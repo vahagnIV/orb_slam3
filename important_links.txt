@@ -1,0 +1,1 @@
+https://github.com/IntelRealSense/librealsense/wiki/API-How-To#start-streaming-left-and-right-infrared-imagers
