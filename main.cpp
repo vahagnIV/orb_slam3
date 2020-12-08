@@ -6,6 +6,7 @@
 #include <rgbd_frame.h>
 #include <orb_feature_extractor.h>
 #include <pinhole_camera.h>
+#include <tracker.h>
 
 void LoadImages(const std::string &strAssociationFilename, std::vector<std::string> &vstrImageFilenamesRGB,
                 std::vector<std::string> &vstrImageFilenamesD, std::vector<double> &vTimestamps) {
@@ -36,12 +37,15 @@ int main() {
   std::vector<std::string> vstrImageFilenamesRGB;
   std::vector<std::string> vstrImageFilenamesD;
   std::vector<double> vTimestamp;
+  nvision::Tracker tracker;
   LoadImages(associsations_filename, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamp);
   std::cout << "Hello, World!" << std::endl;
   std::shared_ptr<nvision::IFeatureExtractor> extractor = std::make_shared<nvision::ORBFeatureExtractor>();
   std::shared_ptr<nvision::ICamera> camera = std::make_shared<nvision::PinholeCamera>();
-  nvision::RGBDFrame frame(cv::Mat(), cv::Mat(), 0., camera, extractor);
-  frame.Compute();
+  std::shared_ptr<nvision::RGBDFrame>
+      frame = std::make_shared<nvision::RGBDFrame>(cv::Mat(), cv::Mat(), 0., camera, extractor);
+  frame->Compute();
+  tracker.Track(frame);
   return 0;
 }
 

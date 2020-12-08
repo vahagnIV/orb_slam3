@@ -23,9 +23,7 @@ class RGBDFrame : public FrameBase {
   int Compute() override;
  private:
   ImageGray8U gray_image_;
-  std::vector<KeyPoint> key_points_;
   std::shared_ptr<ICamera> camera_;
-  DescriptorSet descriptors_;
 
 };
 

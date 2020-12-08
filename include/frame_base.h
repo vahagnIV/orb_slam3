@@ -8,6 +8,7 @@
 #include <typedefs.h>
 #include <memory>
 #include <ifeature_extractor.h>
+#include <opencv2/opencv.hpp>
 
 namespace nvision {
 
@@ -36,12 +37,22 @@ class FrameBase {
   virtual int Compute() = 0;
 
   /*!
+   * Initializes the position of the frame to identity, i.e. the frame is in the origin
+   */
+  void InitializeIdentity() noexcept ;
+
+  size_t FeatureCount() const noexcept { return key_points_.size(); }
+
+  /*!
    * Destructor
    */
   virtual ~FrameBase() = default;
  protected:
   double timestamp_;
   const std::shared_ptr<IFeatureExtractor> feature_extractor_;
+  std::vector<KeyPoint> key_points_;
+  DescriptorSet descriptors_;
+  cv::Matx44f current_pose_;
 
 };
 
