@@ -15,7 +15,8 @@ typedef cv::Mat ImageGray32F;
 typedef cv::KeyPoint KeyPoint;
 typedef cv::Mat DescriptorSet;
 
-typedef cv::Mat DistortionCoefficients;
-typedef cv::Mat IntrinsicMatrix;
+typedef cv::Mat TDistortionCoefficients;
+typedef cv::Matx33f TIntrinsicMatrix;
+typedef cv::Matx33f T3DTransformationMatrix;
 }
 #endif //ORB_SLAM3_INCLUDE_TYPEDEFS_H_

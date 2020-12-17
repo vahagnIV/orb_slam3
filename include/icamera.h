@@ -12,6 +12,7 @@ namespace nvision {
 class ICamera {
  public:
   virtual void UndistortKeyPoints(std::vector<KeyPoint> & in_out_keypoints) = 0;
+  virtual ~ICamera() = default;
 
 };
 

@@ -11,7 +11,7 @@ add_library(orbslam main.cpp
         src/frame_base.cpp
         src/rgbd_frame.cpp
         src/orb_feature_extractor.cpp
-        src/pinhole_camera.cpp
+        src/rgbd_camera.cpp
         src/atlas.cpp
         src/tracker.cpp
         src/map_point.cpp)

@@ -8,22 +8,22 @@
 #include <vector>
 
 #include <frame_base.h>
-#include <icamera.h>
 #include <typedefs.h>
+#include <rgbd_camera.h>
 
 namespace nvision {
 
 class RGBDFrame : public FrameBase {
  public:
-  RGBDFrame(const ImageRGB8U &image,
-            const ImageGray32F &depth,
+  RGBDFrame(const ImageRGB8U & image,
+            const ImageGray32F & depth,
             double timestamp,
-            const std::shared_ptr<ICamera> & camera,
-            const std::shared_ptr<IFeatureExtractor> &feature_extractor);
+            const std::shared_ptr<RGBDCamera> & camera,
+            const std::shared_ptr<IFeatureExtractor> & feature_extractor);
   int Compute() override;
  private:
   ImageGray8U gray_image_;
-  std::shared_ptr<ICamera> camera_;
+  std::shared_ptr<RGBDCamera> camera_;
 
 };
 

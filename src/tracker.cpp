@@ -13,7 +13,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
   if (current_map->FrameCount() == 0) {
     if (frame->FeatureCount() > MINIMAL_FEATURE_COUNT_PER_FRAME)
       frame->InitializeIdentity();
-    current_map->
+
   }
   return OK;
 }
