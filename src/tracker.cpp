@@ -7,13 +7,27 @@
 
 namespace nvision {
 
-TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
+Tracker::Tracker() : atlas_(new Atlas) {
+
+}
+
+Tracker::~Tracker() {
+  delete atlas_;
+}
+
+TrackingResult Tracker::Track(FrameBase *frame) {
   Map *current_map = atlas_->GetCurrentMap();
 
-  if (current_map->FrameCount() == 0) {
-    if (frame->FeatureCount() > MINIMAL_FEATURE_COUNT_PER_FRAME)
-      frame->InitializeIdentity();
+  if (current_map->GetLastFrame() == nullptr) {
 
+    if (frame->FeatureCount() < MINIMAL_FEATURE_COUNT_PER_FRAME)
+      return TrackingResult::Ignore;
+    frame->InitializeIdentity();
+    current_map->SetLastFrame(frame);
+    current_map->AcceptLastFrame();
+
+  } else {
+    frame->SetReferenceFrame(current_map->GetLastFrame());
   }
   return OK;
 }

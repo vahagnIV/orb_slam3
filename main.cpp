@@ -8,8 +8,10 @@
 #include <rgbd_camera.h>
 #include <tracker.h>
 
-void LoadImages(const std::string & strAssociationFilename, std::vector<std::string> & vstrImageFilenamesRGB,
-                std::vector<std::string> & vstrImageFilenamesD, std::vector<double> & vTimestamps) {
+const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
+
+void LoadImages(const std::string &strAssociationFilename, std::vector<std::string> &vstrImageFilenamesRGB,
+                std::vector<std::string> &vstrImageFilenamesD, std::vector<double> &vTimestamps) {
   std::ifstream fAssociation;
   fAssociation.open(strAssociationFilename.c_str());
   while (!fAssociation.eof()) {
@@ -32,7 +34,7 @@ void LoadImages(const std::string & strAssociationFilename, std::vector<std::str
   }
 }
 
-std::shared_ptr<nvision::RGBDCamera> CreateCamera(const std::string & settings_filename) {
+std::shared_ptr<nvision::RGBDCamera> CreateCamera(const std::string &settings_filename) {
   cv::FileStorage fileStorage(settings_filename, 0);
   if (!fileStorage.isOpened())
     return nullptr;
@@ -63,9 +65,9 @@ std::shared_ptr<nvision::RGBDCamera> CreateCamera(const std::string & settings_f
 }
 
 int main() {
-  std::string associsations_filename = "/data/git/ORB_SLAM3/Examples/RGB-D/associations/fr1_desk.txt";
-  std::string settings_file_path = "/data/git/ORB_SLAM3/Examples/RGB-D/TUM2.yaml";
-  std::string database_path = "/data/git/ORB_SLAM3/db/tum/rgbd_dataset_freiburg1_desk";
+  std::string associsations_filename = "/home/vahagn/git/Orb_SLAM3_Customized/Examples/RGB-D/associations/fr1_desk.txt";
+  std::string settings_file_path = "/home/vahagn/git/Orb_SLAM3_Customized/Examples/RGB-D/TUM2.yaml";
+  std::string database_path = "/home/vahagn/git/ORB_SLAM3/db/tum/rgbd_dataset_freiburg1_desk";
 
   std::vector<std::string> rgb_image_filenames;
   std::vector<std::string> depth_image_filenames;
@@ -80,8 +82,11 @@ int main() {
   for (size_t i = 0; i < rgb_image_filenames.size(); ++i) {
     cv::Mat rgb = cv::imread(database_path + "/" + rgb_image_filenames[i], cv::IMREAD_UNCHANGED);
     cv::Mat depth = cv::imread(database_path + "/" + depth_image_filenames[i], cv::IMREAD_UNCHANGED);
-    std::shared_ptr<nvision::RGBDFrame>
-        frame = std::make_shared<nvision::RGBDFrame>(rgb, depth, timestamps[i], camera, extractor);
+    if ((fabs(DEPTH_MAP_FACTOR - 1.0f) > 1e-5) || depth.type() != CV_32F)
+      depth.convertTo(depth, CV_32F, DEPTH_MAP_FACTOR);
+    std::cout << depth.type() << std::endl;
+    nvision::RGBDFrame *
+        frame = new nvision::RGBDFrame(rgb, depth, timestamps[i], camera, extractor);
     frame->Compute();
     tracker.Track(frame);
   }

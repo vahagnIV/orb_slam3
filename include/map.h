@@ -12,10 +12,15 @@ namespace nvision {
 class Map {
  public:
   size_t FrameCount() const noexcept { return key_frames_.size(); }
-  void AddKeyFrame(const std::shared_ptr<FrameBase> &frame);
+  void SetLastFrame(FrameBase *frame) noexcept;
+  const FrameBase *GetLastFrame() const noexcept { return last_frame_; }
+  FrameBase *GetLastFrame() noexcept { return last_frame_; }
+  void AcceptLastFrame() noexcept;
+  ~Map();
 
  private:
-  std::vector<std::shared_ptr<FrameBase>> key_frames_;
+  std::vector<FrameBase *> key_frames_;
+  FrameBase *last_frame_;
 };
 
 }

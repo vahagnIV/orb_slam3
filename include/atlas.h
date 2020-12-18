@@ -12,7 +12,7 @@ namespace nvision {
 class Atlas {
  public:
   Atlas();
-  Map *GetCurrentMap() const;
+  Map *GetCurrentMap();
   void CreateNewMap();
   ~Atlas();
  private:

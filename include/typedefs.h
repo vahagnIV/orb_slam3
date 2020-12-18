@@ -18,5 +18,7 @@ typedef cv::Mat DescriptorSet;
 typedef cv::Mat TDistortionCoefficients;
 typedef cv::Matx33f TIntrinsicMatrix;
 typedef cv::Matx33f T3DTransformationMatrix;
+
+typedef cv::Matx31f T3DVector;
 }
 #endif //ORB_SLAM3_INCLUDE_TYPEDEFS_H_

@@ -9,23 +9,26 @@
 #include <memory>
 namespace nvision {
 
-enum TrackingResult{
-  OK, OldFrame
+enum TrackingResult {
+  OK, OldFrame, Ignore
 };
 
 class Tracker {
  public:
-  Tracker() = default;
+  Tracker();
 
   /*!
    * Processes the frame
    * @param frame the next frame received from the sensor
    * @return Tracking result
    */
-  TrackingResult Track(const std::shared_ptr<FrameBase> & frame);
+  TrackingResult Track(FrameBase *frame);
+
+  virtual ~Tracker();
 
  private:
-  std::shared_ptr<Atlas> atlas_;
+  Atlas *atlas_;
+  T3DVector velocity_;
 
 };
 

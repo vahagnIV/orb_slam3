@@ -10,8 +10,9 @@ Atlas::Atlas() : current_map_(nullptr) {
 
 }
 
-Map *Atlas::GetCurrentMap() const{
+Map *Atlas::GetCurrentMap() {
   if(nullptr == current_map_)
+    CreateNewMap();
 
   return current_map_;
 }

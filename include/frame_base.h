@@ -17,8 +17,9 @@ namespace nvision {
 
 class FrameBase {
  public:
-  FrameBase() = default;
-  FrameBase(double timestamp, const std::shared_ptr<IFeatureExtractor> & feature_extractor)
+  FrameBase() ;
+
+  FrameBase(double timestamp, const std::shared_ptr<IFeatureExtractor> &feature_extractor)
       : timestamp_(timestamp), feature_extractor_(feature_extractor) {}
 
   /*!
@@ -44,7 +45,20 @@ class FrameBase {
    */
   void InitializeIdentity() noexcept;
 
+  /*!
+   * Set the position of the frame in the world coordinate system
+   * @param position 4x4 joint transformation matrix
+   */
+  void SetPosition(const cv::Matx44f &position) noexcept;
+
+  // Get the number of the extracted keypoints
   size_t FeatureCount() const noexcept { return map_points_.size(); }
+
+  /*!
+   * Set the reference frame for this frame
+   * @param reference_frame
+   */
+  void SetReferenceFrame(FrameBase *reference_frame) noexcept { reference_frame_ = reference_frame; }
 
   /*!
    * Destructor
@@ -52,14 +66,19 @@ class FrameBase {
   virtual ~FrameBase() = default;
 
  protected:
-  static void CvKeypointsToMat(const std::vector<cv::KeyPoint> & keypoints, cv::Mat & out_points);
+  static void CvKeypointsToMat(const std::vector<cv::KeyPoint> &keypoints, cv::Mat &out_points);
 
  protected:
   double timestamp_;
   const std::shared_ptr<IFeatureExtractor> feature_extractor_;
   std::vector<MapPoint> map_points_;
   DescriptorSet descriptors_;
-  cv::Matx44f current_pose_;
+  FrameBase *reference_frame_;
+
+  T3DTransformationMatrix R_camera2world_;
+  T3DTransformationMatrix R_world2camera_;
+  T3DVector T_camera2world_;
+  T3DVector T_0world_;
 
 };
 

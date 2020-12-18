@@ -26,8 +26,8 @@ void RGBDCamera::UndistortKeyPoints(const cv::Mat & points, cv::Mat & out_undist
 //  cv::Mat mat(keypoints.size(), 2, CV_32F);
 //
 //  for (int i = 0; i < keypoints.size(); i++) {
-//    mat.at<float>(i, 0) = keypoints[i].pt.x;
-//    mat.at<float>(i, 1) = keypoints[i].pt.y;
+//    mat.at<float>(i, 0) = keypoints[i].xi.x;
+//    mat.at<float>(i, 1) = keypoints[i].xi.y;
 //  }
 
   // Undistort points
@@ -37,8 +37,8 @@ void RGBDCamera::UndistortKeyPoints(const cv::Mat & points, cv::Mat & out_undist
   out_undistorted_points = out_undistorted_points.reshape(1);
 
   /*for (int i = 0; i < keypoints.size(); i++) {
-    keypoints[i].pt.x = mat.at<float>(i, 0);
-    keypoints[i].pt.y = mat.at<float>(i, 1);
+    keypoints[i].xi.x = mat.at<float>(i, 0);
+    keypoints[i].xi.y = mat.at<float>(i, 1);
   }*/
 
 }

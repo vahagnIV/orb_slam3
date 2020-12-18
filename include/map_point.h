@@ -11,8 +11,8 @@ namespace nvision {
 
 class MapPoint {
  public:
-  cv::Point2f pt;
-  float depth;
+  cv::Point2f xi;
+  cv::Point3f x;
 };
 
 }

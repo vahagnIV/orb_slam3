@@ -27,9 +27,12 @@ RGBDFrame::RGBDFrame(const ImageRGB8U & image, const ImageGray32F & depth, doubl
 void RGBDFrame::InitializeMapPoints(const cv::Mat & points, const cv::Mat & undistorted_points) {
   map_points_.resize(points.rows);
   for (int i = 0; i < points.rows; ++i) {
-    map_points_[i].pt.x = points.at<float>(i, 0);
-    map_points_[i].pt.y = points.at<float>(i, 1);
-    map_points_[i].depth = depth_image_.at<float>(points.at<float>(i, 0), points.at<float>(i, 1));
+    map_points_[i].xi.x = points.at<float>(i, 0);
+    map_points_[i].xi.y = points.at<float>(i, 1);
+
+    map_points_[i].x.x = (map_points_[i].xi.x - camera_->Cx()) / camera_->Fx();
+    map_points_[i].x.y = (map_points_[i].xi.y - camera_->Cy()) / camera_->Fy();
+    map_points_[i].x.z = depth_image_.at<float>(points.at<float>(i, 0), points.at<float>(i, 1));
   }
 }
 
