@@ -44,16 +44,19 @@ class FrameBase {
    */
   void InitializeIdentity() noexcept;
 
-  size_t FeatureCount() const noexcept { return key_points_.size(); }
+  size_t FeatureCount() const noexcept { return map_points_.size(); }
 
   /*!
    * Destructor
    */
   virtual ~FrameBase() = default;
+
+ protected:
+  static void CvKeypointsToMat(const std::vector<cv::KeyPoint> & keypoints, cv::Mat & out_points);
+
  protected:
   double timestamp_;
   const std::shared_ptr<IFeatureExtractor> feature_extractor_;
-  std::vector<KeyPoint> key_points_;
   std::vector<MapPoint> map_points_;
   DescriptorSet descriptors_;
   cv::Matx44f current_pose_;

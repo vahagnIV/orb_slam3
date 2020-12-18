@@ -11,7 +11,7 @@ namespace nvision {
 
 class ICamera {
  public:
-  virtual void UndistortKeyPoints(std::vector<KeyPoint> & in_out_keypoints) = 0;
+  virtual void UndistortKeyPoints(const cv::Mat & points, cv::Mat & out_undistorted_points) = 0;
   virtual ~ICamera() = default;
 
 };

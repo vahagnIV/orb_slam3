@@ -21,9 +21,16 @@ class RGBDFrame : public FrameBase {
             const std::shared_ptr<RGBDCamera> & camera,
             const std::shared_ptr<IFeatureExtractor> & feature_extractor);
   int Compute() override;
+
+ private:
+  void InitializeMapPoints(const cv::Mat & points, const cv::Mat & undistorted_points);
+  void AssignFeaturesToGrid();
+
  private:
   ImageGray8U gray_image_;
+  ImageGray32F depth_image_;
   std::shared_ptr<RGBDCamera> camera_;
+
 
 };
 

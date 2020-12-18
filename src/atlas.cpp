@@ -6,8 +6,22 @@
 
 namespace nvision {
 
-Map* Atlas::GetCurrentMap() {
-  return nullptr;
+Atlas::Atlas() : current_map_(nullptr) {
+
+}
+
+Map *Atlas::GetCurrentMap() const{
+  if(nullptr == current_map_)
+
+  return current_map_;
+}
+
+void Atlas::CreateNewMap() {
+  current_map_ = new Map();
+}
+
+Atlas::~Atlas() {
+
 }
 
 }

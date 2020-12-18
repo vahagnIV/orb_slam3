@@ -55,7 +55,11 @@ std::shared_ptr<nvision::RGBDCamera> CreateCamera(const std::string & settings_f
   distortion_coeffs.at<float>(3) = fileStorage["Camera.p2"].real();
   distortion_coeffs.at<float>(4) = fileStorage["Camera.k3"].real();
 
-  return std::make_shared<nvision::RGBDCamera>(intrinsic, distortion_coeffs, intrinsic);
+  return std::make_shared<nvision::RGBDCamera>(intrinsic,
+                                               distortion_coeffs,
+                                               nvision::T3DTransformationMatrix::eye(),
+                                               fileStorage["Camera.width"],
+                                               fileStorage["Camera.height"]);
 }
 
 int main() {
