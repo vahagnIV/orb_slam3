@@ -34,7 +34,7 @@ void LoadImages(const std::string &strAssociationFilename, std::vector<std::stri
   }
 }
 
-std::shared_ptr<nvision::RGBDCamera> CreateCamera(const std::string &settings_filename) {
+std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string &settings_filename) {
   cv::FileStorage fileStorage(settings_filename, 0);
   if (!fileStorage.isOpened())
     return nullptr;
@@ -57,9 +57,9 @@ std::shared_ptr<nvision::RGBDCamera> CreateCamera(const std::string &settings_fi
   distortion_coeffs.at<float>(3) = fileStorage["Camera.p2"].real();
   distortion_coeffs.at<float>(4) = fileStorage["Camera.k3"].real();
 
-  return std::make_shared<nvision::RGBDCamera>(intrinsic,
+  return std::make_shared<orb_slam3::RGBDCamera>(intrinsic,
                                                distortion_coeffs,
-                                               nvision::T3DTransformationMatrix::eye(),
+                                               orb_slam3::T3DTransformationMatrix::eye(),
                                                fileStorage["Camera.width"],
                                                fileStorage["Camera.height"]);
 }
@@ -72,11 +72,11 @@ int main() {
   std::vector<std::string> rgb_image_filenames;
   std::vector<std::string> depth_image_filenames;
   std::vector<double> timestamps;
-  nvision::Tracker tracker;
+  orb_slam3::Tracker tracker;
   LoadImages(associsations_filename, rgb_image_filenames, depth_image_filenames, timestamps);
   std::cout << "Hello, World!" << std::endl;
-  std::shared_ptr<nvision::IFeatureExtractor> extractor = std::make_shared<nvision::ORBFeatureExtractor>();
-  std::shared_ptr<nvision::RGBDCamera>
+  std::shared_ptr<orb_slam3::IFeatureExtractor> extractor = std::make_shared<orb_slam3::ORBFeatureExtractor>();
+  std::shared_ptr<orb_slam3::RGBDCamera>
       camera = CreateCamera(settings_file_path);
 
   for (size_t i = 0; i < rgb_image_filenames.size(); ++i) {
@@ -85,8 +85,8 @@ int main() {
     if ((fabs(DEPTH_MAP_FACTOR - 1.0f) > 1e-5) || depth.type() != CV_32F)
       depth.convertTo(depth, CV_32F, DEPTH_MAP_FACTOR);
     std::cout << depth.type() << std::endl;
-    nvision::RGBDFrame *
-        frame = new nvision::RGBDFrame(rgb, depth, timestamps[i], camera, extractor);
+    orb_slam3::RGBDFrame *
+        frame = new orb_slam3::RGBDFrame(rgb, depth, timestamps[i], camera, extractor);
     frame->Compute();
     tracker.Track(frame);
   }

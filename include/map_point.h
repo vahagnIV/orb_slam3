@@ -7,7 +7,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace nvision {
+namespace orb_slam3 {
 
 class MapPoint {
  public:

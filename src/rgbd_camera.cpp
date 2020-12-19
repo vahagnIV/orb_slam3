@@ -4,7 +4,7 @@
 
 #include "rgbd_camera.h"
 
-namespace nvision {
+namespace orb_slam3 {
 
 RGBDCamera::RGBDCamera(const TIntrinsicMatrix & rgb_intrinsic_matrix,
                        const TDistortionCoefficients & rgb_distortion_coeffs,

@@ -7,7 +7,7 @@
 #include <frame_base.h>
 #include <atlas.h>
 #include <memory>
-namespace nvision {
+namespace orb_slam3 {
 
 enum TrackingResult {
   OK, OldFrame, Ignore

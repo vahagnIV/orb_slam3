@@ -6,7 +6,7 @@
 #define ORB_SLAM3_INCLUDE_TYPEDEFS_H_
 #include <opencv2/opencv.hpp>
 
-namespace nvision{
+namespace orb_slam3{
 
 typedef cv::Mat ImageRGB8U;
 typedef cv::Mat ImageGray8U;

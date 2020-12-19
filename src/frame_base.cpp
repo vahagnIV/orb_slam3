@@ -4,7 +4,7 @@
 
 #include "frame_base.h"
 
-namespace nvision {
+namespace orb_slam3 {
 
 FrameBase::FrameBase() : reference_frame_(nullptr) {
 

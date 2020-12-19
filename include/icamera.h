@@ -7,7 +7,7 @@
 
 #include <typedefs.h>
 
-namespace nvision {
+namespace orb_slam3 {
 
 class ICamera {
  public:

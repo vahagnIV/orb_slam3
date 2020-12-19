@@ -7,7 +7,7 @@
 
 #include <icamera.h>
 
-namespace nvision {
+namespace orb_slam3 {
 
 class RGBDCamera : public ICamera {
  public:

@@ -7,7 +7,7 @@
 
 #include <ifeature_extractor.h>
 
-namespace nvision {
+namespace orb_slam3 {
 
 class ORBFeatureExtractor: public IFeatureExtractor {
  public:

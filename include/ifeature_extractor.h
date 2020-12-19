@@ -7,7 +7,7 @@
 
 #include <typedefs.h>
 #include <vector>
-namespace nvision {
+namespace orb_slam3 {
 
 class IFeatureExtractor {
  public:

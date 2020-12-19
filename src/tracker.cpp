@@ -5,7 +5,7 @@
 #include "tracker.h"
 #include <constants.h>
 
-namespace nvision {
+namespace orb_slam3 {
 
 Tracker::Tracker() : atlas_(new Atlas) {
 

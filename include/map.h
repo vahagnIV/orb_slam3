@@ -7,7 +7,7 @@
 #include <vector>
 #include <map_point.h>
 #include <frame_base.h>
-namespace nvision {
+namespace orb_slam3 {
 
 class Map {
  public:

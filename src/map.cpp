@@ -4,7 +4,7 @@
 
 #include "map.h"
 
-namespace nvision {
+namespace orb_slam3 {
 
 //void Map::AddKeyFrame(const FrameBase *frame) {
 //  key_frames_.push_back(frame);

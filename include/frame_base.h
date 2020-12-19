@@ -13,7 +13,7 @@
 #include <ifeature_extractor.h>
 #include <map_point.h>
 
-namespace nvision {
+namespace orb_slam3 {
 
 class FrameBase {
  public:

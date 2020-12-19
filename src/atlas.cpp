@@ -4,7 +4,7 @@
 
 #include "atlas.h"
 
-namespace nvision {
+namespace orb_slam3 {
 
 Atlas::Atlas() : current_map_(nullptr) {
 

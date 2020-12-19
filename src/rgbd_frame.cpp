@@ -5,7 +5,7 @@
 
 #include "rgbd_frame.h"
 
-namespace nvision {
+namespace orb_slam3 {
 
 RGBDFrame::RGBDFrame(const ImageRGB8U & image, const ImageGray32F & depth, double timestamp,
                      const std::shared_ptr<RGBDCamera> & camera,

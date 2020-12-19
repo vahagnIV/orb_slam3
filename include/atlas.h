@@ -7,7 +7,7 @@
 
 #include <map.h>
 #include <memory>
-namespace nvision {
+namespace orb_slam3 {
 
 class Atlas {
  public:

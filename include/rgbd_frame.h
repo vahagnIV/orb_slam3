@@ -11,7 +11,7 @@
 #include <typedefs.h>
 #include <rgbd_camera.h>
 
-namespace nvision {
+namespace orb_slam3 {
 
 class RGBDFrame : public FrameBase {
  public:

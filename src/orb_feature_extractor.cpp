@@ -4,7 +4,7 @@
 
 #include "orb_feature_extractor.h"
 
-namespace nvision {
+namespace orb_slam3 {
 
 ORBFeatureExtractor::ORBFeatureExtractor() : extractor_(cv::ORB::create(1000)) {
 
