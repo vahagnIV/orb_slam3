@@ -8,19 +8,21 @@ include_directories(include g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_
 add_library(orbslam SHARED
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
-#        src/rgbd_frame.cpp
+        src/camera/monocular_camera.cpp
+        #        src/rgbd_frame.cpp
+        #        src/rgbd_camera.cpp
         src/feature_extraction/orb_feature_extractor.cpp
-        src/rgbd_camera.cpp
         src/atlas.cpp
         src/tracker.cpp
         src/map_point.cpp
 
+        include/camera/monocular_camera.h
         include/frame/frame_base.h
         include/frame/monocular_frame.h
         #        include/rgbd_frame.h
+        #        include/rgbd_camera.h
         include/feature_extraction/orb_feature_extractor.h
         include/feature_extraction/ifeature_extractor.h
-        include/rgbd_camera.h
         include/atlas.h
         include/tracker.h
         include/map_point.h include/orb_vocabulary.h)

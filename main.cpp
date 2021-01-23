@@ -5,7 +5,6 @@
 #include <sstream>
 #include <frame/monocular_frame.h>
 #include <feature_extraction/orb_feature_extractor.h>
-#include <rgbd_camera.h>
 #include <tracker.h>
 #include <boost/filesystem.hpp>
 #include <Eigen/Eigen>
@@ -37,7 +36,7 @@ void LoadImages(const std::string & strAssociationFilename, std::vector<std::str
   }
 }
 
-std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string & settings_filename) {
+/*std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string & settings_filename) {
   cv::FileStorage fileStorage(settings_filename, 0);
   if (!fileStorage.isOpened())
     return nullptr;
@@ -66,7 +65,7 @@ std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string & settings
                                                  fileStorage["Camera.width"],
                                                  fileStorage["Camera.height"]);
 }
-
+*/
 std::vector<std::string> ListDirectory(const std::string & path) {
   std::vector<std::string> out_files;
   boost::filesystem::path dir(path);

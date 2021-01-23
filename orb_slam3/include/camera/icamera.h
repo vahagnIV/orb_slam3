@@ -8,6 +8,7 @@
 #include <typedefs.h>
 
 namespace orb_slam3 {
+namespace camera {
 
 class ICamera {
  public:
@@ -16,6 +17,7 @@ class ICamera {
 
 };
 
+}
 }
 
 #endif //ORB_SLAM3_INCLUDE_ICAMERA_H_
