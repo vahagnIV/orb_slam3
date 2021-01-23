@@ -123,14 +123,18 @@ void TestMonocular() {
   ReadImages(data, filenames, timestamps);
   orb_slam3::Tracker tracker;
 
+  std::shared_ptr<orb_slam3::camera::MonocularCamera>
+      camera = std::make_shared<orb_slam3::camera::MonocularCamera>(640, 480);
+
   std::shared_ptr<orb_slam3::feature_extraction::IFeatureExtractor>
-      extractor = std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>(640, 480);
+      extractor =
+      std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>(camera->Width(), camera->Height());
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
     auto eigen = FromCvMat(image);
     std::shared_ptr<orb_slam3::frame::FrameBase>
-        frame = std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k], extractor);
+        frame = std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k], extractor, camera);
     tracker.Track(frame);
   }
 

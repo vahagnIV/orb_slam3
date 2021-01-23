@@ -13,11 +13,10 @@ namespace feature_extraction {
 class ORBFeatureExtractor : public IFeatureExtractor {
  public:
   ORBFeatureExtractor(unsigned image_width, unsigned image_height);
-  int Extract(const ImageGray8U & image,
-              std::vector<KeyPoint> & out_keypoints,
+  int Extract(const TImageGray8U & image,
+              TKeyPoints & out_keypoints,
               DescriptorSet & out_descriptors) override;
  private:
-  cv::Ptr<cv::ORB> extractor_;
   unsigned image_width_;
   unsigned image_height_;
 

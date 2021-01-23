@@ -36,7 +36,7 @@ class Tracker {
 
  private:
   Atlas * atlas_;
-  T3DVector velocity_;
+
 
 };
 

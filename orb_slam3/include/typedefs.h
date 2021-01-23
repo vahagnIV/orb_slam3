@@ -10,16 +10,18 @@
 
 namespace orb_slam3{
 
-typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> ImageRGB8U;
-typedef cv::Mat ImageGray8U;
-typedef cv::Mat ImageGray32F;
+typedef double precision_t;
 
-typedef cv::KeyPoint KeyPoint;
+typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> TImageGray8U;
+
+typedef Eigen::Matrix<precision_t, Eigen::Dynamic, 2> TKeyPoints;
 typedef cv::Mat DescriptorSet;
 
-typedef cv::Mat TDistortionCoefficients;
-typedef cv::Matx33f TIntrinsicMatrix;
-typedef cv::Matx33f T3DTransformationMatrix;
+typedef Eigen::Matrix<precision_t, 3, 1 > TPoint3D;
+typedef Eigen::Matrix<precision_t, 2, 1 > TPoint2D;
+
+
+
 
 typedef cv::Matx31f T3DVector;
 

@@ -19,8 +19,8 @@ class IFeatureExtractor {
    * @param out_descriptors Descriptors
    * @return The number of extracted keypoints on success, -1 on fail.
    */
-  virtual int Extract(const ImageGray8U & image,
-                      std::vector<KeyPoint> & out_keypoints,
+  virtual int Extract(const TImageGray8U & image,
+                      TKeyPoints & out_keypoints,
                       DescriptorSet & out_descriptors) = 0;
 
   virtual ~IFeatureExtractor() = default;
