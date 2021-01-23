@@ -8,6 +8,7 @@
 #include <typedefs.h>
 #include <vector>
 namespace orb_slam3 {
+namespace feature_extraction {
 
 class IFeatureExtractor {
  public:
@@ -18,13 +19,14 @@ class IFeatureExtractor {
    * @param out_descriptors Descriptors
    * @return The number of extracted keypoints on success, -1 on fail.
    */
-  virtual int Extract(const ImageGray8U &image,
-                      std::vector<KeyPoint> &out_keypoints,
-                      DescriptorSet &out_descriptors) = 0;
+  virtual int Extract(const ImageGray8U & image,
+                      std::vector<KeyPoint> & out_keypoints,
+                      DescriptorSet & out_descriptors) = 0;
 
   virtual ~IFeatureExtractor() = default;
 
 };
 
+}
 }
 #endif //ORB_SLAM3_INCLUDE_I_FEATURE_EXTRACTOR_H_

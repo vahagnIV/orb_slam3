@@ -7,10 +7,10 @@
 
 namespace orb_slam3 {
 
-RGBDFrame::RGBDFrame(const ImageRGB8U & image, const ImageGray32F & depth, double timestamp,
-                     const std::shared_ptr<RGBDCamera> & camera,
-                     const std::shared_ptr<IFeatureExtractor> & feature_extractor) :
-    FrameBase(timestamp, feature_extractor),
+RGBDFrame::RGBDFrame(const ImageRGB8U &image, const ImageGray32F &depth, double timestamp,
+                     const std::shared_ptr<RGBDCamera> &camera,
+                     const std::shared_ptr<IFeatureExtractor> &feature_extractor, ORBVocabulary *orb_vocabulary) :
+    FrameBase(timestamp, feature_extractor, orb_vocabulary),
     gray_image_(image),
     depth_image_(depth),
     camera_(camera) {
@@ -24,7 +24,7 @@ RGBDFrame::RGBDFrame(const ImageRGB8U & image, const ImageGray32F & depth, doubl
   cv::cvtColor(image, gray_image_, cv::COLOR_BGR2RGB);
 }
 
-void RGBDFrame::InitializeMapPoints(const cv::Mat & points, const cv::Mat & undistorted_points) {
+void RGBDFrame::InitializeMapPoints(const cv::Mat &points, const cv::Mat &undistorted_points) {
   map_points_.resize(points.rows);
   for (int i = 0; i < points.rows; ++i) {
     map_points_[i].xi.x = points.at<float>(i, 0);

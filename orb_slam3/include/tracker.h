@@ -4,7 +4,7 @@
 
 #ifndef ORB_SLAM3_INCLUDE_TRACKER_H_
 #define ORB_SLAM3_INCLUDE_TRACKER_H_
-#include <frame_base.h>
+#include <frame/frame_base.h>
 #include <atlas.h>
 #include <memory>
 namespace orb_slam3 {
@@ -13,6 +13,7 @@ enum TrackingResult {
   OK, OldFrame, Ignore
 };
 
+using frame::FrameBase;
 class Tracker {
  public:
   Tracker();
@@ -22,12 +23,19 @@ class Tracker {
    * @param frame the next frame received from the sensor
    * @return Tracking result
    */
-  TrackingResult Track(FrameBase *frame);
+  TrackingResult Track(std::shared_ptr<FrameBase> frame);
 
+  /*!
+   * Destructor
+   */
   virtual ~Tracker();
 
  private:
-  Atlas *atlas_;
+
+  bool TrackReferenceKeyFrame();
+
+ private:
+  Atlas * atlas_;
   T3DVector velocity_;
 
 };

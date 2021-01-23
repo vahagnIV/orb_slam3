@@ -15,8 +15,8 @@ Tracker::~Tracker() {
   delete atlas_;
 }
 
-TrackingResult Tracker::Track(FrameBase *frame) {
-  Map *current_map = atlas_->GetCurrentMap();
+TrackingResult Tracker::Track(std::shared_ptr<FrameBase> frame) {
+  /*Map *current_map = atlas_->GetCurrentMap();
 
   if (current_map->GetLastFrame() == nullptr) {
 
@@ -28,8 +28,12 @@ TrackingResult Tracker::Track(FrameBase *frame) {
 
   } else {
     frame->SetReferenceFrame(current_map->GetLastFrame());
-  }
+  }*/
   return OK;
+}
+
+bool Tracker::TrackReferenceKeyFrame() {
+  return false;
 }
 
 }

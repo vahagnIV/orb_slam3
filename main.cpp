@@ -3,15 +3,18 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include <rgbd_frame.h>
-#include <orb_feature_extractor.h>
+#include <frame/monocular_frame.h>
+#include <feature_extraction/orb_feature_extractor.h>
 #include <rgbd_camera.h>
 #include <tracker.h>
+#include <boost/filesystem.hpp>
+#include <Eigen/Eigen>
+#include <chrono>
 
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
-void LoadImages(const std::string &strAssociationFilename, std::vector<std::string> &vstrImageFilenamesRGB,
-                std::vector<std::string> &vstrImageFilenamesD, std::vector<double> &vTimestamps) {
+void LoadImages(const std::string & strAssociationFilename, std::vector<std::string> & vstrImageFilenamesRGB,
+                std::vector<std::string> & vstrImageFilenamesD, std::vector<double> & vTimestamps) {
   std::ifstream fAssociation;
   fAssociation.open(strAssociationFilename.c_str());
   while (!fAssociation.eof()) {
@@ -34,7 +37,7 @@ void LoadImages(const std::string &strAssociationFilename, std::vector<std::stri
   }
 }
 
-std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string &settings_filename) {
+std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string & settings_filename) {
   cv::FileStorage fileStorage(settings_filename, 0);
   if (!fileStorage.isOpened())
     return nullptr;
@@ -58,26 +61,102 @@ std::shared_ptr<orb_slam3::RGBDCamera> CreateCamera(const std::string &settings_
   distortion_coeffs.at<float>(4) = fileStorage["Camera.k3"].real();
 
   return std::make_shared<orb_slam3::RGBDCamera>(intrinsic,
-                                               distortion_coeffs,
-                                               orb_slam3::T3DTransformationMatrix::eye(),
-                                               fileStorage["Camera.width"],
-                                               fileStorage["Camera.height"]);
+                                                 distortion_coeffs,
+                                                 orb_slam3::T3DTransformationMatrix::eye(),
+                                                 fileStorage["Camera.width"],
+                                                 fileStorage["Camera.height"]);
+}
+
+std::vector<std::string> ListDirectory(const std::string & path) {
+  std::vector<std::string> out_files;
+  boost::filesystem::path dir(path);
+  boost::filesystem::directory_iterator it(path);
+  for (; it != boost::filesystem::directory_iterator(); ++it) {
+    if (boost::filesystem::is_regular_file(it->path()))
+      out_files.push_back(it->path().string());
+  }
+  return out_files;
+}
+
+void ReadImages(const std::string & data_dir,
+                std::vector<std::string> & filenames,
+                std::vector<std::chrono::system_clock::time_point> & timestamps) {
+  std::string row;
+  std::ifstream is(data_dir + "/../data.csv");
+  if (!std::getline(is, row))
+    return;
+  while (std::getline(is, row)) {
+    std::string::size_type idx = row.find(',');
+    if (idx == std::string::npos)
+      continue;
+    time_t timestamp = std::stoul(row.substr(0, idx));
+
+    ;
+    std::chrono::system_clock::time_point time_point
+        (std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::nanoseconds(timestamp)));
+
+    timestamps.push_back(time_point);
+    filenames.push_back(row.substr(idx + 1));
+
+  }
+}
+
+cv::Mat FromEigen(const Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> & eigen_mat) {
+  cv::Mat cv_mat(eigen_mat.rows(), eigen_mat.cols(), CV_8U);
+  memcpy(cv_mat.data, eigen_mat.data(), cv_mat.total());
+  return cv_mat;
+}
+
+Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> FromCvMat(const cv::Mat & cv_mat) {
+  Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> eigen_mat;
+  eigen_mat.resize(cv_mat.rows, cv_mat.cols);
+  memcpy(eigen_mat.data(), cv_mat.data, cv_mat.total());
+  return eigen_mat;
+}
+
+void TestMonocular() {
+  const std::string vocabulary = "/home/vahagn/git/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
+  const std::string settings = "/home/vahagn/git/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
+  const std::string data = "/home/vahagn/git/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
+
+  std::vector<std::string> filenames;
+  std::vector<std::chrono::system_clock::time_point> timestamps;
+  ReadImages(data, filenames, timestamps);
+  orb_slam3::Tracker tracker;
+
+  std::shared_ptr<orb_slam3::feature_extraction::IFeatureExtractor>
+      extractor = std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>(640, 480);
+
+  for (size_t k = 0; k < filenames.size(); ++k) {
+    cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
+    auto eigen = FromCvMat(image);
+    std::shared_ptr<orb_slam3::frame::FrameBase>
+        frame = std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k], extractor);
+    tracker.Track(frame);
+  }
+
 }
 
 int main() {
-  std::string associsations_filename = "/home/vahagn/git/Orb_SLAM3_Customized/Examples/RGB-D/associations/fr1_desk.txt";
-  std::string settings_file_path = "/home/vahagn/git/Orb_SLAM3_Customized/Examples/RGB-D/TUM2.yaml";
-  std::string database_path = "/home/vahagn/git/ORB_SLAM3/db/tum/rgbd_dataset_freiburg1_desk";
 
-  std::vector<std::string> rgb_image_filenames;
+  TestMonocular();
+  /*std::string associsations_filename = "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/associations/fr1_desk.txt";
+  std::string settings_file_path = "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/TUM2.yaml";
+  std::string database_path = "/home/vahagn/git/ORB_SLAM3/db/tum/rgbd_dataset_freiburg1_desk";*/
+
+  /*std::vector<std::string> rgb_image_filenames;
   std::vector<std::string> depth_image_filenames;
   std::vector<double> timestamps;
   orb_slam3::Tracker tracker;
   LoadImages(associsations_filename, rgb_image_filenames, depth_image_filenames, timestamps);
   std::cout << "Hello, World!" << std::endl;
-  std::shared_ptr<orb_slam3::IFeatureExtractor> extractor = std::make_shared<orb_slam3::ORBFeatureExtractor>();
+  std::shared_ptr<orb_slam3::feature_extraction::IFeatureExtractor> extractor = std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>();
   std::shared_ptr<orb_slam3::RGBDCamera>
       camera = CreateCamera(settings_file_path);
+
+  orb_slam3::ORBVocabulary
+      *orb_vocabulary = new orb_slam3::ORBVocabulary();
+  orb_vocabulary->loadFromTextFile("/home/vahagn/git/ORB_SLAM3/Vocabulary/ORBvoc.txt");
 
   for (size_t i = 0; i < rgb_image_filenames.size(); ++i) {
     cv::Mat rgb = cv::imread(database_path + "/" + rgb_image_filenames[i], cv::IMREAD_UNCHANGED);
@@ -86,10 +165,10 @@ int main() {
       depth.convertTo(depth, CV_32F, DEPTH_MAP_FACTOR);
     std::cout << depth.type() << std::endl;
     orb_slam3::RGBDFrame *
-        frame = new orb_slam3::RGBDFrame(rgb, depth, timestamps[i], camera, extractor);
+        frame = new orb_slam3::RGBDFrame(rgb, depth, timestamps[i], camera, extractor, orb_vocabulary);
     frame->Compute();
     tracker.Track(frame);
-  }
+  }*/
 
   return 0;
 }

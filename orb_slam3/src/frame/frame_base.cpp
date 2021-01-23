@@ -2,24 +2,16 @@
 // Created by vahagn on 11/29/20.
 //
 
-#include "frame_base.h"
+#include "frame/frame_base.h"
 
 namespace orb_slam3 {
-
+/*
 FrameBase::FrameBase() : reference_frame_(nullptr) {
 
 }
 
 void FrameBase::InitializeIdentity() noexcept {
   SetPosition(cv::Matx44f::eye());
-}
-
-void FrameBase::CvKeypointsToMat(const std::vector<cv::KeyPoint> &keypoints, cv::Mat &out_points) {
-  out_points.create(keypoints.size(), 2, CV_32F);
-  for (int i = 0; i < keypoints.size(); ++i) {
-    out_points.at<float>(i, 0) = keypoints[i].pt.x;
-    out_points.at<float>(i, 1) = keypoints[i].pt.y;
-  }
 }
 
 void FrameBase::SetPosition(const cv::Matx44f &position) noexcept {
@@ -33,5 +25,12 @@ void FrameBase::SetPosition(const cv::Matx44f &position) noexcept {
 
   T_0world_ = -R_world2camera_ * T_camera2world_;
 }
+
+void FrameBase::ComputeBoW() {
+  if (bow_vector_.empty()) {
+    std::vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(descriptors_);
+    orb_vocabulary_->transform(vCurrentDesc, bow_vector_, feature_vector_, 4);
+  }
+}*/
 
 }

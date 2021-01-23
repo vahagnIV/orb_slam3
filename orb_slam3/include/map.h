@@ -6,12 +6,12 @@
 #define ORB_SLAM3_INCLUDE_MAP_H_
 #include <vector>
 #include <map_point.h>
-#include <frame_base.h>
+#include <frame/frame_base.h>
 namespace orb_slam3 {
 
 class Map {
  public:
-  size_t FrameCount() const noexcept { return key_frames_.size(); }
+  /*size_t FrameCount() const noexcept { return key_frames_.size(); }
   void SetLastFrame(FrameBase *frame) noexcept;
   const FrameBase *GetLastFrame() const noexcept { return last_frame_; }
   FrameBase *GetLastFrame() noexcept { return last_frame_; }
@@ -20,7 +20,7 @@ class Map {
 
  private:
   std::vector<FrameBase *> key_frames_;
-  FrameBase *last_frame_;
+  FrameBase *last_frame_;*/
 };
 
 }
