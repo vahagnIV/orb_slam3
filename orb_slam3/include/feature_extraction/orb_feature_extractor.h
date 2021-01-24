@@ -23,6 +23,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
               DescriptorSet & out_descriptors) override;
  private:
   void AllocatePyramid();
+  void BuildImagePyramid(const TImageGray8U & image );
 
  private:
   unsigned image_width_;

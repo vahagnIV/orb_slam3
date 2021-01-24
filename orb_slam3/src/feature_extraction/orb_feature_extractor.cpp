@@ -3,6 +3,7 @@
 //
 
 #include "feature_extraction/orb_feature_extractor.h"
+#include "image_utils.h"
 
 namespace orb_slam3 {
 namespace feature_extraction {
@@ -51,6 +52,8 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
   }
   features_per_level_.back() = std::max(features - total_features, size_t(0));
 
+  AllocatePyramid();
+
 }
 
 void ORBFeatureExtractor::AllocatePyramid() {
@@ -58,25 +61,26 @@ void ORBFeatureExtractor::AllocatePyramid() {
     precision_t scale = inv_scale_factors_[level];
     int width = std::round(image_width_ * scale);
     int height = std::round(image_height_ * scale);
-    int whole_width = width + EDGE_THRESHOLD * 2;
-    int whole_height = height + EDGE_THRESHOLD * 2;
-
-    image_pyramid_[level].resize(whole_height, whole_width);
-    
-    //Mat temp(wholeSize, image.type()), masktemp;
-    //mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, width_, sz.height));
-
-    // Compute the resized image
-    /*if (level != 0) {
-      resize(mvImagePyramid[level - 1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
-
-      copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
-                     BORDER_REFLECT_101 + BORDER_ISOLATED);
-    } else {
-      copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
-                     BORDER_REFLECT_101);
-    }*/
+    image_pyramid_[level].resize(width - EDGE_THRESHOLD, height - EDGE_THRESHOLD);
   }
+}
+
+void ORBFeatureExtractor::BuildImagePyramid(const TImageGray8U & image ){
+  for (size_t level = 0; level < scale_factors_.size(); level++)
+  {
+    // Compute the resized image
+    if (level != 0) {
+      //image_utils::ResizeImage(image_pyramid_[level - 1], image_pyramid_[level]);
+
+      /*copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                     BORDER_REFLECT_101 + BORDER_ISOLATED);*/
+    } else {
+      /*copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                     BORDER_REFLECT_101);*/
+    }
+    /* code */
+  }
+  
 }
 
 int ORBFeatureExtractor::Extract(const TImageGray8U & image,

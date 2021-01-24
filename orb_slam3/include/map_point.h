@@ -15,6 +15,6 @@ class MapPoint {
   cv::Point3f x;
 };
 
-}
+}  // namespace orb_slam3
 
-#endif //ORB_SLAM3_INCLUDE_MAP_POINT_H_
+#endif  // ORB_SLAM3_INCLUDE_MAP_POINT_H_
