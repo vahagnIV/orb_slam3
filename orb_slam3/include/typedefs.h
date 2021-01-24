@@ -13,6 +13,7 @@ namespace orb_slam3{
 typedef double precision_t;
 
 typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> TImageGray8U;
+typedef Eigen::Matrix<precision_t , Eigen::Dynamic, Eigen::Dynamic> TImageGray;
 
 typedef Eigen::Matrix<precision_t, Eigen::Dynamic, 2> TKeyPoints;
 typedef cv::Mat DescriptorSet;

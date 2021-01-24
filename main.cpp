@@ -126,9 +126,24 @@ void TestMonocular() {
   std::shared_ptr<orb_slam3::camera::MonocularCamera>
       camera = std::make_shared<orb_slam3::camera::MonocularCamera>(640, 480);
 
+  /*
+   *  size_t features, precision_t scale_factor,
+                      size_t levels, unsigned init_threshold_FAST, unsigned min_threshold_FAST*/
+
+  size_t nfeatures = 1000;
+  orb_slam3::precision_t scale_factor = 1.2;
+  size_t levels = 8;
+  unsigned init_threshold = 10;
+  unsigned min_threshold = 5;
   std::shared_ptr<orb_slam3::feature_extraction::IFeatureExtractor>
       extractor =
-      std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>(camera->Width(), camera->Height());
+      std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>(camera->Width(),
+                                                                           camera->Height(),
+                                                                           nfeatures,
+                                                                           scale_factor,
+                                                                           levels,
+                                                                           init_threshold,
+                                                                           min_threshold);
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
@@ -141,6 +156,27 @@ void TestMonocular() {
 }
 
 int main() {
+
+  std::vector<int> umax(HALF_PATCH_SIZE + 1);
+  int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
+  int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
+  const double hp2 = HALF_PATCH_SIZE * HALF_PATCH_SIZE;
+  for (v = 0; v <= vmax; ++v)
+    umax[v] = cvRound(sqrt(hp2 - v * v));
+
+  // Make sure we are symmetric
+  for (v = HALF_PATCH_SIZE, v0 = 0; v >= vmin; --v) {
+    while (umax[v0] == umax[v0 + 1])
+      ++v0;
+    umax[v] = v0;
+    ++v0;
+  }
+  std::cout << std::setprecision(15);
+  for (int i: umax) {
+    std::cout << i << ",";
+
+  }
+  return 0;
 
   TestMonocular();
   /*std::string associsations_filename = "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/associations/fr1_desk.txt";
