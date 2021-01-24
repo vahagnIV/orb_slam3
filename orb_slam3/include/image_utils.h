@@ -1,6 +1,8 @@
 #ifndef ORB_SLAM3_INCLUDE_IMAGE_UTILS_H_
 #define ORB_SLAM3_INCLUDE_IMAGE_UTILS_H_
 
+// https://chao-ji.github.io/jekyll/update/2018/07/19/BilinearResize.html
+
 #include <typedefs.h>
 
 namespace orb_slam3 {
