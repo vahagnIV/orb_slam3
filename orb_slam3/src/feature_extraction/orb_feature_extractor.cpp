@@ -61,7 +61,7 @@ void ORBFeatureExtractor::AllocatePyramid() {
     precision_t scale = inv_scale_factors_[level];
     int width = std::round(image_width_ * scale);
     int height = std::round(image_height_ * scale);
-    image_pyramid_[level].resize(width - EDGE_THRESHOLD, height - EDGE_THRESHOLD);
+    image_pyramid_[level].resize(width + 2*EDGE_THRESHOLD, height + 2*EDGE_THRESHOLD);
   }
 }
 

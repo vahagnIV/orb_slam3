@@ -170,8 +170,9 @@ int main() {
                            cv::IMREAD_GRAYSCALE));
   cv::imshow("d", FromEigen(im));
   Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> result;
-  result.resize(400, 520);
-  orb_slam3::image_utils::ResizeImage(im, result);
+  result.resize(700, 520);
+  result.setZero();
+  orb_slam3::image_utils::ResizeImage(im, result,20,20,20,20);
   cv::Mat res = FromEigen(result);
   cv::imshow("a", res);
   cv::waitKey();
