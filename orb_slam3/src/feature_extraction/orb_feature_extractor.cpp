@@ -65,12 +65,64 @@ void ORBFeatureExtractor::AllocatePyramid() {
   }
 }
 
+template <typename TI, typename TO>
+void ORBFeatureExtractor::ResizeImage(
+      const Eigen::Matrix<TI, Eigen::Dynamic, Eigen::Dynamic>& in,
+      Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic>& out_resized,
+      size_t in_edge_left,       
+      size_t in_edge_right, 
+      size_t in_edge_top, 
+      size_t in_edge_bottom,
+      size_t out_edge_left,
+      size_t out_edge_right,
+      size_t out_edge_top,
+      size_t out_edge_bottom) {
+
+
+  double s_y = static_cast<double>(in.rows()  - in_edge_top - in_edge_bottom - 1) / (out_resized.rows() - 1 - out_edge_top - out_edge_bottom);
+  double s_x = static_cast<double>(in.cols() - in_edge_left - in_edge_right - 1) / (out_resized.cols() - 1 - out_edge_left - out_edge_right);
+
+  for (size_t row = 0; row < out_resized.rows() - out_edge_left - out_edge_right; ++row) {
+#pragma omp parallel for
+    for (size_t col = 0; col < out_resized.cols() - out_edge_top - out_edge_bottom; ++col) {
+      double pre_y = s_y * row;
+      double pre_x = s_x * col;
+      int top_left_x = pre_x;
+      int top_left_y = pre_y;
+
+      double w_x = (pre_x - top_left_x);
+      double w_y = (pre_y - top_left_y);
+      top_left_y += in_edge_top;
+      top_left_x += in_edge_left;
+
+      TO & val = out_resized(row + out_edge_top, col + out_edge_right);
+      if (top_left_x == in.cols() - 1 && top_left_y == in.rows() - 1) {
+        val = in(top_left_y, top_left_x);
+      } else if (top_left_x == in.cols() - 1) {
+        val = (1 - w_y) * in(top_left_y, top_left_x) +
+                                w_y * in(top_left_y + 1, top_left_x);
+      } else if (top_left_y == in.rows() - 1) {
+        val = (1 - w_x) * in(top_left_y, top_left_x) +
+                                w_x * in(top_left_y, top_left_x + 1);
+      } else {
+        double X = (1 - w_x) * in(top_left_y, top_left_x) +
+                   w_x * in(top_left_y, top_left_x + 1);
+        double Y = (1 - w_x) * in(top_left_y + 1, top_left_x) +
+                   w_x * in(top_left_y + 1, top_left_x + 1);
+         val = (1 - w_y) * X + w_y * Y;
+      }
+    }
+  }
+}
+
 void ORBFeatureExtractor::BuildImagePyramid(const TImageGray8U & image ){
   for (size_t level = 0; level < scale_factors_.size(); level++)
   {
+
     // Compute the resized image
     if (level != 0) {
-      //image_utils::ResizeImage(image_pyramid_[level - 1], image_pyramid_[level]);
+      ResizeImage(image_pyramid_[level - 1], image_pyramid_[level], EDGE_THRESHOLD, 
+          EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD);
 
       /*copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                      BORDER_REFLECT_101 + BORDER_ISOLATED);*/

@@ -16,14 +16,28 @@ namespace feature_extraction {
 
 class ORBFeatureExtractor : public IFeatureExtractor {
  public:
-  ORBFeatureExtractor(unsigned image_width, unsigned image_height, size_t features, precision_t scale_factor,
-                      size_t levels, unsigned init_threshold_FAST, unsigned min_threshold_FAST);
-  int Extract(const TImageGray8U & image,
-              TKeyPoints & out_keypoints,
-              DescriptorSet & out_descriptors) override;
+  ORBFeatureExtractor(unsigned image_width, unsigned image_height,
+                      size_t features, precision_t scale_factor, size_t levels,
+                      unsigned init_threshold_FAST,
+                      unsigned min_threshold_FAST);
+  int Extract(const TImageGray8U& image, TKeyPoints& out_keypoints,
+              DescriptorSet& out_descriptors) override;
+
  private:
   void AllocatePyramid();
-  void BuildImagePyramid(const TImageGray8U & image );
+  void BuildImagePyramid(const TImageGray8U& image);
+  template <typename TI, typename TO>
+  void ResizeImage(
+      const Eigen::Matrix<TI, Eigen::Dynamic,Eigen::Dynamic>& in,
+      Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic>& out_resized,
+      size_t in_edge_left, 
+      size_t in_edge_right, 
+      size_t in_edge_top, 
+      size_t in_edge_bottom,
+      size_t out_edge_left, 
+      size_t out_edge_right, 
+      size_t out_edge_top, 
+      size_t out_edge_bottom);
 
  private:
   unsigned image_width_;
@@ -46,9 +60,8 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   const static Eigen::Matrix<int, 256 * 2, 2> pattern_;
 
   const static int umax_[HALF_PATCH_SIZE + 1];
-
 };
 
-}
-}
-#endif //ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
+}  // namespace feature_extraction
+}  // namespace orb_slam3
+#endif  // ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
