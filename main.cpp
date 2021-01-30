@@ -167,9 +167,24 @@ void TestMonocular() {
     cv::Mat dcs;
     std::vector<int> la = {0, camera->Width()};
 
+    orb_slam3::TKeyPoints tk;
+    orb_slam3::DescriptorSet desc;
+    extractor->Extract(eigen, tk, desc);
+
     their(image, cv::Mat(), kps, dcs, la);
 
-    std::cout << "================================" << std::endl << dcs ;
+    for (size_t i = 0; i < dcs.rows; i++) {
+      for (size_t j = 0; j < dcs.cols; j++) {
+        float x1 = dcs.at<uint8_t>(i, j);
+        float x2 = desc(i, j);
+        if (x1 != x2) 
+        std::cout << i << std::endl;
+      }
+
+      /* code */
+    }
+
+    std::cout << "================================" << std::endl << dcs;
     tracker.Track(frame);
   }
 }

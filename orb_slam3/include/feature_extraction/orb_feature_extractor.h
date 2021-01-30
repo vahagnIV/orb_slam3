@@ -55,9 +55,9 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   static void computeDescriptors(const cv::Mat &image,
                                  std::vector<cv::KeyPoint> &keypoints,
                                  cv::Mat &descriptors,
-                                 const std::vector<cv::Point2f> &pattern);
+                                 const std::vector<cv::Point> &pattern);
   static void computeOrbDescriptor(const cv::KeyPoint &kpt, const cv::Mat &img,
-                                   const cv::Point2f *pattern, uchar *desc);
+                                   const cv::Point *pattern, uchar *desc);
       /*template <typename TI, typename TO>
       void ResizeImage(
           const Eigen::Matrix<TI, Eigen::Dynamic,Eigen::Dynamic>& in,
@@ -90,7 +90,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   std::vector<int> features_per_level_;
 
   // const static Eigen::Matrix<int, 256 * 2, 2> pattern_;
-  const static std::vector<cv::Point2f> pattern_;
+  const static std::vector<cv::Point> pattern_;
 
   const static int umax_[HALF_PATCH_SIZE + 1];
 
