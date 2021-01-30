@@ -14,6 +14,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
   TKeyPoints key_points;
   DescriptorSet descriptors;
   feature_extractor_->Extract(image, key_points, descriptors);
+  std::cout<< descriptors<< std::endl;
 
 }
 

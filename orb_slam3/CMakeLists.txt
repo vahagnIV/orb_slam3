@@ -3,6 +3,10 @@ find_package(g2o REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP)
 
+# Temporaty for the time being we use opencv for ORB feature extraction
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -39,4 +43,12 @@ add_library(orbslam SHARED
 target_include_directories(orbslam INTERFACE include)
 
 
-target_link_libraries(orbslam ${DBoW2_LIBS} g2o::core g2o::solver_cholmod g2o::types_sba g2o::opengl_helper Eigen3::Eigen pthread) #${OpenCV_LIBS}
+target_link_libraries(orbslam 
+        ${DBoW2_LIBS} 
+        g2o::core 
+        g2o::solver_cholmod 
+        g2o::types_sba 
+        g2o::opengl_helper 
+        Eigen3::Eigen 
+        ${OpenCV_LIBS}
+        pthread) #

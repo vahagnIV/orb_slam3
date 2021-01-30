@@ -9,8 +9,8 @@ namespace orb_slam3 {
 namespace image_utils {
 
 template <typename TI, typename TO>
-void ResizeImage(const Eigen::Matrix<TI, Eigen::Dynamic, Eigen::Dynamic>& in,
-                 Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic>& out_resized,
+void ResizeImage(const Eigen::Matrix<TI, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& in,
+                 Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& out_resized,
                  size_t edge_left, size_t edge_right, size_t edge_top,
                  size_t edge_bottom) {
 

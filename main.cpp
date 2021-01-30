@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "ORBextractor.h"
+
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
 void LoadImages(const std::string& strAssociationFilename,
@@ -95,8 +97,7 @@ void ReadImages(
   }
 }
 
-cv::Mat FromEigen(
-    const Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic>& eigen_mat) {
+cv::Mat FromEigen(const orb_slam3::TImageGray& eigen_mat) {
   cv::Mat cv_mat(eigen_mat.rows(), eigen_mat.cols(), CV_8U);
 
   for (size_t i = 0; i < cv_mat.rows; i++) {
@@ -108,16 +109,16 @@ cv::Mat FromEigen(
   return cv_mat;
 }
 
-Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> FromCvMat(
-    const cv::Mat& cv_mat) {
-  Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> eigen_mat;
+orb_slam3::TImageGray8U FromCvMat(const cv::Mat& cv_mat) {
+  orb_slam3::TImageGray8U eigen_mat;
   eigen_mat.resize(cv_mat.rows, cv_mat.cols);
-  for (size_t i = 0; i < cv_mat.rows; i++) {
+  memcpy(eigen_mat.data(), cv_mat.data, cv_mat.total());
+
+  /*for (size_t i = 0; i < cv_mat.rows; i++) {
     for (size_t j = 0; j < cv_mat.cols; j++) {
       eigen_mat(i, j) = cv_mat.at<uint8_t>(i, j);
     }
-    /* code */
-  }
+  }*/
   return eigen_mat;
 }
 
@@ -159,23 +160,33 @@ void TestMonocular() {
     std::shared_ptr<orb_slam3::frame::FrameBase> frame =
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
                                                            extractor, camera);
+
+    ORB_SLAM3::ORBextractor their(nfeatures, scale_factor, levels,
+                                  init_threshold, min_threshold);
+    std::vector<cv::KeyPoint> kps;
+    cv::Mat dcs;
+    std::vector<int> la = {0, camera->Width()};
+
+    their(image, cv::Mat(), kps, dcs, la);
+
+    std::cout << "================================" << std::endl << dcs ;
     tracker.Track(frame);
   }
 }
 
 int main() {
-  auto im =
+  /*auto im =
       FromCvMat(cv::imread("/home/vahagn/Pictures/"
                            "67927597_457635884828477_6248421437011394560_n.jpg",
                            cv::IMREAD_GRAYSCALE));
-  cv::imshow("d", FromEigen(im));
-  Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> result;
+  // cv::imshow("d", FromEigen(im));
+  orb_slam3::TImageGray result;
   result.resize(700, 520);
   result.setZero();
   orb_slam3::image_utils::ResizeImage(im, result,20,20,20,20);
   cv::Mat res = FromEigen(result);
   cv::imshow("a", res);
-  cv::waitKey();
+  cv::waitKey();*/
 
   TestMonocular();
   /*std::string associsations_filename =
