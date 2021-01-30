@@ -49,7 +49,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *
 */
-
+#include <fstream>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -823,6 +823,14 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> > &allKeypoin
   // compute orientations
   for (int level = 0; level < nlevels; ++level)
     computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
+
+    std::ofstream os("test1.txt");
+    for(std::vector<cv::KeyPoint> & kps: allKeypoints){
+      for(cv::KeyPoint & kp: kps)
+      {
+        os << kp.pt.x << " " << kp.pt.y << "\n";
+      }
+    }
 }
 
 void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint> > &allKeypoints) {

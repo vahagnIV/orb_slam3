@@ -14,7 +14,7 @@ TPoint2D MonocularCamera::Map(const TPoint3D & vector) const {
   const double & cx = this->_estimate[2];
   const double & cy = this->_estimate[3];
 
-  Eigen::Vector2d result;
+  TPoint2D result;
   double z_inv = 1 / vector[2];
   double x = vector[0] * z_inv;
   double y = vector[1] * z_inv;

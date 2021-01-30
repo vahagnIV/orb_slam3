@@ -137,7 +137,7 @@ void TestMonocular() {
   orb_slam3::Tracker tracker;
 
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
-      std::make_shared<orb_slam3::camera::MonocularCamera>(640, 480);
+      std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
 
   /*
    *  size_t features, precision_t scale_factor,
@@ -165,23 +165,30 @@ void TestMonocular() {
                                   init_threshold, min_threshold);
     std::vector<cv::KeyPoint> kps;
     cv::Mat dcs;
-    std::vector<int> la = {0, camera->Width()};
+    std::vector<int> la = {0, static_cast<int>(camera->Width())};
 
     orb_slam3::TKeyPoints tk;
     orb_slam3::DescriptorSet desc;
     extractor->Extract(eigen, tk, desc);
+   orb_slam3::feature_extraction::ORBFeatureExtractor * ex = dynamic_cast<orb_slam3::feature_extraction::ORBFeatureExtractor * >(extractor.get());
 
     their(image, cv::Mat(), kps, dcs, la);
 
+    int desc_idx = 0;
+
     for (size_t i = 0; i < dcs.rows; i++) {
+      bool is_equal = true;
       for (size_t j = 0; j < dcs.cols; j++) {
         float x1 = dcs.at<uint8_t>(i, j);
-        float x2 = desc(i, j);
-        if (x1 != x2) 
-        std::cout << i << std::endl;
+        float x2 = desc(desc_idx, j);
+        if (x1 != x2){ 
+          is_equal = false;
+          std::cout << i << std::endl;         
+          break;
+        }         
       }
-
-      /* code */
+     // if(is_equal)
+            ++desc_idx;
     }
 
     std::cout << "================================" << std::endl << dcs;

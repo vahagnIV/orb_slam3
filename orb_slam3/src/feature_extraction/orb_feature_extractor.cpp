@@ -4,8 +4,6 @@
 
 #include "feature_extraction/orb_feature_extractor.h"
 
-#include "image_utils.h"
-
 namespace orb_slam3 {
 namespace feature_extraction {
 const float factorPI = (float)(CV_PI / 180.f);
@@ -61,11 +59,9 @@ void ORBFeatureExtractor::AllocatePyramid() {
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     precision_t scale = inv_scale_factors_[level];
     int width = std::round(image_width_ * scale);
-    int height = std::round(image_height_ * scale);
-    // image_pyramid_[level].resize(width + 2 * EDGE_THRESHOLD,
-    //                              height + 2 * EDGE_THRESHOLD);
-    image_pyramid_[level].create(width + 2 * EDGE_THRESHOLD,
-                                 height + 2 * EDGE_THRESHOLD, CV_8U);
+    int height = std::round(image_height_ * scale);   
+    image_pyramid_[level].create(width,
+                                 height, CV_8U);
   }
 }
 
@@ -252,36 +248,11 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 
         cv::FAST(
             image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-            vKeysCell, init_threshold_FAST_, true);
-
-        /*if(bRight && j <= 13){
-            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                 vKeysCell,10,true);
-        }
-        else if(!bRight && j >= 16){
-            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                 vKeysCell,10,true);
-        }
-        else{
-            FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                 vKeysCell,iniThFAST,true);
-        }*/
+            vKeysCell, init_threshold_FAST_, true);        
 
         if (vKeysCell.empty()) {
           FAST(image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-               vKeysCell, min_threshold_FAST_, true);
-          /*if(bRight && j <= 13){
-              FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                   vKeysCell,5,true);
-          }
-          else if(!bRight && j >= 16){
-              FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                   vKeysCell,5,true);
-          }
-          else{
-              FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                   vKeysCell,minThFAST,true);
-          }*/
+               vKeysCell, min_threshold_FAST_, true);          
         }
 
         if (!vKeysCell.empty()) {
@@ -532,7 +503,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
 
     // Compute the resized image
     if (level != 0) {
-      resize(image_pyramid_[level - 1], image_pyramid_[level], sz, 0, 0,
+      cv::resize(image_pyramid_[level - 1], image_pyramid_[level], sz, 0, 0,
              cv::INTER_LINEAR);
 
       cv::copyMakeBorder(image_pyramid_[level], temp, EDGE_THRESHOLD,
@@ -604,13 +575,13 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
           keypoint->pt.x <= lapping_area_end_) {
         _keypoints.at(stereoIndex) = (*keypoint);
         desc.row(i).copyTo(
-            cv::Mat(1, desc.cols, CV_64F,
+            cv::Mat(1, desc.cols, cv::DataType<precision_t>::type,
                     (void *)out_descriptors.row(stereoIndex).data()));
         stereoIndex--;
       } else {
         _keypoints.at(monoIndex) = (*keypoint);
         desc.row(i).copyTo(
-            cv::Mat(1, desc.cols, CV_64F,
+            cv::Mat(1, desc.cols, cv::DataType<precision_t>::type,
                     (void *)out_descriptors.row(monoIndex).data()));
         monoIndex++;
       }
