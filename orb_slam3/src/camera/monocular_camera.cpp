@@ -27,6 +27,15 @@ TPoint2D MonocularCamera::Map(const TPoint3D & vector) const {
   return result;
 }
 
+void MonocularCamera::UndistortKeyPoints(
+    const std::vector<map::KeyPoint>& keypoints,
+    std::vector<map::KeyPoint>& out_undistorted_keypoints) const {
+      // TODO: implement this
+      out_undistorted_keypoints = keypoints;
+}
+
+  // namespace frame
+
 #if DistCoeffsLength == 5
 void MonocularCamera::ComputeDistortion(const double x, const double y, double & xd, double & yd) const {
   const double & k1 = _estimate[4];

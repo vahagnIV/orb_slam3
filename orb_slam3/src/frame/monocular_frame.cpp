@@ -3,18 +3,26 @@
 //
 
 #include <frame/monocular_frame.h>
+#include <constants.h>
 
 namespace orb_slam3 {
 namespace frame {
-MonocularFrame::MonocularFrame(const TImageGray8U & image,
-                               TimePoint timestamp,
-                               const std::shared_ptr<feature_extraction::IFeatureExtractor> & feature_extractor,
-                               const std::shared_ptr<camera::MonocularCamera> & camera)
+
+MonocularFrame::MonocularFrame(
+    const TImageGray8U& image, TimePoint timestamp,
+    const std::shared_ptr<feature_extraction::IFeatureExtractor>&
+        feature_extractor,
+    const std::shared_ptr<camera::MonocularCamera>& camera)
     : FrameBase(timestamp, feature_extractor), camera_(camera) {
   std::vector<map::KeyPoint> key_points;
   DescriptorSet descriptors;
   feature_extractor_->Extract(image, key_points, descriptors);
+  
+}
+
+bool MonocularFrame::IsValid() const {
+    return FeatureCount() > constants::MINIMAL_FEATURE_COUNT_PER_FRAME_MONOCULAR;
 }
 
 }
-}
+}  // namespace orb_slam3

@@ -16,7 +16,9 @@ class MonocularFrame : public FrameBase {
   MonocularFrame(const TImageGray8U & image,
                  TimePoint timestamp,
                  const std::shared_ptr<feature_extraction::IFeatureExtractor> & feature_extractor,
-                 const std::shared_ptr<camera::MonocularCamera> & camera);
+                 const std::shared_ptr<camera::MonocularCamera> & camera);  
+  bool IsValid() const override;
+  
  protected:
   const std::shared_ptr<camera::MonocularCamera> camera_;
 };

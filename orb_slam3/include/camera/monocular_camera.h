@@ -7,6 +7,7 @@
 
 #include <g2o/core/base_vertex.h>
 #include <typedefs.h>
+#include <map/key_point.h>
 
 namespace orb_slam3 {
 namespace camera {
@@ -62,6 +63,7 @@ class MonocularCamera : public g2o::BaseVertex<DistCoeffsLength + 4, Eigen::Vect
    */
   TPoint2D Map(const TPoint3D & vector) const ;
 
+  void UndistortKeyPoints(const std::vector<map::KeyPoint> & keypoints, std::vector<map::KeyPoint> & out_undistorted_keypoints) const;
 
 
  protected:

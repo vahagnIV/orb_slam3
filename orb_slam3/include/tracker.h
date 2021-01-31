@@ -13,9 +13,15 @@ enum TrackingResult {
   OK, OldFrame, Ignore
 };
 
+
+
 using frame::FrameBase;
 class Tracker {
  public:
+ enum State {
+    NOT_INITIALIZED
+  };
+ public: 
   Tracker();
 
   /*!
@@ -23,7 +29,7 @@ class Tracker {
    * @param frame the next frame received from the sensor
    * @return Tracking result
    */
-  TrackingResult Track(std::shared_ptr<FrameBase> frame);
+  TrackingResult Track(const std::shared_ptr<FrameBase> & frame);
 
   /*!
    * Destructor
@@ -31,11 +37,13 @@ class Tracker {
   virtual ~Tracker();
 
  private:
-
   bool TrackReferenceKeyFrame();
-
- private:
+  
+ private:  
   Atlas * atlas_;
+  std::shared_ptr<frame::FrameBase> last_frame_;
+  std::shared_ptr<frame::FrameBase> initial_frame_;
+  State state_;
 
 
 };

@@ -8,6 +8,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace orb_slam3 {
+namespace map{
 
 class MapPoint {
  public:
@@ -15,6 +16,7 @@ class MapPoint {
   cv::Point3f x;
 };
 
+}
 }  // namespace orb_slam3
 
 #endif  // ORB_SLAM3_INCLUDE_MAP_POINT_H_

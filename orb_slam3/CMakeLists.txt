@@ -25,7 +25,7 @@ add_library(orbslam SHARED
         src/feature_extraction/orb_feature_extractor.cpp
         src/atlas.cpp
         src/tracker.cpp
-        src/map_point.cpp        
+        src/map/map_point.cpp        
         src/map/key_point.cpp
 
         include/map/key_point.h
@@ -39,7 +39,8 @@ add_library(orbslam SHARED
         include/atlas.h
         include/tracker.h
         include/image_utils.h
-        include/map_point.h include/orb_vocabulary.h)
+        include/map/map_point.h 
+        include/orb_vocabulary.h)
 
 target_include_directories(orbslam INTERFACE include)
 

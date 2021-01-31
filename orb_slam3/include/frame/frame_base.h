@@ -11,18 +11,25 @@
 /// orb_slam3
 #include <typedefs.h>
 #include <feature_extraction/ifeature_extractor.h>
-#include <map_point.h>
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace frame{
 
 class FrameBase {
  public:
+  typedef size_t id_type;
   FrameBase() = delete;
 
   FrameBase(const TimePoint & timestamp,
             const std::shared_ptr<feature_extraction::IFeatureExtractor> &feature_extractor)
-      : timestamp_(timestamp), feature_extractor_(feature_extractor) {}
+      : id_(++next_id_),timestamp_(timestamp), feature_extractor_(feature_extractor) {}
+
+  /*!
+  *  Getter for id
+  *  @return The id of the frame
+  */
+  inline id_type Id() const noexcept { return id_; }
 
   /*!
    * Getter function
@@ -42,7 +49,9 @@ class FrameBase {
   void SetPosition(const cv::Matx44f &position) noexcept;
 
   // Get the number of the extracted keypoints
-  // size_t FeatureCount() const noexcept { return map_points_.size(); }
+  size_t FeatureCount() const noexcept { return map_points_.size(); }
+
+  virtual bool IsValid() const = 0;
 
 
   /*!
@@ -55,9 +64,13 @@ class FrameBase {
 
 
  protected:
+  const id_type id_;
   TimePoint timestamp_;
   const std::shared_ptr<feature_extraction::IFeatureExtractor> feature_extractor_;
-  //std::vector<MapPoint> map_points_;
+  std::vector<map::MapPoint> map_points_;
+
+  protected:
+    static id_type next_id_;
 
 
 

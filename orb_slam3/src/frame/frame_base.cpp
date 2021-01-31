@@ -5,6 +5,9 @@
 #include "frame/frame_base.h"
 
 namespace orb_slam3 {
+namespace frame {
+  FrameBase::id_type FrameBase::next_id_ = 0;
+}
 /*
 FrameBase::FrameBase() : reference_frame_(nullptr) {
 
@@ -28,9 +31,10 @@ void FrameBase::SetPosition(const cv::Matx44f &position) noexcept {
 
 void FrameBase::ComputeBoW() {
   if (bow_vector_.empty()) {
-    std::vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(descriptors_);
+    std::vector<cv::Mat> vCurrentDesc =
+Converter::toDescriptorVector(descriptors_);
     orb_vocabulary_->transform(vCurrentDesc, bow_vector_, feature_vector_, 4);
   }
 }*/
 
-}
+}  // namespace orb_slam3

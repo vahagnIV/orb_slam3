@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_INCLUDE_MAP_H_
 #define ORB_SLAM3_INCLUDE_MAP_H_
 #include <vector>
-#include <map_point.h>
+#include <map/map_point.h>
 #include <frame/frame_base.h>
 namespace orb_slam3 {
 
