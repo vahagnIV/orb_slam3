@@ -11,11 +11,9 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                const std::shared_ptr<feature_extraction::IFeatureExtractor> & feature_extractor,
                                const std::shared_ptr<camera::MonocularCamera> & camera)
     : FrameBase(timestamp, feature_extractor), camera_(camera) {
-  TKeyPoints key_points;
+  std::vector<map::MapPoint> key_points;
   DescriptorSet descriptors;
   feature_extractor_->Extract(image, key_points, descriptors);
-  std::cout<< descriptors<< std::endl;
-
 }
 
 }

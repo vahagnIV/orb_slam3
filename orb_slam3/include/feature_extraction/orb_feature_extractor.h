@@ -5,9 +5,8 @@
 #ifndef ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
 #define ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
 
-#include <feature_extraction/ifeature_extractor.h>
-
 #include <opencv2/opencv.hpp>
+#include <feature_extraction/ifeature_extractor.h>
 
 namespace orb_slam3 {
 namespace feature_extraction {
@@ -22,7 +21,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       size_t features, precision_t scale_factor, size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
-  int Extract(const TImageGray8U &image, TKeyPoints &out_keypoints,
+  int Extract(const TImageGray8U &image, std::vector<map::MapPoint> &out_keypoints,
               DescriptorSet &out_descriptors) override;
 
  private:
@@ -42,8 +41,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
  private:
   void AllocatePyramid();
   void BuildImagePyramid(cv::Mat &image);
-  void ComputeKeyPointsOctTree(
-      std::vector<std::vector<cv::KeyPoint> > &allKeypoints);
+  void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> > &out_all_keypoints);
   std::vector<cv::KeyPoint> DistributeOctTree(
       const std::vector<cv::KeyPoint> &vToDistributeKeys, const int &minX,
       const int &maxX, const int &minY, const int &maxY, const int &nFeatures,

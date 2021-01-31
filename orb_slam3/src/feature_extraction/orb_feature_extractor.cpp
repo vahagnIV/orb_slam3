@@ -209,12 +209,12 @@ out_resized.cols() - out_edge_top - out_edge_bottom; ++col) { double pre_y = s_y
 }*/
 
 void ORBFeatureExtractor::ComputeKeyPointsOctTree(
-    std::vector<std::vector<cv::KeyPoint> > &allKeypoints) {
-  allKeypoints.resize(scale_factors_.size());
+    std::vector<std::vector<cv::KeyPoint> > &out_all_keypoints) {
+  out_all_keypoints.resize(scale_factors_.size());
 
   const float W = 30;
 
-  for (int level = 0; level < allKeypoints.size(); ++level) {
+  for (int level = 0; level < out_all_keypoints.size(); ++level) {
     const int minBorderX = EDGE_THRESHOLD - 3;
     const int minBorderY = minBorderX;
     const int maxBorderX = image_pyramid_[level].cols - EDGE_THRESHOLD + 3;
@@ -266,7 +266,7 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
       }
     }
 
-    std::vector<cv::KeyPoint> &keypoints = allKeypoints[level];
+    std::vector<cv::KeyPoint> &keypoints = out_all_keypoints[level];
     keypoints.reserve(features_);
 
     keypoints =
@@ -287,7 +287,7 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 
   // compute orientations
   for (size_t level = 0; level < scale_factors_.size(); ++level)
-    computeOrientation(image_pyramid_[level], allKeypoints[level], umax_);
+    computeOrientation(image_pyramid_[level], out_all_keypoints[level], umax_);
 }
 
 std::vector<cv::KeyPoint> ORBFeatureExtractor::DistributeOctTree(
@@ -517,7 +517,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
 }
 
 int ORBFeatureExtractor::Extract(const TImageGray8U &img,
-                                 TKeyPoints &out_keypoints,
+                                 std::vector<map::MapPoint> &out_keypoints,
                                  DescriptorSet &out_descriptors) {
   cv::Mat image(img.rows(), img.cols(), CV_8U, (void *)img.data());
   // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
