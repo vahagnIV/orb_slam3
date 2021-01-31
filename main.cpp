@@ -157,43 +157,17 @@ void TestMonocular() {
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
     auto eigen = FromCvMat(image);
-    // std::shared_ptr<orb_slam3::frame::FrameBase> frame =
-    //     std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
-    //                                                        extractor, camera);
+    std::shared_ptr<orb_slam3::frame::FrameBase> frame =
+        std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
+                                                           extractor, camera);
 
     ORB_SLAM3::ORBextractor their(nfeatures, scale_factor, levels,
                                   init_threshold, min_threshold);
     std::vector<cv::KeyPoint> kps;
     cv::Mat dcs;
-    std::vector<int> la = {0, static_cast<int>(camera->Width())};
+    std::vector<int> la = {0, static_cast<int>(camera->Width())};    
 
-    std::vector<orb_slam3::map::MapPoint> tk;
-    orb_slam3::DescriptorSet desc;
-    extractor->Extract(eigen, tk, desc);
-    orb_slam3::feature_extraction::ORBFeatureExtractor * ex = dynamic_cast<orb_slam3::feature_extraction::ORBFeatureExtractor * >(extractor.get());
-
-    their(image, cv::Mat(), kps, dcs, la);
-
-    int desc_idx = 0;
-    std::cout << dcs.rows << " " << desc.rows() << std::endl;
-
-    // for (size_t i = 0; i < dcs.rows; i++) {
-    //   bool is_equal = true;
-    //   for (size_t j = 0; j < dcs.cols; j++) {
-    //     float x1 = dcs.at<uint8_t>(i, j);
-    //     float x2 = desc(desc_idx, j);
-    //     if (x1 != x2){ 
-    //       is_equal = false;
-    //       std::cout << i << std::endl;         
-    //       break;
-    //     }         
-    //   }
-     // if(is_equal)
-            ++desc_idx;
-    // }
-
-    // std::cout << "================================" << std::endl << dcs;
-    // tracker.Track(frame);
+    tracker.Track(frame);
   }
 }
 

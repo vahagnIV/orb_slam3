@@ -42,7 +42,7 @@ class FrameBase {
   void SetPosition(const cv::Matx44f &position) noexcept;
 
   // Get the number of the extracted keypoints
-  size_t FeatureCount() const noexcept { return map_points_.size(); }
+  // size_t FeatureCount() const noexcept { return map_points_.size(); }
 
 
   /*!
@@ -57,7 +57,7 @@ class FrameBase {
  protected:
   TimePoint timestamp_;
   const std::shared_ptr<feature_extraction::IFeatureExtractor> feature_extractor_;
-  std::vector<MapPoint> map_points_;
+  //std::vector<MapPoint> map_points_;
 
 
 

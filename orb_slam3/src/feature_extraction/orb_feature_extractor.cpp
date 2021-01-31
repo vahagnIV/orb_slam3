@@ -66,23 +66,23 @@ void ORBFeatureExtractor::AllocatePyramid() {
 }
 
 void ORBFeatureExtractor::computeOrientation(
-    const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints,
+    const cv::Mat &image, std::vector<map::KeyPoint> &keypoints,
     const int *umax) {
-  for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(),
+  for (std::vector<map::KeyPoint>::iterator keypoint = keypoints.begin(),
                                            keypointEnd = keypoints.end();
        keypoint != keypointEnd; ++keypoint) {
-    keypoint->angle = IC_Angle(image, keypoint->pt, umax);
+    IC_Angle(image, *keypoint, umax);
   }
 }
 
-void ORBFeatureExtractor::computeOrbDescriptor(const cv::KeyPoint &kpt,
+void ORBFeatureExtractor::computeOrbDescriptor(const map::KeyPoint &kpt,
                                                const cv::Mat &img,
                                                const cv::Point *pattern,
                                                uchar *desc) {
-  float angle = (float)kpt.angle * factorPI;
+  float angle = (float)kpt.Angle() * factorPI;
   float a = (float)cos(angle), b = (float)sin(angle);
 
-  const uchar *center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+  const uchar *center = &img.at<uchar>(cvRound(kpt.Y()), cvRound(kpt.X()));
   const int step = (int)img.step;
 
 #define GET_VALUE(idx)                                             \
@@ -123,7 +123,7 @@ void ORBFeatureExtractor::computeOrbDescriptor(const cv::KeyPoint &kpt,
 }
 
 void ORBFeatureExtractor::computeDescriptors(
-    const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints,
+    const cv::Mat &image, std::vector<map::KeyPoint> &keypoints,
     cv::Mat &descriptors, const std::vector<cv::Point> &pattern) {
   descriptors = cv::Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
 
@@ -132,11 +132,11 @@ void ORBFeatureExtractor::computeDescriptors(
                          descriptors.ptr((int)i));
 }
 
-float ORBFeatureExtractor::IC_Angle(const cv::Mat &image, cv::Point2f pt,
+void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, map::KeyPoint & pt,
                                     const int *u_max) {
   int m_01 = 0, m_10 = 0;
 
-  const uchar *center = &image.at<uchar>(cvRound(pt.y), cvRound(pt.x));
+  const uchar *center = &image.at<uchar>(cvRound(pt.Y()), cvRound(pt.X()));
 
   // Treat the center line differently, v=0
   for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
@@ -156,60 +156,11 @@ float ORBFeatureExtractor::IC_Angle(const cv::Mat &image, cv::Point2f pt,
     m_01 += v * v_sum;
   }
 
-  return cv::fastAtan2((float)m_01, (float)m_10);
+  pt.SetAngle(cv::fastAtan2((float)m_01, (float)m_10));
 }
 
-/*template <typename TI, typename TO>
-void ORBFeatureExtractor::ResizeImage(
-      const Eigen::Matrix<TI, Eigen::Dynamic, Eigen::Dynamic>& in,
-      Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic>& out_resized,
-      size_t in_edge_left,
-      size_t in_edge_right,
-      size_t in_edge_top,
-      size_t in_edge_bottom,
-      size_t out_edge_left,
-      size_t out_edge_right,
-      size_t out_edge_top,
-      size_t out_edge_bottom) {
-
-
-  double s_y = static_cast<double>(in.rows()  - in_edge_top - in_edge_bottom -
-1) / (out_resized.rows() - 1 - out_edge_top - out_edge_bottom); double s_x =
-static_cast<double>(in.cols() - in_edge_left - in_edge_right - 1) /
-(out_resized.cols() - 1 - out_edge_left - out_edge_right);
-
-  for (size_t row = 0; row < out_resized.rows() - out_edge_left -
-out_edge_right; ++row) { #pragma omp parallel for for (size_t col = 0; col <
-out_resized.cols() - out_edge_top - out_edge_bottom; ++col) { double pre_y = s_y
-* row; double pre_x = s_x * col; int top_left_x = pre_x; int top_left_y = pre_y;
-
-      double w_x = (pre_x - top_left_x);
-      double w_y = (pre_y - top_left_y);
-      top_left_y += in_edge_top;
-      top_left_x += in_edge_left;
-
-      TO & val = out_resized(row + out_edge_top, col + out_edge_right);
-      if (top_left_x == in.cols() - 1 && top_left_y == in.rows() - 1) {
-        val = in(top_left_y, top_left_x);
-      } else if (top_left_x == in.cols() - 1) {
-        val = (1 - w_y) * in(top_left_y, top_left_x) +
-                                w_y * in(top_left_y + 1, top_left_x);
-      } else if (top_left_y == in.rows() - 1) {
-        val = (1 - w_x) * in(top_left_y, top_left_x) +
-                                w_x * in(top_left_y, top_left_x + 1);
-      } else {
-        double X = (1 - w_x) * in(top_left_y, top_left_x) +
-                   w_x * in(top_left_y, top_left_x + 1);
-        double Y = (1 - w_x) * in(top_left_y + 1, top_left_x) +
-                   w_x * in(top_left_y + 1, top_left_x + 1);
-         val = (1 - w_y) * X + w_y * Y;
-      }
-    }
-  }
-}*/
-
 void ORBFeatureExtractor::ComputeKeyPointsOctTree(
-    std::vector<std::vector<cv::KeyPoint> > &out_all_keypoints) {
+    std::vector<std::vector<map::KeyPoint> > &out_all_keypoints) {
   out_all_keypoints.resize(scale_factors_.size());
 
   const float W = 30;
@@ -266,22 +217,20 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
       }
     }
 
-    std::vector<cv::KeyPoint> &keypoints = out_all_keypoints[level];
+    std::vector<map::KeyPoint> &keypoints = out_all_keypoints[level];
     keypoints.reserve(features_);
 
-    keypoints =
-        DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX, minBorderY,
-                          maxBorderY, features_per_level_[level], level);
+    DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX, minBorderY,
+                          maxBorderY, features_per_level_[level], level, keypoints);
 
     const int scaledPatchSize = PATCH_SIZE * scale_factors_[level];
 
-    // Add border to coordinates and scale information
-    const int nkps = keypoints.size();
-    for (int i = 0; i < nkps; i++) {
-      keypoints[i].pt.x += minBorderX;
-      keypoints[i].pt.y += minBorderY;
-      keypoints[i].octave = level;
-      keypoints[i].size = scaledPatchSize;
+    // Add border to coordinates and scale information    
+    for (size_t i = 0; i < keypoints.size(); i++) {
+      keypoints[i].SetX(keypoints[i].X() + minBorderX);
+      keypoints[i].SetY(keypoints[i].Y() + minBorderY);      
+      keypoints[i].SetLevel(level);
+      keypoints[i].SetSize(scaledPatchSize);
     }
   }
 
@@ -290,10 +239,15 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
     computeOrientation(image_pyramid_[level], out_all_keypoints[level], umax_);
 }
 
-std::vector<cv::KeyPoint> ORBFeatureExtractor::DistributeOctTree(
-    const std::vector<cv::KeyPoint> &vToDistributeKeys, const int &minX,
-    const int &maxX, const int &minY, const int &maxY, const int &nFeatures,
-    const int &level) {
+void ORBFeatureExtractor::DistributeOctTree(
+    const std::vector<cv::KeyPoint> &vToDistributeKeys, 
+    const int &minX,
+    const int &maxX, 
+    const int &minY, 
+    const int &maxY, 
+    const int &nFeatures,
+    const int &level,
+    std::vector<map::KeyPoint> & out_map_points) {
   // Compute how many initial nodes
   const int nIni = round(static_cast<float>(maxX - minX) / (maxY - minY));
 
@@ -469,8 +423,8 @@ std::vector<cv::KeyPoint> ORBFeatureExtractor::DistributeOctTree(
   }
 
   // Retain the best point in each node
-  std::vector<cv::KeyPoint> vResultKeys;
-  vResultKeys.reserve(features_);
+  
+  out_map_points.reserve(features_);
   for (std::list<ExtractorNode>::iterator lit = lNodes.begin();
        lit != lNodes.end(); lit++) {
     std::vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
@@ -484,10 +438,11 @@ std::vector<cv::KeyPoint> ORBFeatureExtractor::DistributeOctTree(
       }
     }
 
-    vResultKeys.push_back(*pKP);
+    out_map_points.push_back(map::KeyPoint());
+    out_map_points.back().SetX(pKP->pt.x);
+    out_map_points.back().SetY(pKP->pt.y);
+    out_map_points.back().SetAngle(pKP->angle);
   }
-
-  return vResultKeys;
 }
 
 void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
@@ -517,7 +472,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
 }
 
 int ORBFeatureExtractor::Extract(const TImageGray8U &img,
-                                 std::vector<map::MapPoint> &out_keypoints,
+                                 std::vector<map::KeyPoint> &out_keypoints,
                                  DescriptorSet &out_descriptors) {
   cv::Mat image(img.rows(), img.cols(), CV_8U, (void *)img.data());
   // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
@@ -526,7 +481,7 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
   // Pre-compute the scale pyramid
   BuildImagePyramid(image);
 
-  std::vector<std::vector<cv::KeyPoint> > allKeypoints;
+  std::vector<std::vector<map::KeyPoint> > allKeypoints;
   ComputeKeyPointsOctTree(allKeypoints);
   // ComputeKeyPointsOld(allKeypoints);
   int nkeypoints = 0;
@@ -534,16 +489,13 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
     nkeypoints += (int)allKeypoints[level].size();
 
   out_descriptors.resize(nkeypoints, 32);
-
-  //_keypoints.clear();
-  //_keypoints.reserve(nkeypoints);
-  std::vector<cv::KeyPoint> _keypoints(nkeypoints);
+  out_keypoints.resize(nkeypoints);
 
   int offset = 0;
   // Modified for speeding up stereo fisheye matching
   int monoIndex = 0, stereoIndex = nkeypoints - 1;
   for (int level = 0; level < scale_factors_.size(); ++level) {
-    std::vector<cv::KeyPoint> &keypoints = allKeypoints[level];
+    std::vector<map::KeyPoint> &keypoints = allKeypoints[level];
     int nkeypointsLevel = (int)keypoints.size();
 
     if (nkeypointsLevel == 0) continue;
@@ -553,9 +505,8 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
     cv::GaussianBlur(workingMat, workingMat, cv::Size(7, 7), 2, 2,
                      cv::BORDER_REFLECT_101);
 
-    // Compute the descriptors
-    // Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
-    cv::Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
+    // Compute the descriptors    
+    cv::Mat desc(nkeypointsLevel, 32, CV_8U);
     computeDescriptors(workingMat, keypoints, desc, pattern_);
 
     offset += nkeypointsLevel;
@@ -563,23 +514,24 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
     float scale =
         scale_factors_[level];  // getScale(level, firstLevel, scaleFactor);
     int i = 0;
-    for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(),
+    for (std::vector<map::KeyPoint>::iterator keypoint = keypoints.begin(),
                                              keypointEnd = keypoints.end();
          keypoint != keypointEnd; ++keypoint) {
       // Scale keypoint coordinates
       if (level != 0) {
-        keypoint->pt *= scale;
+        keypoint->SetX(keypoint->X() * scale);
+        keypoint->SetY(keypoint->Y() * scale);
       }
 
-      if (keypoint->pt.x >= lapping_area_start_ &&
-          keypoint->pt.x <= lapping_area_end_) {
-        _keypoints.at(stereoIndex) = (*keypoint);
+      if (keypoint->X() >= lapping_area_start_ &&
+          keypoint->X() <= lapping_area_end_) {
+        out_keypoints.at(stereoIndex) = (*keypoint);
         desc.row(i).copyTo(
             cv::Mat(1, desc.cols, cv::DataType<precision_t>::type,
                     (void *)out_descriptors.row(stereoIndex).data()));
         stereoIndex--;
       } else {
-        _keypoints.at(monoIndex) = (*keypoint);
+        out_keypoints.at(monoIndex) = (*keypoint);
         desc.row(i).copyTo(
             cv::Mat(1, desc.cols, cv::DataType<precision_t>::type,
                     (void *)out_descriptors.row(monoIndex).data()));
@@ -588,8 +540,6 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
       i++;
     }
   }
-  // cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints"
-  // << endl;
   return monoIndex;
 }
 
@@ -1097,6 +1047,55 @@ const std::vector<cv::Point> ORBFeatureExtractor::pattern_ = {
 //         7, 0, 12, -2/*mean (0.127002), correlation (0.537452)*/,
 //         -1, -6, 0, -11/*mean (0.127148), correlation (0.547401)*/
 //     ).finished());
+
+/*template <typename TI, typename TO>
+void ORBFeatureExtractor::ResizeImage(
+      const Eigen::Matrix<TI, Eigen::Dynamic, Eigen::Dynamic>& in,
+      Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic>& out_resized,
+      size_t in_edge_left,
+      size_t in_edge_right,
+      size_t in_edge_top,
+      size_t in_edge_bottom,
+      size_t out_edge_left,
+      size_t out_edge_right,
+      size_t out_edge_top,
+      size_t out_edge_bottom) {
+
+
+  double s_y = static_cast<double>(in.rows()  - in_edge_top - in_edge_bottom -
+1) / (out_resized.rows() - 1 - out_edge_top - out_edge_bottom); double s_x =
+static_cast<double>(in.cols() - in_edge_left - in_edge_right - 1) /
+(out_resized.cols() - 1 - out_edge_left - out_edge_right);
+
+  for (size_t row = 0; row < out_resized.rows() - out_edge_left -
+out_edge_right; ++row) { #pragma omp parallel for for (size_t col = 0; col <
+out_resized.cols() - out_edge_top - out_edge_bottom; ++col) { double pre_y = s_y
+* row; double pre_x = s_x * col; int top_left_x = pre_x; int top_left_y = pre_y;
+
+      double w_x = (pre_x - top_left_x);
+      double w_y = (pre_y - top_left_y);
+      top_left_y += in_edge_top;
+      top_left_x += in_edge_left;
+
+      TO & val = out_resized(row + out_edge_top, col + out_edge_right);
+      if (top_left_x == in.cols() - 1 && top_left_y == in.rows() - 1) {
+        val = in(top_left_y, top_left_x);
+      } else if (top_left_x == in.cols() - 1) {
+        val = (1 - w_y) * in(top_left_y, top_left_x) +
+                                w_y * in(top_left_y + 1, top_left_x);
+      } else if (top_left_y == in.rows() - 1) {
+        val = (1 - w_x) * in(top_left_y, top_left_x) +
+                                w_x * in(top_left_y, top_left_x + 1);
+      } else {
+        double X = (1 - w_x) * in(top_left_y, top_left_x) +
+                   w_x * in(top_left_y, top_left_x + 1);
+        double Y = (1 - w_x) * in(top_left_y + 1, top_left_x) +
+                   w_x * in(top_left_y + 1, top_left_x + 1);
+         val = (1 - w_y) * X + w_y * Y;
+      }
+    }
+  }
+}*/
 
 }  // namespace feature_extraction
 }  // namespace orb_slam3

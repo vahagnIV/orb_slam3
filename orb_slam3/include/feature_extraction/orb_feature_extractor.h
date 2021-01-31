@@ -21,7 +21,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       size_t features, precision_t scale_factor, size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
-  int Extract(const TImageGray8U &image, std::vector<map::MapPoint> &out_keypoints,
+  int Extract(const TImageGray8U &image, std::vector<map::KeyPoint> &out_keypoints,
               DescriptorSet &out_descriptors) override;
 
  private:
@@ -41,20 +41,24 @@ class ORBFeatureExtractor : public IFeatureExtractor {
  private:
   void AllocatePyramid();
   void BuildImagePyramid(cv::Mat &image);
-  void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> > &out_all_keypoints);
-  std::vector<cv::KeyPoint> DistributeOctTree(
-      const std::vector<cv::KeyPoint> &vToDistributeKeys, const int &minX,
-      const int &maxX, const int &minY, const int &maxY, const int &nFeatures,
-      const int &level);
+  void ComputeKeyPointsOctTree(std::vector<std::vector<map::KeyPoint>> &out_all_keypoints);
+  void DistributeOctTree(const std::vector<cv::KeyPoint> &vToDistributeKeys, 
+                         const int &minX,
+                         const int &maxX, 
+                         const int &minY, 
+                         const int &maxY, 
+                         const int &nFeatures,
+                         const int &level,
+                         std::vector<map::KeyPoint> & out_map_points);
   static void computeOrientation(const cv::Mat &image,
-                                 std::vector<cv::KeyPoint> &keypoints,
+                                 std::vector<map::KeyPoint> &keypoints,
                                  const int *umax);
-  static float IC_Angle(const cv::Mat &image, cv::Point2f pt, const int *u_max);
+  static void IC_Angle(const cv::Mat &image, map::KeyPoint &, const int *u_max);
   static void computeDescriptors(const cv::Mat &image,
-                                 std::vector<cv::KeyPoint> &keypoints,
+                                 std::vector<map::KeyPoint> &keypoints,
                                  cv::Mat &descriptors,
                                  const std::vector<cv::Point> &pattern);
-  static void computeOrbDescriptor(const cv::KeyPoint &kpt, const cv::Mat &img,
+  static void computeOrbDescriptor(const map::KeyPoint &kpt, const cv::Mat &img,
                                    const cv::Point *pattern, uchar *desc);
       /*template <typename TI, typename TO>
       void ResizeImage(

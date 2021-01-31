@@ -26,9 +26,9 @@ add_library(orbslam SHARED
         src/atlas.cpp
         src/tracker.cpp
         src/map_point.cpp        
-        src/map/map_point.cpp
+        src/map/key_point.cpp
 
-        include/map/map_point.h
+        include/map/key_point.h
         include/camera/monocular_camera.h
         include/frame/frame_base.h
         include/frame/monocular_frame.h
