@@ -84,19 +84,9 @@ void Features::AssignFeaturesToGrid(const precision_t & min_X,
                                     const precision_t & min_Y,
                                     const precision_t & grid_element_width_inv_,
                                     const precision_t & grid_element_height_inv_) {
-  // Fill matrix with points
-  static const int nCells = constants::FRAME_GRID_COLS * constants::FRAME_GRID_ROWS;
-
-  int nReserve = 0.5f * keypoints.size() / (nCells);
-
-  for (unsigned int i = 0; i < constants::FRAME_GRID_COLS; i++)
-    for (unsigned int j = 0; j < constants::FRAME_GRID_ROWS; j++) {
-      grid[i][j].reserve(nReserve);
-    }
 
   for (size_t i = 0; i < keypoints.size(); i++) {
     const KeyPoint & kp = undistorted_keypoints[i];
-
     size_t pos_X, pos_Y;
     if (PosInGrid(kp, min_X, min_Y, grid_element_width_inv_, grid_element_height_inv_, pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);
