@@ -38,6 +38,7 @@ add_library(orbslam SHARED
         include/camera/monocular_camera.h
         include/frame/frame_base.h
         include/frame/monocular_frame.h
+        include/frame/frame_type.h
         #        include/rgbd_frame.h
         #        include/rgbd_camera.h
         include/features/orb_feature_extractor.h

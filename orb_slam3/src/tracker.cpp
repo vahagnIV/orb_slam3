@@ -16,21 +16,22 @@ Tracker::Tracker()
 
 Tracker::~Tracker() { delete atlas_; }
 
-TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
+TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
 //  Map *current_map = atlas_->GetCurrentMap();
-  switch (state_)
-  {
-  case NOT_INITIALIZED:
-    {
-      if(frame->IsValid()){
+  switch (state_) {
+    case NOT_INITIALIZED: {
+      if (frame->IsValid()) {
         initial_frame_ = last_frame_ = frame;
+        state_ = FIRST_IMAGE;
       }
-
+    }
+      break;
+    case FIRST_IMAGE: {
+      frame->SetPrevious(frame);
     }
     break;
-  
-  default:
-    break;
+
+    default:break;
   }
 
   /* IMU stuff skipping for now ... */

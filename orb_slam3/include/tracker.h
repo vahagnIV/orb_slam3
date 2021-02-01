@@ -19,7 +19,9 @@ using frame::FrameBase;
 class Tracker {
  public:
  enum State {
-    NOT_INITIALIZED
+    NOT_INITIALIZED,
+    FIRST_IMAGE,
+    OK
   };
  public: 
   Tracker();

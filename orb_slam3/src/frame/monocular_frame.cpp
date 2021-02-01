@@ -32,5 +32,9 @@ size_t MonocularFrame::FeatureCount() const noexcept {
   return features_.keypoints.size();
 }
 
+FrameType MonocularFrame::Type() const {
+  return MONOCULAR;
+}
+
 }
 }  // namespace orb_slam3

@@ -20,7 +20,8 @@ class MonocularFrame : public FrameBase {
 
   size_t FeatureCount() const noexcept override;
   bool IsValid() const override;
-  
+  FrameType Type() const override;
+
  protected:
   const std::shared_ptr<camera::MonocularCamera> camera_;
   features::Features features_;

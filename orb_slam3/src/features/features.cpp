@@ -10,73 +10,74 @@ namespace features {
 void Features::ListFeaturesInArea(const precision_t & x,
                                   const precision_t & y,
                                   const size_t & window_size,
-                                  const precision_t & level1,
-                                  const precision_t & level2,
+                                  const precision_t & minLevel,
+                                  const precision_t & maxLevel,
+                                  const precision_t & min_X,
+                                  const precision_t & min_Y,
+                                  const precision_t & grid_element_width_inv,
+                                  const precision_t & grid_element_height_inv,
                                   std::vector<size_t> & out_idx) {
 
-
-/*  out_idx.reserve(keypoints.size());
+  out_idx.reserve(keypoints.size());
 
   float factorX = window_size;
-  float factorY = window_size;*/
+  float factorY = window_size;
 
   /*cout << "fX " << factorX << endl;
   cout << "fY " << factorY << endl;*/
 
-  /* const int nMinCellX =
-       max(0, (int) floor((x - GetCamera()->ImageBoundMinX() - factorX) * GetCamera()->GridElementWidthInv()));
-   if (nMinCellX >= FRAME_GRID_COLS) {
-     return ;
-   }
+  const size_t nMinCellX =
+      std::max(0, (int) floor((x - min_X - factorX) * grid_element_width_inv));
+  if (nMinCellX >= constants::FRAME_GRID_COLS) {
+    return;
+  }
 
-   const int nMaxCellX =
-       min((int) FRAME_GRID_COLS - 1,
-           (int) ceil((x - GetCamera()->ImageBoundMinX() + factorX) * GetCamera()->GridElementWidthInv()));
-   if (nMaxCellX < 0) {
-     return ;
-   }
+  const int nMaxCellX =
+      std::min((int) constants::FRAME_GRID_COLS - 1,
+               (int) ceil((x - min_X + factorX) * grid_element_width_inv));
+  if (nMaxCellX < 0) {
+    return;
+  }
 
-   const int nMinCellY =
-       max(0, (int) floor((y - GetCamera()->ImageBoundMinY() - factorY) * GetCamera()->GridElementHeightInv()));
-   if (nMinCellY >= FRAME_GRID_ROWS) {
-     return ;
-   }
+  const size_t nMinCellY =
+      std::max(0, (int) floor((y - min_Y - factorY) * grid_element_height_inv));
+  if (nMinCellY >= constants::FRAME_GRID_ROWS) {
+    return;
+  }
 
-   const int nMaxCellY =
-       min((int) FRAME_GRID_ROWS - 1,
-           (int) ceil((y - GetCamera()->ImageBoundMinY() + factorY) * GetCamera()->GridElementHeightInv()));
-   if (nMaxCellY < 0) {
-     return ;
-   }
+  const int nMaxCellY =
+      std::min((int) constants::FRAME_GRID_ROWS - 1,
+               (int) ceil((y - min_Y + factorY) * grid_element_height_inv));
+  if (nMaxCellY < 0) {
+    return;
+  }
 
-   const bool bCheckLevels = (minLevel > 0) || (maxLevel >= 0);
+  const bool bCheckLevels = (minLevel > 0) || (maxLevel >= 0);
 
-   for (int ix = nMinCellX; ix <= nMaxCellX; ix++) {
-     for (int iy = nMinCellY; iy <= nMaxCellY; iy++) {
-       const vector<size_t> vCell = (!bRight) ? mGrid[ix][iy] : mGridRight[ix][iy];
-       if (vCell.empty())
-         continue;
+  for (int ix = nMinCellX; ix <= nMaxCellX; ix++) {
+    for (int iy = nMinCellY; iy <= nMaxCellY; iy++) {
+      const std::vector<size_t> & vCell = grid[ix][iy];
+      if (vCell.empty())
+        continue;
 
-       for (size_t j = 0, jend = vCell.size(); j < jend; j++) {
-         const cv::KeyPoint &kpUn = (Nleft == -1) ? undistorted_key_poinst_[vCell[j]]
-                                                  : (!bRight) ? key_points_[vCell[j]]
-                                                              : right_key_points_[vCell[j]];
-         if (bCheckLevels) {
-           if (kpUn.octave < minLevel)
-             continue;
-           if (maxLevel >= 0)
-             if (kpUn.octave > maxLevel)
-               continue;
-         }
+      for (size_t j = 0, jend = vCell.size(); j < jend; j++) {
+        const KeyPoint & kpUn = undistorted_keypoints[vCell[j]];
+        if (bCheckLevels) {
+          if (kpUn.level < minLevel)
+            continue;
+          if (maxLevel >= 0)
+            if (kpUn.level > maxLevel)
+              continue;
+        }
 
-         const float distx = kpUn.pt.x - x;
-         const float disty = kpUn.pt.y - y;
+        const float distx = kpUn.X() - x;
+        const float disty = kpUn.Y() - y;
 
-         if (fabs(distx) < factorX && fabs(disty) < factorY)
-           out_idx.push_back(vCell[j]);
-       }
-     }
-   }*/
+        if (fabs(distx) < factorX && fabs(disty) < factorY)
+          out_idx.push_back(vCell[j]);
+      }
+    }
+  }
 
 }
 

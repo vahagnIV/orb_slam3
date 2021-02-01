@@ -9,6 +9,7 @@
 #include <memory>
 
 /// orb_slam3
+#include "frame_type.h"
 #include <typedefs.h>
 #include <features/ifeature_extractor.h>
 #include <map/map_point.h>
@@ -20,6 +21,8 @@ class FrameBase {
  public:
   typedef size_t id_type;
   FrameBase() = delete;
+
+  virtual FrameType Type() const = 0;
 
   FrameBase(const TimePoint & timestamp,
             const std::shared_ptr<features::IFeatureExtractor> & feature_extractor)
@@ -62,6 +65,7 @@ class FrameBase {
    * @param previous_frame the previous frame
    */
   void SetPrevious(const std::shared_ptr<FrameBase> & previous_frame);
+
 
   /*!
    * Getter for the previous frame

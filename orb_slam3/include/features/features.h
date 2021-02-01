@@ -24,9 +24,14 @@ class Features {
   void ListFeaturesInArea(const precision_t & x,
                           const precision_t & y,
                           const size_t & window_size,
-                          const precision_t & level1,
-                          const precision_t & level2,
+                          const precision_t & minLevel,
+                          const precision_t & maxLevel,
+                          const precision_t & min_X,
+                          const precision_t & min_Y,
+                          const precision_t & grid_element_width_inv,
+                          const precision_t & grid_element_height_inv,
                           std::vector<size_t> & out_idx);
+
   void AssignFeaturesToGrid(const precision_t & min_X,
                             const precision_t & min_Y,
                             const precision_t & grid_element_width_inv_,
