@@ -7,6 +7,9 @@ find_package(OpenMP)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -22,20 +25,26 @@ add_library(orbslam SHARED
         src/camera/monocular_camera.cpp
         #        src/rgbd_frame.cpp
         #        src/rgbd_camera.cpp
-        src/feature_extraction/orb_feature_extractor.cpp
+        src/features/orb_feature_extractor.cpp
+        src/features/features.cpp
         src/atlas.cpp
         src/tracker.cpp
         src/map/map_point.cpp        
         src/map/key_point.cpp
 
-        include/map/key_point.h
+
+        include/constants.h
+        include/features/key_point.h
         include/camera/monocular_camera.h
         include/frame/frame_base.h
         include/frame/monocular_frame.h
         #        include/rgbd_frame.h
         #        include/rgbd_camera.h
-        include/feature_extraction/orb_feature_extractor.h
-        include/feature_extraction/ifeature_extractor.h
+        include/features/orb_feature_extractor.h
+        include/features/ifeature_extractor.h
+        include/features/features.h
+        include/features/imatcher.h
+        include/features/key_point.h
         include/atlas.h
         include/tracker.h
         include/image_utils.h

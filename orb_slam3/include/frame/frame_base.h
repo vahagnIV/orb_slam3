@@ -10,11 +10,11 @@
 
 /// orb_slam3
 #include <typedefs.h>
-#include <feature_extraction/ifeature_extractor.h>
+#include <features/ifeature_extractor.h>
 #include <map/map_point.h>
 
 namespace orb_slam3 {
-namespace frame{
+namespace frame {
 
 class FrameBase {
  public:
@@ -22,8 +22,8 @@ class FrameBase {
   FrameBase() = delete;
 
   FrameBase(const TimePoint & timestamp,
-            const std::shared_ptr<feature_extraction::IFeatureExtractor> &feature_extractor)
-      : id_(++next_id_),timestamp_(timestamp), feature_extractor_(feature_extractor) {}
+            const std::shared_ptr<features::IFeatureExtractor> & feature_extractor)
+      : id_(++next_id_), timestamp_(timestamp), feature_extractor_(feature_extractor), previous_frame_(nullptr) {}
 
   /*!
   *  Getter for id
@@ -46,13 +46,28 @@ class FrameBase {
    * Set the position of the frame in the world coordinate system
    * @param position 4x4 joint transformation matrix
    */
-  void SetPosition(const cv::Matx44f &position) noexcept;
+  void SetPosition(const cv::Matx44f & position) noexcept;
 
   // Get the number of the extracted keypoints
-  size_t FeatureCount() const noexcept { return map_points_.size(); }
+  virtual size_t FeatureCount() const noexcept = 0;
 
+  /*!
+   * If frame passed certain checks like the number of features etc
+   * @return true if valid
+   */
   virtual bool IsValid() const = 0;
 
+  /*!
+   * Setter for the previous frame
+   * @param previous_frame the previous frame
+   */
+  void SetPrevious(const std::shared_ptr<FrameBase> & previous_frame);
+
+  /*!
+   * Getter for the previous frame
+   * @return the previous frame
+   */
+  const std::shared_ptr<FrameBase> & PreviousFrame() { return previous_frame_; }
 
   /*!
    * Destructor
@@ -61,18 +76,16 @@ class FrameBase {
 
  protected:
 
-
-
  protected:
+
   const id_type id_;
   TimePoint timestamp_;
-  const std::shared_ptr<feature_extraction::IFeatureExtractor> feature_extractor_;
+  const std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
   std::vector<map::MapPoint> map_points_;
+  std::shared_ptr<FrameBase> previous_frame_;
 
-  protected:
-    static id_type next_id_;
-
-
+ protected:
+  static id_type next_id_;
 
 };
 

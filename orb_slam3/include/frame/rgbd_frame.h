@@ -20,7 +20,7 @@ class RGBDFrame : public FrameBase {
             const ImageGray32F & depth,
             double timestamp,
             const std::shared_ptr<RGBDCamera> & camera,
-            const std::shared_ptr<feature_extraction::IFeatureExtractor> & feature_extractor,
+            const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
             ORBVocabulary * orb_vocabulary);
   int Compute() override;
 

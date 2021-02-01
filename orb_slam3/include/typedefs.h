@@ -15,8 +15,6 @@ typedef float precision_t;
 typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> TImageGray8U;
 typedef Eigen::Matrix<precision_t , Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> TImageGray;
 
-typedef Eigen::Matrix<precision_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DescriptorSet;
-
 typedef Eigen::Matrix<precision_t, 3, 1 > TPoint3D;
 typedef Eigen::Matrix<precision_t, 2, 1 > TPoint2D;
 

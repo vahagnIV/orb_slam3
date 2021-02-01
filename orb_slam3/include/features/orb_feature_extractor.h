@@ -6,10 +6,10 @@
 #define ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
 
 #include <opencv2/opencv.hpp>
-#include <feature_extraction/ifeature_extractor.h>
+#include <features/ifeature_extractor.h>
 
 namespace orb_slam3 {
-namespace feature_extraction {
+namespace features {
 
 #define HALF_PATCH_SIZE 15
 #define PATCH_SIZE 31
@@ -21,8 +21,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       size_t features, precision_t scale_factor, size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
-  int Extract(const TImageGray8U &image, std::vector<map::KeyPoint> &out_keypoints,
-              DescriptorSet &out_descriptors) override;
+  int Extract(const TImageGray8U &image, Features & out_features) override;
 
  private:
   class ExtractorNode {
@@ -41,7 +40,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
  private:
   void AllocatePyramid();
   void BuildImagePyramid(cv::Mat &image);
-  void ComputeKeyPointsOctTree(std::vector<std::vector<map::KeyPoint>> &out_all_keypoints);
+  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint>> &out_all_keypoints);
   void DistributeOctTree(const std::vector<cv::KeyPoint> &vToDistributeKeys, 
                          const int &minX,
                          const int &maxX, 
@@ -49,16 +48,16 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                          const int &maxY, 
                          const int &nFeatures,
                          const int &level,
-                         std::vector<map::KeyPoint> & out_map_points);
+                         std::vector<features::KeyPoint> & out_map_points);
   static void computeOrientation(const cv::Mat &image,
-                                 std::vector<map::KeyPoint> &keypoints,
+                                 std::vector<features::KeyPoint> &keypoints,
                                  const int *umax);
-  static void IC_Angle(const cv::Mat &image, map::KeyPoint &, const int *u_max);
+  static void IC_Angle(const cv::Mat &image, features::KeyPoint &, const int *u_max);
   static void computeDescriptors(const cv::Mat &image,
-                                 std::vector<map::KeyPoint> &keypoints,
+                                 std::vector<features::KeyPoint> &keypoints,
                                  cv::Mat &descriptors,
                                  const std::vector<cv::Point> &pattern);
-  static void computeOrbDescriptor(const map::KeyPoint &kpt, const cv::Mat &img,
+  static void computeOrbDescriptor(const features::KeyPoint &kpt, const cv::Mat &img,
                                    const cv::Point *pattern, uchar *desc);
       /*template <typename TI, typename TO>
       void ResizeImage(
@@ -99,6 +98,6 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   float lapping_area_start_, lapping_area_end_;
 };
 
-}  // namespace feature_extraction
+}  // namespace features
 }  // namespace orb_slam3
 #endif  // ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_

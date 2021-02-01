@@ -7,10 +7,11 @@
 
 #include <vector>
 #include <typedefs.h>
-#include <map/key_point.h>
+#include "features.h"
+#include <features/key_point.h>
 
 namespace orb_slam3 {
-namespace feature_extraction {
+namespace features {
 
 class IFeatureExtractor {
  public:
@@ -22,8 +23,7 @@ class IFeatureExtractor {
    * @return The number of extracted keypoints on success, -1 on fail.
    */
   virtual int Extract(const TImageGray8U & image,
-                      std::vector<map::KeyPoint> & out_keypoints,
-                      DescriptorSet & out_descriptors) = 0;
+                      Features & features) = 0;
 
   virtual ~IFeatureExtractor() = default;
 

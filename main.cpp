@@ -1,4 +1,4 @@
-#include <feature_extraction/orb_feature_extractor.h>
+#include <features/orb_feature_extractor.h>
 #include <frame/monocular_frame.h>
 #include <image_utils.h>
 #include <tracker.h>
@@ -11,15 +11,16 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <constants.h>
 
 #include "ORBextractor.h"
 
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
-void LoadImages(const std::string& strAssociationFilename,
-                std::vector<std::string>& vstrImageFilenamesRGB,
-                std::vector<std::string>& vstrImageFilenamesD,
-                std::vector<double>& vTimestamps) {
+void LoadImages(const std::string & strAssociationFilename,
+                std::vector<std::string> & vstrImageFilenamesRGB,
+                std::vector<std::string> & vstrImageFilenamesD,
+                std::vector<double> & vTimestamps) {
   std::ifstream fAssociation;
   fAssociation.open(strAssociationFilename.c_str());
   while (!fAssociation.eof()) {
@@ -65,7 +66,7 @@ fileStorage["Camera.cy"].real(); intrinsic(2, 0) = 0; intrinsic(2, 1) = 0;
                                                  fileStorage["Camera.height"]);
 }
 */
-std::vector<std::string> ListDirectory(const std::string& path) {
+std::vector<std::string> ListDirectory(const std::string & path) {
   std::vector<std::string> out_files;
   boost::filesystem::path dir(path);
   boost::filesystem::directory_iterator it(path);
@@ -77,8 +78,8 @@ std::vector<std::string> ListDirectory(const std::string& path) {
 }
 
 void ReadImages(
-    const std::string& data_dir, std::vector<std::string>& filenames,
-    std::vector<std::chrono::system_clock::time_point>& timestamps) {
+    const std::string & data_dir, std::vector<std::string> & filenames,
+    std::vector<std::chrono::system_clock::time_point> & timestamps) {
   std::string row;
   std::ifstream is(data_dir + "/../data.csv");
   if (!std::getline(is, row)) return;
@@ -97,7 +98,7 @@ void ReadImages(
   }
 }
 
-cv::Mat FromEigen(const orb_slam3::TImageGray& eigen_mat) {
+cv::Mat FromEigen(const orb_slam3::TImageGray & eigen_mat) {
   cv::Mat cv_mat(eigen_mat.rows(), eigen_mat.cols(), CV_8U);
 
   for (size_t i = 0; i < cv_mat.rows; i++) {
@@ -109,7 +110,7 @@ cv::Mat FromEigen(const orb_slam3::TImageGray& eigen_mat) {
   return cv_mat;
 }
 
-orb_slam3::TImageGray8U FromCvMat(const cv::Mat& cv_mat) {
+orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
   orb_slam3::TImageGray8U eigen_mat;
   eigen_mat.resize(cv_mat.rows, cv_mat.cols);
   memcpy(eigen_mat.data(), cv_mat.data, cv_mat.total());
@@ -139,6 +140,17 @@ void TestMonocular() {
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
 
+
+  camera->SetFx(190.978477);
+  camera->SetFy(190.973307);
+  camera->SetCx(254.931706);
+  camera->SetCy(256.897442);
+  camera->SetK1(0.3);
+  camera->SetK2(-0.002053236141);
+  camera->SetK3(0);
+  camera->SetP1(0.000715034845);
+  camera->SetP2(0.000715034845);
+  camera->ComputeImageBounds();
   /*
    *  size_t features, precision_t scale_factor,
                       size_t levels, unsigned init_threshold_FAST, unsigned
@@ -149,8 +161,8 @@ void TestMonocular() {
   size_t levels = 8;
   unsigned init_threshold = 10;
   unsigned min_threshold = 5;
-  std::shared_ptr<orb_slam3::feature_extraction::IFeatureExtractor> extractor =
-      std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>(
+  std::shared_ptr<orb_slam3::features::IFeatureExtractor> extractor =
+      std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
           camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
           init_threshold, min_threshold);
 
@@ -161,11 +173,11 @@ void TestMonocular() {
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
                                                            extractor, camera);
 
-    ORB_SLAM3::ORBextractor their(nfeatures, scale_factor, levels,
+    /*ORB_SLAM3::ORBextractor their(nfeatures, scale_factor, levels,
                                   init_threshold, min_threshold);
     std::vector<cv::KeyPoint> kps;
     cv::Mat dcs;
-    std::vector<int> la = {0, static_cast<int>(camera->Width())};    
+    std::vector<int> la = {0, static_cast<int>(camera->Width())};*/
 
     tracker.Track(frame);
   }
@@ -199,8 +211,8 @@ int main() {
   orb_slam3::Tracker tracker;
   LoadImages(associsations_filename, rgb_image_filenames, depth_image_filenames,
   timestamps); std::cout << "Hello, World!" << std::endl;
-  std::shared_ptr<orb_slam3::feature_extraction::IFeatureExtractor> extractor =
-  std::make_shared<orb_slam3::feature_extraction::ORBFeatureExtractor>();
+  std::shared_ptr<orb_slam3::features::IFeatureExtractor> extractor =
+  std::make_shared<orb_slam3::features::ORBFeatureExtractor>();
   std::shared_ptr<orb_slam3::RGBDCamera>
       camera = CreateCamera(settings_file_path);
 
