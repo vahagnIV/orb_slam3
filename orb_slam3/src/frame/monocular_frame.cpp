@@ -50,7 +50,7 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   if(matcher.Match(features_, previous_frame->features_, matched_features) < 100)
     return false;
 
-  camera_->
+  //camera_->
 
   return false;
 }

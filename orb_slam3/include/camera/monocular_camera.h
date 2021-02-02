@@ -87,20 +87,24 @@ class MonocularCamera : protected g2o::BaseVertex<DistCoeffsLength + 4, Eigen::V
   void UndistortKeyPoints(const std::vector<features::KeyPoint> & keypoints,
                           std::vector<features::KeyPoint> & out_undistorted_keypoints) const;
 
-  precision_t Fx() noexcept { return _estimate[0]; }
-  precision_t Fy() noexcept { return _estimate[1]; }
-  precision_t Cx() noexcept { return _estimate[2]; }
-  precision_t Cy() noexcept { return _estimate[3]; }
-  precision_t K1() noexcept { return _estimate[4]; }
-  precision_t K2() noexcept { return _estimate[5]; }
-  precision_t P1() noexcept { return _estimate[6]; }
-  precision_t P2() noexcept { return _estimate[7]; }
-  precision_t K3() noexcept { return _estimate[8]; }
+  void Reconstruct(const std::vector<features::KeyPoint> & keypoints1,
+                   const std::vector<features::KeyPoint> & keypoints2,
+                   const std::vector<int> & matches12  );
+
+  inline const decltype(_estimate)::Scalar & Fx() noexcept { return this->_estimate[0]; }
+  inline const decltype(_estimate)::Scalar & Fy() noexcept { return this->_estimate[1]; }
+  inline const decltype(_estimate)::Scalar & Cx() noexcept { return this->_estimate[2]; }
+  inline const decltype(_estimate)::Scalar & Cy() noexcept { return this->_estimate[3]; }
+  inline const decltype(_estimate)::Scalar & K1() noexcept { return this->_estimate[4]; }
+  inline const decltype(_estimate)::Scalar & K2() noexcept { return this->_estimate[5]; }
+  inline const decltype(_estimate)::Scalar & P1() noexcept { return this->_estimate[6]; }
+  inline const decltype(_estimate)::Scalar & P2() noexcept { return this->_estimate[7]; }
+  inline const decltype(_estimate)::Scalar & K3() noexcept { return this->_estimate[8]; }
 
 #if DistCoeffsLength == 8
-  precision_t K4() noexcept { return _estimate[9] ; }
-  precision_t K5() noexcept { return _estimate[10]; }
-  precision_t K6() noexcept { return _estimate[11]; }
+  inline const double & K4() noexcept { return _estimate[9] ; }
+  inline const double & K5() noexcept { return _estimate[10]; }
+  inline const double & K6() noexcept { return _estimate[11]; }
 #endif
 
   void SetFx(precision_t fx) noexcept { _estimate[0] = fx; }
