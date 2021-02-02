@@ -16,7 +16,7 @@ void Features::ListFeaturesInArea(const precision_t & x,
                                   const precision_t & min_Y,
                                   const precision_t & grid_element_width_inv,
                                   const precision_t & grid_element_height_inv,
-                                  std::vector<size_t> & out_idx) {
+                                  std::vector<size_t> & out_idx) const {
 
   out_idx.reserve(keypoints.size());
 

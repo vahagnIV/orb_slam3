@@ -28,10 +28,13 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
       break;
     case FIRST_IMAGE: {
       frame->SetPrevious(frame);
+      if (frame->InitializePositionFromPrevious())
+        state_ = OK;
     }
-    break;
+      break;
 
-    default:break;
+    default:
+      break;
   }
 
   /* IMU stuff skipping for now ... */
@@ -47,7 +50,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
   } else {
     frame->SetReferenceFrame(current_map->GetLastFrame());
   }*/
-  return OK;
+  return TrackingResult::OK;
 }
 
 bool Tracker::TrackReferenceKeyFrame() { return false; }

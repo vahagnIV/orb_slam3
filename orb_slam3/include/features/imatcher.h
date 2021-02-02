@@ -4,11 +4,18 @@
 
 #ifndef ORB_SLAM3_IMATCHER_H
 #define ORB_SLAM3_IMATCHER_H
-namespace orba_slam3 {
+#include <features/features.h>
+
+namespace orb_slam3 {
 namespace features {
 
-
 class IMatcher {
+ public:
+  virtual int Match(const features::Features & features1,
+                    const features::Features & features2,
+                    std::vector<int> & out_matches_12) = 0;
+
+  virtual ~IMatcher() = default;
 
 };
 

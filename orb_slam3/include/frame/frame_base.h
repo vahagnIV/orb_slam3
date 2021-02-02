@@ -27,7 +27,6 @@ class FrameBase {
   FrameBase(const TimePoint & timestamp,
             const std::shared_ptr<features::IFeatureExtractor> & feature_extractor)
       : id_(++next_id_), timestamp_(timestamp), feature_extractor_(feature_extractor), previous_frame_(nullptr) {}
-
   /*!
   *  Getter for id
   *  @return The id of the frame
@@ -64,14 +63,20 @@ class FrameBase {
    * Setter for the previous frame
    * @param previous_frame the previous frame
    */
-  void SetPrevious(const std::shared_ptr<FrameBase> & previous_frame);
-
+  void SetPrevious(const std::shared_ptr<FrameBase> & previous_frame) { previous_frame_ = previous_frame; }
 
   /*!
    * Getter for the previous frame
    * @return the previous frame
    */
   const std::shared_ptr<FrameBase> & PreviousFrame() { return previous_frame_; }
+
+  /*!
+   * If needed, this should inizialize the position from the previous frames
+   * Used only for monocular case
+   * @return
+   */
+  virtual bool InitializePositionFromPrevious() = 0;
 
   /*!
    * Destructor

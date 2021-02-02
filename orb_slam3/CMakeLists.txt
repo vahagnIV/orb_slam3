@@ -27,6 +27,7 @@ add_library(orbslam SHARED
         #        src/rgbd_camera.cpp
         src/features/orb_feature_extractor.cpp
         src/features/features.cpp
+        src/features/second_nearest_neighbor_matcher.cpp
         src/atlas.cpp
         src/tracker.cpp
         src/map/map_point.cpp        
@@ -46,6 +47,8 @@ add_library(orbslam SHARED
         include/features/features.h
         include/features/imatcher.h
         include/features/key_point.h
+        include/features/imatcher.h
+        include/features/second_nearest_neighbor_matcher.h
         include/atlas.h
         include/tracker.h
         include/image_utils.h

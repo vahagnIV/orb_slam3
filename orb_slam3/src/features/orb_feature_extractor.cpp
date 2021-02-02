@@ -525,13 +525,13 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
           keypoint->X() <= lapping_area_end_) {
         out_features.keypoints.at(stereoIndex) = (*keypoint);
         desc.row(i).copyTo(
-            cv::Mat(1, desc.cols, cv::DataType<precision_t>::type,
+            cv::Mat(1, desc.cols, cv::DataType<DescriptorSet::Scalar  >::type,
                     (void *)out_features.descriptors.row(stereoIndex).data()));
         stereoIndex--;
       } else {
         out_features.keypoints.at(monoIndex) = (*keypoint);
         desc.row(i).copyTo(
-            cv::Mat(1, desc.cols, cv::DataType<precision_t>::type,
+            cv::Mat(1, desc.cols, cv::DataType<DescriptorSet::Scalar >::type,
                     (void *)out_features.descriptors.row(monoIndex).data()));
         monoIndex++;
       }

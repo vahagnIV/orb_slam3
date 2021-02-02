@@ -14,7 +14,7 @@ namespace camera {
 
 #define DistCoeffsLength 5
 
-class MonocularCamera : public g2o::BaseVertex<DistCoeffsLength + 4, Eigen::VectorXd> {
+class MonocularCamera : protected g2o::BaseVertex<DistCoeffsLength + 4, Eigen::VectorXd> {
  public:
   typedef Eigen::Matrix<double, DistCoeffsLength + 4, 1> Estimate_t;
   typedef Eigen::Matrix<double, DistCoeffsLength, 1> DistCoeffs_t;
