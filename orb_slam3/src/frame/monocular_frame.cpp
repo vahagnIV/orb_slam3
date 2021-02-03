@@ -24,8 +24,6 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                  camera_->ImageBoundMinY(),
                                  camera_->GridElementWidthInv(),
                                  camera_->GridElementHeightInv());
-  cv::imshow("a", cv::Mat(image.rows(), image.cols(), CV_8U, (void *)image.data()));
-  cv::waitKey(10);
 }
 
 bool MonocularFrame::IsValid() const {
@@ -49,7 +47,6 @@ bool MonocularFrame::InitializePositionFromPrevious() {
                                                  camera_->GridElementHeightInv());
   std::vector<int> matched_features;
   int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
-  std::cout << number_of_good_matches << std::endl;
   if (number_of_good_matches < 100)
     return false;
 
