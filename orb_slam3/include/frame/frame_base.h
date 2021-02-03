@@ -92,7 +92,7 @@ class FrameBase {
   const std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
   std::vector<map::MapPoint> map_points_;
   std::shared_ptr<FrameBase> previous_frame_;
-
+  TPose pose_;
  protected:
   static id_type next_id_;
 

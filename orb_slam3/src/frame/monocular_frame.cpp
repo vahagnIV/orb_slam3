@@ -5,6 +5,7 @@
 #include <frame/monocular_frame.h>
 #include <constants.h>
 #include <features/second_nearest_neighbor_matcher.h>
+#include <geometry/two_view_reconstructor.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -19,12 +20,12 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
   std::vector<features::KeyPoint> key_points;
   feature_extractor_->Extract(image, features_);
   camera_->UndistortKeyPoints(features_.keypoints, features_.undistorted_keypoints);
-
-  std::cout << features_.descriptors.cast<int>() << std::endl;
   features_.AssignFeaturesToGrid(camera_->ImageBoundMinX(),
                                  camera_->ImageBoundMinY(),
                                  camera_->GridElementWidthInv(),
                                  camera_->GridElementHeightInv());
+  cv::imshow("a", cv::Mat(image.rows(), image.cols(), CV_8U, (void *)image.data()));
+  cv::waitKey(10);
 }
 
 bool MonocularFrame::IsValid() const {
@@ -39,16 +40,29 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   if (previous_frame_->Type() != Type())
     return false;
   MonocularFrame * previous_frame = dynamic_cast<MonocularFrame *>(previous_frame_.get());
-  features::SecondNearestNeighborMatcher matcher(100,
+  features::SecondNearestNeighborMatcher matcher(200,
                                                  0.9,
-                                                 true,
+                                                 false,
                                                  camera_->ImageBoundMinY(),
                                                  camera_->ImageBoundMinY(),
                                                  camera_->GridElementWidthInv(),
                                                  camera_->GridElementHeightInv());
-  std::vector<int > matched_features;
-  if(matcher.Match(features_, previous_frame->features_, matched_features) < 100)
+  std::vector<int> matched_features;
+  int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
+  std::cout << number_of_good_matches << std::endl;
+  if (number_of_good_matches < 100)
     return false;
+
+  geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5);
+  std::vector<TPoint3D> points;
+  std::vector<bool> outliers;
+  reconstructor.Reconstruct(features_.keypoints,
+                            previous_frame->features_.keypoints,
+                            matched_features,
+                            pose_,
+                            points,
+                            outliers,
+                            number_of_good_matches);
 
   //camera_->
 

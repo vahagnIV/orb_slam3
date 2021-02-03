@@ -125,12 +125,11 @@ orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
 
 void TestMonocular() {
   const std::string vocabulary =
-      "/home/vahagn/git/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
+      "/data/git/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
   const std::string settings =
-      "/home/vahagn/git/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
+      "/data/git/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
   const std::string data =
-      "/home/vahagn/git/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/"
-      "cam0/data";
+      "/data/git/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
 
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
@@ -145,22 +144,18 @@ void TestMonocular() {
   camera->SetFy(190.973307);
   camera->SetCx(254.931706);
   camera->SetCy(256.897442);
-  camera->SetK1(0.3);
+  camera->SetK1(3);
   camera->SetK2(-0.002053236141);
   camera->SetK3(0);
   camera->SetP1(0.000715034845);
   camera->SetP2(0.000715034845);
   camera->ComputeImageBounds();
-  /*
-   *  size_t features, precision_t scale_factor,
-                      size_t levels, unsigned init_threshold_FAST, unsigned
-   min_threshold_FAST*/
 
   size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
   size_t levels = 8;
-  unsigned init_threshold = 10;
-  unsigned min_threshold = 5;
+  unsigned init_threshold = 20;
+  unsigned min_threshold = 7;
   std::shared_ptr<orb_slam3::features::IFeatureExtractor> extractor =
       std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
           camera->Width(), camera->Height(), nfeatures, scale_factor, levels,

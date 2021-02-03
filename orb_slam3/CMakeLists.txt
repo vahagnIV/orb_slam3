@@ -20,28 +20,39 @@ endif()
 include_directories(include g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_DIR})
 
 add_library(orbslam SHARED
+        src/atlas.cpp
+        src/tracker.cpp
+
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
+
         src/camera/monocular_camera.cpp
-        #        src/rgbd_frame.cpp
-        #        src/rgbd_camera.cpp
+
         src/features/orb_feature_extractor.cpp
         src/features/features.cpp
         src/features/second_nearest_neighbor_matcher.cpp
-        src/atlas.cpp
-        src/tracker.cpp
-        src/map/map_point.cpp        
+
+        src/map/map_point.cpp
         src/map/key_point.cpp
 
+        src/geometry/two_view_reconstructor.cpp
 
+
+        include/typedefs.h
         include/constants.h
-        include/features/key_point.h
+        include/atlas.h
+        include/tracker.h
+        include/image_utils.h
+
+        include/geometry/two_view_reconstructor.h
+
         include/camera/monocular_camera.h
+
         include/frame/frame_base.h
         include/frame/monocular_frame.h
         include/frame/frame_type.h
-        #        include/rgbd_frame.h
-        #        include/rgbd_camera.h
+
+        include/features/key_point.h
         include/features/orb_feature_extractor.h
         include/features/ifeature_extractor.h
         include/features/features.h
@@ -49,10 +60,8 @@ add_library(orbslam SHARED
         include/features/key_point.h
         include/features/imatcher.h
         include/features/second_nearest_neighbor_matcher.h
-        include/atlas.h
-        include/tracker.h
-        include/image_utils.h
-        include/map/map_point.h 
+
+        include/map/map_point.h
         include/orb_vocabulary.h)
 
 target_include_directories(orbslam INTERFACE include)
