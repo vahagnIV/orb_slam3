@@ -3,6 +3,7 @@
 //
 
 #include <features/features.h>
+#include <boost/shared_ptr.hpp>
 
 namespace orb_slam3 {
 namespace features {

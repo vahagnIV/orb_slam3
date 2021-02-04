@@ -5,15 +5,19 @@
 #ifndef ORB_SLAM3_FEATURES_H
 #define ORB_SLAM3_FEATURES_H
 
+#include <memory>
+
 #include <Eigen/Eigen>
+
 #include <typedefs.h>
 #include <constants.h>
+#include <camera/monocular_camera.h>
 #include "key_point.h"
 
 namespace orb_slam3 {
 namespace features {
 
-typedef Eigen::Matrix<uint8_t , Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DescriptorSet;
+typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DescriptorSet;
 
 class Features {
  public:
@@ -39,6 +43,17 @@ class Features {
                             const precision_t & min_Y,
                             const precision_t & grid_element_width_inv_,
                             const precision_t & grid_element_height_inv_);
+
+
+  void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera) {
+    undistorted_keypoints.resize(keypoints.size());
+    for (size_t i = 0; i < undistorted_keypoints.size(); ++i) {
+      camera->UndistortPoint(keypoints[i].pt, undistorted_keypoints[i].pt);
+      undistorted_keypoints[i].angle = keypoints[i].angle;
+      undistorted_keypoints[i].size = keypoints[i].size;
+      undistorted_keypoints[i].level = keypoints[i].level;
+    }
+  }
  private:
   bool PosInGrid(const KeyPoint & kp,
                  const precision_t & min_X,
@@ -47,7 +62,6 @@ class Features {
                  const precision_t & grid_element_height_inv_,
                  size_t & posX,
                  size_t & posY) const;
-
 
 };
 

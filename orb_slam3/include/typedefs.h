@@ -9,6 +9,7 @@
 #include <ctype.h>
 
 namespace orb_slam3{
+#define DISTORTION_MODEL_PARAMS 4
 
 typedef double precision_t;
 

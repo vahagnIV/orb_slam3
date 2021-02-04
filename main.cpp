@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 #include <constants.h>
+#include <camera/kannala_brandt_5.h>
+#include <camera/fish_eye.h>
 
 #include "ORBextractor.h"
 
@@ -139,16 +141,19 @@ void TestMonocular() {
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
 
+  orb_slam3::camera::FishEye * distortion = camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
+//  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 
-  camera->SetFx(190.978477);
-  camera->SetFy(190.973307);
-  camera->SetCx(254.931706);
-  camera->SetCy(256.897442);
-  camera->SetK1(3);
-  camera->SetK2(-0.002053236141);
-  camera->SetK3(0);
-  camera->SetP1(0.000715034845);
-  camera->SetP2(0.000715034845);
+  camera->SetFx(190.97847715128717);
+  camera->SetFy(190.9733070521226);
+  camera->SetCx(254.93170605935475);
+  camera->SetCy(256.8974428996504);
+  distortion->SetK1(0.0034823894022493434);
+  distortion->SetK2(0.0007150348452162257);
+  distortion->SetK3(-0.0020532361418706202);
+  distortion->SetK4(0.00020293673591811182);
+
+
   camera->ComputeImageBounds();
 
   size_t nfeatures = 1000;
@@ -156,13 +161,51 @@ void TestMonocular() {
   size_t levels = 8;
   unsigned init_threshold = 20;
   unsigned min_threshold = 7;
-  std::shared_ptr<orb_slam3::features::IFeatureExtractor> extractor =
-      std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
-          camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
-          init_threshold, min_threshold);
+  std::shared_ptr<orb_slam3::features::IFeatureExtractor>
+      extractor = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
+      camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
+      init_threshold, min_threshold);
+
+  cv::Mat cm = cv::Mat::zeros(3, 3, CV_32F);
+  cm.at<float>(0, 0) = camera->Fx();
+  cm.at<float>(1, 1) = camera->Fy();
+  cm.at<float>(0, 2) = camera->Cx();
+  cm.at<float>(1, 2) = camera->Cy();
+  cm.at<float>(2, 2) = 1;
+
+  cv::Mat cm1 = cm.clone();
+  cm1.at<float>(0, 2) = 512;
+  cm1.at<float>(1, 2) = 512;
+
+  cv::Mat distCoeffs(4, 1, CV_32F);
+  distCoeffs.at<float>(0) = distortion->K1();
+  distCoeffs.at<float>(1) = distortion->K2();
+  distCoeffs.at<float>(2) = distortion->K3();
+  distCoeffs.at<float>(3) = distortion->K4();
+
+  orb_slam3::TPoint2D m{7.6, 9.1};
+  cv::Mat cv_point(1, 1, CV_64FC2), cv_result;
+  cv_point.at<cv::Point2d>(0) = cv::Point2d(m[0], m[1]);
+
+  cv::fisheye::undistortPoints(cv_point, cv_result, cm, distCoeffs, cv::Mat(), cm);
+  float x = cv_result.at<cv::Point2d>(0).x;
+  float y = cv_result.at<cv::Point2d>(0).y;
+
+  camera->UndistortPoint(m, m);
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
+    cv::Mat undistorted;
+    cv::imshow("image", image);
+//      cv::undistort(image, undistorted, cm, distCoeffs);
+    cv::fisheye::undistortImage(image, undistorted, cm, distCoeffs, cm1, cv::Size(1024, 1024));
+    cv::imshow("undistorted", undistorted);
+    cv::waitKey();
+    continue;
+//    for(float x = 0.03; x<= 3;x+=0.03) {
+//      distCoeffs.at<float>(0) = - x;
+//    }
+
     auto eigen = FromCvMat(image);
     std::shared_ptr<orb_slam3::frame::FrameBase> frame =
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],

@@ -27,6 +27,9 @@ add_library(orbslam SHARED
         src/frame/monocular_frame.cpp
 
         src/camera/monocular_camera.cpp
+        src/camera/kannala_brandt_5.cpp
+        src/camera/kannala_brandt_8.cpp
+        src/camera/fish_eye.cpp
 
         src/features/orb_feature_extractor.cpp
         src/features/features.cpp
@@ -47,6 +50,10 @@ add_library(orbslam SHARED
         include/geometry/two_view_reconstructor.h
 
         include/camera/monocular_camera.h
+        include/camera/idistortion_model.h
+        include/camera/kannala_brandt_5.h
+        include/camera/kannala_brandt_8.h
+        include/camera/fish_eye.h
 
         include/frame/frame_base.h
         include/frame/monocular_frame.h

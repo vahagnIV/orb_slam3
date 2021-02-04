@@ -8,23 +8,24 @@
 #include <g2o/core/base_vertex.h>
 #include <typedefs.h>
 #include <features/key_point.h>
+#include "idistortion_model.h"
 
 namespace orb_slam3 {
 namespace camera {
 
-#define DistCoeffsLength 5
-
-class MonocularCamera : protected g2o::BaseVertex<DistCoeffsLength + 4, Eigen::VectorXd> {
+class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, Eigen::VectorXd> {
  public:
-  typedef Eigen::Matrix<double, DistCoeffsLength + 4, 1> Estimate_t;
-  typedef Eigen::Matrix<double, DistCoeffsLength, 1> DistCoeffs_t;
+
+  typedef decltype(_estimate)::Scalar Scalar;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   MonocularCamera(unsigned width, unsigned height) :
       width_(width),
-      height_(height) {
+      height_(height),
+      distortion_model_(nullptr) {
 
-    setEstimate(Estimate_t::Zero());
+    setEstimate(Eigen::Matrix<double, DISTORTION_MODEL_PARAMS + 4, 1>::Zero());
   }
+  virtual ~MonocularCamera() { delete distortion_model_; }
 
  public: // ====  g2o =============
 
@@ -45,9 +46,28 @@ class MonocularCamera : protected g2o::BaseVertex<DistCoeffsLength + 4, Eigen::V
   void oplusImpl(const double * update) override {
     Eigen::VectorXd::ConstMapType v(update, MonocularCamera::Dimension);
     this->_estimate += v;
+    fx_inv_ = _estimate[0] ? 1 / _estimate[0] : 1;
+    fx_inv_ = _estimate[1] ? 1 / _estimate[1] : 1;
   }
 
  public:
+
+  template<typename TDistortionModel>
+  TDistortionModel * CreateDistortionModel() {
+    delete distortion_model_;
+    TDistortionModel * model = new TDistortionModel(&_estimate);
+    distortion_model_ = model;
+    return model;
+  }
+
+  IDistortionModel<DISTORTION_MODEL_PARAMS> * GetDistortionModel() {
+    return distortion_model_;
+  }
+
+  const IDistortionModel<DISTORTION_MODEL_PARAMS> * GetDistortionModel() const {
+    return distortion_model_;
+  }
+
   /*!
    *
    */
@@ -74,48 +94,39 @@ class MonocularCamera : protected g2o::BaseVertex<DistCoeffsLength + 4, Eigen::V
 
   /*!
    * Projects a 3D point on the image plane using the camera model
-   * @param vector The 3D point in the camera frame
+   * @param point3d The 3D point in the camera frame
    * @return 2D image point
    */
-  TPoint2D Map(const TPoint3D & vector) const;
+  TPoint2D Map(const TPoint3D & point3d) const;
 
   /*!
    * Undistorts keypoint
-   * @param keypoints input
-   * @param out_undistorted_keypoints output
+   * @param points input
+   * @param undistorted_points output
    */
-  void UndistortKeyPoints(const std::vector<features::KeyPoint> & keypoints,
-                          std::vector<features::KeyPoint> & out_undistorted_keypoints) const;
+  void UndistortPoint(TPoint2D & point, TPoint2D & undistorted_point) const;
 
-  void Reconstruct(const std::vector<features::KeyPoint> & keypoints1,
-                   const std::vector<features::KeyPoint> & keypoints2,
-                   const std::vector<int> & matches12  );
+  inline const Scalar & Fx() const noexcept { return this->_estimate[0]; }
+  inline const Scalar & Fy() const noexcept { return this->_estimate[1]; }
+  inline const Scalar & Cx() const noexcept { return this->_estimate[2]; }
+  inline const Scalar & Cy() const noexcept { return this->_estimate[3]; }
 
-  inline const decltype(_estimate)::Scalar & Fx() noexcept { return this->_estimate[0]; }
-  inline const decltype(_estimate)::Scalar & Fy() noexcept { return this->_estimate[1]; }
-  inline const decltype(_estimate)::Scalar & Cx() noexcept { return this->_estimate[2]; }
-  inline const decltype(_estimate)::Scalar & Cy() noexcept { return this->_estimate[3]; }
-  inline const decltype(_estimate)::Scalar & K1() noexcept { return this->_estimate[4]; }
-  inline const decltype(_estimate)::Scalar & K2() noexcept { return this->_estimate[5]; }
-  inline const decltype(_estimate)::Scalar & P1() noexcept { return this->_estimate[6]; }
-  inline const decltype(_estimate)::Scalar & P2() noexcept { return this->_estimate[7]; }
-  inline const decltype(_estimate)::Scalar & K3() noexcept { return this->_estimate[8]; }
+  void SetFx(Scalar fx) noexcept {
+    _estimate[0] = fx;
+    fx_inv_ = fx ? 1 / fx : 0;
+  }
+  void SetFy(Scalar fy) noexcept {
+    _estimate[1] = fy;
+    fy_inv_ = fy ? 1 / fy : 1;
+  }
+  void SetCx(Scalar cx) noexcept { _estimate[2] = cx; }
+  void SetCy(Scalar cy) noexcept { _estimate[3] = cy; }
 
 #if DistCoeffsLength == 8
   inline const double & K4() noexcept { return _estimate[9] ; }
   inline const double & K5() noexcept { return _estimate[10]; }
   inline const double & K6() noexcept { return _estimate[11]; }
 #endif
-
-  void SetFx(precision_t fx) noexcept { _estimate[0] = fx; }
-  void SetFy(precision_t fy) noexcept { _estimate[1] = fy; }
-  void SetCx(precision_t cx) noexcept { _estimate[2] = cx; }
-  void SetCy(precision_t cy) noexcept { _estimate[3] = cy; }
-  void SetK1(precision_t k1) noexcept { _estimate[4] = k1; }
-  void SetK2(precision_t k2) noexcept { _estimate[5] = k2; }
-  void SetP1(precision_t p1) noexcept { _estimate[6] = p1; }
-  void SetP2(precision_t p2) noexcept { _estimate[7] = p2; }
-  void SetK3(precision_t k3) noexcept { _estimate[8] = k3; }
 
 #if DistCoeffsLength == 8
   void SetK4(precision_t k4) noexcept { _estimate[9] = k4; }
@@ -124,13 +135,12 @@ class MonocularCamera : protected g2o::BaseVertex<DistCoeffsLength + 4, Eigen::V
 #endif
 
  protected:
-  void ComputeDistortion(const double x, const double y, double & xd, double & yd) const;
-
- protected:
   unsigned width_;
   unsigned height_;
-  precision_t min_X_, max_X_, min_Y_, max_Y_;
-  precision_t grid_element_width_inv_, grid_element_height_inv_;
+  double min_X_, max_X_, min_Y_, max_Y_;
+  double grid_element_width_inv_, grid_element_height_inv_;
+  double fx_inv_, fy_inv_;
+  IDistortionModel<DISTORTION_MODEL_PARAMS> * distortion_model_;
 
 };
 
