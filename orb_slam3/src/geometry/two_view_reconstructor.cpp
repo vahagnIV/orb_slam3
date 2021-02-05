@@ -125,7 +125,7 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
                                                  std::vector<std::vector<size_t>> & out_result) const {
   out_result.resize(subset_count);
   do { GenerateRandomSubset(min, max, count, out_result[subset_count - 1]); }
-  while (subset_count--);
+  while (--subset_count);
 }
 
 void TwoViewReconstructor::FilterGoodMatches(const std::vector<int> & matches12,

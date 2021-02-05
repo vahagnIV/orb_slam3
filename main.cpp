@@ -141,20 +141,26 @@ void TestMonocular() {
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
 
-  orb_slam3::camera::FishEye * distortion = camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
+  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 //  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 
   camera->SetFx(190.97847715128717);
   camera->SetFy(190.9733070521226);
   camera->SetCx(254.93170605935475);
   camera->SetCy(256.8974428996504);
-  distortion->SetK1(0.0034823894022493434);
+  distortion->SetK1(0.3);
+//  distortion->SetK1(0.0034823894022493434);
   distortion->SetK2(0.0007150348452162257);
   distortion->SetK3(-0.0020532361418706202);
-  distortion->SetK4(0.00020293673591811182);
+//  distortion->SetK4(0.00020293673591811182);
 
   camera->ComputeImageBounds();
 
+  orb_slam3::TPoint2D point{7.7, 9.9}, undistorted, distorted;
+  camera->DistortPoint(point, distorted);
+  camera->UndistortPoint(distorted, undistorted);
+  std::cout << "Undistorted: \n" << undistorted << std::endl;
+  std::cout << "Distorted: \n" << distorted << std::endl;
 
   size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
@@ -166,7 +172,7 @@ void TestMonocular() {
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
-  cv::Mat cm = cv::Mat::zeros(3, 3, CV_32F);
+  /*cv::Mat cm = cv::Mat::zeros(3, 3, CV_32F);
   cm.at<float>(0, 0) = camera->Fx();
   cm.at<float>(1, 1) = camera->Fy();
   cm.at<float>(0, 2) = camera->Cx();
@@ -181,7 +187,7 @@ void TestMonocular() {
   distCoeffs.at<float>(0) = distortion->K1();
   distCoeffs.at<float>(1) = distortion->K2();
   distCoeffs.at<float>(2) = distortion->K3();
-  distCoeffs.at<float>(3) = distortion->K4();
+//  distCoeffs.at<float>(3) = distortion->K4();
 
   orb_slam3::TPoint2D m{7.6, 9.1};
   cv::Mat cv_point(1, 1, CV_64FC2), cv_result;
@@ -191,7 +197,7 @@ void TestMonocular() {
   float x = cv_result.at<cv::Point2d>(0).x;
   float y = cv_result.at<cv::Point2d>(0).y;
 
-  camera->UndistortPoint(m, m);
+  camera->UndistortPoint(m, m);*/
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);

@@ -41,16 +41,20 @@ bool KannalaBrandt5::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undis
 
   Scalar & x = undistorted[0];
   Scalar & y = undistorted[1];
-  precision_t x0 = x, y0 = y;
+  precision_t x0 = x = distorted[0], y0 = y = distorted[1];
 
   // compensate distortion iteratively
-  for (int j = 0; j < 5; j++) {
+  for (int j = 0; j < 50; j++) {
     double r2 = x * x + y * y;
     double icdist = 1. / (1 + ((k3 * r2 + k2) * r2 + k1) * r2);
     double deltaX = 2 * p1 * x * y + p2 * (r2 + 2 * x * x);
     double deltaY = p1 * (r2 + 2 * y * y) + 2 * p2 * x * y;
-    x = (x0 - deltaX) * icdist;
-    y = (y0 - deltaY) * icdist;
+    double xnew = (x0 - deltaX) * icdist;
+    double ynew = (y0 - deltaY) * icdist;
+    if(std::abs(x- xnew) < 1e-7 && std::abs(y- ynew) < 1e-7)
+      return true;
+    x = xnew;
+    y = ynew;
   }
   return true;
 }
