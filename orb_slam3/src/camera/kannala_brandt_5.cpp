@@ -9,7 +9,7 @@ namespace camera {
 KannalaBrandt5::KannalaBrandt5(EstimateType * estimate) : IDistortionModel<5>(estimate) {
 }
 
-void KannalaBrandt5::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) {
+bool KannalaBrandt5::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) {
   const double & k1 = (*estimate_)[4];
   const double & k2 = (*estimate_)[5];
   const double & p1 = (*estimate_)[6];
@@ -28,9 +28,10 @@ void KannalaBrandt5::DistortPoint(const TPoint2D & undistorted, TPoint2D & disto
 
   distorted[0] = x * cdist + p1 * a1 + p2 * (r2 + 2 * x * x);
   distorted[1] = y * cdist + p2 * a1 + p1 * (r2 + 2 * y * y);
+  return true;
 }
 
-void KannalaBrandt5::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) {
+bool KannalaBrandt5::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) {
   const double & k1 = (*estimate_)[4];
   const double & k2 = (*estimate_)[5];
   const double & p1 = (*estimate_)[6];
@@ -51,6 +52,7 @@ void KannalaBrandt5::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undis
     x = (x0 - deltaX) * icdist;
     y = (y0 - deltaY) * icdist;
   }
+  return true;
 }
 
 }

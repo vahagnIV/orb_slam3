@@ -27,41 +27,43 @@ TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {
   return result;
 }
 
-void MonocularCamera::UndistortPoint(TPoint2D & point, TPoint2D & undistorted_point) const {
+bool MonocularCamera::UndistortPoint(TPoint2D & point, TPoint2D & undistorted_point) const {
   TPoint2D central{(point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_};
-  distortion_model_->UnDistortPoint(central, undistorted_point);
+  if(!distortion_model_->UnDistortPoint(central, undistorted_point))
+    return false;
   undistorted_point[0] = undistorted_point[0] * Fx() + Cx();
   undistorted_point[1] = undistorted_point[1] * Fy() + Cy();
+  return true;
 }
 
-void MonocularCamera::DistortPoint(TPoint2D & undistorted, TPoint2D & distorted) const {
+bool MonocularCamera::DistortPoint(TPoint2D & undistorted, TPoint2D & distorted) const {
   TPoint2D central{(undistorted[0] - Cx()) * fx_inv_, (undistorted[1] - Cy()) * fy_inv_};
-  distortion_model_->DistortPoint(central, distorted);
+  if(!distortion_model_->DistortPoint(central, distorted))
+    return false;
   distorted[0] = distorted[0] * Fx() + Cx();
   distorted[1] = distorted[1] * Fy() + Cy();
+  return true;
 }
 
 void MonocularCamera::ComputeImageBounds() {
 
   std::vector<TPoint2D> bounds(4), undistorted_bounds(4);
-  bounds[0][0] = 0;
-  bounds[0][1] = 0;
-  bounds[1][0] = 0;
-  bounds[1][1] = height_;
-  bounds[2][0] = width_;
-  bounds[2][1] = 0;
-  bounds[3][0] = width_;
-  bounds[3][1] = height_;
-
-  UndistortPoint(bounds[0], undistorted_bounds[0]);
-  UndistortPoint(bounds[1], undistorted_bounds[1]);
-  UndistortPoint(bounds[2], undistorted_bounds[2]);
-  UndistortPoint(bounds[3], undistorted_bounds[3]);
-
-  min_X_ = std::min(undistorted_bounds[0][0], undistorted_bounds[1][0]);
-  max_X_ = std::max(undistorted_bounds[2][0], undistorted_bounds[3][0]);
-  min_Y_ = std::min(undistorted_bounds[0][1], undistorted_bounds[2][1]);
-  max_Y_ = std::max(undistorted_bounds[1][1], undistorted_bounds[3][1]);
+  max_X_ = std::numeric_limits<decltype(max_X_)>::min();
+  min_X_ = std::numeric_limits<decltype(min_X_)>::max();
+  max_Y_ = std::numeric_limits<decltype(max_Y_)>::min();
+  min_Y_ = std::numeric_limits<decltype(min_Y_)>::max();
+  for (size_t i = 0; i < Width(); ++i) {
+    for (size_t j = 0; j < Height(); ++j) {
+      TPoint2D pt{i,j}, undistorted;
+      if(UndistortPoint(pt, undistorted))
+      {
+        max_X_ = std::max(max_X_, undistorted[0]);
+        max_Y_ = std::max(max_Y_, undistorted[1]);
+        min_X_ = std::min(min_X_, undistorted[0]);
+        min_Y_ = std::min(min_Y_, undistorted[1]);
+      }
+    }
+  }
 
   grid_element_width_inv_ = constants::FRAME_GRID_COLS / (ImageBoundMaxX() - ImageBoundMinX());
   grid_element_height_inv_ = constants::FRAME_GRID_ROWS / (ImageBoundMaxY() - ImageBoundMinY());

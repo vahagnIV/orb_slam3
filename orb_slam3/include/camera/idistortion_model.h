@@ -16,9 +16,11 @@ class IDistortionModel {
   typedef typename g2o::BaseVertex<4 + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType EstimateType;
   IDistortionModel(EstimateType * estimate)
       : estimate_(estimate) {}
-  virtual void DistortPoint(const TPoint2D & undistorted,
+
+
+  virtual bool DistortPoint(const TPoint2D & undistorted,
                             TPoint2D & distorted) = 0;
-  virtual void UnDistortPoint(const TPoint2D & distorted,
+  virtual bool UnDistortPoint(const TPoint2D & distorted,
                               TPoint2D & undistorted) = 0;
   virtual ~IDistortionModel() = default;
  protected:

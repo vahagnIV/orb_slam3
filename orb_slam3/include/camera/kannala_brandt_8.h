@@ -12,8 +12,8 @@ namespace camera {
 class KannalaBrandt8 : public IDistortionModel<8>{
   // IDistortion
   KannalaBrandt8(EstimateType * estimate);
-  void DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) override;
-  void UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) override;
+  bool DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) override;
+  bool UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) override;
 
  public:
   typedef std::decay<decltype(*estimate_)>::type::Scalar Scalar;

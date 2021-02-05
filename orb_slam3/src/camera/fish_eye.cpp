@@ -12,7 +12,7 @@ FishEye::FishEye(IDistortionModel<4>::EstimateType * estimate) : IDistortionMode
 
 }
 
-void FishEye::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) {
+bool FishEye::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) {
 
   /*ACHTUNG: NOT TESTED*/
 
@@ -39,9 +39,10 @@ void FishEye::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) {
   double cdist = r > 1e-8 ? theta_d * inv_r : 1;
 
   distorted = undistorted * cdist;
+  return true;
 }
 
-void FishEye::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) {
+bool FishEye::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) {
 
   double r_prime = std::sqrt(distorted[0] * distorted[0] + distorted[1] * distorted[1]);
 
@@ -69,16 +70,17 @@ void FishEye::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted)
       break;
     }
     theta += delta_theta;
-
   }
+  if(!converged)
+    return false;
 
-  if (converged) {
+  double scale = std::tan(theta) / theta_d;
 
-    double scale = std::tan(theta) / theta_d ;
-    undistorted = distorted * scale;
-  } else {
-    undistorted << std::numeric_limits<double>::min(), std::numeric_limits<double>::min();
+  if ( scale < 0) {
+    return false;
   }
+  undistorted = distorted * scale;
+  return true;
 }
 
 }
