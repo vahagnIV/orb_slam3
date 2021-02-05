@@ -34,6 +34,13 @@ void MonocularCamera::UndistortPoint(TPoint2D & point, TPoint2D & undistorted_po
   undistorted_point[1] = undistorted_point[1] * Fy() + Cy();
 }
 
+void MonocularCamera::DistortPoint(TPoint2D & undistorted, TPoint2D & distorted) const {
+  TPoint2D central{(undistorted[0] - Cx()) * fx_inv_, (undistorted[1] - Cy()) * fy_inv_};
+  distortion_model_->DistortPoint(central, distorted);
+  distorted[0] = distorted[0] * Fx() + Cx();
+  distorted[1] = distorted[1] * Fy() + Cy();
+}
+
 void MonocularCamera::ComputeImageBounds() {
 
   std::vector<TPoint2D> bounds(4), undistorted_bounds(4);

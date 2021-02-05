@@ -153,8 +153,8 @@ void TestMonocular() {
   distortion->SetK3(-0.0020532361418706202);
   distortion->SetK4(0.00020293673591811182);
 
-
   camera->ComputeImageBounds();
+
 
   size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
@@ -195,13 +195,13 @@ void TestMonocular() {
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
-    cv::Mat undistorted;
-    cv::imshow("image", image);
-//      cv::undistort(image, undistorted, cm, distCoeffs);
-    cv::fisheye::undistortImage(image, undistorted, cm, distCoeffs, cm1, cv::Size(1024, 1024));
-    cv::imshow("undistorted", undistorted);
-    cv::waitKey();
-    continue;
+//    cv::Mat undistorted;
+//    cv::imshow("image", image);
+////      cv::undistort(image, undistorted, cm, distCoeffs);
+//    cv::fisheye::undistortImage(image, undistorted, cm, distCoeffs, cm1, cv::Size(1024, 1024));
+//    cv::imshow("undistorted", undistorted);
+//    cv::waitKey();
+//    continue;
 //    for(float x = 0.03; x<= 3;x+=0.03) {
 //      distCoeffs.at<float>(0) = - x;
 //    }
@@ -222,19 +222,74 @@ void TestMonocular() {
 }
 
 int main() {
-  /*auto im =
-      FromCvMat(cv::imread("/home/vahagn/Pictures/"
-                           "67927597_457635884828477_6248421437011394560_n.jpg",
-                           cv::IMREAD_GRAYSCALE));
-  // cv::imshow("d", FromEigen(im));
-  orb_slam3::TImageGray result;
-  result.resize(700, 520);
-  result.setZero();
-  orb_slam3::image_utils::ResizeImage(im, result,20,20,20,20);
-  cv::Mat res = FromEigen(result);
-  cv::imshow("a", res);
-  cv::waitKey();*/
 
+  /*std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
+      std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
+
+  orb_slam3::camera::FishEye * distortion = camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
+//  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+
+  camera->SetFx(190.97847715128717);
+  camera->SetFy(190.9733070521226);
+  camera->SetCx(254.93170605935475);
+  camera->SetCy(256.8974428996504);
+  distortion->SetK1(0.0034823894022493434);
+  distortion->SetK2(0.0007150348452162257);
+  distortion->SetK3(-0.0020532361418706202);
+  distortion->SetK4(0.00020293673591811182);
+
+
+
+
+  typedef float p_t;
+  int OpenCvMatrixType= CV_32F;
+  int OpenCvPointMatrixType= CV_32FC2;
+  typedef cv::Point2f OpenCVPointType;
+  cv::Mat camera_matrix = cv::Mat::zeros(3, 3, OpenCvMatrixType);
+  camera_matrix.at<p_t>(0, 0) = 190.9784;
+  camera_matrix.at<p_t>(1, 1) = 190.9733;
+  camera_matrix.at<p_t>(0, 2) = 254.9317;
+  camera_matrix.at<p_t>(1, 2) = 256.8974;
+  camera_matrix.at<p_t>(2, 2) = 1;
+
+  std::cout << "Camera matrix: \n" << camera_matrix << "\n" << std::endl;
+
+  cv::Mat distortion_coefficients(4, 1, OpenCvMatrixType);
+  distortion_coefficients.at<p_t>(0) = 0.003482;
+  distortion_coefficients.at<p_t>(1) = 0.000715;
+  distortion_coefficients.at<p_t>(2) = -0.0020532;
+  distortion_coefficients.at<p_t>(3) = 0.000203;
+
+  std::cout << "Distortion coefficients\n" << distortion_coefficients << "\n" << std::endl;
+
+  cv::Mat original_point(1, 1, OpenCvPointMatrixType);
+  original_point.at<OpenCVPointType>(0).x = 7.7;
+  original_point.at<OpenCVPointType>(0).y = 9.9;
+  cv::Mat undistorted, distorted;
+
+  cv::fisheye::distortPoints(original_point, distorted, camera_matrix, distortion_coefficients);
+
+  cv::fisheye::undistortPoints(distorted, undistorted, camera_matrix,
+                               distortion_coefficients, cv::Mat(), camera_matrix);
+
+  int utype = undistorted.type();
+  int dtype = distorted.type();
+
+
+
+  std::cout << "Original point: " << original_point.at<OpenCVPointType>(0).x << " " << original_point.at<OpenCVPointType>(0).y
+            << std::endl;
+  std::cout << "Undistorted point: " << undistorted.at<OpenCVPointType>(0).x << " " << undistorted.at<OpenCVPointType>(0).y
+            << std::endl;
+
+  cv::Mat camera_matrix_inv = camera_matrix.inv();
+  p_t x = 1 / camera_matrix.at<p_t>(0, 0) * undistorted.at<OpenCVPointType>(0).x + camera_matrix.at<p_t>(0, 2);
+  p_t y = 1 / camera_matrix.at<p_t>(1, 1) * undistorted.at<OpenCVPointType>(0).y + camera_matrix.at<p_t>(1, 2);
+
+  std::cout << "Undistorted point p: " << x << " " << y << std::endl;
+
+  std::cout << "Distorted point: " << distorted.at<OpenCVPointType>(0).x << " " << distorted.at<OpenCVPointType>(0).y;
+  return 0;*/
   TestMonocular();
   /*std::string associsations_filename =
   "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/associations/fr1_desk.txt";

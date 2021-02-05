@@ -20,8 +20,6 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
   std::vector<features::KeyPoint> key_points;
   feature_extractor_->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
-
-  //camera_->UndistortPoints(features_.keypoints, features_.undistorted_keypoints);
   features_.AssignFeaturesToGrid(camera_->ImageBoundMinX(),
                                  camera_->ImageBoundMinY(),
                                  camera_->GridElementWidthInv(),
