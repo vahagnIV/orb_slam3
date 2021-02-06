@@ -35,20 +35,22 @@ class TwoViewReconstructor {
   precision_t ComputeHomographyReprojectionError(const TMatrix33 & homography,
                                                  const std::vector<features::KeyPoint> & kp1,
                                                  const std::vector<features::KeyPoint> & kp2,
-                                                 const std::vector<std::pair<size_t, size_t>> & good_matches) const;
+                                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                 std::vector<bool> & out_inliers) const;
 
   void FindBestHomographyMatrix(const std::vector<features::KeyPoint> & kp1,
                                 const std::vector<features::KeyPoint> & kp2,
                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
                                 TMatrix33 & out_homography,
+                                std::vector<bool> & out_inliers,
                                 precision_t & out_error) const;
 
   precision_t ComputeFundamentalReprojectionError(const TMatrix33 & homography,
                                                   const std::vector<features::KeyPoint> & kp1,
                                                   const std::vector<features::KeyPoint> & kp2,
                                                   const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                  std::vector<bool> & inliers) const;
+                                                  std::vector<bool> & out_inliers) const;
 
   void FindFundamentalMatrix(const std::vector<features::KeyPoint> & kp1,
                              const std::vector<features::KeyPoint> & kp2,
@@ -61,6 +63,7 @@ class TwoViewReconstructor {
                                  const std::vector<std::pair<size_t, size_t>> & good_matches,
                                  const std::vector<std::vector<size_t>> & good_match_random_idx,
                                  TMatrix33 & out_fundamental,
+                                 std::vector<bool> & out_inliers,
                                  precision_t & out_error) const;
 
   void GenerateRandomSubset(size_t min,
@@ -82,8 +85,9 @@ class TwoViewReconstructor {
   const unsigned number_of_ransac_iterations_;
   const precision_t sigma_threshold_;
   const precision_t sigma_squared_inv_;
-  static const precision_t THRESHOLD;
-  static const precision_t THRESHOLD_SCORE;
+  static const precision_t FUNDAMENTAL_THRESHOLD;
+  static const precision_t HOMOGRAPHY_THRESHOLD;
+  static const precision_t FUNDAMENTAL_THRESHOLD_SCORE;
 
 };
 
