@@ -15,7 +15,8 @@ class TwoViewReconstructor {
  public:
   TwoViewReconstructor(const std::shared_ptr<camera::MonocularCamera> & left,
                        const std::shared_ptr<camera::MonocularCamera> & right,
-                       const unsigned number_of_ransac_iterations);
+                       const unsigned number_of_ransac_iterations,
+                       precision_t sigma_threshold = 1.0);
 
   void Reconstruct(const std::vector<features::KeyPoint> & kp1,
                    const std::vector<features::KeyPoint> & kp2,
@@ -43,6 +44,25 @@ class TwoViewReconstructor {
                                 TMatrix33 & out_homography,
                                 precision_t & out_error) const;
 
+  precision_t ComputeFundamentalReprojectionError(const TMatrix33 & homography,
+                                                  const std::vector<features::KeyPoint> & kp1,
+                                                  const std::vector<features::KeyPoint> & kp2,
+                                                  const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                  std::vector<bool> & inliers) const;
+
+  void FindFundamentalMatrix(const std::vector<features::KeyPoint> & kp1,
+                             const std::vector<features::KeyPoint> & kp2,
+                             const std::vector<std::pair<size_t, size_t>> & good_matches,
+                             const std::vector<size_t> & good_match_random_idx,
+                             TMatrix33 & out_fundamental) const;
+
+  void FindBestFundamentalMatrix(const std::vector<features::KeyPoint> & kp1,
+                                 const std::vector<features::KeyPoint> & kp2,
+                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                 TMatrix33 & out_fundamental,
+                                 precision_t & out_error) const;
+
   void GenerateRandomSubset(size_t min,
                             size_t max,
                             size_t count,
@@ -60,6 +80,11 @@ class TwoViewReconstructor {
  private:
   const std::shared_ptr<camera::MonocularCamera> left_, right_;
   const unsigned number_of_ransac_iterations_;
+  const precision_t sigma_threshold_;
+  const precision_t sigma_squared_inv_;
+  static const precision_t THRESHOLD;
+  static const precision_t THRESHOLD_SCORE;
+
 };
 
 }

@@ -125,13 +125,13 @@ orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
   return eigen_mat;
 }
 
-void TestMonocular() {
+void TestMonocular(std::string original) {
   const std::string vocabulary =
-      "/data/git/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
+  original + "/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
   const std::string settings =
-      "/data/git/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
+      original + "/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
   const std::string data =
-      "/data/git/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
+      original + "/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
 
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
@@ -227,7 +227,7 @@ void TestMonocular() {
   }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
   /*std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
@@ -296,7 +296,7 @@ int main() {
 
   std::cout << "Distorted point: " << distorted.at<OpenCVPointType>(0).x << " " << distorted.at<OpenCVPointType>(0).y;
   return 0;*/
-  TestMonocular();
+  TestMonocular(argv[1]);
   /*std::string associsations_filename =
   "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/associations/fr1_desk.txt";
   std::string settings_file_path =
