@@ -47,7 +47,7 @@ class TwoViewReconstructor {
  private:
   const std::shared_ptr<camera::MonocularCamera> left_, right_;
   const unsigned number_of_ransac_iterations_;
-  FundamentalMatrixEstimator fundamental_matrix_sstimator_;
+  FundamentalMatrixEstimator fundamental_matrix_estimator_;
   HomographyMatrixEstimator homography_matrix_sstimator_;
 
 

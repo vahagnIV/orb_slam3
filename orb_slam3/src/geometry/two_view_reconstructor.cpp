@@ -18,7 +18,7 @@ TwoViewReconstructor::TwoViewReconstructor(const std::shared_ptr<camera::Monocul
     : left_(left),
       right_(right),
       number_of_ransac_iterations_(number_of_ransac_iterations),
-      fundamental_matrix_sstimator_(sigma_threshold),
+      fundamental_matrix_estimator_(sigma_threshold),
       homography_matrix_sstimator_(sigma_threshold){
 }
 
@@ -38,7 +38,7 @@ void TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
   precision_t f_error;
   TMatrix33 homography, fundamental;
   std::vector<bool> homography_inliers, fundamental_inliers;
-  fundamental_matrix_sstimator_.FindBestFundamentalMatrix(kp1, kp2, pre_matches, random_match_subset_idx, fundamental, fundamental_inliers, f_error);
+  fundamental_matrix_estimator_.FindBestFundamentalMatrix(kp1, kp2, pre_matches, random_match_subset_idx, fundamental, fundamental_inliers, f_error);
   homography_matrix_sstimator_.FindBestHomographyMatrix(kp1, kp2, pre_matches, random_match_subset_idx, homography, homography_inliers, h_error);
   if (f_error > h_error) {
     int x = 9;
