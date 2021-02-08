@@ -23,7 +23,7 @@ class Features {
  public:
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
-  std::vector<KeyPoint> undistorted_keypoints;
+  std::vector<TPoint2D> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
 
   size_t Size() const { return keypoints.size(); }
@@ -48,14 +48,11 @@ class Features {
   void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera) {
     undistorted_keypoints.resize(keypoints.size());
     for (size_t i = 0; i < undistorted_keypoints.size(); ++i) {
-      camera->UndistortPoint(keypoints[i].pt, undistorted_keypoints[i].pt);
-      undistorted_keypoints[i].angle = keypoints[i].angle;
-      undistorted_keypoints[i].size = keypoints[i].size;
-      undistorted_keypoints[i].level = keypoints[i].level;
+      camera->UndistortPoint(keypoints[i].pt, undistorted_keypoints[i]);
     }
   }
  private:
-  bool PosInGrid(const KeyPoint & kp,
+  bool PosInGrid(const TPoint2D & kp,
                  const precision_t & min_X,
                  const precision_t & min_Y,
                  const precision_t & grid_element_width_inv_,

@@ -62,7 +62,8 @@ void Features::ListFeaturesInArea(const precision_t & x,
         continue;
 
       for (size_t j = 0, jend = vCell.size(); j < jend; j++) {
-        const KeyPoint & kpUn = undistorted_keypoints[vCell[j]];
+        const KeyPoint & kpUn = keypoints[vCell[j]];
+
         if (bCheckLevels) {
           if (kpUn.level < minLevel)
             continue;
@@ -71,10 +72,10 @@ void Features::ListFeaturesInArea(const precision_t & x,
               continue;
         }
 
-        const float distx = kpUn.X() - x;
-        const float disty = kpUn.Y() - y;
+        const float distance_x = undistorted_keypoints[j][0] - x;
+        const float distance_y = undistorted_keypoints[j][1] - y;
 
-        if (fabs(distx) < factorX && fabs(disty) < factorY)
+        if (fabs(distance_x) < factorX && fabs(distance_y) < factorY)
           out_idx.push_back(vCell[j]);
       }
     }
@@ -88,7 +89,7 @@ void Features::AssignFeaturesToGrid(const precision_t & min_X,
                                     const precision_t & grid_element_height_inv_) {
 
   for (size_t i = 0; i < keypoints.size(); i++) {
-    const KeyPoint & kp = undistorted_keypoints[i];
+    const TPoint2D kp = undistorted_keypoints[i];
     size_t pos_X, pos_Y;
     if (PosInGrid(kp, min_X, min_Y, grid_element_width_inv_, grid_element_height_inv_, pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);
@@ -96,18 +97,21 @@ void Features::AssignFeaturesToGrid(const precision_t & min_X,
   }
 }
 
-bool Features::PosInGrid(const KeyPoint & kp,
+bool Features::PosInGrid(const TPoint2D & kp,
                          const precision_t & min_X,
                          const precision_t & min_Y,
                          const precision_t & grid_element_width_inv_,
                          const precision_t & grid_element_height_inv_,
                          size_t & posX,
                          size_t & posY) const {
-  posX = round((kp.X() - min_X) * grid_element_width_inv_);
-  posY = round((kp.Y() - min_Y) * grid_element_height_inv_);
+  if(kp[0] < min_X || kp[1] < min_Y)
+    return false;
+
+  posX = round((kp[0] - min_X) * grid_element_width_inv_);
+  posY = round((kp[1] - min_Y) * grid_element_height_inv_);
 
   //Keypoint's coordinates are undistorted, which could cause to go out of the image
-  if (posX < 0 || posX >= constants::FRAME_GRID_COLS || posY < 0 || posY >= constants::FRAME_GRID_ROWS)
+  if (posX >= constants::FRAME_GRID_COLS || posY >= constants::FRAME_GRID_ROWS)
     return false;
 
   return true;

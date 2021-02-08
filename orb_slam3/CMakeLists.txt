@@ -39,6 +39,8 @@ add_library(orbslam SHARED
         src/map/key_point.cpp
 
         src/geometry/two_view_reconstructor.cpp
+        src/geometry/homography_matrix_estimator.cpp
+        src/geometry/fundamental_matrix_estimator.cpp
 
 
         include/typedefs.h
@@ -48,6 +50,9 @@ add_library(orbslam SHARED
         include/image_utils.h
 
         include/geometry/two_view_reconstructor.h
+        include/geometry/homography_matrix_estimator.h
+        include/geometry/transfromation_estimator_base.h
+        include/geometry/fundamental_matrix_estimator.h
 
         include/camera/monocular_camera.h
         include/camera/idistortion_model.h

@@ -45,7 +45,7 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
   }
 
   for (size_t i1 = 0; i1 < features1.Size(); i1++) {
-    const KeyPoint & kp1 = features1.undistorted_keypoints[i1];
+    const KeyPoint & kp1 = features1.keypoints[i1];
     int level1 = kp1.level;
     if (level1 > 0)
       continue;
@@ -99,7 +99,7 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
         nmatches++;
 
         if (check_orientation_) {
-          float rot = features1.undistorted_keypoints[i1].angle - features2.undistorted_keypoints[best_idx2].angle;
+          float rot = features1.keypoints[i1].angle - features2.keypoints[best_idx2].angle;
           if (rot < 0.0)
             rot += 360.0f;
           int bin = std::round(rot * factor);

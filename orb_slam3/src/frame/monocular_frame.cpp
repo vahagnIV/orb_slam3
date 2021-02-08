@@ -46,14 +46,14 @@ bool MonocularFrame::InitializePositionFromPrevious() {
                                                  camera_->GridElementHeightInv());
   std::vector<int> matched_features;
   int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
-  if (number_of_good_matches < 100)
+  if (number_of_good_matches < 50)
     return false;
 
   geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5);
   std::vector<TPoint3D> points;
   std::vector<bool> outliers;
-  reconstructor.Reconstruct(features_.keypoints,
-                            previous_frame->features_.keypoints,
+  reconstructor.Reconstruct(features_.undistorted_keypoints,
+                            previous_frame->features_.undistorted_keypoints,
                             matched_features,
                             pose_,
                             points,

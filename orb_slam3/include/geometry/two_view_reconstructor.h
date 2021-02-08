@@ -7,64 +7,28 @@
 
 #include <memory>
 #include <camera/monocular_camera.h>
+#include <geometry/fundamental_matrix_estimator.h>
+#include <geometry/homography_matrix_estimator.h>
 
 namespace orb_slam3 {
 namespace geometry {
 
 class TwoViewReconstructor {
+  typedef std::vector<std::pair<size_t, size_t>> pairs_t;
  public:
   TwoViewReconstructor(const std::shared_ptr<camera::MonocularCamera> & left,
                        const std::shared_ptr<camera::MonocularCamera> & right,
                        const unsigned number_of_ransac_iterations,
                        precision_t sigma_threshold = 1.0);
 
-  void Reconstruct(const std::vector<features::KeyPoint> & kp1,
-                   const std::vector<features::KeyPoint> & kp2,
+  void Reconstruct(const std::vector<TPoint2D> & kp1,
+                   const std::vector<TPoint2D> & kp2,
                    const std::vector<int> & matches12,
                    TPose & out_pose,
                    std::vector<TPoint3D> & out_points,
                    std::vector<bool> & out_outliers,
                    size_t number_of_matches) const;
  private:
-  void FindHomographyMatrix(const std::vector<features::KeyPoint> & kp1,
-                            const std::vector<features::KeyPoint> & kp2,
-                            const std::vector<std::pair<size_t, size_t>> & good_matches,
-                            const std::vector<size_t> & good_match_random_idx,
-                            TMatrix33 & out_homography) const;
-
-  precision_t ComputeHomographyReprojectionError(const TMatrix33 & homography,
-                                                 const std::vector<features::KeyPoint> & kp1,
-                                                 const std::vector<features::KeyPoint> & kp2,
-                                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                 std::vector<bool> & out_inliers) const;
-
-  void FindBestHomographyMatrix(const std::vector<features::KeyPoint> & kp1,
-                                const std::vector<features::KeyPoint> & kp2,
-                                const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                const std::vector<std::vector<size_t>> & good_match_random_idx,
-                                TMatrix33 & out_homography,
-                                std::vector<bool> & out_inliers,
-                                precision_t & out_error) const;
-
-  precision_t ComputeFundamentalReprojectionError(const TMatrix33 & homography,
-                                                  const std::vector<features::KeyPoint> & kp1,
-                                                  const std::vector<features::KeyPoint> & kp2,
-                                                  const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                  std::vector<bool> & out_inliers) const;
-
-  void FindFundamentalMatrix(const std::vector<features::KeyPoint> & kp1,
-                             const std::vector<features::KeyPoint> & kp2,
-                             const std::vector<std::pair<size_t, size_t>> & good_matches,
-                             const std::vector<size_t> & good_match_random_idx,
-                             TMatrix33 & out_fundamental) const;
-
-  void FindBestFundamentalMatrix(const std::vector<features::KeyPoint> & kp1,
-                                 const std::vector<features::KeyPoint> & kp2,
-                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
-                                 TMatrix33 & out_fundamental,
-                                 std::vector<bool> & out_inliers,
-                                 precision_t & out_error) const;
 
   void GenerateRandomSubset(size_t min,
                             size_t max,
@@ -79,15 +43,14 @@ class TwoViewReconstructor {
 
   void FilterGoodMatches(const std::vector<int> & matches12,
                          const size_t number_of_matches,
-                         std::vector<std::pair<size_t, size_t>> & out_good_matches) const;
+                         pairs_t & out_good_matches) const;
  private:
   const std::shared_ptr<camera::MonocularCamera> left_, right_;
   const unsigned number_of_ransac_iterations_;
-  const precision_t sigma_threshold_;
-  const precision_t sigma_squared_inv_;
-  static const precision_t FUNDAMENTAL_THRESHOLD;
-  static const precision_t HOMOGRAPHY_THRESHOLD;
-  static const precision_t FUNDAMENTAL_THRESHOLD_SCORE;
+  FundamentalMatrixEstimator fundamental_matrix_sstimator_;
+  HomographyMatrixEstimator homography_matrix_sstimator_;
+
+
 
 };
 
