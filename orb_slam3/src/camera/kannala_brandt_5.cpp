@@ -9,46 +9,39 @@ namespace camera {
 KannalaBrandt5::KannalaBrandt5(EstimateType * estimate) : IDistortionModel<5>(estimate) {
 }
 
-bool KannalaBrandt5::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) {
-  const double & k1 = (*estimate_)[4];
-  const double & k2 = (*estimate_)[5];
-  const double & p1 = (*estimate_)[6];
-  const double & p2 = (*estimate_)[7];
-  const double & k3 = (*estimate_)[8];
+bool KannalaBrandt5::DistortPoint(const TPoint3D & undistorted, TPoint3D & distorted) {
 
-  const double & x = undistorted[0];
-  const double & y = undistorted[1];
+  const Scalar & x = undistorted[0];
+  const Scalar & y = undistorted[1];
 
   double r2 = x * x + y * y;
   double r4 = r2 * r2;
   double r6 = r4 * r2;
 
-  double cdist = 1 + k1 * r2 + k2 * r4 + k3 * r6;
+  double cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
   double a1 = 2 * x * y;
 
-  distorted[0] = x * cdist + p1 * a1 + p2 * (r2 + 2 * x * x);
-  distorted[1] = y * cdist + p2 * a1 + p1 * (r2 + 2 * y * y);
+  distorted[0] = x * cdist + P1() * a1 + P2() * (r2 + 2 * x * x);
+  distorted[1] = y * cdist + P2() * a1 + P1() * (r2 + 2 * y * y);
+  distorted[2] = 1;
   return true;
 }
 
-bool KannalaBrandt5::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) {
-  const double & k1 = (*estimate_)[4];
-  const double & k2 = (*estimate_)[5];
-  const double & p1 = (*estimate_)[6];
-  const double & p2 = (*estimate_)[7];
-  const double & k3 = (*estimate_)[8];
+bool KannalaBrandt5::UnDistortPoint(const TPoint3D & distorted, TPoint3D & undistorted) {
+
   undistorted = distorted;
 
   Scalar & x = undistorted[0];
   Scalar & y = undistorted[1];
+  undistorted[2] = 1;
   precision_t x0 = x = distorted[0], y0 = y = distorted[1];
 
   // compensate distortion iteratively
   for (int j = 0; j < 50; j++) {
     double r2 = x * x + y * y;
-    double icdist = 1. / (1 + ((k3 * r2 + k2) * r2 + k1) * r2);
-    double deltaX = 2 * p1 * x * y + p2 * (r2 + 2 * x * x);
-    double deltaY = p1 * (r2 + 2 * y * y) + 2 * p2 * x * y;
+    double icdist = 1. / (1 + ((K3() * r2 + K2()) * r2 + K1()) * r2);
+    double deltaX = 2 * P1() * x * y + P2() * (r2 + 2 * x * x);
+    double deltaY = P1() * (r2 + 2 * y * y) + 2 * P2() * x * y;
     double xnew = (x0 - deltaX) * icdist;
     double ynew = (y0 - deltaY) * icdist;
     if(std::abs(x- xnew) < 1e-7 && std::abs(y- ynew) < 1e-7)
@@ -56,7 +49,7 @@ bool KannalaBrandt5::UnDistortPoint(const TPoint2D & distorted, TPoint2D & undis
     x = xnew;
     y = ynew;
   }
-  return true;
+  return false;
 }
 
 }

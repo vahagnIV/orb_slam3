@@ -9,34 +9,33 @@
 namespace orb_slam3 {
 namespace geometry {
 
-class HomographyMatrixEstimator: protected TransfromationEstimatorBase {
+class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   typedef std::vector<std::pair<size_t, size_t>> pairs_t;
  public:
-  HomographyMatrixEstimator(precision_t sigma): TransfromationEstimatorBase(sigma){}
+  HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
-  void FindBestHomographyMatrix(const std::vector<TPoint2D> & kp1,
-                                                           const std::vector<TPoint2D> & kp2,
-                                                           const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                           const std::vector<std::vector<size_t>> & good_match_random_idx,
-                                                           TMatrix33 & out_homography,
-                                                           std::vector<bool> & out_inliers,
-                                                           precision_t & out_error) const;
+  void FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
+                                const std::vector<TPoint3D> & kp2,
+                                const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                TMatrix33 & out_homography,
+                                std::vector<bool> & out_inliers,
+                                precision_t & out_error) const;
 
   precision_t ComputeHomographyReprojectionError(const TMatrix33 & h,
-                                                                            const std::vector<TPoint2D> & kp1,
-                                                                            const std::vector<TPoint2D> & kp2,
-                                                                            const pairs_t & good_matches,
-                                                                            std::vector<bool> & out_inliers,
-                                                                            bool inverse) const;
+                                                 const std::vector<TPoint3D> & kp1,
+                                                 const std::vector<TPoint3D> & kp2,
+                                                 const pairs_t & good_matches,
+                                                 std::vector<bool> & out_inliers,
+                                                 bool inverse) const;
 
-  void FindHomographyMatrix(const std::vector<TPoint2D> & kp1,
-                                                       const std::vector<TPoint2D> & kp2,
-                                                       const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                       const std::vector<size_t> & good_match_random_idx,
-                                                       TMatrix33 & out_homography) const;
+  void FindHomographyMatrix(const std::vector<TPoint3D> & kp1,
+                            const std::vector<TPoint3D> & kp2,
+                            const std::vector<std::pair<size_t, size_t>> & good_matches,
+                            const std::vector<size_t> & good_match_random_idx,
+                            TMatrix33 & out_homography) const;
  private:
   static const precision_t HOMOGRAPHY_THRESHOLD;
-
 
 };
 

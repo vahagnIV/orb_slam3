@@ -106,6 +106,9 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
    */
   bool UndistortPoint(TPoint2D & point, TPoint2D & undistorted_point) const;
   bool DistortPoint(TPoint2D & undistorted, TPoint2D & distorted) const;
+  void UnprojectPoint(TPoint2D & point, TPoint3D & unprojected) const;
+  void ProjectPoint(TPoint3D & point, TPoint2D & projected) const;
+  bool UnprojectAndUndistort(TPoint2D & point, TPoint3D & projected) const;
 
   inline const Scalar & Fx() const noexcept { return this->_estimate[0]; }
   inline const Scalar & Fy() const noexcept { return this->_estimate[1]; }

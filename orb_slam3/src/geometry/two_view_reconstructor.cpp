@@ -22,8 +22,8 @@ TwoViewReconstructor::TwoViewReconstructor(const std::shared_ptr<camera::Monocul
       homography_matrix_sstimator_(sigma_threshold){
 }
 
-void TwoViewReconstructor::Reconstruct(const std::vector<TPoint2D> & kp1,
-                                       const std::vector<TPoint2D> & kp2,
+void TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
+                                       const std::vector<TPoint3D> & kp2,
                                        const std::vector<int> & matches12,
                                        TPose & out_pose,
                                        std::vector<TPoint3D> & out_points,

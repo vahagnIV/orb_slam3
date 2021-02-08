@@ -18,10 +18,10 @@ class IDistortionModel {
       : estimate_(estimate) {}
 
 
-  virtual bool DistortPoint(const TPoint2D & undistorted,
-                            TPoint2D & distorted) = 0;
-  virtual bool UnDistortPoint(const TPoint2D & distorted,
-                              TPoint2D & undistorted) = 0;
+  virtual bool DistortPoint(const TPoint3D & undistorted,
+                            TPoint3D & distorted) = 0;
+  virtual bool UnDistortPoint(const TPoint3D & distorted,
+                              TPoint3D & undistorted) = 0;
   virtual ~IDistortionModel() = default;
  protected:
    EstimateType * estimate_;

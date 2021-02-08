@@ -72,8 +72,8 @@ void Features::ListFeaturesInArea(const precision_t & x,
               continue;
         }
 
-        const float distance_x = undistorted_keypoints[j][0] - x;
-        const float distance_y = undistorted_keypoints[j][1] - y;
+        const float distance_x = kpUn.pt[0] - x;
+        const float distance_y = kpUn.pt[1] - y;
 
         if (fabs(distance_x) < factorX && fabs(distance_y) < factorY)
           out_idx.push_back(vCell[j]);
@@ -89,7 +89,7 @@ void Features::AssignFeaturesToGrid(const precision_t & min_X,
                                     const precision_t & grid_element_height_inv_) {
 
   for (size_t i = 0; i < keypoints.size(); i++) {
-    const TPoint2D kp = undistorted_keypoints[i];
+    const TPoint2D & kp = keypoints[i].pt;
     size_t pos_X, pos_Y;
     if (PosInGrid(kp, min_X, min_Y, grid_element_width_inv_, grid_element_height_inv_, pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);

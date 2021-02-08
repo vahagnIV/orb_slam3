@@ -13,8 +13,8 @@ class KannalaBrandt5 : public IDistortionModel<5> {
  public:
   // IDistortion
   KannalaBrandt5(EstimateType * estimate);
-  bool DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) override;
-  bool UnDistortPoint(const TPoint2D & distorted, TPoint2D & undistorted) override;
+  bool DistortPoint(const TPoint3D & undistorted, TPoint3D & distorted) override;
+  bool UnDistortPoint(const TPoint3D & distorted, TPoint3D & undistorted) override;
 
  public:
   typedef std::decay<decltype(*estimate_)>::type::Scalar Scalar;

@@ -23,7 +23,7 @@ class Features {
  public:
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
-  std::vector<TPoint2D> undistorted_keypoints;
+  std::vector<TPoint3D> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
 
   size_t Size() const { return keypoints.size(); }
@@ -48,7 +48,7 @@ class Features {
   void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera) {
     undistorted_keypoints.resize(keypoints.size());
     for (size_t i = 0; i < undistorted_keypoints.size(); ++i) {
-      camera->UndistortPoint(keypoints[i].pt, undistorted_keypoints[i]);
+      camera->UnprojectAndUndistort(keypoints[i].pt, undistorted_keypoints[i]);
     }
   }
  private:

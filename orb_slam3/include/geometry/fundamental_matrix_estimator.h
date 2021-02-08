@@ -15,19 +15,19 @@ class FundamentalMatrixEstimator: protected TransfromationEstimatorBase {
   FundamentalMatrixEstimator(precision_t sigma): TransfromationEstimatorBase(sigma){}
 
   precision_t ComputeFundamentalReprojectionError(const TMatrix33 & homography,
-                                                  const std::vector<TPoint2D> & kp1,
-                                                  const std::vector<TPoint2D> & kp2,
+                                                  const std::vector<TPoint3D> & kp1,
+                                                  const std::vector<TPoint3D> & kp2,
                                                   const std::vector<std::pair<size_t, size_t>> & good_matches,
                                                   std::vector<bool> & out_inliers) const;
 
-  void FindFundamentalMatrix(const std::vector<TPoint2D> & kp1,
-                             const std::vector<TPoint2D> & kp2,
+  void FindFundamentalMatrix(const std::vector<TPoint3D> & kp1,
+                             const std::vector<TPoint3D> & kp2,
                              const pairs_t & good_matches,
                              const std::vector<size_t> & good_match_random_idx,
                              TMatrix33 & out_fundamental) const;
 
-  void FindBestFundamentalMatrix(const std::vector<TPoint2D> & kp1,
-                                 const std::vector<TPoint2D> & kp2,
+  void FindBestFundamentalMatrix(const std::vector<TPoint3D> & kp1,
+                                 const std::vector<TPoint3D> & kp2,
                                  const pairs_t & good_matches,
                                  const std::vector<std::vector<size_t>> & good_match_random_idx,
                                  TMatrix33 & out_fundamental,

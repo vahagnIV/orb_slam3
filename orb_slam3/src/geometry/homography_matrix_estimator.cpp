@@ -7,8 +7,8 @@ namespace orb_slam3 {
 namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
 
-void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoint2D> & kp1,
-                                                    const std::vector<TPoint2D> & kp2,
+void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
+                                                    const std::vector<TPoint3D> & kp2,
                                                     const std::vector<std::pair<size_t, size_t>> & good_matches,
                                                     const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                     TMatrix33 & out_homography,
@@ -34,8 +34,8 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoin
 }
 
 precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const TMatrix33 & h,
-                                                                     const std::vector<TPoint2D> & kp1,
-                                                                     const std::vector<TPoint2D> & kp2,
+                                                                     const std::vector<TPoint3D> & kp1,
+                                                                     const std::vector<TPoint3D> & kp2,
                                                                      const pairs_t & good_matches,
                                                                      std::vector<bool> & out_inliers,
                                                                      bool inverse) const {
@@ -44,15 +44,8 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
     if (!out_inliers[i])
       continue;
     const auto & match = good_matches[i];
-    TPoint3D point_from, point_to;
-
-    if (!inverse) {
-      point_from << kp2[match.second], 1;
-      point_to << kp1[match.first], 1;
-    } else {
-      point_to << kp2[match.second], 1;
-      point_from << kp1[match.first], 1;
-    }
+    const TPoint3D & point_from = inverse ? kp1[match.first] : kp2[match.second];
+    const TPoint3D & point_to = inverse ? kp2[match.second] : kp1[match.first];
 
     TPoint3D p21 = h * point_from;
     p21 /= p21[2];
@@ -68,8 +61,8 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
   return error;
 }
 
-void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<TPoint2D> & kp1,
-                                                const std::vector<TPoint2D> & kp2,
+void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<TPoint3D> & kp1,
+                                                const std::vector<TPoint3D> & kp2,
                                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
                                                 const std::vector<size_t> & good_match_random_idx,
                                                 TMatrix33 & out_homography) const {

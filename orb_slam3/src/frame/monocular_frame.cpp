@@ -19,8 +19,8 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
     camera_(camera) {
   feature_extractor_->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
-  features_.AssignFeaturesToGrid(camera_->ImageBoundMinX(),
-                                 camera_->ImageBoundMinY(),
+  features_.AssignFeaturesToGrid(0,
+                                 0,
                                  camera_->GridElementWidthInv(),
                                  camera_->GridElementHeightInv());
 }
@@ -40,8 +40,8 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   features::SecondNearestNeighborMatcher matcher(200,
                                                  0.9,
                                                  false,
-                                                 camera_->ImageBoundMinY(),
-                                                 camera_->ImageBoundMinY(),
+                                                 0,
+                                                 0,
                                                  camera_->GridElementWidthInv(),
                                                  camera_->GridElementHeightInv());
   std::vector<int> matched_features;

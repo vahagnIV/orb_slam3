@@ -8,62 +8,63 @@
 namespace orb_slam3 {
 namespace camera {
 
+void MonocularCamera::UnprojectPoint(TPoint2D & point, TPoint3D & unprojected) const {
+  unprojected << (point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_, 1;
+}
+
+void MonocularCamera::ProjectPoint(TPoint3D & point, TPoint2D & projected) const {
+  double z_inv = 1 / point[2];
+  projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy();
+}
+
+bool MonocularCamera::UnprojectAndUndistort(TPoint2D & point, TPoint3D & unprojected) const {
+  UnprojectPoint(point, unprojected);
+  return distortion_model_->UnDistortPoint(unprojected, unprojected);
+}
+
 TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {
 
-  const double & fx = this->_estimate[0];
-  const double & fy = this->_estimate[1];
-  const double & cx = this->_estimate[2];
-  const double & cy = this->_estimate[3];
+  // TODO: rethink definition
+  double z_inv = 1 / point3d[2];
+  TPoint3D distorted;
+  distortion_model_->DistortPoint(TPoint3D{point3d[0] * z_inv, point3d[2] * z_inv, 1}, distorted);
 
   TPoint2D result;
-  double z_inv = 1 / point3d[2];
-  double x = point3d[0] * z_inv;
-  double y = point3d[1] * z_inv;
-
-  distortion_model_->DistortPoint(TPoint2D{x, y}, result);
-
-  result[0] = result[0] * fx + cx;
-  result[1] = result[1] * fy + cy;
+  ProjectPoint(distorted, result);
   return result;
 }
 
 bool MonocularCamera::UndistortPoint(TPoint2D & point, TPoint2D & undistorted_point) const {
-  TPoint2D central{(point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_};
-  if(!distortion_model_->UnDistortPoint(central, undistorted_point))
+  TPoint3D unprojected, undistorted;
+  UnprojectPoint(point, unprojected);
+  if (!distortion_model_->UnDistortPoint(unprojected, undistorted))
     return false;
-  undistorted_point[0] = undistorted_point[0] * Fx() + Cx();
-  undistorted_point[1] = undistorted_point[1] * Fy() + Cy();
+  ProjectPoint(undistorted, undistorted_point);
   return true;
 }
 
 bool MonocularCamera::DistortPoint(TPoint2D & undistorted, TPoint2D & distorted) const {
-  TPoint2D central{(undistorted[0] - Cx()) * fx_inv_, (undistorted[1] - Cy()) * fy_inv_};
-  if(!distortion_model_->DistortPoint(central, distorted))
+  TPoint3D unprojected, distorted_3d;
+  UnprojectPoint(undistorted, unprojected);
+
+  if (!distortion_model_->DistortPoint(unprojected, distorted_3d))
     return false;
-  distorted[0] = distorted[0] * Fx() + Cx();
-  distorted[1] = distorted[1] * Fy() + Cy();
+  ProjectPoint(distorted_3d, distorted);
   return true;
 }
 
 void MonocularCamera::ComputeImageBounds() {
 
-  std::vector<TPoint2D> bounds(4), undistorted_bounds(4);
-  max_X_ = std::numeric_limits<decltype(max_X_)>::min();
-  min_X_ = std::numeric_limits<decltype(min_X_)>::max();
-  max_Y_ = std::numeric_limits<decltype(max_Y_)>::min();
-  min_Y_ = std::numeric_limits<decltype(min_Y_)>::max();
-  for (size_t i = 0; i < Width(); ++i) {
-    for (size_t j = 0; j < Height(); ++j) {
-      TPoint2D pt{i,j}, undistorted;
-      if(UndistortPoint(pt, undistorted))
-      {
-        max_X_ = std::max(max_X_, undistorted[0]);
-        max_Y_ = std::max(max_Y_, undistorted[1]);
-        min_X_ = std::min(min_X_, undistorted[0]);
-        min_Y_ = std::min(min_Y_, undistorted[1]);
-      }
-    }
-  }
+  TPoint2D top_left{0, 0}, top_right{width_ - 1, 0}, bottom_left{height_ - 1, 0}, bottom_right{width_ - 1, height_ - 1};
+  UndistortPoint(top_left, top_left);
+  UndistortPoint(top_right, top_right);
+  UndistortPoint(bottom_left, bottom_left);
+  UndistortPoint(bottom_right, bottom_right);
+
+  max_X_ = std::max(top_right[0], bottom_right[0]);
+  max_Y_ = std::max(bottom_left[1], bottom_right[1]);
+  min_X_ = std::min(top_right[0], top_left[0]);
+  min_Y_ = std::max(top_left[1], bottom_left[1]);
 
   grid_element_width_inv_ = constants::FRAME_GRID_COLS / (ImageBoundMaxX() - ImageBoundMinX());
   grid_element_height_inv_ = constants::FRAME_GRID_ROWS / (ImageBoundMaxY() - ImageBoundMinY());
