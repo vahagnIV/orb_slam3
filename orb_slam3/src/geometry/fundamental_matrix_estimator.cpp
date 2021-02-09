@@ -10,10 +10,10 @@ const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD = 3.841;
 const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD_SCORE = 5.991;
 
 precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(const TMatrix33 & f,
-                                                                      const std::vector<TPoint3D> & kp1,
-                                                                      const std::vector<TPoint3D> & kp2,
-                                                                      const pairs_t & good_matches,
-                                                                      std::vector<bool> & out_inliers) const {
+                                                                            const std::vector<TPoint3D> & kp1,
+                                                                            const std::vector<TPoint3D> & kp2,
+                                                                            const pairs_t & good_matches,
+                                                                            std::vector<bool> & out_inliers) const {
   precision_t error = 0;
   out_inliers.resize(good_matches.size(), true);
   std::fill(out_inliers.begin(), out_inliers.end(), true);
@@ -22,7 +22,6 @@ precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(cons
 
     const TPoint3D point_from = kp2[match.second];
     const TPoint3D point_to = kp1[match.first];
-
 
     TPoint3D f_from = f * point_from;
     TPoint3D to_f = point_to.transpose() * f;
@@ -44,10 +43,10 @@ precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(cons
 }
 
 void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<TPoint3D> & kp1,
-                                                 const std::vector<TPoint3D> & kp2,
-                                                 const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                 const std::vector<size_t> & good_match_random_idx,
-                                                 TMatrix33 & out_fundamental) const {
+                                                       const std::vector<TPoint3D> & kp2,
+                                                       const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                       const std::vector<size_t> & good_match_random_idx,
+                                                       TMatrix33 & out_fundamental) const {
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size(), Eigen::NoChange);
 
@@ -57,13 +56,13 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<TPoint3
 
     L(i, 0) = X[0] * U[0];
     L(i, 1) = X[0] * U[1];
-    L(i, 2) = X[0];
+    L(i, 2) = X[0] * U[2];
     L(i, 3) = X[1] * U[0];
     L(i, 4) = X[1] * U[1];
-    L(i, 5) = X[1];
-    L(i, 6) = U[0];
-    L(i, 7) = U[1];
-    L(i, 8) = 1;
+    L(i, 5) = X[1] * U[2];
+    L(i, 6) = X[2] * U[0];
+    L(i, 7) = X[2] * U[1];
+    L(i, 8) = X[2] * U[2];
 
   }
 
@@ -87,12 +86,12 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<TPoint3
 }
 
 void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<TPoint3D> & kp1,
-                                                     const std::vector<TPoint3D> & kp2,
-                                                     const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                     const std::vector<std::vector<size_t>> & good_match_random_idx,
-                                                     TMatrix33 & out_fundamental,
-                                                     std::vector<bool> & out_inliers,
-                                                     precision_t & out_error) const {
+                                                           const std::vector<TPoint3D> & kp2,
+                                                           const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                           const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                                           TMatrix33 & out_fundamental,
+                                                           std::vector<bool> & out_inliers,
+                                                           precision_t & out_error) const {
   out_error = std::numeric_limits<precision_t>::max();
   TMatrix33 tmp_fundamental;
   std::vector<bool> tmp_inliers;
@@ -108,7 +107,6 @@ void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<TPo
   }
 
 }
-
 
 }
 }
