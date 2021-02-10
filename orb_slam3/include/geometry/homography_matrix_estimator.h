@@ -16,7 +16,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
 
   void FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
                                 const std::vector<TPoint3D> & kp2,
-                                const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                const pairs_t & good_matches,
                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
                                 TMatrix33 & out_homography,
                                 std::vector<bool> & out_inliers,
@@ -34,6 +34,9 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             const std::vector<std::pair<size_t, size_t>> & good_matches,
                             const std::vector<size_t> & good_match_random_idx,
                             TMatrix33 & out_homography) const;
+
+  bool FindRTTransformation(const TMatrix33 & homography,
+                            TPose & out_pose) const;
  private:
   static const precision_t HOMOGRAPHY_THRESHOLD;
 

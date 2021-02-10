@@ -8,16 +8,23 @@
 namespace orb_slam3 {
 namespace features {
 
+Features::Features(size_t image_width, size_t image_height)
+    : image_width_(image_width), image_height_(image_height), grid_element_width_inv_(
+    static_cast<precision_t >(constants::FRAME_GRID_COLS) / image_width), grid_element_height_inv_(
+    static_cast<precision_t >(constants::FRAME_GRID_ROWS) / image_height) {
+
+}
+
 void Features::ListFeaturesInArea(const precision_t & x,
                                   const precision_t & y,
                                   const size_t & window_size,
                                   const precision_t & minLevel,
                                   const precision_t & maxLevel,
-                                  const precision_t & min_X,
-                                  const precision_t & min_Y,
-                                  const precision_t & grid_element_width_inv,
-                                  const precision_t & grid_element_height_inv,
                                   std::vector<size_t> & out_idx) const {
+
+
+  const precision_t min_X = 0;
+  const precision_t min_Y = 0;
 
   out_idx.reserve(keypoints.size());
 
@@ -28,27 +35,27 @@ void Features::ListFeaturesInArea(const precision_t & x,
   cout << "fY " << factorY << endl;*/
 
   const size_t nMinCellX =
-      std::max(0, (int) floor((x - min_X - factorX) * grid_element_width_inv));
+      std::max(0, (int) floor((x - min_X - factorX) * grid_element_width_inv_));
   if (nMinCellX >= constants::FRAME_GRID_COLS) {
     return;
   }
 
   const int nMaxCellX =
       std::min((int) constants::FRAME_GRID_COLS - 1,
-               (int) ceil((x - min_X + factorX) * grid_element_width_inv));
+               (int) ceil((x - min_X + factorX) * grid_element_width_inv_));
   if (nMaxCellX < 0) {
     return;
   }
 
   const size_t nMinCellY =
-      std::max(0, (int) floor((y - min_Y - factorY) * grid_element_height_inv));
+      std::max(0, (int) floor((y - min_Y - factorY) * grid_element_height_inv_));
   if (nMinCellY >= constants::FRAME_GRID_ROWS) {
     return;
   }
 
   const int nMaxCellY =
       std::min((int) constants::FRAME_GRID_ROWS - 1,
-               (int) ceil((y - min_Y + factorY) * grid_element_height_inv));
+               (int) ceil((y - min_Y + factorY) * grid_element_height_inv_));
   if (nMaxCellY < 0) {
     return;
   }
@@ -83,15 +90,14 @@ void Features::ListFeaturesInArea(const precision_t & x,
 
 }
 
-void Features::AssignFeaturesToGrid(const precision_t & min_X,
-                                    const precision_t & min_Y,
-                                    const precision_t & grid_element_width_inv_,
-                                    const precision_t & grid_element_height_inv_) {
+void Features::AssignFeaturesToGrid() {
+  const precision_t min_X = 0;
+  const precision_t min_Y = 0;
 
   for (size_t i = 0; i < keypoints.size(); i++) {
     const TPoint2D & kp = keypoints[i].pt;
     size_t pos_X, pos_Y;
-    if (PosInGrid(kp, min_X, min_Y, grid_element_width_inv_, grid_element_height_inv_, pos_X, pos_Y)) {
+    if (PosInGrid(kp, min_X, min_Y, pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);
     }
   }
@@ -100,11 +106,9 @@ void Features::AssignFeaturesToGrid(const precision_t & min_X,
 bool Features::PosInGrid(const TPoint2D & kp,
                          const precision_t & min_X,
                          const precision_t & min_Y,
-                         const precision_t & grid_element_width_inv_,
-                         const precision_t & grid_element_height_inv_,
                          size_t & posX,
                          size_t & posY) const {
-  if(kp[0] < min_X || kp[1] < min_Y)
+  if (kp[0] < min_X || kp[1] < min_Y)
     return false;
 
   posX = round((kp[0] - min_X) * grid_element_width_inv_);

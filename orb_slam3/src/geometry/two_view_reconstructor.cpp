@@ -41,7 +41,7 @@ void TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
   fundamental_matrix_estimator_.FindBestFundamentalMatrix(kp1, kp2, pre_matches, random_match_subset_idx, fundamental, fundamental_inliers, f_error);
   homography_matrix_sstimator_.FindBestHomographyMatrix(kp1, kp2, pre_matches, random_match_subset_idx, homography, homography_inliers, h_error);
   if (f_error > h_error) {
-    int x = 9;
+    homography_matrix_sstimator_.FindRTTransformation(homography, out_pose);
   } else {
     int y = 10;
   }

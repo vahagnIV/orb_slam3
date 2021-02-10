@@ -7,13 +7,31 @@ namespace orb_slam3 {
 namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
 
+bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homography,
+                                                     TPose & out_pose) const {
+
+  Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
+  const precision_t d1 = svd.singularValues()[0];
+  const precision_t d2 = svd.singularValues()[1];
+  const precision_t d3 = svd.singularValues()[2];
+
+  if (d1 / d2 < 1.0001 || d2 / d3 < 1.0001)
+    return false;
+
+  precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
+  precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
+//  precision_t sin_theta = std::sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3) / (d1 + d3) / d2);
+//  precision_t cos_theta = (d2 * d2 - d1 * d3) / (d1 + d3) / d2;
+
+}
+
 void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
-                                                    const std::vector<TPoint3D> & kp2,
-                                                    const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                    const std::vector<std::vector<size_t>> & good_match_random_idx,
-                                                    TMatrix33 & out_homography,
-                                                    std::vector<bool> & out_inliers,
-                                                    precision_t & out_error) const {
+                                                         const std::vector<TPoint3D> & kp2,
+                                                         const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                         const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                                         TMatrix33 & out_homography,
+                                                         std::vector<bool> & out_inliers,
+                                                         precision_t & out_error) const {
   out_error = std::numeric_limits<precision_t>::max();
   TMatrix33 tmp_homography;
 
@@ -34,11 +52,11 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoin
 }
 
 precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const TMatrix33 & h,
-                                                                     const std::vector<TPoint3D> & kp1,
-                                                                     const std::vector<TPoint3D> & kp2,
-                                                                     const pairs_t & good_matches,
-                                                                     std::vector<bool> & out_inliers,
-                                                                     bool inverse) const {
+                                                                          const std::vector<TPoint3D> & kp1,
+                                                                          const std::vector<TPoint3D> & kp2,
+                                                                          const pairs_t & good_matches,
+                                                                          std::vector<bool> & out_inliers,
+                                                                          bool inverse) const {
   precision_t error = 0;
   for (size_t i = 0; i < good_matches.size(); ++i) {
     if (!out_inliers[i])
@@ -50,7 +68,7 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
     TPoint3D p21 = h * point_from;
     p21 /= p21[2];
     precision_t chi_square2 =
-        ((p21[0] - point_from[0]) * (p21[0] - point_from[0]) + (p21[1] - point_from[1]) * (p21[1] - point_from[1]))
+        ((p21[0] - point_to[0]) * (p21[0] - point_to[0]) + (p21[1] - point_to[1]) * (p21[1] - point_to[1]))
             * sigma_squared_inv_;
 
     if (chi_square2 > HOMOGRAPHY_THRESHOLD) {
@@ -62,10 +80,10 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
 }
 
 void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<TPoint3D> & kp1,
-                                                const std::vector<TPoint3D> & kp2,
-                                                const std::vector<std::pair<size_t, size_t>> & good_matches,
-                                                const std::vector<size_t> & good_match_random_idx,
-                                                TMatrix33 & out_homography) const {
+                                                     const std::vector<TPoint3D> & kp2,
+                                                     const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                     const std::vector<size_t> & good_match_random_idx,
+                                                     TMatrix33 & out_homography) const {
 
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size() * 2, Eigen::NoChange);

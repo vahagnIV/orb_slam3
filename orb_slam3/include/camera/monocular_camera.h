@@ -89,8 +89,6 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
   inline const precision_t & ImageBoundMinY() const { return min_Y_; }
   inline const precision_t & ImageBoundMaxX() const { return max_X_; }
   inline const precision_t & ImageBoundMaxY() const { return max_Y_; }
-  inline const precision_t & GridElementWidthInv() const { return grid_element_width_inv_; }
-  inline const precision_t & GridElementHeightInv() const { return grid_element_height_inv_; }
 
   /*!
    * Projects a 3D point on the image plane using the camera model
@@ -142,7 +140,6 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
   unsigned width_;
   unsigned height_;
   double min_X_, max_X_, min_Y_, max_Y_;
-  double grid_element_width_inv_, grid_element_height_inv_;
   double fx_inv_, fy_inv_;
   IDistortionModel<DISTORTION_MODEL_PARAMS> * distortion_model_;
 

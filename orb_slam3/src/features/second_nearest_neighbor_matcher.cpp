@@ -13,18 +13,10 @@ const int SecondNearestNeighborMatcher::HISTO_LENGTH = 30;
 
 SecondNearestNeighborMatcher::SecondNearestNeighborMatcher(const size_t window_size,
                                                            const precision_t nearest_neighbour_ratio,
-                                                           const bool check_orientation,
-                                                           const precision_t min_X,
-                                                           const precision_t min_Y,
-                                                           const precision_t grid_element_width_inv,
-                                                           const precision_t grid_element_height_inv)
+                                                           const bool check_orientation)
     : window_size_(window_size),
       nearest_neighbour_ratio_(nearest_neighbour_ratio),
-      check_orientation_(check_orientation),
-      min_X_(min_X),
-      min_Y_(min_Y),
-      grid_element_width_inv_(grid_element_width_inv),
-      grid_element_height_inv_(grid_element_height_inv) {
+      check_orientation_(check_orientation){
 }
 
 int SecondNearestNeighborMatcher::Match(const features::Features & features1,
@@ -56,10 +48,6 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
                                  window_size_,
                                  level1,
                                  level1,
-                                 min_X_,
-                                 min_Y_,
-                                 grid_element_width_inv_,
-                                 grid_element_height_inv_,
                                  f2_indices_in_window);
 
     if (f2_indices_in_window.empty())

@@ -15,14 +15,11 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                feature_extractor,
                                const std::shared_ptr<camera::MonocularCamera> & camera) :
     FrameBase(timestamp,
-              feature_extractor),
+              feature_extractor),features_(camera->Width(), camera->Height()),
     camera_(camera) {
   feature_extractor_->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
-  features_.AssignFeaturesToGrid(0,
-                                 0,
-                                 camera_->GridElementWidthInv(),
-                                 camera_->GridElementHeightInv());
+  features_.AssignFeaturesToGrid();
 }
 
 bool MonocularFrame::IsValid() const {
@@ -39,11 +36,7 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   MonocularFrame * previous_frame = dynamic_cast<MonocularFrame *>(previous_frame_.get());
   features::SecondNearestNeighborMatcher matcher(200,
                                                  0.9,
-                                                 false,
-                                                 0,
-                                                 0,
-                                                 camera_->GridElementWidthInv(),
-                                                 camera_->GridElementHeightInv());
+                                                 false);
   std::vector<int> matched_features;
   int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
   if (number_of_good_matches < 50)

@@ -21,6 +21,8 @@ typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> 
 
 class Features {
  public:
+  Features(size_t image_width, size_t image_height);
+
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
   std::vector<TPoint3D> undistorted_keypoints;
@@ -33,17 +35,9 @@ class Features {
                           const size_t & window_size,
                           const precision_t & minLevel,
                           const precision_t & maxLevel,
-                          const precision_t & min_X,
-                          const precision_t & min_Y,
-                          const precision_t & grid_element_width_inv,
-                          const precision_t & grid_element_height_inv,
                           std::vector<size_t> & out_idx) const;
 
-  void AssignFeaturesToGrid(const precision_t & min_X,
-                            const precision_t & min_Y,
-                            const precision_t & grid_element_width_inv_,
-                            const precision_t & grid_element_height_inv_);
-
+  void AssignFeaturesToGrid();
 
   void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera) {
     undistorted_keypoints.resize(keypoints.size());
@@ -55,10 +49,14 @@ class Features {
   bool PosInGrid(const TPoint2D & kp,
                  const precision_t & min_X,
                  const precision_t & min_Y,
-                 const precision_t & grid_element_width_inv_,
-                 const precision_t & grid_element_height_inv_,
                  size_t & posX,
                  size_t & posY) const;
+
+ private:
+  const size_t image_width_;
+  const size_t image_height_;
+  const precision_t grid_element_width_inv_;
+  const precision_t grid_element_height_inv_;
 
 };
 

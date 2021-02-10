@@ -14,11 +14,7 @@ class SecondNearestNeighborMatcher : public IMatcher {
  public:
   SecondNearestNeighborMatcher(const size_t window_size,
                 const precision_t nearest_neighbour_ratio,
-                const bool check_orientation,
-                const precision_t min_X,
-                const precision_t min_Y,
-                const precision_t grid_element_width_inv,
-                const precision_t grid_element_height_inv);
+                const bool check_orientation);
 
   int Match(const features::Features & features1,
             const features::Features & features2,
@@ -36,10 +32,6 @@ class SecondNearestNeighborMatcher : public IMatcher {
   const size_t window_size_;
   const precision_t nearest_neighbour_ratio_;
   const bool check_orientation_;
-  const precision_t min_X_;
-  const precision_t min_Y_;
-  const precision_t grid_element_width_inv_;
-  const precision_t grid_element_height_inv_;
 
 };
 

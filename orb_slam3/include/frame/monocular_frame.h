@@ -24,8 +24,8 @@ class MonocularFrame : public FrameBase {
   bool InitializePositionFromPrevious() override;
 
  protected:
-  const std::shared_ptr<camera::MonocularCamera> camera_;
   features::Features features_;
+  const std::shared_ptr<camera::MonocularCamera> camera_;
 };
 
 }

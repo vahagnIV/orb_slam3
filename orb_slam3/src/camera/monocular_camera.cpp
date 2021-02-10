@@ -54,7 +54,6 @@ bool MonocularCamera::DistortPoint(TPoint2D & undistorted, TPoint2D & distorted)
 }
 
 void MonocularCamera::ComputeImageBounds() {
-
   TPoint2D top_left{0, 0}, top_right{width_ - 1, 0}, bottom_left{height_ - 1, 0}, bottom_right{width_ - 1, height_ - 1};
   UndistortPoint(top_left, top_left);
   UndistortPoint(top_right, top_right);
@@ -65,9 +64,6 @@ void MonocularCamera::ComputeImageBounds() {
   max_Y_ = std::max(bottom_left[1], bottom_right[1]);
   min_X_ = std::min(top_right[0], top_left[0]);
   min_Y_ = std::max(top_left[1], bottom_left[1]);
-
-  grid_element_width_inv_ = constants::FRAME_GRID_COLS / (ImageBoundMaxX() - ImageBoundMinX());
-  grid_element_height_inv_ = constants::FRAME_GRID_ROWS / (ImageBoundMaxY() - ImageBoundMinY());
 }
 
 }
