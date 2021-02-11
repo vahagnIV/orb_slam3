@@ -19,7 +19,7 @@ typedef Eigen::Matrix<precision_t , Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMa
 typedef Eigen::Matrix<precision_t, 3, 1 > TPoint3D;
 typedef Eigen::Matrix<precision_t, 2, 1 > TPoint2D;
 
-typedef Eigen::Matrix<precision_t, 3, 1> T3DVector;
+typedef Eigen::Matrix<precision_t, 3, 1> TVector3D;
 typedef Eigen::Matrix<precision_t, 2, 1> T2DVector;
 
 typedef Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> TPose;

@@ -38,6 +38,26 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   bool FindRTTransformation(const TMatrix33 & homography,
                             TPose & out_pose) const;
  private:
+  typedef struct {
+    TMatrix33 R;
+    TVector3D T;
+    TVector3D n;
+  } Solution;
+  void FillSolutionsForPositiveD(precision_t d1,
+                                 precision_t d2,
+                                 precision_t d3,
+                                 const TMatrix33 & U,
+                                 const TMatrix33 & VT,
+                                 Solution solution[4],
+                                 precision_t s  ) const;
+  void FillSolutionsForNegativeD(precision_t d1,
+                                 precision_t d2,
+                                 precision_t d3,
+                                 const TMatrix33 & U,
+                                 const TMatrix33 & VT,
+                                 Solution solution[4],
+                                 precision_t s) const;
+
   static const precision_t HOMOGRAPHY_THRESHOLD;
 
 };

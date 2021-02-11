@@ -3,6 +3,7 @@
 //
 
 #include <geometry/homography_matrix_estimator.h>
+#include <iostream>
 namespace orb_slam3 {
 namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
@@ -18,11 +19,107 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   if (d1 / d2 < 1.0001 || d2 / d3 < 1.0001)
     return false;
 
+  const TMatrix33 & U = svd.matrixU();
+  const TMatrix33 VT = svd.matrixV().transpose();
+  precision_t s = U.determinant() * VT.determinant();
+
+  Solution solution1[4];
+  Solution solution2[4];
+  FillSolutionsForPositiveD(d1, d2, d3, U, VT, solution1, s);
+  FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution2, s);
+
+  for (int j = 0; j < 4; ++j) {
+    const Solution & sol = solution1[j];
+    std::cout << " ========= Solution " << j << " ========" << std::endl;
+    std::cout << "Determinant R: " << sol.R.determinant() << std::endl;
+
+    TPoint3D probe{100., 100., 100.};
+    probe = probe * d2 / probe.dot(sol.n);
+
+    TPoint3D transormed = sol.R * probe + sol.T;
+    std::cout << "Transformed " << transormed[0] << " " << transormed[1] << " " << transormed[2] << std::endl;
+    std::cout << "Transformed projection " << transormed[0] / transormed[2] << " " << transormed[1] / transormed[2]
+              << std::endl;
+    std::cout << "Satisfies visibility contraint " << (transormed[2] > 0 ? "true" : "false") << std::endl;
+    std::cout << "R " << std::endl << sol.R << std::endl;
+    std::cout << "T " << std::endl << sol.T << std::endl;
+    std::cout << "n " << std::endl << sol.n << std::endl << std::endl;
+
+  }
+  for (int j = 0; j < 4; ++j) {
+    const Solution & sol = solution2[j];
+    std::cout << " ========= Solution " << j << " ========" << std::endl;
+    std::cout << "Determinant R: " << sol.R.determinant() << std::endl;
+
+    TPoint3D probe{100., 100., 100.};
+    probe = probe * d2 / probe.dot(sol.n);
+
+    TPoint3D transormed = sol.R * probe + sol.T;
+    std::cout << "Transformed " << transormed[0] << " " << transormed[1] << " " << transormed[2] << std::endl;
+    std::cout << "Transformed projection " << transormed[0] / transormed[2] << " " << transormed[1] / transormed[2]
+              << std::endl;
+    std::cout << "Satisfies visibility contraint " << (transormed[2] > 0 ? "true" : "false") << std::endl;
+    std::cout << "R " << std::endl << sol.R << std::endl;
+    std::cout << "T " << std::endl << sol.T << std::endl;
+    std::cout << "n " << std::endl << sol.n << std::endl << std::endl;
+
+  }
+  return true;
+
+}
+
+void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
+                                                          precision_t d2,
+                                                          precision_t d3,
+                                                          const TMatrix33 & U,
+                                                          const TMatrix33 & VT,
+                                                          HomographyMatrixEstimator::Solution * solution,
+                                                          precision_t s) const {
   precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
   precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
-//  precision_t sin_theta = std::sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3) / (d1 + d3) / d2);
-//  precision_t cos_theta = (d2 * d2 - d1 * d3) / (d1 + d3) / d2;
+  precision_t sin_theta = std::sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / (d1 + d3) / d2;
+  precision_t cos_theta = (d2 * d2 + d1 * d3) / (d1 + d3) / d2;
+  static precision_t epsilon[4][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+  for (int i = 0; i < 4; ++i) {
+    precision_t epsilon_1 = epsilon[i][0];
+    precision_t epsilon_3 = epsilon[i][1];
+    precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
+    Solution & sol = solution[i];
+    sol.R << cos_theta, 0, -signed_sin, 0, 1, 0, signed_sin, 0, cos_theta;
+    sol.T << (d1 - d3) * epsilon_1 * x1, 0, (d1 - d3) * epsilon_3 * x3;
+    sol.n << epsilon_1 * x1, 0, epsilon_3 * x3;
 
+    sol.R = s * U * sol.R * VT;
+    sol.T = U * sol.T;
+    sol.n = VT.transpose() * sol.n;
+  }
+}
+
+void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
+                                                          precision_t d2,
+                                                          precision_t d3,
+                                                          const TMatrix33 & U,
+                                                          const TMatrix33 & VT,
+                                                          HomographyMatrixEstimator::Solution * solution,
+                                                          precision_t s) const {
+
+  precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
+  precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
+  precision_t sin_theta = std::sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / (d1 - d3) / d2;
+  precision_t cos_theta = (d1 * d3 - d2 * d2) / (d1 - d3) / d2;
+  static precision_t epsilon[4][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+  for (int i = 0; i < 4; ++i) {
+    precision_t epsilon_1 = epsilon[i][0];
+    precision_t epsilon_3 = epsilon[i][1];
+    precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
+    Solution & sol = solution[i];
+    sol.R << cos_theta, 0, signed_sin, 0, -1, 0, signed_sin, 0, -cos_theta;
+    sol.T << (d1 + d3) * epsilon_1 * x1, 0, (d1 + d3) * epsilon_3 * x3;
+    sol.n << epsilon_1 * x1, 0, epsilon_3 * x3;
+    sol.R = s * U * sol.R * VT;
+    sol.T = U * sol.T;
+    sol.n = VT.transpose() * sol.n;
+  }
 }
 
 void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,

@@ -148,7 +148,7 @@ void TestMonocular(std::string original) {
   camera->SetFy(190.9733070521226);
   camera->SetCx(254.93170605935475);
   camera->SetCy(256.8974428996504);
-  distortion->SetK1(0.3);
+  distortion->SetK1(3);
 //  distortion->SetK1(0.0034823894022493434);
   distortion->SetK2(0.0007150348452162257);
   distortion->SetK3(-0.0020532361418706202);
@@ -156,11 +156,28 @@ void TestMonocular(std::string original) {
 
   camera->ComputeImageBounds();
 
-  orb_slam3::TPoint2D point{7.7, 9.9}, undistorted, distorted;
+  /*orb_slam3::TPoint2D point{7.7, 9.9}, undistorted, distorted;
   camera->DistortPoint(point, distorted);
   camera->UndistortPoint(distorted, undistorted);
   std::cout << "Undistorted: \n" << undistorted << std::endl;
   std::cout << "Distorted: \n" << distorted << std::endl;
+
+  cv::Mat distCoeffs(5,1,CV_32F);
+  distCoeffs.at<float>(0) = distortion->K1();
+  distCoeffs.at<float>(1) = distortion->K2();
+  distCoeffs.at<float>(2) = distortion->P1();
+  distCoeffs.at<float>(3) = distortion->P1();
+  distCoeffs.at<float>(4) = distortion->K3();
+  cv::Mat cammat = cv::Mat::zeros(3,3,CV_32F);
+  cammat.at<float>(0,0) = camera->Fx();
+  cammat.at<float>(1,1) = camera->Fy();
+  cammat.at<float>(0,2) = camera->Cx();
+  cammat.at<float>(1,2) = camera->Cy();
+  cammat.at<float>(2,2) = 1;
+  cv::Mat originalcv(1,1, CV_32FC2), undistortedcv;
+  originalcv.at<cv::Point2f>(0) = cv::Point2f(distorted[0],distorted[1]);
+  cv::undistortPoints(originalcv,undistortedcv, cammat, distCoeffs,cv::Mat(), cammat);
+  std::cout << undistortedcv<<std::endl;*/
 
   size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
