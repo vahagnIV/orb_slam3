@@ -9,6 +9,11 @@ namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
 
 bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homography,
+                                                     const std::vector<TPoint3D> & kp1,
+                                                     const std::vector<TPoint3D> & kp2,
+                                                     const pairs_t & good_matches,
+                                                     const std::vector<bool> & out_inliers,
+                                                     std::vector<TPoint3D> & out_triangulated,
                                                      TPose & out_pose) const {
 
   Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
@@ -23,13 +28,17 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   const TMatrix33 VT = svd.matrixV().transpose();
   precision_t s = U.determinant() * VT.determinant();
 
-  Solution solution1[4];
-  Solution solution2[4];
-  FillSolutionsForPositiveD(d1, d2, d3, U, VT, solution1, s);
-  FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution2, s);
+  Solution solution[8];
+  FillSolutionsForPositiveD(d1, d2, d3, U, VT, solution, s);
+  FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution + 4, s);
+  std::vector<TPoint3D> tmp_triangulated;
+  for (const Solution & sol: solution) {
+    int no_good = CheckRT(sol, kp1, kp2, good_matches, out_inliers, tmp_triangulated);
+
+  }
 
   for (int j = 0; j < 4; ++j) {
-    const Solution & sol = solution1[j];
+    const Solution & sol = solution[j];
     std::cout << " ========= Solution " << j << " ========" << std::endl;
     std::cout << "Determinant R: " << sol.R.determinant() << std::endl;
 
@@ -44,10 +53,10 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
     std::cout << "R " << std::endl << sol.R << std::endl;
     std::cout << "T " << std::endl << sol.T << std::endl;
     std::cout << "n " << std::endl << sol.n << std::endl << std::endl;
-
   }
+
   for (int j = 0; j < 4; ++j) {
-    const Solution & sol = solution2[j];
+    const Solution & sol = solution[j + 4];
     std::cout << " ========= Solution " << j << " ========" << std::endl;
     std::cout << "Determinant R: " << sol.R.determinant() << std::endl;
 
@@ -124,7 +133,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
 
 void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
                                                          const std::vector<TPoint3D> & kp2,
-                                                         const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                         const pairs_t & good_matches,
                                                          const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                          TMatrix33 & out_homography,
                                                          std::vector<bool> & out_inliers,
@@ -159,8 +168,8 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
     if (!out_inliers[i])
       continue;
     const auto & match = good_matches[i];
-    const TPoint3D & point_from = inverse ? kp1[match.first] : kp2[match.second];
-    const TPoint3D & point_to = inverse ? kp2[match.second] : kp1[match.first];
+    const TPoint3D & point_from = (inverse ? kp1[match.first] : kp2[match.second]);
+    const TPoint3D & point_to = (inverse ? kp2[match.second] : kp1[match.first]);
 
     TPoint3D p21 = h * point_from;
     p21 /= p21[2];
@@ -221,6 +230,24 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<TPoint3D>
       v(6, 8), v(7, 8), v(8, 8);
   out_homography /= out_homography(2, 2);
 
+}
+
+int HomographyMatrixEstimator::CheckRT(const Solution & solution,
+                                       const std::vector<TPoint3D> & kp1,
+                                       const std::vector<TPoint3D> & kp2,
+                                       const HomographyMatrixEstimator::pairs_t & good_matches,
+                                       const std::vector<bool> & inliers,
+                                       std::vector<TPoint3D> & trinagulated) const {
+
+  for (size_t i = 0; i < good_matches.size(); ++i) {
+    if (!inliers[i])
+      continue;
+    const auto & match = good_matches[i];
+    TPoint3D transformed = solution.R * kp2[match.second] + solution.T;
+
+
+  }
+  return 0;
 }
 
 }

@@ -11,6 +11,11 @@ namespace geometry {
 
 class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   typedef std::vector<std::pair<size_t, size_t>> pairs_t;
+  typedef struct {
+    TMatrix33 R;
+    TVector3D T;
+    TVector3D n;
+  } Solution;
  public:
   HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
@@ -36,7 +41,19 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             TMatrix33 & out_homography) const;
 
   bool FindRTTransformation(const TMatrix33 & homography,
+                            const std::vector<TPoint3D> & kp1,
+                            const std::vector<TPoint3D> & kp2,
+                            const pairs_t & good_matches,
+                            const std::vector<bool> & out_inliers,
+                            std::vector<TPoint3D> & out_triangulated,
                             TPose & out_pose) const;
+
+  int CheckRT(const Solution & solution,
+              const std::vector<TPoint3D> & kp1,
+              const std::vector<TPoint3D> & kp2,
+              const pairs_t & good_matches,
+              const std::vector<bool> & inliers,
+              std::vector<TPoint3D> & trinagulated) const;
  private:
   typedef struct {
     TMatrix33 R;
@@ -49,7 +66,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                  const TMatrix33 & U,
                                  const TMatrix33 & VT,
                                  Solution solution[4],
-                                 precision_t s  ) const;
+                                 precision_t s) const;
   void FillSolutionsForNegativeD(precision_t d1,
                                  precision_t d2,
                                  precision_t d3,
