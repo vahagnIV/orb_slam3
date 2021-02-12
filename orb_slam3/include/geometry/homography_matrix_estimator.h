@@ -55,11 +55,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
               const std::vector<bool> & inliers,
               std::vector<TPoint3D> & trinagulated) const;
  private:
-  typedef struct {
-    TMatrix33 R;
-    TVector3D T;
-    TVector3D n;
-  } Solution;
+
   void FillSolutionsForPositiveD(precision_t d1,
                                  precision_t d2,
                                  precision_t d3,
