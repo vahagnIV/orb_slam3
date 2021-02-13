@@ -4,6 +4,7 @@
 
 #include <geometry/homography_matrix_estimator.h>
 #include <iostream>
+#include <math.h>
 namespace orb_slam3 {
 namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
@@ -236,16 +237,21 @@ int HomographyMatrixEstimator::CheckRT(const Solution & solution,
                                        const std::vector<TPoint3D> & kp1,
                                        const std::vector<TPoint3D> & kp2,
                                        const HomographyMatrixEstimator::pairs_t & good_matches,
-                                       const std::vector<bool> & inliers,
+                                       std::vector<bool> & inliers,
                                        std::vector<TPoint3D> & trinagulated) const {
 
   for (size_t i = 0; i < good_matches.size(); ++i) {
+
     if (!inliers[i])
       continue;
     const auto & match = good_matches[i];
-    TPoint3D trinagulated;
-    if(Triangulate(solution, kp1[good_matches[i].first], kp2[good_matches[i].second], trinagulated)){
-      int m = 10;
+    TPoint3D triangulated;
+    if(Triangulate(solution, kp1[good_matches[i].first], kp2[good_matches[i].second], triangulated)){
+      if(!std::isfinite(triangulated[0]) || !std::isfinite(triangulated[1]) || !std::isfinite(triangulated[2])) {
+        inliers[i] = false;
+        continue;
+      }
+
     }
   }
   return 0;
