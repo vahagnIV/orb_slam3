@@ -244,7 +244,7 @@ int HomographyMatrixEstimator::CheckRT(const Solution & solution,
       continue;
     const auto & match = good_matches[i];
     TPoint3D trinagulated;
-    if(Triangulate(solution, kp1[good_matches[i].first], kp1[good_matches[i].second], trinagulated)){
+    if(Triangulate(solution, kp1[good_matches[i].first], kp2[good_matches[i].second], trinagulated)){
       int m = 10;
     }
   }
