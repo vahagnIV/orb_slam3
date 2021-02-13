@@ -243,11 +243,59 @@ int HomographyMatrixEstimator::CheckRT(const Solution & solution,
     if (!inliers[i])
       continue;
     const auto & match = good_matches[i];
-    TPoint3D transformed = solution.R * kp2[match.second] + solution.T;
-
-
+    TPoint3D trinagulated;
+    if(Triangulate(solution, kp1[good_matches[i].first], kp1[good_matches[i].second], trinagulated)){
+      int m = 10;
+    }
   }
   return 0;
+}
+
+/*
+ * Zisserman 12.2 Linear triangulation methods p. 312
+ * The preojection of a 3D point X = (X,Y,Z,1) is given by a 3x4 projection matrix P, i.e. pt =~ PX,
+ * where =~ means the projective equality. To eliminatie the multiplier we can rewrite the equation as
+ * a vector product pt x PX = 0. This is an overdetermined set of 3 equations.
+ *
+ * For pt1 the matrix P reads
+ * 1 0 0 0
+ * 0 1 0 0
+ * 0 0 1 0
+ *
+ * while for pt2
+ *
+ * r00 r01 r01 t0
+ * r10 r11 r12 t1
+ * r20 r21 r22 t2
+ *
+ * Combining the first 2 equations for each point we get
+ * AX = 0,
+ *
+ * where A is a 4x4 matrix such that
+ * A[0,.] = pt1.y * P1.row(2) - P1.row(1)
+ * A[1,.] = pt1.x * P1.row(2) - P1.row(0)
+ * A[2,.] = pt2.y * P2.row(2) - P2.row(1)
+ * A[3,.] = pt2.x * P2.row(2) - P2.row(0)
+ *
+ * The solution of this equation is the column of right singular matrix in SVD that corresponds to the minimal
+ * singular value. In Eigen the singular values are sorted so it is the last column.
+ * */
+bool HomographyMatrixEstimator::Triangulate(const HomographyMatrixEstimator::Solution & sol,
+                                            const TPoint3D & pt1,
+                                            const TPoint3D & pt2,
+                                            TPoint3D & out_trinagulated) const {
+  Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
+  A << 0, -1, pt1[1], 0,
+      -1, 0, pt1[0], 0,
+      pt2[1] * sol.R(2, 0) - sol.R(1, 0), pt2[1] * sol.R(2, 1) - sol.R(1, 1), pt2[1] * sol.R(2, 2) - sol.R(1, 2),
+      pt2[1] * sol.T[2] - sol.T[1],
+      pt2[0] * sol.R(2, 0) - sol.R(0, 0), pt2[0] * sol.R(2, 1) - sol.R(0, 1), pt2[0] * sol.R(2, 2) - sol.R(0, 2),
+      pt2[0] * sol.T[2] - sol.T[0];
+
+  Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  precision_t l_inv = 1 / svd.matrixV()(3, 3);
+  out_trinagulated << svd.matrixV()(0, 3) * l_inv, svd.matrixV()(1, 3) * l_inv, svd.matrixV()(2, 3) * l_inv;
+  return true;
 }
 
 }

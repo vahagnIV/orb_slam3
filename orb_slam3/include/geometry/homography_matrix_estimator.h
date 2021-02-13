@@ -54,6 +54,8 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
               const pairs_t & good_matches,
               const std::vector<bool> & inliers,
               std::vector<TPoint3D> & trinagulated) const;
+
+  bool Triangulate(const Solution & sol, const TPoint3D & pt1, const TPoint3D & pt2, TPoint3D &out_trinagulated) const;
  private:
 
   void FillSolutionsForPositiveD(precision_t d1,
