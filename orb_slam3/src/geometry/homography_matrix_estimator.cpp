@@ -8,6 +8,7 @@
 namespace orb_slam3 {
 namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
+const precision_t HomographyMatrixEstimator::PARALLAX_THRESHOLD = 0.99998;
 
 bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homography,
                                                      const std::vector<HomogenousPoint> & kp1,
@@ -34,7 +35,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution + 4, s);
   std::vector<TPoint3D> tmp_triangulated;
   for (const Solution & sol: solution) {
-    int no_good = CheckRT(sol, kp1, kp2, good_matches, out_inliers, tmp_triangulated);
+    size_t no_good = CheckRT(sol, kp1, kp2, good_matches, out_inliers, tmp_triangulated);
 
   }
 
@@ -233,27 +234,55 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
 
 }
 
-int HomographyMatrixEstimator::CheckRT(const Solution & solution,
+size_t HomographyMatrixEstimator::CheckRT(const Solution & solution,
                                        const std::vector<HomogenousPoint> & points_to,
                                        const std::vector<HomogenousPoint> & points_from,
                                        const HomographyMatrixEstimator::pairs_t & good_matches,
                                        std::vector<bool> & inliers,
                                        std::vector<TPoint3D> & trinagulated) const {
+  size_t count = 0;
 
   for (size_t i = 0; i < good_matches.size(); ++i) {
 
     if (!inliers[i])
       continue;
     const auto & match = good_matches[i];
+    const HomogenousPoint point_to = points_to[match.first];
+    const HomogenousPoint point_from = points_from[match.second];
+
     TPoint3D triangulated;
-    if(!Triangulate(solution, points_to[good_matches[i].first], points_from[good_matches[i].second], triangulated)){
+
+    if (!Triangulate(solution, point_to, point_from, triangulated)) {
       inliers[i] = false;
       continue;
     }
 
+    // Eliminate far points
+    if (ComputeParallax(triangulated, solution) > PARALLAX_THRESHOLD) {
+      inliers[i] = false;
+      continue;
+    }
+
+    TPoint3D triangulatedC2 = solution.R * triangulated + solution.T;
+    precision_t z2_inv = 1. / triangulatedC2[2];
+    TPoint2D projectedC2{triangulatedC2[0] * z2_inv, triangulatedC2[1] * z2_inv};
+
+    precision_t error = (point_to[0] - projectedC2[0]) * (point_to[0] - projectedC2[0]) + (point_to[1] - projectedC2[1]) * (point_to[1] - projectedC2[1]);
+    if(error > 4 * sigma_threshold_){
+      inliers[i] = false;
+      continue;
+    }
+    ++count;
 
   }
-  return 0;
+  return count;
+}
+
+precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
+                                                       const HomographyMatrixEstimator::Solution & solution) const {
+  const TVector3D vec1 = point;
+  const TVector3D vec2 = point - (solution.T.transpose() * solution.R).transpose();
+  return vec1.dot(vec2) / vec1.norm() / vec2.norm();
 }
 
 /*
