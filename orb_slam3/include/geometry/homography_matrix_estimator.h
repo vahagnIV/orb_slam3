@@ -48,7 +48,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             std::vector<TPoint3D> & out_triangulated,
                             TPose & out_pose) const;
 
-  int CheckRT(const Solution & solution,
+  size_t CheckRT(const Solution & solution,
               const std::vector<HomogenousPoint> & points_to,
               const std::vector<HomogenousPoint> & points_from,
               const pairs_t & good_matches,
@@ -72,8 +72,10 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                  const TMatrix33 & VT,
                                  Solution solution[4],
                                  precision_t s) const;
+  precision_t ComputeParallax(const TPoint3D & point, const Solution & solution) const;
 
   static const precision_t HOMOGRAPHY_THRESHOLD;
+  static const precision_t PARALLAX_THRESHOLD;
 
 };
 
