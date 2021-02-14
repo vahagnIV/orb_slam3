@@ -13,7 +13,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
                                                      const std::vector<HomogenousPoint> & kp1,
                                                      const std::vector<HomogenousPoint> & kp2,
                                                      const pairs_t & good_matches,
-                                                     const std::vector<bool> & out_inliers,
+                                                     std::vector<bool> & out_inliers,
                                                      std::vector<TPoint3D> & out_triangulated,
                                                      TPose & out_pose) const {
 
@@ -234,8 +234,8 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
 }
 
 int HomographyMatrixEstimator::CheckRT(const Solution & solution,
-                                       const std::vector<HomogenousPoint> & kp1,
-                                       const std::vector<HomogenousPoint> & kp2,
+                                       const std::vector<HomogenousPoint> & points_to,
+                                       const std::vector<HomogenousPoint> & points_from,
                                        const HomographyMatrixEstimator::pairs_t & good_matches,
                                        std::vector<bool> & inliers,
                                        std::vector<TPoint3D> & trinagulated) const {
@@ -246,7 +246,7 @@ int HomographyMatrixEstimator::CheckRT(const Solution & solution,
       continue;
     const auto & match = good_matches[i];
     TPoint3D triangulated;
-    if(!Triangulate(solution, kp1[good_matches[i].first], kp2[good_matches[i].second], triangulated)){
+    if(!Triangulate(solution, points_to[good_matches[i].first], points_from[good_matches[i].second], triangulated)){
       inliers[i] = false;
       continue;
     }

@@ -44,13 +44,13 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             const std::vector<TPoint3D> & kp1,
                             const std::vector<TPoint3D> & kp2,
                             const pairs_t & good_matches,
-                            const std::vector<bool> & out_inliers,
+                            std::vector<bool> & out_inliers,
                             std::vector<TPoint3D> & out_triangulated,
                             TPose & out_pose) const;
 
   int CheckRT(const Solution & solution,
-              const std::vector<HomogenousPoint> & kp1,
-              const std::vector<HomogenousPoint> & kp2,
+              const std::vector<HomogenousPoint> & points_to,
+              const std::vector<HomogenousPoint> & points_from,
               const pairs_t & good_matches,
               std::vector<bool> & inliers,
               std::vector<TPoint3D> & trinagulated) const;
