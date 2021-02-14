@@ -10,7 +10,7 @@ namespace camera {
 KannalaBrandt8::KannalaBrandt8(IDistortionModel<8>::EstimateType * estimate) : IDistortionModel(estimate) {
 }
 
-bool KannalaBrandt8::DistortPoint(const TPoint3D & undistorted, TPoint3D & distorted) {
+bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
   const double & k1 = (*estimate_)[4];
   const double & k2 = (*estimate_)[5];
   const double & p1 = (*estimate_)[6];
@@ -39,7 +39,7 @@ bool KannalaBrandt8::DistortPoint(const TPoint3D & undistorted, TPoint3D & disto
   return true;
 }
 
-bool KannalaBrandt8::UnDistortPoint(const TPoint3D & distorted, TPoint3D & undistorted) {
+bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
   return false;
 

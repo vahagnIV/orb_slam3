@@ -10,8 +10,8 @@ namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_THRESHOLD = 5.991;
 
 bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homography,
-                                                     const std::vector<TPoint3D> & kp1,
-                                                     const std::vector<TPoint3D> & kp2,
+                                                     const std::vector<HomogenousPoint> & kp1,
+                                                     const std::vector<HomogenousPoint> & kp2,
                                                      const pairs_t & good_matches,
                                                      const std::vector<bool> & out_inliers,
                                                      std::vector<TPoint3D> & out_triangulated,
@@ -132,8 +132,8 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
   }
 }
 
-void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
-                                                         const std::vector<TPoint3D> & kp2,
+void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<HomogenousPoint> & kp1,
+                                                         const std::vector<HomogenousPoint> & kp2,
                                                          const pairs_t & good_matches,
                                                          const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                          TMatrix33 & out_homography,
@@ -159,8 +159,8 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<TPoin
 }
 
 precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const TMatrix33 & h,
-                                                                          const std::vector<TPoint3D> & kp1,
-                                                                          const std::vector<TPoint3D> & kp2,
+                                                                          const std::vector<HomogenousPoint> & kp1,
+                                                                          const std::vector<HomogenousPoint> & kp2,
                                                                           const pairs_t & good_matches,
                                                                           std::vector<bool> & out_inliers,
                                                                           bool inverse) const {
@@ -169,10 +169,10 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
     if (!out_inliers[i])
       continue;
     const auto & match = good_matches[i];
-    const TPoint3D & point_from = (inverse ? kp1[match.first] : kp2[match.second]);
-    const TPoint3D & point_to = (inverse ? kp2[match.second] : kp1[match.first]);
+    const HomogenousPoint & point_from = (inverse ? kp1[match.first] : kp2[match.second]);
+    const HomogenousPoint & point_to = (inverse ? kp2[match.second] : kp1[match.first]);
 
-    TPoint3D p21 = h * point_from;
+    HomogenousPoint p21 = h * point_from;
     p21 /= p21[2];
     precision_t chi_square2 =
         ((p21[0] - point_to[0]) * (p21[0] - point_to[0]) + (p21[1] - point_to[1]) * (p21[1] - point_to[1]))
@@ -186,8 +186,8 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
   return error;
 }
 
-void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<TPoint3D> & kp1,
-                                                     const std::vector<TPoint3D> & kp2,
+void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<HomogenousPoint> & kp1,
+                                                     const std::vector<HomogenousPoint> & kp2,
                                                      const std::vector<std::pair<size_t, size_t>> & good_matches,
                                                      const std::vector<size_t> & good_match_random_idx,
                                                      TMatrix33 & out_homography) const {
@@ -234,8 +234,8 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<TPoint3D>
 }
 
 int HomographyMatrixEstimator::CheckRT(const Solution & solution,
-                                       const std::vector<TPoint3D> & kp1,
-                                       const std::vector<TPoint3D> & kp2,
+                                       const std::vector<HomogenousPoint> & kp1,
+                                       const std::vector<HomogenousPoint> & kp2,
                                        const HomographyMatrixEstimator::pairs_t & good_matches,
                                        std::vector<bool> & inliers,
                                        std::vector<TPoint3D> & trinagulated) const {
@@ -246,13 +246,12 @@ int HomographyMatrixEstimator::CheckRT(const Solution & solution,
       continue;
     const auto & match = good_matches[i];
     TPoint3D triangulated;
-    if(Triangulate(solution, kp1[good_matches[i].first], kp2[good_matches[i].second], triangulated)){
-      if(!std::isfinite(triangulated[0]) || !std::isfinite(triangulated[1]) || !std::isfinite(triangulated[2])) {
-        inliers[i] = false;
-        continue;
-      }
-
+    if(!Triangulate(solution, kp1[good_matches[i].first], kp2[good_matches[i].second], triangulated)){
+      inliers[i] = false;
+      continue;
     }
+
+
   }
   return 0;
 }
@@ -284,11 +283,11 @@ int HomographyMatrixEstimator::CheckRT(const Solution & solution,
  * A[3,.] = pt2.x * P2.row(2) - P2.row(0)
  *
  * The solution of this equation is the column of right singular matrix in SVD that corresponds to the minimal
- * singular value. In Eigen the singular values are sorted so it is the last column.
+ * singular value. In Eigen the singular values are sorted sorted. Therefore it is the last column.
  * */
 bool HomographyMatrixEstimator::Triangulate(const HomographyMatrixEstimator::Solution & sol,
-                                            const TPoint3D & pt1,
-                                            const TPoint3D & pt2,
+                                            const HomogenousPoint & pt1,
+                                            const HomogenousPoint & pt2,
                                             TPoint3D & out_trinagulated) const {
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
   A << 0, -1, pt1[1], 0,
@@ -301,7 +300,8 @@ bool HomographyMatrixEstimator::Triangulate(const HomographyMatrixEstimator::Sol
   Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
   precision_t l_inv = 1 / svd.matrixV()(3, 3);
   out_trinagulated << svd.matrixV()(0, 3) * l_inv, svd.matrixV()(1, 3) * l_inv, svd.matrixV()(2, 3) * l_inv;
-  return true;
+
+  return std::isfinite(out_trinagulated[0]) && std::isfinite(out_trinagulated[1]) && std::isfinite(out_trinagulated[2]);
 }
 
 }

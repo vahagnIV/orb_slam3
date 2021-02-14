@@ -19,8 +19,8 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
  public:
   HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
-  void FindBestHomographyMatrix(const std::vector<TPoint3D> & kp1,
-                                const std::vector<TPoint3D> & kp2,
+  void FindBestHomographyMatrix(const std::vector<HomogenousPoint> & kp1,
+                                const std::vector<HomogenousPoint> & kp2,
                                 const pairs_t & good_matches,
                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
                                 TMatrix33 & out_homography,
@@ -28,14 +28,14 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                 precision_t & out_error) const;
 
   precision_t ComputeHomographyReprojectionError(const TMatrix33 & h,
-                                                 const std::vector<TPoint3D> & kp1,
-                                                 const std::vector<TPoint3D> & kp2,
+                                                 const std::vector<HomogenousPoint> & kp1,
+                                                 const std::vector<HomogenousPoint> & kp2,
                                                  const pairs_t & good_matches,
                                                  std::vector<bool> & out_inliers,
                                                  bool inverse) const;
 
-  void FindHomographyMatrix(const std::vector<TPoint3D> & kp1,
-                            const std::vector<TPoint3D> & kp2,
+  void FindHomographyMatrix(const std::vector<HomogenousPoint> & kp1,
+                            const std::vector<HomogenousPoint> & kp2,
                             const std::vector<std::pair<size_t, size_t>> & good_matches,
                             const std::vector<size_t> & good_match_random_idx,
                             TMatrix33 & out_homography) const;
@@ -49,13 +49,13 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             TPose & out_pose) const;
 
   int CheckRT(const Solution & solution,
-              const std::vector<TPoint3D> & kp1,
-              const std::vector<TPoint3D> & kp2,
+              const std::vector<HomogenousPoint> & kp1,
+              const std::vector<HomogenousPoint> & kp2,
               const pairs_t & good_matches,
               std::vector<bool> & inliers,
               std::vector<TPoint3D> & trinagulated) const;
 
-  bool Triangulate(const Solution & sol, const TPoint3D & pt1, const TPoint3D & pt2, TPoint3D &out_trinagulated) const;
+  bool Triangulate(const Solution & sol, const HomogenousPoint & pt1, const HomogenousPoint & pt2, TPoint3D &out_trinagulated) const;
  private:
 
   void FillSolutionsForPositiveD(precision_t d1,

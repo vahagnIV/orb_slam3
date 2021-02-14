@@ -9,7 +9,7 @@ namespace camera {
 KannalaBrandt5::KannalaBrandt5(EstimateType * estimate) : IDistortionModel<5>(estimate) {
 }
 
-bool KannalaBrandt5::DistortPoint(const TPoint3D & undistorted, TPoint3D & distorted) {
+bool KannalaBrandt5::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
 
   const Scalar & x = undistorted[0];
   const Scalar & y = undistorted[1];
@@ -27,7 +27,7 @@ bool KannalaBrandt5::DistortPoint(const TPoint3D & undistorted, TPoint3D & disto
   return true;
 }
 
-bool KannalaBrandt5::UnDistortPoint(const TPoint3D & distorted, TPoint3D & undistorted) {
+bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
 
   undistorted = distorted;
 

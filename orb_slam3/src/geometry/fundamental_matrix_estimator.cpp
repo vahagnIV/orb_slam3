@@ -10,8 +10,8 @@ const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD = 3.841;
 const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD_SCORE = 5.991;
 
 precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(const TMatrix33 & f,
-                                                                            const std::vector<TPoint3D> & kp1,
-                                                                            const std::vector<TPoint3D> & kp2,
+                                                                            const std::vector<HomogenousPoint> & kp1,
+                                                                            const std::vector<HomogenousPoint> & kp2,
                                                                             const pairs_t & good_matches,
                                                                             std::vector<bool> & out_inliers) const {
   precision_t error = 0;
@@ -20,11 +20,11 @@ precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(cons
   for (size_t i = 0; i < good_matches.size(); ++i) {
     const auto & match = good_matches[i];
 
-    const TPoint3D point_from = kp2[match.second];
-    const TPoint3D point_to = kp1[match.first];
+    const HomogenousPoint point_from = kp2[match.second];
+    const HomogenousPoint point_to = kp1[match.first];
 
-    TPoint3D f_from = f * point_from;
-    TPoint3D to_f = point_to.transpose() * f;
+    HomogenousPoint f_from = f * point_from;
+    HomogenousPoint to_f = point_to.transpose() * f;
 
     const precision_t err = point_to.dot(f_from);
 
@@ -42,8 +42,8 @@ precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(cons
   return error;
 }
 
-void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<TPoint3D> & kp1,
-                                                       const std::vector<TPoint3D> & kp2,
+void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<HomogenousPoint> & kp1,
+                                                       const std::vector<HomogenousPoint> & kp2,
                                                        const std::vector<std::pair<size_t, size_t>> & good_matches,
                                                        const std::vector<size_t> & good_match_random_idx,
                                                        TMatrix33 & out_fundamental) const {
@@ -85,8 +85,8 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<TPoint3
 
 }
 
-void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<TPoint3D> & kp1,
-                                                           const std::vector<TPoint3D> & kp2,
+void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<HomogenousPoint> & kp1,
+                                                           const std::vector<HomogenousPoint> & kp2,
                                                            const std::vector<std::pair<size_t, size_t>> & good_matches,
                                                            const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                            TMatrix33 & out_fundamental,

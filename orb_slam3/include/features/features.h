@@ -25,7 +25,7 @@ class Features {
 
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
-  std::vector<TPoint3D> undistorted_keypoints;
+  std::vector<HomogenousPoint> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
 
   size_t Size() const { return keypoints.size(); }

@@ -12,7 +12,7 @@ FishEye::FishEye(IDistortionModel<4>::EstimateType * estimate) : IDistortionMode
 
 }
 
-bool FishEye::DistortPoint(const TPoint3D & undistorted, TPoint3D & distorted) {
+bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
 
   /*ACHTUNG: NOT TESTED*/
 
@@ -40,7 +40,7 @@ bool FishEye::DistortPoint(const TPoint3D & undistorted, TPoint3D & distorted) {
   return true;
 }
 
-bool FishEye::UnDistortPoint(const TPoint3D & distorted, TPoint3D & undistorted) {
+bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
 
   double r_prime = std::sqrt(distorted[0] * distorted[0] + distorted[1] * distorted[1]);
 

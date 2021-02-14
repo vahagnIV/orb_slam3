@@ -17,7 +17,7 @@ void MonocularCamera::ProjectPoint(TPoint3D & point, TPoint2D & projected) const
   projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy();
 }
 
-bool MonocularCamera::UnprojectAndUndistort(TPoint2D & point, TPoint3D & unprojected) const {
+bool MonocularCamera::UnprojectAndUndistort(TPoint2D & point, HomogenousPoint & unprojected) const {
   UnprojectPoint(point, unprojected);
   return distortion_model_->UnDistortPoint(unprojected, unprojected);
 }
