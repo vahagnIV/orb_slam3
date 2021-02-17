@@ -51,6 +51,7 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint & distorted, Homogenou
     x = xnew;
     y = ynew;
   }
+  undistorted = distorted;
   return false;
 }
 

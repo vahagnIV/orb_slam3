@@ -20,10 +20,10 @@ TwoViewReconstructor::TwoViewReconstructor(const std::shared_ptr<camera::Monocul
       homography_matrix_sstimator_(sigma_threshold) {
 }
 
-void TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
+bool TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
                                        const std::vector<TPoint3D> & kp2,
                                        const std::vector<int> & matches12,
-                                       TPose & out_pose,
+                                       Pose & out_pose,
                                        std::vector<TPoint3D> & out_points,
                                        std::vector<bool> & out_outliers,
                                        const size_t number_of_matches) const {
@@ -51,7 +51,7 @@ void TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
                                                         homography_inliers,
                                                         h_error);
   if (f_error > h_error) {
-    homography_matrix_sstimator_.FindRTTransformation(homography,
+    return homography_matrix_sstimator_.FindRTTransformation(homography,
                                                       kp1,
                                                       kp2,
                                                       pre_matches,
@@ -59,7 +59,7 @@ void TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
                                                       out_points,
                                                       out_pose);
   } else {
-    int y = 10;
+    return false;
   }
 
 }

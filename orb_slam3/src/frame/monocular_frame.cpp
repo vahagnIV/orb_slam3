@@ -15,7 +15,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                feature_extractor,
                                const std::shared_ptr<camera::MonocularCamera> & camera) :
     FrameBase(timestamp,
-              feature_extractor),features_(camera->Width(), camera->Height()),
+              feature_extractor), features_(camera->Width(), camera->Height()),
     camera_(camera) {
   feature_extractor_->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
@@ -42,16 +42,19 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   if (number_of_good_matches < 50)
     return false;
 
-  geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5);
+  geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5, 1. / 190.);
   std::vector<TPoint3D> points;
   std::vector<bool> outliers;
-  reconstructor.Reconstruct(features_.undistorted_keypoints,
+  if(reconstructor.Reconstruct(features_.undistorted_keypoints,
                             previous_frame->features_.undistorted_keypoints,
                             matched_features,
                             pose_,
                             points,
                             outliers,
-                            number_of_good_matches);
+                            number_of_good_matches))
+  {
+    std::cout << pose_.R << std::endl << pose_.T << std::endl;
+  }
 
   //camera_->
 

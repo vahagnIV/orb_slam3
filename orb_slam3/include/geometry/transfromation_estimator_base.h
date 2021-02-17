@@ -13,9 +13,11 @@ class TransfromationEstimatorBase {
  public:
   TransfromationEstimatorBase(precision_t sigma) :
       sigma_threshold_(sigma),
+      sigma_threshold__square_(sigma*sigma),
       sigma_squared_inv_(1 / sigma / sigma) {}
  protected:
   const precision_t sigma_threshold_;
+  const precision_t sigma_threshold__square_;
   const precision_t sigma_squared_inv_;
 
 };

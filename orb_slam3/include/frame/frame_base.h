@@ -12,6 +12,7 @@
 #include "frame_type.h"
 #include <typedefs.h>
 #include <features/ifeature_extractor.h>
+#include <geometry/pose.h>
 #include <map/map_point.h>
 
 namespace orb_slam3 {
@@ -92,7 +93,7 @@ class FrameBase {
   const std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
   std::vector<map::MapPoint> map_points_;
   std::shared_ptr<FrameBase> previous_frame_;
-  TPose pose_;
+  geometry::Pose pose_;
  protected:
   static id_type next_id_;
 

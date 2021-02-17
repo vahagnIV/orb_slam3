@@ -50,6 +50,7 @@ add_library(orbslam SHARED
         include/image_utils.h
 
         include/geometry/two_view_reconstructor.h
+        include/geometry/pose.h
         include/geometry/homography_matrix_estimator.h
         include/geometry/transfromation_estimator_base.h
         include/geometry/fundamental_matrix_estimator.h
