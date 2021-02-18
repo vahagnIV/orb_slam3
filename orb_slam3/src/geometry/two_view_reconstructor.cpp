@@ -20,8 +20,8 @@ TwoViewReconstructor::TwoViewReconstructor(const std::shared_ptr<camera::Monocul
       homography_matrix_sstimator_(sigma_threshold) {
 }
 
-bool TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
-                                       const std::vector<TPoint3D> & kp2,
+bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & points_to,
+                                       const std::vector<HomogenousPoint> & points_from,
                                        const std::vector<int> & matches12,
                                        Pose & out_pose,
                                        std::vector<TPoint3D> & out_points,
@@ -36,24 +36,24 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<TPoint3D> & kp1,
   precision_t f_error;
   TMatrix33 homography, fundamental;
   std::vector<bool> homography_inliers, fundamental_inliers;
-  fundamental_matrix_estimator_.FindBestFundamentalMatrix(kp1,
-                                                          kp2,
+  fundamental_matrix_estimator_.FindBestFundamentalMatrix(points_to,
+                                                          points_from,
                                                           pre_matches,
                                                           random_match_subset_idx,
                                                           fundamental,
                                                           fundamental_inliers,
                                                           f_error);
-  homography_matrix_sstimator_.FindBestHomographyMatrix(kp1,
-                                                        kp2,
+  homography_matrix_sstimator_.FindBestHomographyMatrix(points_to,
+                                                        points_from,
                                                         pre_matches,
                                                         random_match_subset_idx,
                                                         homography,
                                                         homography_inliers,
                                                         h_error);
-  if (f_error > h_error) {
+  if (true) {
     return homography_matrix_sstimator_.FindRTTransformation(homography,
-                                                      kp1,
-                                                      kp2,
+                                                      points_to,
+                                                      points_from,
                                                       pre_matches,
                                                       homography_inliers,
                                                       out_points,

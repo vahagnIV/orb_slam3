@@ -21,8 +21,8 @@ class TwoViewReconstructor {
                        const unsigned number_of_ransac_iterations,
                        precision_t sigma_threshold = 1.0);
 
-  bool Reconstruct(const std::vector<TPoint3D> & kp1,
-                   const std::vector<TPoint3D> & kp2,
+  bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
+                   const std::vector<HomogenousPoint> & points_from,
                    const std::vector<int> & matches12,
                    Pose & out_pose,
                    std::vector<TPoint3D> & out_points,

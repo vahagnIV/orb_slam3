@@ -28,8 +28,8 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
       break;
     case FIRST_IMAGE: {
       frame->SetPrevious(last_frame_);
-      if (frame->InitializePositionFromPrevious())
-        state_ = OK;
+      if (frame->InitializePositionFromPrevious()){}
+//        state_ = OK;
     }
       break;
 

@@ -218,6 +218,8 @@ void TestMonocular(std::string original) {
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
+    cv::imshow("Image " + std::to_string(k), image);
+
 //    cv::Mat undistorted;
 //    cv::imshow("image", image);
 ////      cv::undistort(image, undistorted, cm, distCoeffs);
@@ -241,6 +243,7 @@ void TestMonocular(std::string original) {
     std::vector<int> la = {0, static_cast<int>(camera->Width())};*/
 
     tracker.Track(frame);
+    cv::waitKey();
   }
 }
 
