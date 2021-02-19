@@ -8,16 +8,16 @@
 namespace orb_slam3 {
 namespace camera {
 
-void MonocularCamera::UnprojectPoint(TPoint2D & point, TPoint3D & unprojected) const {
+void MonocularCamera::UnprojectPoint(const TPoint2D & point, TPoint3D & unprojected) const {
   unprojected << (point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_, 1;
 }
 
-void MonocularCamera::ProjectPoint(TPoint3D & point, TPoint2D & projected) const {
+void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
   double z_inv = 1 / point[2];
   projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy();
 }
 
-bool MonocularCamera::UnprojectAndUndistort(TPoint2D & point, HomogenousPoint & unprojected) const {
+bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const {
   UnprojectPoint(point, unprojected);
   return distortion_model_->UnDistortPoint(unprojected, unprojected);
 }
@@ -34,7 +34,7 @@ TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {
   return result;
 }
 
-bool MonocularCamera::UndistortPoint(TPoint2D & point, TPoint2D & undistorted_point) const {
+bool MonocularCamera::UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const {
   TPoint3D unprojected, undistorted;
   UnprojectPoint(point, unprojected);
   if (!distortion_model_->UnDistortPoint(unprojected, undistorted))
@@ -43,7 +43,7 @@ bool MonocularCamera::UndistortPoint(TPoint2D & point, TPoint2D & undistorted_po
   return true;
 }
 
-bool MonocularCamera::DistortPoint(TPoint2D & undistorted, TPoint2D & distorted) const {
+bool MonocularCamera::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) const {
   TPoint3D unprojected, distorted_3d;
   UnprojectPoint(undistorted, unprojected);
 

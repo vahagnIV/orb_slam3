@@ -77,7 +77,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
 
   precision_t ComputeParallax(const TPoint3D & point, const geometry::Pose & solution) const;
 
-  precision_t ComputeReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) const;
+  precision_t ComputeTriangulatedReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) const;
 
   static const precision_t HOMOGRAPHY_SCORE;
   static const precision_t PARALLAX_THRESHOLD;

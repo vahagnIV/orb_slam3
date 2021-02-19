@@ -52,12 +52,12 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                         h_error);
   if (true) {
     return homography_matrix_sstimator_.FindRTTransformation(homography,
-                                                      points_to,
-                                                      points_from,
-                                                      pre_matches,
-                                                      homography_inliers,
-                                                      out_points,
-                                                      out_pose);
+                                                             points_to,
+                                                             points_from,
+                                                             pre_matches,
+                                                             out_outliers,
+                                                             out_points,
+                                                             out_pose);
   } else {
     return false;
   }

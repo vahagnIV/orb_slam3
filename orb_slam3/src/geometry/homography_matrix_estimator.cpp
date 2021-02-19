@@ -3,8 +3,8 @@
 //
 
 #include <geometry/homography_matrix_estimator.h>
-#include <iostream>
 #include <math.h>
+
 namespace orb_slam3 {
 namespace geometry {
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_SCORE = 5.991;
@@ -37,11 +37,12 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   size_t best_count = 0, second_best_count = 0;
   precision_t best_parallax = -1;
 
+//  std::vector<bool> original_inliers = out_inliers;
   for (size_t i = 0; i < 8; ++i) {
     std::vector<TPoint3D> tmp_triangulated;
     const geometry::Pose & sol = solution[i];
-    std::cout << sol.R << std::endl;
     std::vector<bool> tmp_inliers(good_matches.size(), true);
+//    std::vector<bool> tmp_inliers = original_inliers;
     precision_t parallax;
     size_t no_good = CheckRT(sol, points_to, points_from, good_matches, tmp_inliers, parallax, tmp_triangulated);
     if (best_count < no_good) {
@@ -53,10 +54,8 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
       best_parallax = parallax;
     } else
       second_best_count = std::max(second_best_count, no_good);
-    std::cout << i << "\t" << no_good << "\t" << best_count << "\t" << second_best_count << std::endl;
   }
 
-  std::cout << std::endl << std::endl;
   return second_best_count < 0.75 * best_count && best_parallax < 0.995;
 }
 
@@ -136,7 +135,7 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<Homog
                                                   good_matches,
                                                   tmp_inliers,
                                                   true);
-    if (score > 0 && score > out_score ) {
+    if (score > 0 && score > out_score) {
       out_homography = tmp_homography;
       out_inliers = tmp_inliers;
       out_score = score;
@@ -227,9 +226,10 @@ size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
                                           precision_t & out_parallax,
                                           std::vector<TPoint3D> & out_triangulated) const {
   size_t count = 0;
-
+  out_triangulated.resize(good_matches.size());
   std::vector<precision_t> triangulated_parallax;
   triangulated_parallax.reserve(good_matches.size());
+
   for (size_t i = 0; i < good_matches.size(); ++i) {
 
     if (!inliers[i])
@@ -238,9 +238,9 @@ size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
     const HomogenousPoint point_to = points_to[match.first];
     const HomogenousPoint point_from = points_from[match.second];
 
-    TPoint3D triangulated;
+    TPoint3D & triangulated = out_triangulated[i];
 
-    if (!Triangulate(solution, point_to, point_from, triangulated) || (triangulated[2] < 0)) {
+    if (!Triangulate(solution, point_to, point_from, triangulated) || triangulated[2] < 0) {
       inliers[i] = false;
       continue;
     }
@@ -253,10 +253,15 @@ size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
     }
 
     triangulated_parallax.push_back(point_parallax);
+    const TVector3D triangulated2 = solution.R * triangulated + solution.T;
+    if(triangulated2[2] < 0){
+      inliers[i] = false;
+      continue;
+    }
 
-    precision_t error = std::max(ComputeReprojectionError(triangulated, point_from),
-                                 ComputeReprojectionError(solution.R * triangulated + solution.T, point_to));
-    if (error > 2 * sigma_threshold__square_) {
+    precision_t error = std::max(ComputeTriangulatedReprojectionError(triangulated, point_from),
+                                 ComputeTriangulatedReprojectionError(triangulated2 + solution.T, point_to));
+    if (error > 4 * sigma_threshold__square_) {
       inliers[i] = false;
       continue;
     }
@@ -273,8 +278,8 @@ size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
   return count;
 }
 
-precision_t HomographyMatrixEstimator::ComputeReprojectionError(const TPoint3D & point,
-                                                                const HomogenousPoint & original_point) const {
+precision_t HomographyMatrixEstimator::ComputeTriangulatedReprojectionError(const TPoint3D & point,
+                                                                            const HomogenousPoint & original_point) const {
   precision_t z2_inv = 1. / point[2];
   TPoint2D projected{point[0] * z2_inv, point[1] * z2_inv};
 
@@ -323,22 +328,21 @@ bool HomographyMatrixEstimator::Triangulate(const geometry::Pose & sol,
                                             const HomogenousPoint & point_from,
                                             TPoint3D & out_trinagulated) const {
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
-//  A << 0, -1, point_to[1], 0,
-//      -1, 0, point_to[0], 0,
-//      point_from[1] * sol.R(2, 0) - sol.R(1, 0), point_from[1] * sol.R(2, 1) - sol.R(1, 1), point_from[1] * sol.R(2, 2)
+
+  A << 0, -1, point_to[1], 0,
+      -1, 0, point_to[0], 0,
+      point_from[1] * sol.R(2, 0) - sol.R(1, 0), point_from[1] * sol.R(2, 1) - sol.R(1, 1), point_from[1] * sol.R(2, 2)
+      - sol.R(1, 2), point_from[1] * sol.T[2] - sol.T[1],
+      point_from[0] * sol.R(2, 0) - sol.R(0, 0), point_from[0] * sol.R(2, 1) - sol.R(0, 1), point_from[0] * sol.R(2, 2)
+      - sol.R(0, 2), point_from[0] * sol.T[2] - sol.T[0];
+//  A << 0, -1, point_from[1], 0,
+//      -1, 0, point_from[0], 0,
+//      point_to[1] * sol.R(2, 0) - sol.R(1, 0), point_to[1] * sol.R(2, 1) - sol.R(1, 1), point_to[1] * sol.R(2, 2)
 //      - sol.R(1, 2),
-//      point_from[1] * sol.T[2] - sol.T[1],
-//      point_from[0] * sol.R(2, 0) - sol.R(0, 0), point_from[0] * sol.R(2, 1) - sol.R(0, 1), point_from[0] * sol.R(2, 2)
+//      point_to[1] * sol.T[2] - sol.T[1],
+//      point_to[0] * sol.R(2, 0) - sol.R(0, 0), point_to[0] * sol.R(2, 1) - sol.R(0, 1), point_to[0] * sol.R(2, 2)
 //      - sol.R(0, 2),
-//      point_from[0] * sol.T[2] - sol.T[0];
-  A << 0, -1, point_from[1], 0,
-      -1, 0, point_from[0], 0,
-      point_to[1] * sol.R(2, 0) - sol.R(1, 0), point_to[1] * sol.R(2, 1) - sol.R(1, 1), point_to[1] * sol.R(2, 2)
-      - sol.R(1, 2),
-      point_to[1] * sol.T[2] - sol.T[1],
-      point_to[0] * sol.R(2, 0) - sol.R(0, 0), point_to[0] * sol.R(2, 1) - sol.R(0, 1), point_to[0] * sol.R(2, 2)
-      - sol.R(0, 2),
-      point_to[0] * sol.T[2] - sol.T[0];
+//      point_to[0] * sol.T[2] - sol.T[0];
 
   Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
   precision_t l_inv = 1 / svd.matrixV()(3, 3);
