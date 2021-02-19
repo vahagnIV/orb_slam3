@@ -9,7 +9,7 @@
 namespace orb_slam3 {
 
 Tracker::Tracker()
-    : atlas_(new Atlas),
+    : atlas_(new map::Atlas),
       last_frame_(nullptr),
       initial_frame_(nullptr),
       state_(NOT_INITIALIZED) {}

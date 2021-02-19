@@ -37,7 +37,7 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   features::SecondNearestNeighborMatcher matcher(200,
                                                  0.9,
                                                  false);
-  std::vector<int> matched_features;
+  std::vector<features::Match> matched_features;
   int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
   if (number_of_good_matches < 50)
     return false;
@@ -50,8 +50,7 @@ bool MonocularFrame::InitializePositionFromPrevious() {
                                 matched_features,
                                 pose_,
                                 points,
-                                outliers,
-                                number_of_good_matches)) {
+                                outliers)) {
     std::cout << pose_.R << std::endl << pose_.T << std::endl;
     return true;
   }

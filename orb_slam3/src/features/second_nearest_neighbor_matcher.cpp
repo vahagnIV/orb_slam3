@@ -21,7 +21,21 @@ SecondNearestNeighborMatcher::SecondNearestNeighborMatcher(const size_t window_s
 
 int SecondNearestNeighborMatcher::Match(const features::Features & features1,
                                         const features::Features & features2,
-                                        std::vector<int> & out_matches_12) {
+                                        std::vector<features::Match> & out_matches) const {
+  std::vector<int> matches12;
+  int matches = Match(features1, features2, matches12);
+  out_matches.reserve(matches);
+  for (size_t i = 0; i < matches12.size(); ++i) {
+    if(matches12[i] >= 0 )
+      out_matches.push_back(features::Match(i, matches12[i]));
+  }
+  return matches;
+}
+
+int SecondNearestNeighborMatcher::Match(const features::Features & features1,
+          const features::Features & features2,
+          std::vector<int> & out_matches_12) const {
+
   int nmatches = 0;
   out_matches_12.resize(features1.Size(), -1);
 
@@ -123,6 +137,7 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
   }
 
   return nmatches;
+
 }
 
 int SecondNearestNeighborMatcher::DescriptorDistance(const Eigen::Matrix<uint8_t,

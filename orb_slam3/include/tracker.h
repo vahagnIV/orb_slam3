@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_INCLUDE_TRACKER_H_
 #define ORB_SLAM3_INCLUDE_TRACKER_H_
 #include <frame/frame_base.h>
-#include <atlas.h>
+#include <map/atlas.h>
 #include <memory>
 namespace orb_slam3 {
 
@@ -42,7 +42,7 @@ class Tracker {
   bool TrackReferenceKeyFrame();
   
  private:  
-  Atlas * atlas_;
+  map::Atlas * atlas_;
   std::shared_ptr<frame::FrameBase> last_frame_;
   std::shared_ptr<frame::FrameBase> initial_frame_;
   State state_;

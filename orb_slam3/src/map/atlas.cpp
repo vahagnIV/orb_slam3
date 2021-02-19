@@ -2,16 +2,16 @@
 // Created by vahagn on 12/8/20.
 //
 
-#include "atlas.h"
+#include "map/atlas.h"
 
 namespace orb_slam3 {
-
+namespace map {
 Atlas::Atlas() : current_map_(nullptr) {
 
 }
 
-Map *Atlas::GetCurrentMap() {
-  if(nullptr == current_map_)
+Map * Atlas::GetCurrentMap() {
+  if (nullptr == current_map_)
     CreateNewMap();
 
   return current_map_;
@@ -24,5 +24,5 @@ void Atlas::CreateNewMap() {
 Atlas::~Atlas() {
 
 }
-
+}
 }

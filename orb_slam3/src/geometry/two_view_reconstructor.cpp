@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <geometry/two_view_reconstructor.h>
+#include <features/match.h>
 
 namespace orb_slam3 {
 namespace geometry {
@@ -22,30 +23,29 @@ TwoViewReconstructor::TwoViewReconstructor(const std::shared_ptr<camera::Monocul
 
 bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & points_to,
                                        const std::vector<HomogenousPoint> & points_from,
-                                       const std::vector<int> & matches12,
+                                       const std::vector<features::Match> & matches,
                                        Pose & out_pose,
                                        std::vector<TPoint3D> & out_points,
-                                       std::vector<bool> & out_outliers,
-                                       const size_t number_of_matches) const {
-  std::vector<std::pair<size_t, size_t>> pre_matches;
-  out_outliers.resize(matches12.size(), false);
-  FilterGoodMatches(matches12, number_of_matches, pre_matches);
+                                       std::vector<bool> & out_inliers) const {
+
+  out_inliers.resize(matches.size(), false);
   std::vector<std::vector<size_t>> random_match_subset_idx;
-  GenerateRandomSubsets(0, pre_matches.size(), 8, number_of_ransac_iterations_, random_match_subset_idx);
-  precision_t h_error;
-  precision_t f_error;
+  GenerateRandomSubsets(0, matches.size(), 8, number_of_ransac_iterations_, random_match_subset_idx);
+  precision_t h_error, f_error;
   TMatrix33 homography, fundamental;
   std::vector<bool> homography_inliers, fundamental_inliers;
+
+  // TODO: do this in parallel
   fundamental_matrix_estimator_.FindBestFundamentalMatrix(points_to,
                                                           points_from,
-                                                          pre_matches,
+                                                          matches,
                                                           random_match_subset_idx,
                                                           fundamental,
                                                           fundamental_inliers,
                                                           f_error);
   homography_matrix_sstimator_.FindBestHomographyMatrix(points_to,
                                                         points_from,
-                                                        pre_matches,
+                                                        matches,
                                                         random_match_subset_idx,
                                                         homography,
                                                         homography_inliers,
@@ -54,8 +54,8 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
     return homography_matrix_sstimator_.FindRTTransformation(homography,
                                                              points_to,
                                                              points_from,
-                                                             pre_matches,
-                                                             out_outliers,
+                                                             matches,
+                                                             out_inliers,
                                                              out_points,
                                                              out_pose);
   } else {
@@ -72,19 +72,6 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
   out_result.resize(subset_count);
   do { GenerateRandomSubset(min, max, count, out_result[subset_count - 1]); }
   while (--subset_count);
-}
-
-void TwoViewReconstructor::FilterGoodMatches(const std::vector<int> & matches12,
-                                             const size_t number_of_matches,
-                                             std::vector<std::pair<size_t, size_t>> & out_good_matches) const {
-  out_good_matches.resize(number_of_matches);
-  size_t idx = 0;
-  for (size_t i = 0; i < matches12.size(); ++i) {
-    if (matches12[i] >= 0) {
-      out_good_matches[idx].first = i;
-      out_good_matches[idx++].second = static_cast<size_t >(matches12[i]);
-    }
-  }
 }
 
 void TwoViewReconstructor::GenerateRandomSubset(const size_t min,

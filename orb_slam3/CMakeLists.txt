@@ -20,7 +20,6 @@ endif()
 include_directories(include g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 
 add_library(orbslam SHARED
-        src/atlas.cpp
         src/tracker.cpp
 
         src/frame/frame_base.cpp
@@ -36,7 +35,8 @@ add_library(orbslam SHARED
         src/features/second_nearest_neighbor_matcher.cpp
 
         src/map/map_point.cpp
-        src/map/key_point.cpp
+        src/map/map.cpp
+        src/map/atlas.cpp
 
         src/geometry/two_view_reconstructor.cpp
         src/geometry/homography_matrix_estimator.cpp
@@ -45,7 +45,6 @@ add_library(orbslam SHARED
 
         include/typedefs.h
         include/constants.h
-        include/atlas.h
         include/tracker.h
         include/image_utils.h
 
@@ -73,8 +72,12 @@ add_library(orbslam SHARED
         include/features/key_point.h
         include/features/imatcher.h
         include/features/second_nearest_neighbor_matcher.h
+        include/features/match.h
 
         include/map/map_point.h
+        include/map/atlas.h
+        include/map/map.h
+
         include/orb_vocabulary.h)
 
 target_include_directories(orbslam INTERFACE include)

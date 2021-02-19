@@ -6,8 +6,12 @@
 
 namespace orb_slam3 {
 namespace frame {
-  FrameBase::id_type FrameBase::next_id_ = 0;
+FrameBase::id_type FrameBase::next_id_ = 0;
+
+void FrameBase::SetPosition(const geometry::Pose & pose) noexcept {
+  pose_ = pose;
 }
+
 /*
 FrameBase::FrameBase() : reference_frame_(nullptr) {
 
@@ -36,5 +40,5 @@ Converter::toDescriptorVector(descriptors_);
     orb_vocabulary_->transform(vCurrentDesc, bow_vector_, feature_vector_, 4);
   }
 }*/
-
+}
 }  // namespace orb_slam3

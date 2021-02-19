@@ -12,16 +12,16 @@ const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD_SCORE = 5.99
 precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(const TMatrix33 & f,
                                                                             const std::vector<HomogenousPoint> & kp1,
                                                                             const std::vector<HomogenousPoint> & kp2,
-                                                                            const pairs_t & good_matches,
+                                                                            const std::vector<features::Match> & matches,
                                                                             std::vector<bool> & out_inliers) const {
   precision_t error = 0;
-  out_inliers.resize(good_matches.size(), true);
+  out_inliers.resize(matches.size(), true);
   std::fill(out_inliers.begin(), out_inliers.end(), true);
-  for (size_t i = 0; i < good_matches.size(); ++i) {
-    const auto & match = good_matches[i];
+  for (size_t i = 0; i < matches.size(); ++i) {
+    const auto & match = matches[i];
 
-    const HomogenousPoint point_from = kp2[match.second];
-    const HomogenousPoint point_to = kp1[match.first];
+    const HomogenousPoint point_from = kp2[match.from_idx];
+    const HomogenousPoint point_to = kp1[match.to_idx];
 
     HomogenousPoint f_from = f * point_from;
     HomogenousPoint to_f = point_to.transpose() * f;
@@ -44,15 +44,15 @@ precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(cons
 
 void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<HomogenousPoint> & kp1,
                                                        const std::vector<HomogenousPoint> & kp2,
-                                                       const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                       const std::vector<features::Match> & matches,
                                                        const std::vector<size_t> & good_match_random_idx,
                                                        TMatrix33 & out_fundamental) const {
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size(), Eigen::NoChange);
 
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const auto & X = kp1[good_matches[good_match_random_idx[i]].first];
-    const auto & U = kp2[good_matches[good_match_random_idx[i]].second];
+    const auto & X = kp1[matches[good_match_random_idx[i]].to_idx];
+    const auto & U = kp2[matches[good_match_random_idx[i]].from_idx];
 
     L(i, 0) = X[0] * U[0];
     L(i, 1) = X[0] * U[1];
@@ -87,7 +87,7 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<Homogen
 
 void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<HomogenousPoint> & kp1,
                                                            const std::vector<HomogenousPoint> & kp2,
-                                                           const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                           const std::vector<features::Match> & matches,
                                                            const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                            TMatrix33 & out_fundamental,
                                                            std::vector<bool> & out_inliers,
@@ -97,8 +97,8 @@ void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<Hom
   std::vector<bool> tmp_inliers;
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
     const std::vector<size_t> & good_matches_rnd = good_match_random_idx[i];
-    FindFundamentalMatrix(kp1, kp2, good_matches, good_matches_rnd, tmp_fundamental);
-    precision_t error = ComputeFundamentalReprojectionError(tmp_fundamental, kp1, kp2, good_matches, tmp_inliers);
+    FindFundamentalMatrix(kp1, kp2, matches, good_matches_rnd, tmp_fundamental);
+    precision_t error = ComputeFundamentalReprojectionError(tmp_fundamental, kp1, kp2, matches, tmp_inliers);
     if (error > 0 && out_error > error) {
       out_fundamental = tmp_fundamental;
       out_inliers = tmp_inliers;

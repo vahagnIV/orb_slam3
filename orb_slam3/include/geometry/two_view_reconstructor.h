@@ -9,12 +9,12 @@
 #include <camera/monocular_camera.h>
 #include <geometry/fundamental_matrix_estimator.h>
 #include <geometry/homography_matrix_estimator.h>
+#include <features/match.h>
 
 namespace orb_slam3 {
 namespace geometry {
 
 class TwoViewReconstructor {
-  typedef std::vector<std::pair<size_t, size_t>> pairs_t;
  public:
   TwoViewReconstructor(const std::shared_ptr<camera::MonocularCamera> & left,
                        const std::shared_ptr<camera::MonocularCamera> & right,
@@ -23,11 +23,10 @@ class TwoViewReconstructor {
 
   bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
                    const std::vector<HomogenousPoint> & points_from,
-                   const std::vector<int> & matches12,
+                   const std::vector<features::Match> & matches,
                    Pose & out_pose,
                    std::vector<TPoint3D> & out_points,
-                   std::vector<bool> & out_outliers,
-                   size_t number_of_matches) const;
+                   std::vector<bool> & out_outliers) const;
  private:
 
   void GenerateRandomSubset(size_t min,
@@ -41,9 +40,6 @@ class TwoViewReconstructor {
                              size_t subset_count,
                              std::vector<std::vector<size_t>> & out_result) const;
 
-  void FilterGoodMatches(const std::vector<int> & matches12,
-                         const size_t number_of_matches,
-                         pairs_t & out_good_matches) const;
  private:
   const std::shared_ptr<camera::MonocularCamera> left_, right_;
   const unsigned number_of_ransac_iterations_;

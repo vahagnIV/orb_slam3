@@ -5,19 +5,20 @@
 #ifndef ORB_SLAM3_INCLUDE_ATLAS_H_
 #define ORB_SLAM3_INCLUDE_ATLAS_H_
 
-#include <map.h>
+#include <map/map.h>
 #include <memory>
 namespace orb_slam3 {
-
+namespace map {
 class Atlas {
  public:
   Atlas();
-  Map *GetCurrentMap();
+  Map * GetCurrentMap();
   void CreateNewMap();
   ~Atlas();
  private:
-  Map *current_map_;
+  Map * current_map_;
 };
 
+}
 }
 #endif //ORB_SLAM3_INCLUDE_ATLAS_H_

@@ -7,13 +7,14 @@
 
 namespace orb_slam3 {
 namespace geometry {
+
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_SCORE = 5.991;
 const precision_t HomographyMatrixEstimator::PARALLAX_THRESHOLD = 0.99998;
 
 bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homography,
                                                      const std::vector<HomogenousPoint> & points_to,
                                                      const std::vector<HomogenousPoint> & points_from,
-                                                     const pairs_t & good_matches,
+                                                     const std::vector<features::Match> & matches,
                                                      std::vector<bool> & out_inliers,
                                                      std::vector<TPoint3D> & out_triangulated,
                                                      geometry::Pose & out_pose) const {
@@ -41,10 +42,10 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   for (size_t i = 0; i < 8; ++i) {
     std::vector<TPoint3D> tmp_triangulated;
     const geometry::Pose & sol = solution[i];
-    std::vector<bool> tmp_inliers(good_matches.size(), true);
+    std::vector<bool> tmp_inliers(matches.size(), true);
 //    std::vector<bool> tmp_inliers = original_inliers;
     precision_t parallax;
-    size_t no_good = CheckRT(sol, points_to, points_from, good_matches, tmp_inliers, parallax, tmp_triangulated);
+    size_t no_good = CheckRT(sol, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
     if (best_count < no_good) {
       second_best_count = best_count;
       best_count = no_good;
@@ -56,6 +57,8 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
       second_best_count = std::max(second_best_count, no_good);
   }
 
+  //secondBestGood<0.75*bestGood && bestParallax>=minParallax && bestGood>minTriangulated && bestGood>0.9*N
+  // TODO: address this issue
   return second_best_count < 0.75 * best_count && best_parallax < 0.995;
 }
 
@@ -113,7 +116,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
 
 void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                                          const std::vector<HomogenousPoint> & points_from,
-                                                         const pairs_t & good_matches,
+                                                         const std::vector<features::Match> & matches,
                                                          const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                          TMatrix33 & out_homography,
                                                          std::vector<bool> & out_inliers,
@@ -123,16 +126,16 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<Homog
 
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
     const std::vector<size_t> & good_matches_rnd = good_match_random_idx[i];
-    std::vector<bool> tmp_inliers(good_matches.size());
+    std::vector<bool> tmp_inliers(matches.size());
     std::fill(tmp_inliers.begin(), tmp_inliers.end(), true);
-    FindHomographyMatrix(points_to, points_from, good_matches, good_matches_rnd, tmp_homography);
+    FindHomographyMatrix(points_to, points_from, matches, good_matches_rnd, tmp_homography);
     precision_t score =
-        ComputeHomographyReprojectionError(tmp_homography, points_to, points_from, good_matches, tmp_inliers, false);
+        ComputeHomographyReprojectionError(tmp_homography, points_to, points_from, matches, tmp_inliers, false);
     if (score > 0)
       score += ComputeHomographyReprojectionError(tmp_homography.inverse(),
                                                   points_to,
                                                   points_from,
-                                                  good_matches,
+                                                  matches,
                                                   tmp_inliers,
                                                   true);
     if (score > 0 && score > out_score) {
@@ -146,16 +149,16 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<Homog
 precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const TMatrix33 & h,
                                                                           const std::vector<HomogenousPoint> & points_to,
                                                                           const std::vector<HomogenousPoint> & points_from,
-                                                                          const pairs_t & good_matches,
+                                                                          const std::vector<features::Match> & matches,
                                                                           std::vector<bool> & out_inliers,
                                                                           bool inverse) const {
   precision_t score = 0;
-  for (size_t i = 0; i < good_matches.size(); ++i) {
+  for (size_t i = 0; i < matches.size(); ++i) {
     if (!out_inliers[i])
       continue;
-    const auto & match = good_matches[i];
-    const HomogenousPoint & point_from = (inverse ? points_to[match.first] : points_from[match.second]);
-    const HomogenousPoint & point_to = (inverse ? points_from[match.second] : points_to[match.first]);
+    const auto & match = matches[i];
+    const HomogenousPoint & point_from = (inverse ? points_to[match.to_idx] : points_from[match.from_idx]);
+    const HomogenousPoint & point_to = (inverse ? points_from[match.from_idx] : points_to[match.to_idx]);
 
     HomogenousPoint p21 = h * point_from;
     p21 /= p21[2];
@@ -173,7 +176,7 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
 
 void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                                      const std::vector<HomogenousPoint> & points_from,
-                                                     const std::vector<std::pair<size_t, size_t>> & good_matches,
+                                                     const std::vector<features::Match> & matches,
                                                      const std::vector<size_t> & good_match_random_idx,
                                                      TMatrix33 & out_homography) const {
 
@@ -181,8 +184,8 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
   L.resize(good_match_random_idx.size() * 2, Eigen::NoChange);
 
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const auto & U = points_to[good_matches[good_match_random_idx[i]].first];
-    const auto & X = points_from[good_matches[good_match_random_idx[i]].second];
+    const auto & U = points_to[matches[good_match_random_idx[i]].to_idx];
+    const auto & X = points_from[matches[good_match_random_idx[i]].from_idx];
 
     L(2 * i, 0) = X[0];
     L(2 * i, 1) = X[1];
@@ -221,26 +224,33 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
 size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
                                           const std::vector<HomogenousPoint> & points_to,
                                           const std::vector<HomogenousPoint> & points_from,
-                                          const pairs_t & good_matches,
+                                          const std::vector<features::Match> & matches,
                                           std::vector<bool> & inliers,
                                           precision_t & out_parallax,
                                           std::vector<TPoint3D> & out_triangulated) const {
   size_t count = 0;
-  out_triangulated.resize(good_matches.size());
+  out_triangulated.resize(matches.size());
   std::vector<precision_t> triangulated_parallax;
-  triangulated_parallax.reserve(good_matches.size());
+  triangulated_parallax.reserve(matches.size());
 
-  for (size_t i = 0; i < good_matches.size(); ++i) {
+  for (size_t i = 0; i < matches.size(); ++i) {
 
     if (!inliers[i])
       continue;
-    const auto & match = good_matches[i];
-    const HomogenousPoint point_to = points_to[match.first];
-    const HomogenousPoint point_from = points_from[match.second];
+
+    const auto & match = matches[i];
+    const HomogenousPoint point_to = points_to[match.to_idx];
+    const HomogenousPoint point_from = points_from[match.from_idx];
 
     TPoint3D & triangulated = out_triangulated[i];
 
-    if (!Triangulate(solution, point_to, point_from, triangulated) || triangulated[2] < 0) {
+
+    if (!Triangulate(solution, point_to, point_from, triangulated)) {
+      inliers[i] = false;
+      continue;
+    }
+
+    if(triangulated[2] < 0){
       inliers[i] = false;
       continue;
     }
@@ -260,7 +270,7 @@ size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
     }
 
     precision_t error = std::max(ComputeTriangulatedReprojectionError(triangulated, point_from),
-                                 ComputeTriangulatedReprojectionError(triangulated2 + solution.T, point_to));
+                                 ComputeTriangulatedReprojectionError(triangulated2, point_to));
     if (error > 4 * sigma_threshold__square_) {
       inliers[i] = false;
       continue;

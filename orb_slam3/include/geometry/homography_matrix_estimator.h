@@ -7,6 +7,7 @@
 #include <typedefs.h>
 #include <geometry/transfromation_estimator_base.h>
 #include <geometry/pose.h>
+#include <features/match.h>
 namespace orb_slam3 {
 namespace geometry {
 
@@ -17,7 +18,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
 
   void FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                 const std::vector<HomogenousPoint> & points_from,
-                                const pairs_t & good_matches,
+                                const std::vector<features::Match> & matches,
                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
                                 TMatrix33 & out_homography,
                                 std::vector<bool> & out_inliers,
@@ -26,20 +27,20 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   precision_t ComputeHomographyReprojectionError(const TMatrix33 & h,
                                                  const std::vector<HomogenousPoint> & points_to,
                                                  const std::vector<HomogenousPoint> & points_from,
-                                                 const pairs_t & good_matches,
+                                                 const std::vector<features::Match> & matches,
                                                  std::vector<bool> & out_inliers,
                                                  bool inverse) const;
 
   void FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                             const std::vector<HomogenousPoint> & points_from,
-                            const std::vector<std::pair<size_t, size_t>> & good_matches,
+                            const std::vector<features::Match> & matches,
                             const std::vector<size_t> & good_match_random_idx,
                             TMatrix33 & out_homography) const;
 
   bool FindRTTransformation(const TMatrix33 & homography,
                             const std::vector<TPoint3D> & points_to,
                             const std::vector<TPoint3D> & points_from,
-                            const pairs_t & good_matches,
+                            const std::vector<features::Match> & matches,
                             std::vector<bool> & out_inliers,
                             std::vector<TPoint3D> & out_triangulated,
                             geometry::Pose & out_pose) const;
@@ -47,7 +48,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   size_t CheckRT(const geometry::Pose & solution,
                  const std::vector<HomogenousPoint> & points_to,
                  const std::vector<HomogenousPoint> & points_from,
-                 const pairs_t & good_matches,
+                 const std::vector<features::Match> & matches,
                  std::vector<bool> & inliers,
                  precision_t & out_parallax,
                  std::vector<TPoint3D> & out_triangulated) const;

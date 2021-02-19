@@ -5,15 +5,18 @@
 #ifndef ORB_SLAM3_INCLUDE_MAP_POINT_H_
 #define ORB_SLAM3_INCLUDE_MAP_POINT_H_
 
-#include <opencv2/opencv.hpp>
+#include <unordered_set>
+#include <frame/frame_base.h>
 
 namespace orb_slam3 {
-namespace map{
+namespace map {
 
 class MapPoint {
  public:
-  cv::Point2f xi;
-  cv::Point3f x;
+  MapPoint() {};
+ private:
+  std::unordered_set<std::shared_ptr<orb_slam3::frame::FrameBase>> frames_;
+
 };
 
 }

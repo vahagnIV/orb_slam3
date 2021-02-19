@@ -13,7 +13,6 @@
 #include <typedefs.h>
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
-#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -47,9 +46,9 @@ class FrameBase {
 
   /*!
    * Set the position of the frame in the world coordinate system
-   * @param position 4x4 joint transformation matrix
+   * @param pose 4x4 joint transformation matrix
    */
-  void SetPosition(const cv::Matx44f & position) noexcept;
+  void SetPosition(const geometry::Pose & pose) noexcept;
 
   // Get the number of the extracted keypoints
   virtual size_t FeatureCount() const noexcept = 0;
@@ -91,7 +90,7 @@ class FrameBase {
   const id_type id_;
   TimePoint timestamp_;
   const std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
-  std::vector<map::MapPoint> map_points_;
+//  std::vector<orb_slam3::map::MapPoint> map_points_;
   std::shared_ptr<FrameBase> previous_frame_;
   geometry::Pose pose_;
  protected:

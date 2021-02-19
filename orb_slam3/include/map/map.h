@@ -8,7 +8,7 @@
 #include <map/map_point.h>
 #include <frame/frame_base.h>
 namespace orb_slam3 {
-
+namespace map {
 class Map {
  public:
   /*size_t FrameCount() const noexcept { return key_frames_.size(); }
@@ -22,6 +22,6 @@ class Map {
   std::vector<FrameBase *> key_frames_;
   FrameBase *last_frame_;*/
 };
-
+}
 }
 #endif //ORB_SLAM3_INCLUDE_MAP_H_

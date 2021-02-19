@@ -2,15 +2,13 @@
 // Created by vahagn on 12/8/20.
 //
 
-#include "map.h"
+#include "map/map.h"
 
 namespace orb_slam3 {
+namespace map {
+/*
 
-//void Map::AddKeyFrame(const FrameBase *frame) {
-//  key_frames_.push_back(frame);
-//}
-
-void Map::SetLastFrame(FrameBase *frame) noexcept {
+void Map::SetLastFrame(frame::FrameBase * frame) noexcept {
   if (last_frame_ && !key_frames_.empty() && last_frame_ != key_frames_.back())
     delete frame;
 
@@ -23,9 +21,10 @@ void Map::AcceptLastFrame() noexcept {
 }
 
 Map::~Map() {
-  for (FrameBase *frame: key_frames_)
+  for (FrameBase * frame: key_frames_)
     delete frame;
 
 }
-
+*/
+}
 }

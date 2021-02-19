@@ -18,11 +18,15 @@ class SecondNearestNeighborMatcher : public IMatcher {
 
   int Match(const features::Features & features1,
             const features::Features & features2,
-            std::vector<int> & out_matches_12) override;
+            std::vector<features::Match> & out_matches) const override;
  private:
   int DescriptorDistance(const Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> & a,
                          const Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> & b) const;
   void ComputeThreeMaxima(std::vector<int> *histo, const int L, int & ind1, int & ind2, int & ind3) const;
+
+  int Match(const features::Features & features1,
+            const features::Features & features2,
+            std::vector<int> & out_matches_12) const;
 
  private:
   static const int TH_LOW;
