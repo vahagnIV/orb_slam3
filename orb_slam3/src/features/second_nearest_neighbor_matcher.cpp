@@ -41,14 +41,15 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
 
   const precision_t factor = 1.0f / HISTO_LENGTH;
 
-  std::vector<int> matched_distance(features1.Size(), std::numeric_limits<int>::max());
-  std::vector<int> matches21(features2.Size(), -1);
 
+  std::vector<int> matched_distance(features2.Size(), std::numeric_limits<int>::max());
+  std::vector<int> matches21(features2.Size(), -1);
   std::vector<int> rotation_hostogram[HISTO_LENGTH];
   if (check_orientation_) {
     for (int i = 0; i < HISTO_LENGTH; i++)
       rotation_hostogram[i].reserve(500);
   }
+
 
   for (size_t i1 = 0; i1 < features1.Size(); i1++) {
     const KeyPoint & kp1 = features1.keypoints[i1];

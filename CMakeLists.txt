@@ -10,9 +10,8 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 add_subdirectory(orb_slam3)
 
-add_executable(test_p main.cpp ORBextractor.cc)
+add_executable(test_p main.cpp )
 
 target_link_libraries(test_p orbslam
-        ${OpenCV_LIBS}
         ${Boost_FILESYSTEM_LIBRARY}
         ${Boost_SYSTEM_LIBRARY})

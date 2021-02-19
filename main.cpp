@@ -15,8 +15,6 @@
 #include <camera/kannala_brandt_5.h>
 #include <camera/fish_eye.h>
 
-#include "ORBextractor.h"
-
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
 void LoadImages(const std::string & strAssociationFilename,
@@ -156,28 +154,6 @@ void TestMonocular(std::string original) {
 
   camera->ComputeImageBounds();
 
-  /*orb_slam3::TPoint2D point{7.7, 9.9}, undistorted, distorted;
-  camera->DistortPoint(point, distorted);
-  camera->UndistortPoint(distorted, undistorted);
-  std::cout << "Undistorted: \n" << undistorted << std::endl;
-  std::cout << "Distorted: \n" << distorted << std::endl;
-
-  cv::Mat distCoeffs(5,1,CV_32F);
-  distCoeffs.at<float>(0) = distortion->K1();
-  distCoeffs.at<float>(1) = distortion->K2();
-  distCoeffs.at<float>(2) = distortion->P1();
-  distCoeffs.at<float>(3) = distortion->P1();
-  distCoeffs.at<float>(4) = distortion->K3();
-  cv::Mat cammat = cv::Mat::zeros(3,3,CV_32F);
-  cammat.at<float>(0,0) = camera->Fx();
-  cammat.at<float>(1,1) = camera->Fy();
-  cammat.at<float>(0,2) = camera->Cx();
-  cammat.at<float>(1,2) = camera->Cy();
-  cammat.at<float>(2,2) = 1;
-  cv::Mat originalcv(1,1, CV_32FC2), undistortedcv;
-  originalcv.at<cv::Point2f>(0) = cv::Point2f(distorted[0],distorted[1]);
-  cv::undistortPoints(originalcv,undistortedcv, cammat, distCoeffs,cv::Mat(), cammat);
-  std::cout << undistortedcv<<std::endl;*/
 
   size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
@@ -189,58 +165,18 @@ void TestMonocular(std::string original) {
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
-  /*cv::Mat cm = cv::Mat::zeros(3, 3, CV_32F);
-  cm.at<float>(0, 0) = camera->Fx();
-  cm.at<float>(1, 1) = camera->Fy();
-  cm.at<float>(0, 2) = camera->Cx();
-  cm.at<float>(1, 2) = camera->Cy();
-  cm.at<float>(2, 2) = 1;
-
-  cv::Mat cm1 = cm.clone();
-  cm1.at<float>(0, 2) = 512;
-  cm1.at<float>(1, 2) = 512;
-
-  cv::Mat distCoeffs(4, 1, CV_32F);
-  distCoeffs.at<float>(0) = distortion->K1();
-  distCoeffs.at<float>(1) = distortion->K2();
-  distCoeffs.at<float>(2) = distortion->K3();
-//  distCoeffs.at<float>(3) = distortion->K4();
-
-  orb_slam3::TPoint2D m{7.6, 9.1};
-  cv::Mat cv_point(1, 1, CV_64FC2), cv_result;
-  cv_point.at<cv::Point2d>(0) = cv::Point2d(m[0], m[1]);
-
-  cv::fisheye::undistortPoints(cv_point, cv_result, cm, distCoeffs, cv::Mat(), cm);
-  float x = cv_result.at<cv::Point2d>(0).x;
-  float y = cv_result.at<cv::Point2d>(0).y;
-
-  camera->UndistortPoint(m, m);*/
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
-//    cv::imshow("Image " + std::to_string(k), image);
-
-//    cv::Mat undistorted;
-//    cv::imshow("image", image);
-////      cv::undistort(image, undistorted, cm, distCoeffs);
-//    cv::fisheye::undistortImage(image, undistorted, cm, distCoeffs, cm1, cv::Size(1024, 1024));
-//    cv::imshow("undistorted", undistorted);
-//    cv::waitKey();
-//    continue;
-//    for(float x = 0.03; x<= 3;x+=0.03) {
-//      distCoeffs.at<float>(0) = - x;
-//    }
-
+//    cv::imshow("im", image);
+//    cv::waitKey(0);
+    std::cout << "processing frame " << filenames[k] << std::endl;
     auto eigen = FromCvMat(image);
     std::shared_ptr<orb_slam3::frame::FrameBase> frame =
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
                                                            extractor, camera);
 
-    /*ORB_SLAM3::ORBextractor their(nfeatures, scale_factor, levels,
-                                  init_threshold, min_threshold);
-    std::vector<cv::KeyPoint> kps;
-    cv::Mat dcs;
-    std::vector<int> la = {0, static_cast<int>(camera->Width())};*/
+
 
     tracker.Track(frame);
 //    cv::waitKey();
@@ -249,106 +185,9 @@ void TestMonocular(std::string original) {
 
 int main(int argc, char *argv[]) {
 
-  /*std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
-      std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
 
-  orb_slam3::camera::FishEye * distortion = camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
-//  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+  TestMonocular(std::string(argv[1]));
 
-  camera->SetFx(190.97847715128717);
-  camera->SetFy(190.9733070521226);
-  camera->SetCx(254.93170605935475);
-  camera->SetCy(256.8974428996504);
-  distortion->SetK1(0.0034823894022493434);
-  distortion->SetK2(0.0007150348452162257);
-  distortion->SetK3(-0.0020532361418706202);
-  distortion->SetK4(0.00020293673591811182);
-
-
-
-
-  typedef float p_t;
-  int OpenCvMatrixType= CV_32F;
-  int OpenCvPointMatrixType= CV_32FC2;
-  typedef cv::Point2f OpenCVPointType;
-  cv::Mat camera_matrix = cv::Mat::zeros(3, 3, OpenCvMatrixType);
-  camera_matrix.at<p_t>(0, 0) = 190.9784;
-  camera_matrix.at<p_t>(1, 1) = 190.9733;
-  camera_matrix.at<p_t>(0, 2) = 254.9317;
-  camera_matrix.at<p_t>(1, 2) = 256.8974;
-  camera_matrix.at<p_t>(2, 2) = 1;
-
-  std::cout << "Camera matrix: \n" << camera_matrix << "\n" << std::endl;
-
-  cv::Mat distortion_coefficients(4, 1, OpenCvMatrixType);
-  distortion_coefficients.at<p_t>(0) = 0.003482;
-  distortion_coefficients.at<p_t>(1) = 0.000715;
-  distortion_coefficients.at<p_t>(2) = -0.0020532;
-  distortion_coefficients.at<p_t>(3) = 0.000203;
-
-  std::cout << "Distortion coefficients\n" << distortion_coefficients << "\n" << std::endl;
-
-  cv::Mat original_point(1, 1, OpenCvPointMatrixType);
-  original_point.at<OpenCVPointType>(0).x = 7.7;
-  original_point.at<OpenCVPointType>(0).y = 9.9;
-  cv::Mat undistorted, distorted;
-
-  cv::fisheye::distortPoints(original_point, distorted, camera_matrix, distortion_coefficients);
-
-  cv::fisheye::undistortPoints(distorted, undistorted, camera_matrix,
-                               distortion_coefficients, cv::Mat(), camera_matrix);
-
-  int utype = undistorted.type();
-  int dtype = distorted.type();
-
-
-
-  std::cout << "Original point: " << original_point.at<OpenCVPointType>(0).x << " " << original_point.at<OpenCVPointType>(0).y
-            << std::endl;
-  std::cout << "Undistorted point: " << undistorted.at<OpenCVPointType>(0).x << " " << undistorted.at<OpenCVPointType>(0).y
-            << std::endl;
-
-  cv::Mat camera_matrix_inv = camera_matrix.inv();
-  p_t x = 1 / camera_matrix.at<p_t>(0, 0) * undistorted.at<OpenCVPointType>(0).x + camera_matrix.at<p_t>(0, 2);
-  p_t y = 1 / camera_matrix.at<p_t>(1, 1) * undistorted.at<OpenCVPointType>(0).y + camera_matrix.at<p_t>(1, 2);
-
-  std::cout << "Undistorted point p: " << x << " " << y << std::endl;
-
-  std::cout << "Distorted point: " << distorted.at<OpenCVPointType>(0).x << " " << distorted.at<OpenCVPointType>(0).y;
-  return 0;*/
-  TestMonocular(argv[1]);
-  /*std::string associsations_filename =
-  "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/associations/fr1_desk.txt";
-  std::string settings_file_path =
-  "/home/vahagn/git/ORB_SLAM3/Examples/RGB-D/TUM2.yaml"; std::string
-  database_path =
-  "/home/vahagn/git/ORB_SLAM3/db/tum/rgbd_dataset_freiburg1_desk";*/
-
-  /*std::vector<std::string> rgb_image_filenames;
-  std::vector<std::string> depth_image_filenames;
-  std::vector<double> timestamps;
-  orb_slam3::Tracker tracker;
-  LoadImages(associsations_filename, rgb_image_filenames, depth_image_filenames,
-  timestamps); std::cout << "Hello, World!" << std::endl;
-  std::shared_ptr<orb_slam3::features::IFeatureExtractor> extractor =
-  std::make_shared<orb_slam3::features::ORBFeatureExtractor>();
-  std::shared_ptr<orb_slam3::RGBDCamera>
-      camera = CreateCamera(settings_file_path);
-
-  orb_slam3::ORBVocabulary
-      *orb_vocabulary = new orb_slam3::ORBVocabulary();
-  orb_vocabulary->loadFromTextFile("/home/vahagn/git/ORB_SLAM3/Vocabulary/ORBvoc.txt");
-
-  for (size_t i = 0; i < rgb_image_filenames.size(); ++i) {
-    cv::Mat rgb = cv::imread(database_path + "/" + rgb_image_filenames[i],
-  cv::IMREAD_UNCHANGED); cv::Mat depth = cv::imread(database_path + "/" +
-  depth_image_filenames[i], cv::IMREAD_UNCHANGED); if ((fabs(DEPTH_MAP_FACTOR
-  - 1.0f) > 1e-5) || depth.type() != CV_32F) depth.convertTo(depth, CV_32F,
-  DEPTH_MAP_FACTOR); std::cout << depth.type() << std::endl;
-    orb_slam3::RGBDFrame *
-        frame = new orb_slam3::RGBDFrame(rgb, depth, timestamps[i], camera,
-  extractor, orb_vocabulary); frame->Compute(); tracker.Track(frame);
-  }*/
 
   return 0;
 }

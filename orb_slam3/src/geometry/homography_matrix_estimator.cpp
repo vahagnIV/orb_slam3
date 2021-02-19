@@ -257,7 +257,7 @@ size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
 
     precision_t point_parallax = ComputeParallax(triangulated, solution);
     // Eliminate far points
-    if (point_parallax > PARALLAX_THRESHOLD) {
+    if (point_parallax > PARALLAX_THRESHOLD || std::isnan(point_parallax)) {
       inliers[i] = false;
       continue;
     }
