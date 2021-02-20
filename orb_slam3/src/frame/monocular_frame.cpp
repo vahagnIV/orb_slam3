@@ -12,13 +12,11 @@ namespace orb_slam3 {
 namespace frame {
 
 MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
-                               const std::shared_ptr<features::IFeatureExtractor> &
-                               feature_extractor,
+                               const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
                                const std::shared_ptr<camera::MonocularCamera> & camera) :
-    FrameBase(timestamp,
-              feature_extractor), features_(camera->Width(), camera->Height()),
+    FrameBase(timestamp), features_(camera->Width(), camera->Height()),
     camera_(camera) {
-  feature_extractor_->Extract(image, features_);
+  feature_extractor->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
   features_.AssignFeaturesToGrid();
 }
@@ -35,15 +33,15 @@ bool MonocularFrame::InitializePositionFromPrevious() {
   if (previous_frame_->Type() != Type())
     return false;
   MonocularFrame * previous_frame = dynamic_cast<MonocularFrame *>(previous_frame_.get());
-  features::SecondNearestNeighborMatcher matcher(200,
+  features::SecondNearestNeighborMatcher matcher(100,
                                                  0.9,
                                                  false);
   std::vector<features::Match> matched_features;
   int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
-  if (number_of_good_matches < 50)
+  if (number_of_good_matches < 100)
     return false;
 
-  geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5, 1. / 190.);
+  geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5, camera_->FxInv());
   std::vector<TPoint3D> points;
   std::vector<bool> outliers;
   if (reconstructor.Reconstruct(features_.undistorted_keypoints,

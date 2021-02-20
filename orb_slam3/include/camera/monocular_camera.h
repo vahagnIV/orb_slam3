@@ -115,6 +115,8 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
   inline const Scalar & Fy() const noexcept { return this->_estimate[1]; }
   inline const Scalar & Cx() const noexcept { return this->_estimate[2]; }
   inline const Scalar & Cy() const noexcept { return this->_estimate[3]; }
+  inline const Scalar & FxInv() const noexcept { return fx_inv_; }
+  inline const Scalar & FyInv() const noexcept { return fy_inv_; }
 
   void SetFx(Scalar fx) noexcept {
     _estimate[0] = fx;

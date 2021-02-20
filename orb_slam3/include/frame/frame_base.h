@@ -24,9 +24,8 @@ class FrameBase {
 
   virtual FrameType Type() const = 0;
 
-  FrameBase(const TimePoint & timestamp,
-            const std::shared_ptr<features::IFeatureExtractor> & feature_extractor)
-      : id_(++next_id_), timestamp_(timestamp), feature_extractor_(feature_extractor), previous_frame_(nullptr) {}
+  FrameBase(const TimePoint & timestamp)
+      : id_(++next_id_), timestamp_(timestamp), previous_frame_(nullptr) {}
   /*!
   *  Getter for id
   *  @return The id of the frame
@@ -89,7 +88,6 @@ class FrameBase {
 
   const id_type id_;
   TimePoint timestamp_;
-  const std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
 //  std::vector<orb_slam3::map::MapPoint> map_points_;
   std::shared_ptr<FrameBase> previous_frame_;
   geometry::Pose pose_;

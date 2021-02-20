@@ -7,13 +7,16 @@
 // === stl ===
 #include <unordered_set>
 
+// === g2o ===
+#include <g2o/types/slam3d/vertex_pointxyz.h>
+
 // === orb-slam3 ===
 #include <frame/frame_base.h>
 
 namespace orb_slam3 {
 namespace map {
 
-class MapPoint {
+ class MapPoint: protected g2o::VertexPointXYZ {
  public:
   MapPoint() {};
  private:
