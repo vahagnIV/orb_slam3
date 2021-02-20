@@ -14,11 +14,14 @@ namespace frame {
 MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
                                const std::shared_ptr<camera::MonocularCamera> & camera) :
-    FrameBase(timestamp), features_(camera->Width(), camera->Height()),
+    FrameBase(timestamp),
+    features_(camera->Width(), camera->Height()),
     camera_(camera) {
   feature_extractor->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
   features_.AssignFeaturesToGrid();
+  map_points_.resize(features_.undistorted_keypoints.size());
+  std::fill(map_points_.begin(), map_points_.end(), nullptr);
 }
 
 bool MonocularFrame::IsValid() const {
@@ -29,28 +32,45 @@ size_t MonocularFrame::FeatureCount() const noexcept {
   return features_.keypoints.size();
 }
 
-bool MonocularFrame::InitializePositionFromPrevious() {
-  if (previous_frame_->Type() != Type())
+bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
+  if (other->Type() != Type())
     return false;
-  MonocularFrame * previous_frame = dynamic_cast<MonocularFrame *>(previous_frame_.get());
+  MonocularFrame * other_frame = dynamic_cast<MonocularFrame *>(other.get());
   features::SecondNearestNeighborMatcher matcher(100,
                                                  0.9,
                                                  false);
-  std::vector<features::Match> matched_features;
-  int number_of_good_matches = matcher.Match(features_, previous_frame->features_, matched_features);
-  if (number_of_good_matches < 100)
+  matcher.Match(features_, other_frame->features_, frame_link_.matches);
+  if (frame_link_.matches.size() < 100)
     return false;
 
-  geometry::TwoViewReconstructor reconstructor(camera_, camera_, 5, camera_->FxInv());
+  geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
   std::vector<TPoint3D> points;
   std::vector<bool> outliers;
   if (reconstructor.Reconstruct(features_.undistorted_keypoints,
-                                previous_frame->features_.undistorted_keypoints,
-                                matched_features,
+                                other_frame->features_.undistorted_keypoints,
+                                frame_link_.matches,
                                 pose_,
                                 points,
-                                outliers)) {
-    std::cout << pose_.R << std::endl << pose_.T << std::endl;
+                                frame_link_.inliers)) {
+    // TODO: pass to asolute R,T
+    frame_link_.other = other;
+
+    for (size_t i = 0; i < frame_link_.matches.size(); ++i) {
+      if (!frame_link_.inliers[i])
+        continue;
+      const features::Match & match = frame_link_.matches[i];
+
+      if (other->MapPoint(match.from_idx)) {
+        // TODO: do the contistency check
+      } else {
+
+        auto map_point = std::make_shared<map::MapPoint>(points[i]);
+        map_points_[match.to_idx] = map_point;
+        other->MapPoint(match.from_idx) = map_points_[match.to_idx];
+      }
+    }
+
+    std::cout << "Frame " << Id() << " " << pose_.R << std::endl << pose_.T << std::endl;
     return true;
   }
 

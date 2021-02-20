@@ -17,7 +17,7 @@ class SecondNearestNeighborMatcher : public IMatcher {
                 const precision_t nearest_neighbour_ratio,
                 const bool check_orientation);
 
-  int Match(const features::Features & features1,
+  void Match(const features::Features & features1,
             const features::Features & features2,
             std::vector<features::Match> & out_matches) const override;
  private:

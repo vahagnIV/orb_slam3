@@ -22,17 +22,22 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
     case NOT_INITIALIZED: {
       if (frame->IsValid()) {
         initial_frame_ = last_frame_ = frame;
+        last_frame_->InitializeIdentity();
         state_ = FIRST_IMAGE;
       }
     }
       break;
     case FIRST_IMAGE: {
-      frame->SetPrevious(last_frame_);
-      if (frame->InitializePositionFromPrevious()) {
-        last_frame_->InitializeIdentity();
+      if (frame->Link(last_frame_)) {
         map::Map * current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
-        current_map->AddKeyFrame(last_frame_);
+        current_map->SetInitialKeyFrame(last_frame_);
+        for (auto & mp: frame->MapPoints())
+          if (mp) {
+            mp->AddFrame(frame);
+            mp->AddFrame(last_frame_);
+          }
+        last_frame_ = frame;
         state_ = OK;
       }
     }
@@ -40,20 +45,6 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
 
     default:break;
   }
-
-  /* IMU stuff skipping for now ... */
-
-  /*if (current_map->GetLastFrame() == nullptr) {
-
-    if (frame->FeatureCount() < MINIMAL_FEATURE_COUNT_PER_FRAME)
-      return TrackingResult::Ignore;
-    frame->InitializeIdentity();
-    current_map->SetLastFrame(frame);
-    current_map->AcceptLastFrame();
-
-  } else {
-    frame->SetReferenceFrame(current_map->GetLastFrame());
-  }*/
   return TrackingResult::OK;
 }
 

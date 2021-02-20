@@ -13,6 +13,7 @@
 #include <typedefs.h>
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -25,7 +26,7 @@ class FrameBase {
   virtual FrameType Type() const = 0;
 
   FrameBase(const TimePoint & timestamp)
-      : id_(++next_id_), timestamp_(timestamp), previous_frame_(nullptr) {}
+      : id_(++next_id_), timestamp_(timestamp) {}
   /*!
   *  Getter for id
   *  @return The id of the frame
@@ -59,23 +60,15 @@ class FrameBase {
   virtual bool IsValid() const = 0;
 
   /*!
-   * Setter for the previous frame
-   * @param previous_frame the previous frame
-   */
-  void SetPrevious(const std::shared_ptr<FrameBase> & previous_frame) { previous_frame_ = previous_frame; }
-
-  /*!
-   * Getter for the previous frame
-   * @return the previous frame
-   */
-  const std::shared_ptr<FrameBase> & PreviousFrame() { return previous_frame_; }
-
-  /*!
    * If needed, this should inizialize the position from the previous frames
    * Used only for monocular case
    * @return
    */
-  virtual bool InitializePositionFromPrevious() = 0;
+  virtual bool Link(const std::shared_ptr<FrameBase> & other) = 0;
+
+  const std::shared_ptr<map::MapPoint> & MapPoint(size_t id) const { return map_points_[id]; }
+  std::shared_ptr<map::MapPoint> & MapPoint(size_t id) { return map_points_[id]; }
+  std::vector<std::shared_ptr<map::MapPoint>> & MapPoints() { return map_points_; }
 
   /*!
    * Destructor
@@ -88,8 +81,7 @@ class FrameBase {
 
   const id_type id_;
   TimePoint timestamp_;
-//  std::vector<orb_slam3::map::MapPoint> map_points_;
-  std::shared_ptr<FrameBase> previous_frame_;
+  std::vector<std::shared_ptr<map::MapPoint>> map_points_;
   geometry::Pose pose_;
  protected:
   static id_type next_id_;

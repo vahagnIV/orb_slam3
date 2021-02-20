@@ -12,5 +12,9 @@ void Map::AddKeyFrame(const std::shared_ptr<frame::FrameBase> & frame) {
   key_frames_.insert(frame);
 }
 
+void Map::SetInitialKeyFrame(const std::shared_ptr<frame::FrameBase> & frame) {
+  initial_keyframe_ = frame;
+}
+
 }
 }

@@ -20,7 +20,7 @@ SecondNearestNeighborMatcher::SecondNearestNeighborMatcher(const size_t window_s
       check_orientation_(check_orientation){
 }
 
-int SecondNearestNeighborMatcher::Match(const features::Features & features1,
+void SecondNearestNeighborMatcher::Match(const features::Features & features1,
                                         const features::Features & features2,
                                         std::vector<features::Match> & out_matches) const {
   std::vector<int> matches12;
@@ -30,7 +30,6 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
     if(matches12[i] >= 0 )
       out_matches.push_back(features::Match(i, matches12[i]));
   }
-  return matches;
 }
 
 int SecondNearestNeighborMatcher::Match(const features::Features & features1,

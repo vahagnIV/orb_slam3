@@ -11,16 +11,22 @@
 #include <g2o/types/slam3d/vertex_pointxyz.h>
 
 // === orb-slam3 ===
-#include <frame/frame_base.h>
+#include <typedefs.h>
+//#include <frame/frame_base.h>
 
 namespace orb_slam3 {
+namespace frame{
+class FrameBase;
+}
 namespace map {
 
- class MapPoint: protected g2o::VertexPointXYZ {
+class MapPoint : protected g2o::VertexPointXYZ {
  public:
+  MapPoint(const TPoint3D & point);
   MapPoint() {};
+  void AddFrame(const std::shared_ptr<frame::FrameBase> & frame);
  private:
-  std::unordered_set<std::shared_ptr<orb_slam3::frame::FrameBase>> frames_;
+ std::unordered_set<std::shared_ptr<frame::FrameBase>> frames_;
 
 };
 

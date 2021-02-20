@@ -63,6 +63,7 @@ add_library(orbslam SHARED
         include/frame/frame_base.h
         include/frame/monocular_frame.h
         include/frame/frame_type.h
+        include/frame/frame_link.h
 
         include/features/key_point.h
         include/features/orb_feature_extractor.h

@@ -6,8 +6,9 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_MONOCULAR_FRAME_H_
 
 // == orb-slam3 ===
-#include "frame_base.h"
+#include <frame/frame_base.h>
 #include <camera/monocular_camera.h>
+#include <frame/frame_link.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -22,11 +23,13 @@ class MonocularFrame : public FrameBase {
   size_t FeatureCount() const noexcept override;
   bool IsValid() const override;
   FrameType Type() const override;
-  bool InitializePositionFromPrevious() override;
+  bool Link(const std::shared_ptr<FrameBase> & other) override;
+
 
  protected:
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;
+  FrameLink frame_link_;
 };
 
 }

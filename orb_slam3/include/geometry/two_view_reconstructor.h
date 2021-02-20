@@ -19,9 +19,7 @@ namespace geometry {
 
 class TwoViewReconstructor {
  public:
-  TwoViewReconstructor(const std::shared_ptr<camera::MonocularCamera> & left,
-                       const std::shared_ptr<camera::MonocularCamera> & right,
-                       const unsigned number_of_ransac_iterations,
+  TwoViewReconstructor(const unsigned number_of_ransac_iterations,
                        precision_t sigma_threshold = 1.0);
 
   bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
@@ -44,7 +42,6 @@ class TwoViewReconstructor {
                              std::vector<std::vector<size_t>> & out_result) const;
 
  private:
-  const std::shared_ptr<camera::MonocularCamera> left_, right_;
   const unsigned number_of_ransac_iterations_;
   FundamentalMatrixEstimator fundamental_matrix_estimator_;
   HomographyMatrixEstimator homography_matrix_sstimator_;

@@ -13,13 +13,9 @@
 namespace orb_slam3 {
 namespace geometry {
 
-TwoViewReconstructor::TwoViewReconstructor(const std::shared_ptr<camera::MonocularCamera> & left,
-                                           const std::shared_ptr<camera::MonocularCamera> & right,
-                                           const unsigned number_of_ransac_iterations,
+TwoViewReconstructor::TwoViewReconstructor(const unsigned number_of_ransac_iterations,
                                            precision_t sigma_threshold)
-    : left_(left),
-      right_(right),
-      number_of_ransac_iterations_(number_of_ransac_iterations),
+    : number_of_ransac_iterations_(number_of_ransac_iterations),
       fundamental_matrix_estimator_(sigma_threshold),
       homography_matrix_sstimator_(sigma_threshold) {
 }

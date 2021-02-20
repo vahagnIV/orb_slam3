@@ -14,7 +14,7 @@ namespace features {
 
 class IMatcher {
  public:
-  virtual int Match(const features::Features & features1,
+  virtual void Match(const features::Features & features1,
                     const features::Features & features2,
                     std::vector<Match> & out_matches) const = 0;
 
