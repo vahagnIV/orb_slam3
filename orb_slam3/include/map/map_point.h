@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_INCLUDE_MAP_POINT_H_
 #define ORB_SLAM3_INCLUDE_MAP_POINT_H_
 // === stl ===
-#include <unordered_set>
+#include <unordered_map>
 
 // === g2o ===
 #include <g2o/types/slam3d/vertex_pointxyz.h>
@@ -24,9 +24,9 @@ class MapPoint : protected g2o::VertexPointXYZ {
  public:
   MapPoint(const TPoint3D & point);
   MapPoint() {};
-  void AddFrame(const std::shared_ptr<frame::FrameBase> & frame);
+  void AddObservation(const std::shared_ptr<frame::FrameBase> & frame, size_t feature_id);
  private:
- std::unordered_set<std::shared_ptr<frame::FrameBase>> frames_;
+ std::unordered_map<std::shared_ptr<frame::FrameBase>, size_t> obsevations_;
 
 };
 

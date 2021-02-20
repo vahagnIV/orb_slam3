@@ -12,8 +12,8 @@ MapPoint::MapPoint(const TPoint3D & point) {
   this->setEstimate(point);
 }
 
-void MapPoint::AddFrame(const std::shared_ptr<frame::FrameBase> & frame) {
-  frames_.insert(frame);
+void MapPoint::AddObservation(const std::shared_ptr<frame::FrameBase> & frame, size_t feature_id) {
+  obsevations_[frame] = feature_id;
 }
 
 }

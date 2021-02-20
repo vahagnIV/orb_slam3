@@ -32,18 +32,23 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
         map::Map * current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
         current_map->SetInitialKeyFrame(last_frame_);
-        for (auto & mp: frame->MapPoints())
-          if (mp) {
-            mp->AddFrame(frame);
-            mp->AddFrame(last_frame_);
-          }
+        for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
+          auto & mp = frame->MapPoint(i);
+          if (mp)
+            mp->AddObservation(frame, i);
+        }
+        for (size_t i = 0; i < last_frame_->MapPoints().size(); ++i) {
+          auto & mp = last_frame_->MapPoint(i);
+          if (mp)
+            mp->AddObservation(last_frame_, i);
+        }
         last_frame_ = frame;
         state_ = OK;
       }
-    }
       break;
 
-    default:break;
+      default:break;
+    }
   }
   return TrackingResult::OK;
 }
