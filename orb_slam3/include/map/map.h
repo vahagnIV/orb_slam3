@@ -4,23 +4,24 @@
 
 #ifndef ORB_SLAM3_INCLUDE_MAP_H_
 #define ORB_SLAM3_INCLUDE_MAP_H_
-#include <vector>
-#include <map/map_point.h>
+
+// == stl =====
+#include <unordered_set>
+
+// == orb-slam3 ===
 #include <frame/frame_base.h>
+
 namespace orb_slam3 {
 namespace map {
 class Map {
  public:
-  /*size_t FrameCount() const noexcept { return key_frames_.size(); }
-  void SetLastFrame(FrameBase *frame) noexcept;
-  const FrameBase *GetLastFrame() const noexcept { return last_frame_; }
-  FrameBase *GetLastFrame() noexcept { return last_frame_; }
-  void AcceptLastFrame() noexcept;
-  ~Map();
+  void AddKeyFrame(const std::shared_ptr<frame::FrameBase> & frame);
 
  private:
-  std::vector<FrameBase *> key_frames_;
-  FrameBase *last_frame_;*/
+  std::unordered_set<std::shared_ptr<frame::FrameBase>> key_frames_;
+
+
+
 };
 }
 }

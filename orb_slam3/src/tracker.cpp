@@ -28,13 +28,17 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
       break;
     case FIRST_IMAGE: {
       frame->SetPrevious(last_frame_);
-      if (frame->InitializePositionFromPrevious()){}
-//        state_ = OK;
+      if (frame->InitializePositionFromPrevious()) {
+        last_frame_->InitializeIdentity();
+        map::Map * current_map = atlas_->GetCurrentMap();
+        current_map->AddKeyFrame(frame);
+        current_map->AddKeyFrame(last_frame_);
+        state_ = OK;
+      }
     }
       break;
 
-    default:
-      break;
+    default:break;
   }
 
   /* IMU stuff skipping for now ... */

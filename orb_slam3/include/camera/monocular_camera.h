@@ -5,7 +5,10 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_MONOCULAR_CAMERA_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_MONOCULAR_CAMERA_H_
 
+// === g2o ===
 #include <g2o/core/base_vertex.h>
+
+// == orb-slam3 ===
 #include <typedefs.h>
 #include <features/key_point.h>
 #include "idistortion_model.h"

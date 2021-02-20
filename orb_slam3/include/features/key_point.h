@@ -1,6 +1,7 @@
 #ifndef ORB_SLAM3_INCLUDE_MAP_MAP_POINT_H_
 #define ORB_SLAM3_INCLUDE_MAP_MAP_POINT_H_
 
+// == orb-slam3 ===
 #include <typedefs.h>
 
 namespace orb_slam3 {

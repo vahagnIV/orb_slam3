@@ -4,7 +4,11 @@
 
 #ifndef ORB_SLAM3_I_DISTORTION_MODEL_H
 #define ORB_SLAM3_I_DISTORTION_MODEL_H
+
+// === g2o ===
 #include <g2o/core/base_vertex.h>
+
+// == orb-slam3 ===
 #include <typedefs.h>
 
 namespace orb_slam3 {

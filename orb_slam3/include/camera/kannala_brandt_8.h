@@ -4,6 +4,8 @@
 
 #ifndef ORB_SLAM3_KANNALA_BRANDT_8_H
 #define ORB_SLAM3_KANNALA_BRANDT_8_H
+
+// == orb-slam3 ===
 #include "idistortion_model.h"
 
 namespace orb_slam3 {

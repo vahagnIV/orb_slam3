@@ -5,10 +5,13 @@
 #ifndef ORB_SLAM3_FEATURES_H
 #define ORB_SLAM3_FEATURES_H
 
+// === stl ===
 #include <memory>
 
+// === Eigen ===
 #include <Eigen/Eigen>
 
+// == orb-slam3 ===
 #include <typedefs.h>
 #include <constants.h>
 #include <camera/monocular_camera.h>

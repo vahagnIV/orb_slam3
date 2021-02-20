@@ -5,6 +5,7 @@
 #ifndef ORB_SLAM3_FISH_EYE_H
 #define ORB_SLAM3_FISH_EYE_H
 
+// == orb-slam3 ==
 #include "idistortion_model.h"
 
 namespace orb_slam3 {

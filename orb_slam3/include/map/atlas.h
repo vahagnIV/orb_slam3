@@ -4,9 +4,12 @@
 
 #ifndef ORB_SLAM3_INCLUDE_ATLAS_H_
 #define ORB_SLAM3_INCLUDE_ATLAS_H_
-
-#include <map/map.h>
+// === stl ===
 #include <memory>
+
+// === orb-slam3 ===
+#include <map/map.h>
+
 namespace orb_slam3 {
 namespace map {
 class Atlas {

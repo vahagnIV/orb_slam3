@@ -4,9 +4,14 @@
 
 #ifndef ORB_SLAM3_INCLUDE_TRACKER_H_
 #define ORB_SLAM3_INCLUDE_TRACKER_H_
+
+// == stl ===
+#include <memory>
+
+// == orb-slam3 ===
 #include <frame/frame_base.h>
 #include <map/atlas.h>
-#include <memory>
+
 namespace orb_slam3 {
 
 enum TrackingResult {

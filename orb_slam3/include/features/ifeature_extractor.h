@@ -5,7 +5,10 @@
 #ifndef ORB_SLAM3_INCLUDE_I_FEATURE_EXTRACTOR_H_
 #define ORB_SLAM3_INCLUDE_I_FEATURE_EXTRACTOR_H_
 
+// == stl ===
 #include <vector>
+
+// == orb-slam3 ===
 #include <typedefs.h>
 #include "features.h"
 #include <features/key_point.h>

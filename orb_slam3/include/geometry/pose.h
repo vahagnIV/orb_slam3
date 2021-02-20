@@ -4,7 +4,10 @@
 
 #ifndef ORB_SLAM3_POSE_H
 #define ORB_SLAM3_POSE_H
+
+// == orb-slam3 ===
 #include <typedefs.h>
+
 namespace orb_slam3 {
 namespace geometry {
 

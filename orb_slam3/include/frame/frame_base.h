@@ -5,10 +5,10 @@
 #ifndef ORB_SLAM3_INCLUDE_FRAME_BASE_H_
 #define ORB_SLAM3_INCLUDE_FRAME_BASE_H_
 
-/// stl
+// ===stl===
 #include <memory>
 
-/// orb_slam3
+// == orb-slam3 ===
 #include "frame_type.h"
 #include <typedefs.h>
 #include <features/ifeature_extractor.h>

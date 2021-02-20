@@ -2,8 +2,8 @@
 // Created by vahagn on 01/02/21.
 //
 
+// == orb-slam3 ===
 #include <features/features.h>
-#include <boost/shared_ptr.hpp>
 
 namespace orb_slam3 {
 namespace features {

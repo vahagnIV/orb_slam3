@@ -5,7 +5,10 @@
 #ifndef ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
 #define ORB_SLAM3_INCLUDE_ORB_FEATURE_EXTRACTOR_H_
 
+// === opencv ===
 #include <opencv2/opencv.hpp>
+
+// == orb-slam3 ===
 #include <features/ifeature_extractor.h>
 
 namespace orb_slam3 {

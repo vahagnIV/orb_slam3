@@ -4,9 +4,13 @@
 
 #ifndef ORB_SLAM3_INCLUDE_TYPEDEFS_H_
 #define ORB_SLAM3_INCLUDE_TYPEDEFS_H_
+
+// == stl ===
 #include <chrono>
+#include <cstddef>
+
+// == Eigen ===
 #include <Eigen/Eigen>
-#include <ctype.h>
 
 namespace orb_slam3{
 #define DISTORTION_MODEL_PARAMS 5
