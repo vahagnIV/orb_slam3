@@ -46,7 +46,8 @@ add_library(orbslam SHARED
         include/typedefs.h
         include/constants.h
         include/tracker.h
-        include/image_utils.h
+#        include/image_utils.h
+        include/position_observer.h
 
         include/geometry/two_view_reconstructor.h
         include/geometry/pose.h

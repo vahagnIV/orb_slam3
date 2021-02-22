@@ -7,6 +7,7 @@
 
 // ===stl===
 #include <memory>
+#include <unordered_set>
 
 // == orb-slam3 ===
 #include "frame_type.h"
@@ -66,8 +67,24 @@ class FrameBase {
    */
   virtual bool Link(const std::shared_ptr<FrameBase> & other) = 0;
 
+  /*!
+   * Return the map point assiciated with the id. The id is unique within the frame
+   * @param id The id of the Map point in the frame
+   * @return pointer to the map point
+   */
   const std::shared_ptr<map::MapPoint> & MapPoint(size_t id) const { return map_points_[id]; }
+
+  /*!
+   * Non const method of the previous
+   * @param id
+   * @return
+   */
   std::shared_ptr<map::MapPoint> & MapPoint(size_t id) { return map_points_[id]; }
+
+  /*!
+   * Returns all map points associated with the frame
+   * @return
+   */
   std::vector<std::shared_ptr<map::MapPoint>> & MapPoints() { return map_points_; }
 
   /*!
@@ -77,6 +94,8 @@ class FrameBase {
 
  protected:
 
+
+
  protected:
 
   const id_type id_;
@@ -85,6 +104,7 @@ class FrameBase {
   geometry::Pose pose_;
  protected:
   static id_type next_id_;
+
 
 };
 

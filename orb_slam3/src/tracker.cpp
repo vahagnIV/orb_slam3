@@ -44,15 +44,23 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
         }
         last_frame_ = frame;
         state_ = OK;
+        NotifyObservers(frame, MessageType::Initial);
       }
       break;
 
-      default:break;
+      default:
+        break;
     }
   }
   return TrackingResult::OK;
 }
 
 bool Tracker::TrackReferenceKeyFrame() { return false; }
+
+void Tracker::NotifyObservers(const std::shared_ptr<const FrameBase> & frame, MessageType type) {
+  for (PositionObserver * observer: observers_) {
+    observer->GetUpdateQueue()->enqueue(UpdateMessage{type:type, frame:frame});
+  }
+}
 
 }  // namespace orb_slam3

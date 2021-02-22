@@ -18,6 +18,7 @@ void FrameBase::InitializeIdentity() noexcept {
   pose_.T.setZero();
 }
 
+
 /*
 FrameBase::FrameBase() : reference_frame_(nullptr) {
 
