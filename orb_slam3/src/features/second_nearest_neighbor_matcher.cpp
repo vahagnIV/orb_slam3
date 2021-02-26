@@ -4,6 +4,7 @@
 
 // == orb-slam3 ===
 #include "features/second_nearest_neighbor_matcher.h"
+#include "features/feature_utils.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -140,31 +141,6 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
   return nmatches;
 
 }
-
-int SecondNearestNeighborMatcher::DescriptorDistance(const Eigen::Matrix<uint8_t,
-                                                                         Eigen::Dynamic,
-                                                                         Eigen::Dynamic,
-                                                                         Eigen::RowMajor> & a,
-                                                     const Eigen::Matrix<uint8_t,
-                                                                         Eigen::Dynamic,
-                                                                         Eigen::Dynamic,
-                                                                         Eigen::RowMajor> & b) const {
-
-  const int32_t * pa = reinterpret_cast<const int32_t *>(a.data());
-  const int32_t * pb = reinterpret_cast<const int32_t *>(b.data());
-
-  int dist = 0;
-
-  for (int i = 0; i < a.cols() >> 2; ++i, ++pa, ++pb) {
-    unsigned int v = *pa ^*pb;
-    v -= ((v >> 1) & 0x55555555);
-    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-    dist += (((v + (v >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24;
-  }
-
-  return dist;
-}
-
 void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> * histo,
                                                       const int L,
                                                       int & ind1,

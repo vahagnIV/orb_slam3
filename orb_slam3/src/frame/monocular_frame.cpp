@@ -81,5 +81,12 @@ FrameType MonocularFrame::Type() const {
   return MONOCULAR;
 }
 
+void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
+                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const {
+
+  out_descriptor_ptr.push_back(features_.descriptors.row(feature_id));
+
+}
+
 }
 }  // namespace orb_slam3

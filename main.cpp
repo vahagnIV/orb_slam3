@@ -175,8 +175,7 @@ void TestMonocular(std::string original) {
     std::shared_ptr<orb_slam3::frame::FrameBase> frame =
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
                                                            extractor, camera);
-
-
+    std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);
 //    cv::waitKey();

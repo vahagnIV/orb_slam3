@@ -33,6 +33,7 @@ add_library(orbslam SHARED
         src/features/orb_feature_extractor.cpp
         src/features/features.cpp
         src/features/second_nearest_neighbor_matcher.cpp
+        src/features/feature_utils.cpp
 
         src/map/map_point.cpp
         src/map/map.cpp
@@ -75,6 +76,7 @@ add_library(orbslam SHARED
         include/features/imatcher.h
         include/features/second_nearest_neighbor_matcher.h
         include/features/match.h
+        include/features/feature_utils.h
 
         include/map/map_point.h
         include/map/atlas.h

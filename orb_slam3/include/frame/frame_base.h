@@ -87,14 +87,15 @@ class FrameBase {
    */
   std::vector<std::shared_ptr<map::MapPoint>> & MapPoints() { return map_points_; }
 
+  virtual void AppendDescriptorsToList(size_t feature_id,
+                                 std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
+
   /*!
    * Destructor
    */
   virtual ~FrameBase() = default;
 
  protected:
-
-
 
  protected:
 
@@ -104,7 +105,6 @@ class FrameBase {
   geometry::Pose pose_;
  protected:
   static id_type next_id_;
-
 
 };
 

@@ -24,15 +24,15 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       size_t features, precision_t scale_factor, size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
-  int Extract(const TImageGray8U &image, Features & out_features) override;
+  int Extract(const TImageGray8U & image, Features & out_features) override;
 
  private:
   class ExtractorNode {
    public:
     ExtractorNode() : bNoMore(false) {}
 
-    void DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNode &n3,
-                    ExtractorNode &n4);
+    void DivideNode(ExtractorNode & n1, ExtractorNode & n2, ExtractorNode & n3,
+                    ExtractorNode & n4);
 
     std::vector<cv::KeyPoint> vKeys;
     cv::Point2i UL, UR, BL, BR;
@@ -42,40 +42,29 @@ class ORBFeatureExtractor : public IFeatureExtractor {
 
  private:
   void AllocatePyramid();
-  void BuildImagePyramid(cv::Mat &image);
-  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint>> &out_all_keypoints);
-  void DistributeOctTree(const std::vector<cv::KeyPoint> &vToDistributeKeys, 
-                         const int &minX,
-                         const int &maxX, 
-                         const int &minY, 
-                         const int &maxY, 
-                         const int &nFeatures,
-                         const int &level,
+  void BuildImagePyramid(cv::Mat & image);
+  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint>> & out_all_keypoints);
+  void DistributeOctTree(const std::vector<cv::KeyPoint> & vToDistributeKeys,
+                         const int & minX,
+                         const int & maxX,
+                         const int & minY,
+                         const int & maxY,
+                         const int & nFeatures,
+                         const int & level,
                          std::vector<features::KeyPoint> & out_map_points);
-  static void computeOrientation(const cv::Mat &image,
-                                 std::vector<features::KeyPoint> &keypoints,
-                                 const int *umax);
-  static void IC_Angle(const cv::Mat &image, features::KeyPoint &, const int *u_max);
-  static void computeDescriptors(const cv::Mat &image,
-                                 std::vector<features::KeyPoint> &keypoints,
-                                 cv::Mat &descriptors,
-                                 const std::vector<cv::Point> &pattern);
-  static void computeOrbDescriptor(const features::KeyPoint &kpt, const cv::Mat &img,
-                                   const cv::Point *pattern, uchar *desc);
-      /*template <typename TI, typename TO>
-      void ResizeImage(
-          const Eigen::Matrix<TI, Eigen::Dynamic,Eigen::Dynamic>& in,
-          Eigen::Matrix<TO, Eigen::Dynamic, Eigen::Dynamic>& out_resized,
-          size_t in_edge_left,
-          size_t in_edge_right,
-          size_t in_edge_top,
-          size_t in_edge_bottom,
-          size_t out_edge_left,
-          size_t out_edge_right,
-          size_t out_edge_top,
-          size_t out_edge_bottom);*/
+  static void computeOrientation(const cv::Mat & image,
+                                 std::vector<features::KeyPoint> & keypoints,
+                                 const int * umax);
+  static void IC_Angle(const cv::Mat & image, features::KeyPoint &, const int * u_max);
+  static void computeDescriptors(const cv::Mat & image,
+                                 std::vector<features::KeyPoint> & keypoints,
+                                 cv::Mat & descriptors,
+                                 const std::vector<cv::Point> & pattern);
+  static void computeOrbDescriptor(const features::KeyPoint & kpt, const cv::Mat & img,
+                                   const cv::Point * pattern, uchar * desc);
 
-      private : unsigned image_width_;
+ private :
+  unsigned image_width_;
   unsigned image_height_;
 
   unsigned features_;

@@ -24,7 +24,14 @@ class MapPoint : protected g2o::VertexPointXYZ {
  public:
   MapPoint(const TPoint3D & point);
   MapPoint() {};
+
   void AddObservation(const std::shared_ptr<frame::FrameBase> & frame, size_t feature_id);
+
+  void Refresh();
+
+ private:
+  void ComputeDistinctiveDescriptor();
+  void UpdateNormalAndDepth();
  private:
  std::unordered_map<std::shared_ptr<frame::FrameBase>, size_t> obsevations_;
 

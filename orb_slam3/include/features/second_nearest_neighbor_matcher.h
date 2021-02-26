@@ -21,8 +21,7 @@ class SecondNearestNeighborMatcher : public IMatcher {
             const features::Features & features2,
             std::vector<features::Match> & out_matches) const override;
  private:
-  int DescriptorDistance(const Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> & a,
-                         const Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> & b) const;
+
   void ComputeThreeMaxima(std::vector<int> *histo, const int L, int & ind1, int & ind2, int & ind3) const;
 
   int Match(const features::Features & features1,

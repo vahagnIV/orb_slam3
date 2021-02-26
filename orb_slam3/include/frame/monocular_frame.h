@@ -24,7 +24,8 @@ class MonocularFrame : public FrameBase {
   bool IsValid() const override;
   FrameType Type() const override;
   bool Link(const std::shared_ptr<FrameBase> & other) override;
-
+  void AppendDescriptorsToList(size_t feature_id,
+                               std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
 
  protected:
   features::Features features_;
