@@ -64,7 +64,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
 
   //secondBestGood<0.75*bestGood && bestParallax>=minParallax && bestGood>minTriangulated && bestGood>0.9*N
   // TODO: address this issue
-  return second_best_count < 0.75 * best_count && best_parallax < 0.995;
+  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;
 }
 
 void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
@@ -250,7 +250,8 @@ size_t HomographyMatrixEstimator::CheckRT(const Solution & solution,
     TPoint3D & triangulated = out_triangulated[i];
 
 
-    if (!Triangulate(solution, point_to, point_from, triangulated)) {
+//    if (!Triangulate(solution, point_to, point_from, triangulated)) {
+    if (!Triangulate(solution, point_from, point_to, triangulated)) {
       inliers[i] = false;
       continue;
     }
@@ -339,25 +340,17 @@ precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
  * singular value. In Eigen the singular values are sorted sorted. Therefore it is the last column.
  * */
 bool HomographyMatrixEstimator::Triangulate(const Solution & sol,
-                                            const HomogenousPoint & point_to,
                                             const HomogenousPoint & point_from,
+                                            const HomogenousPoint & point_to,
                                             TPoint3D & out_trinagulated) const {
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
 
-  A << 0, -1, point_to[1], 0,
-      -1, 0, point_to[0], 0,
-      point_from[1] * sol.R(2, 0) - sol.R(1, 0), point_from[1] * sol.R(2, 1) - sol.R(1, 1), point_from[1] * sol.R(2, 2)
-      - sol.R(1, 2), point_from[1] * sol.T[2] - sol.T[1],
-      point_from[0] * sol.R(2, 0) - sol.R(0, 0), point_from[0] * sol.R(2, 1) - sol.R(0, 1), point_from[0] * sol.R(2, 2)
-      - sol.R(0, 2), point_from[0] * sol.T[2] - sol.T[0];
-//  A << 0, -1, point_from[1], 0,
-//      -1, 0, point_from[0], 0,
-//      point_to[1] * sol.R(2, 0) - sol.R(1, 0), point_to[1] * sol.R(2, 1) - sol.R(1, 1), point_to[1] * sol.R(2, 2)
-//      - sol.R(1, 2),
-//      point_to[1] * sol.T[2] - sol.T[1],
-//      point_to[0] * sol.R(2, 0) - sol.R(0, 0), point_to[0] * sol.R(2, 1) - sol.R(0, 1), point_to[0] * sol.R(2, 2)
-//      - sol.R(0, 2),
-//      point_to[0] * sol.T[2] - sol.T[0];
+  A << 0, -1, point_from[1], 0,
+      -1, 0, point_from[0], 0,
+      point_to[1] * sol.R(2, 0) - sol.R(1, 0), point_to[1] * sol.R(2, 1) - sol.R(1, 1), point_to[1] * sol.R(2, 2)
+      - sol.R(1, 2), point_to[1] * sol.T[2] - sol.T[1],
+      point_to[0] * sol.R(2, 0) - sol.R(0, 0), point_to[0] * sol.R(2, 1) - sol.R(0, 1), point_to[0] * sol.R(2, 2)
+      - sol.R(0, 2), point_to[0] * sol.T[2] - sol.T[0];
 
   Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
   precision_t l_inv = 1 / svd.matrixV()(3, 3);

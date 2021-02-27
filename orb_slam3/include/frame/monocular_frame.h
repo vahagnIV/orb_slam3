@@ -20,6 +20,7 @@ class MonocularFrame : public FrameBase {
                  const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
                  const std::shared_ptr<camera::MonocularCamera> & camera);
 
+  // ==== FrameBase =========
   size_t FeatureCount() const noexcept override;
   bool IsValid() const override;
   FrameType Type() const override;
@@ -27,6 +28,10 @@ class MonocularFrame : public FrameBase {
   void AppendDescriptorsToList(size_t feature_id,
                                std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
   TPoint3D GetNormal(const TPoint3D & point) const override;
+
+  // ==== Monocular
+  const features::Features & GetFeatures() const { return features_; }
+  const FrameLink & GetFrameLink() const { return frame_link_; }
 
  protected:
   features::Features features_;

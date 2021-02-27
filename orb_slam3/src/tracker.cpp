@@ -17,7 +17,6 @@ Tracker::Tracker()
 Tracker::~Tracker() { delete atlas_; }
 
 TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
-//  Map *current_map = atlas_->GetCurrentMap();
   switch (state_) {
     case NOT_INITIALIZED: {
       if (frame->IsValid()) {
@@ -50,8 +49,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
       }
       break;
 
-      default:
-        break;
+      default:break;
     }
   }
   return TrackingResult::OK;

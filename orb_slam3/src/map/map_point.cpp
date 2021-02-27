@@ -57,15 +57,13 @@ void MapPoint::ComputeDistinctiveDescriptor() {
 
 void MapPoint::UpdateNormalAndDepth() {
   std::vector<TVector3D> normals;
-  TVector3D avg_normal{0,0,0};
+  normal_.setZero();
   for (const auto & frame_id_pair: obsevations_) {
     const auto & mp = frame_id_pair.first->MapPoint(frame_id_pair.second);
     auto normal = frame_id_pair.first->GetNormal(mp->estimate());
-    avg_normal += normal;
+    normal_ += normal;
   }
-  avg_normal.normalize();
-
-
+  normal_.normalize();
 }
 
 }

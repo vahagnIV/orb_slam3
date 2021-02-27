@@ -125,7 +125,7 @@ orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
 
 void TestMonocular(std::string original) {
   const std::string vocabulary =
-  original + "/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
+      original + "/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
   const std::string settings =
       original + "/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
   const std::string data =
@@ -154,7 +154,6 @@ void TestMonocular(std::string original) {
 
   camera->ComputeImageBounds();
 
-
   size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
   size_t levels = 8;
@@ -164,7 +163,6 @@ void TestMonocular(std::string original) {
       extractor = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
-
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
@@ -182,11 +180,202 @@ void TestMonocular(std::string original) {
   }
 }
 
-int main(int argc, char *argv[]) {
+cv::DMatch ToCvMatch(const orb_slam3::features::Match & match) {
+//  return cv::DMatch(match.to_idx, match.from_idx, 0);
+  return cv::DMatch(match.from_idx, match.to_idx, 0);
+}
 
+std::vector<cv::DMatch> ToCvMatches(const std::vector<orb_slam3::features::Match> & match,
+                                    const std::vector<bool> & inliers) {
+  std::vector<cv::DMatch> result;
+  for (size_t i = 0; i < match.size(); ++i) {
+    if (inliers[i])
+      result.push_back(ToCvMatch(match[i]));
+  }
+  return result;
 
+}
+
+cv::KeyPoint ToCvKeypoint(const orb_slam3::features::KeyPoint & keypoint) {
+  return cv::KeyPoint(keypoint.X(), keypoint.Y(), keypoint.size, keypoint.angle, 0, keypoint.level, -1);
+}
+
+cv::Mat DrawMatches(std::shared_ptr<orb_slam3::frame::MonocularFrame> & frame, cv::Mat & im1, cv::Mat & im2) {
+  std::vector<cv::DMatch> matches = ToCvMatches(frame->GetFrameLink().matches, frame->GetFrameLink().inliers);
+  std::vector<cv::KeyPoint> kp1(frame->FeatureCount()), kp2(frame->GetFrameLink().other->FeatureCount());
+  std::transform(frame->GetFeatures().keypoints.begin(),
+                 frame->GetFeatures().keypoints.end(),
+                 kp1.begin(),
+                 ToCvKeypoint);
+  std::transform(dynamic_cast<orb_slam3::frame::MonocularFrame *>(frame->GetFrameLink().other.get())->GetFeatures().keypoints.begin(),
+                 dynamic_cast<orb_slam3::frame::MonocularFrame *>(frame->GetFrameLink().other.get())->GetFeatures().keypoints.end(),
+                 kp2.begin(),
+                 ToCvKeypoint);
+  cv::Mat out;
+  cv::drawMatches(im1,
+                  kp1,
+                  im2,
+                  kp2,
+                  matches,
+                  out,
+                  cv::Scalar::all(-1),
+                  cv::Scalar::all(-1),
+                  std::vector<char>(),
+                  cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+  return out;
+}
+
+void TestDrawMonocular(std::string original) {
+
+  const std::string vocabulary =
+      original + "/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
+  const std::string settings =
+      original + "/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
+  const std::string data =
+      original + "/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
+
+  std::vector<std::string> filenames;
+  std::vector<std::chrono::system_clock::time_point> timestamps;
+  ReadImages(data, filenames, timestamps);
+
+  std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
+      std::make_shared<orb_slam3::camera::MonocularCamera>(640, 480);
+
+  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+//  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+
+  camera->SetFx(807.29687323230985);
+  camera->SetFy(801.74251830283572);
+  camera->SetCx(329.55062600354535);
+  camera->SetCy(230.68815538052482);
+  distortion->SetK1(-8.3884801899896042e-03);
+  distortion->SetK2(2.0444610154269991e-02);
+  distortion->SetP1(-4.1265821859503889e-03);
+  distortion->SetP2(-5.9769204393686991e-04);
+
+  camera->ComputeImageBounds();
+
+  size_t nfeatures = 1000;
+  orb_slam3::precision_t scale_factor = 1.2;
+  size_t levels = 8;
+  unsigned init_threshold = 20;
+  unsigned min_threshold = 7;
+  std::shared_ptr<orb_slam3::features::IFeatureExtractor>
+      extractor = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
+      camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
+      init_threshold, min_threshold);
+
+//  cv::Mat image = cv::imread(filenames[0], cv::IMREAD_GRAYSCALE);
+  cv::Mat image = cv::imread("im1.jpg", cv::IMREAD_GRAYSCALE);
+  cv::imshow("im", image);
+  cv::waitKey(1);
+
+  auto eigen = FromCvMat(image);
+  std::shared_ptr<orb_slam3::frame::MonocularFrame> frame =
+      std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[0],
+                                                         extractor, camera);
+
+  for (size_t k = 100; k < filenames.size(); ++k) {
+
+//    cv::Mat image_o = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
+    cv::Mat image_o = cv::imread("im2.jpg", cv::IMREAD_GRAYSCALE);
+    cv::imshow("imo", image_o);
+    cv::waitKey(1);
+
+    auto eigen = FromCvMat(image_o);
+    std::shared_ptr<orb_slam3::frame::MonocularFrame> frame_o =
+        std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
+                                                           extractor, camera);
+    std::string imname = std::to_string(frame->Id()) + ".jpg";
+
+    if (frame_o->Link(frame)) {
+
+      for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
+        auto & mp = frame->MapPoint(i);
+        if (mp)
+          mp->AddObservation(frame, i);
+      }
+      for (size_t i = 0; i < frame_o->MapPoints().size(); ++i) {
+        auto & mp = frame_o->MapPoint(i);
+        if (mp) {
+          mp->AddObservation(frame_o, i);
+          mp->Refresh();
+        }
+      }
+
+      std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);
+
+      for (const auto & mp: frame_o->MapPoints()) {
+        if (!mp)
+          continue;
+        orb_slam3::TPoint3D pose = mp->GetPose();
+        ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
+        ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
+        ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
+        orb_slam3::TVector3D normal = mp->GetNormal();
+        ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
+        ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
+        ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
+      }
+
+      cv::imshow("matches", DrawMatches(frame_o, image_o, image));
+      cv::waitKey();
+
+      return;
+    }
+  }
+
+}
+
+typedef struct { orb_slam3::TMatrix33 R; orb_slam3::TVector3D T; } Solution;
+
+bool Triangulate(const Solution & sol,
+                 const orb_slam3::HomogenousPoint & point_to,
+                 const orb_slam3::HomogenousPoint & point_from,
+                 orb_slam3::TPoint3D & out_trinagulated) {
+  Eigen::Matrix<double, 4, 4, Eigen::RowMajor> A;
+
+  A << 0, -1, point_to[1], 0,
+      1, 0, -point_to[0], 0,
+      point_from[1] * sol.R(2, 0) - sol.R(1, 0), point_from[1] * sol.R(2, 1) - sol.R(1, 1), point_from[1] * sol.R(2, 2)
+      - sol.R(1, 2), point_from[1] * sol.T[2] - sol.T[1],
+      -point_from[0] * sol.R(2, 0) + sol.R(0, 0), -point_from[0] * sol.R(2, 1) + sol.R(0, 1), -point_from[0] * sol.R(2, 2)
+      + sol.R(0, 2), -point_from[0] * sol.T[2] + sol.T[0];
+//  A << 0, -1, point_from[1], 0,
+//      -1, 0, point_from[0], 0,
+//      point_to[1] * sol.R(2, 0) - sol.R(1, 0), point_to[1] * sol.R(2, 1) - sol.R(1, 1), point_to[1] * sol.R(2, 2)
+//      - sol.R(1, 2),
+//      point_to[1] * sol.T[2] - sol.T[1],
+//      point_to[0] * sol.R(2, 0) - sol.R(0, 0), point_to[0] * sol.R(2, 1) - sol.R(0, 1), point_to[0] * sol.R(2, 2)
+//      - sol.R(0, 2),
+//      point_to[0] * sol.T[2] - sol.T[0];
+
+  Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  double l_inv = 1 / svd.matrixV()(3, 3);
+  std::cout << svd.matrixV() << std::endl;
+  out_trinagulated << svd.matrixV()(0, 3) * l_inv, svd.matrixV()(1, 3) * l_inv, svd.matrixV()(2, 3) * l_inv;
+
+  return std::isfinite(out_trinagulated[0]) && std::isfinite(out_trinagulated[1]) && std::isfinite(out_trinagulated[2]);
+}
+
+int main(int argc, char * argv[]) {
+
+//  Solution s;
+//  s.R << 0.9744130448166306, 0.0079732137968923922, -0.2246233424044147,
+//      -0.029808154777706375, 0.99512733101543915, -0.093984408147505916,
+//      0.22277946943093815, 0.098275240665376518, 0.96990271938593442;
+//  s.T << -0.39658592652301994, -0.097202121414010578, 0.91283697913509931;
+//
+//  orb_slam3::TPoint3D point_from{.1, .2, .3};
+//  orb_slam3::HomogenousPoint pt1{point_from[0] / point_from[2], point_from[1] / point_from[2], 1};
+//  orb_slam3::TPoint3D point_to = s.R * point_from + s.T;
+//  orb_slam3::HomogenousPoint pt2{point_to[0] / point_to[2], point_to[1] / point_to[2], 1};
+//  orb_slam3::TPoint3D point_triangulated1, point_triangulated2;
+//  Triangulate(s, pt1,pt2, point_triangulated1);
+//  Triangulate(s, pt2, pt1, point_triangulated2);
+
+//  TestDrawMonocular(std::string(argv[1]));
   TestMonocular(std::string(argv[1]));
-
 
   return 0;
 }

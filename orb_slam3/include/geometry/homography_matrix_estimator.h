@@ -57,8 +57,8 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                  std::vector<TPoint3D> & out_triangulated) const;
 
   bool Triangulate(const Solution & sol,
-                   const HomogenousPoint & point_to,
                    const HomogenousPoint & point_from,
+                   const HomogenousPoint & point_to,
                    TPoint3D & out_trinagulated) const;
  private:
 

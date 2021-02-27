@@ -31,6 +31,7 @@ class MapPoint : protected g2o::VertexPointXYZ {
   void Refresh();
 
   const TPoint3D & GetPose() const { return estimate(); }
+  const TVector3D & GetNormal() const { return normal_; }
 
  private:
   void ComputeDistinctiveDescriptor();
@@ -38,6 +39,7 @@ class MapPoint : protected g2o::VertexPointXYZ {
  private:
   std::unordered_map<std::shared_ptr<frame::FrameBase>, size_t> obsevations_;
   features::DescriptorType descriptor_;
+  TVector3D normal_;
 
 };
 
