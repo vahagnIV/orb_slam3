@@ -24,24 +24,47 @@ void MapPoint::Refresh() {
 }
 
 void MapPoint::ComputeDistinctiveDescriptor() {
-//  std::map<frame::FrameBase * , int>
+
   std::vector<features::DescriptorType> descriptors;
   for (const auto & frame_id_pair: obsevations_) {
     frame_id_pair.first->AppendDescriptorsToList(frame_id_pair.second, descriptors);
   }
-  const int N = descriptors.size();
+  const unsigned N = descriptors.size();
   int distances[N][N];
-  for (int i = 0; i < N; ++i) {
+  for (size_t i = 0; i < N; ++i) {
     distances[i][i] = 0;
-    for (int j = i + 1; j < N; ++j) {
+    for (size_t j = i + 1; j < N; ++j) {
       distances[i][j] = features::DescriptorDistance(descriptors[i], descriptors[j]);
       distances[j][i] = distances[i][j];
     }
   }
 
+  int best_median = INT_MAX;
+  int best_idx = 0;
+  for (size_t i = 0; i < N; i++) {
+    std::vector<int> dists(distances[i], distances[i] + N);
+    sort(dists.begin(), dists.end());
+    int median = dists[0.5 * (N - 1)];
+
+    if (median < best_median) {
+      best_median = median;
+      best_idx = i;
+    }
+  }
+  descriptor_ = descriptors[best_idx];
+
 }
 
 void MapPoint::UpdateNormalAndDepth() {
+  std::vector<TVector3D> normals;
+  TVector3D avg_normal{0,0,0};
+  for (const auto & frame_id_pair: obsevations_) {
+    const auto & mp = frame_id_pair.first->MapPoint(frame_id_pair.second);
+    auto normal = frame_id_pair.first->GetNormal(mp->estimate());
+    avg_normal += normal;
+  }
+  avg_normal.normalize();
+
 
 }
 

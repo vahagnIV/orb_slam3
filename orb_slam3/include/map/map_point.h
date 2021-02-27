@@ -12,10 +12,11 @@
 
 // === orb-slam3 ===
 #include <typedefs.h>
+#include <features/features.h>
 //#include <frame/frame_base.h>
 
 namespace orb_slam3 {
-namespace frame{
+namespace frame {
 class FrameBase;
 }
 namespace map {
@@ -29,11 +30,14 @@ class MapPoint : protected g2o::VertexPointXYZ {
 
   void Refresh();
 
+  const TPoint3D & GetPose() const { return estimate(); }
+
  private:
   void ComputeDistinctiveDescriptor();
   void UpdateNormalAndDepth();
  private:
- std::unordered_map<std::shared_ptr<frame::FrameBase>, size_t> obsevations_;
+  std::unordered_map<std::shared_ptr<frame::FrameBase>, size_t> obsevations_;
+  features::DescriptorType descriptor_;
 
 };
 

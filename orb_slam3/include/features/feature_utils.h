@@ -12,7 +12,7 @@
 namespace orb_slam3 {
 namespace features {
 
-int DescriptorDistance(const DescriptorType & d1,
+unsigned DescriptorDistance(const DescriptorType & d1,
                        const DescriptorType & d2);
 
 }

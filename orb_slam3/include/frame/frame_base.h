@@ -87,8 +87,21 @@ class FrameBase {
    */
   std::vector<std::shared_ptr<map::MapPoint>> & MapPoints() { return map_points_; }
 
+  /*!
+   * Appends the descriptors that correspond to the map_point with feature_id to the provided vector.
+   * In case of multi-view frame 1 map point can correspond to multiple keypoints and, therefore, descriptors
+   * @param feature_id The id of the keypoint
+   * @param out_descriptor_ptr The vector to which the descriptors will be appended
+   */
   virtual void AppendDescriptorsToList(size_t feature_id,
-                                 std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
+                                       std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
+
+  /*!
+   * Computes the normal of the point.
+   * @param point the point
+   * @return The normal
+   */
+  virtual TPoint3D GetNormal(const TPoint3D & point) const = 0;
 
   /*!
    * Destructor
@@ -102,6 +115,8 @@ class FrameBase {
   const id_type id_;
   TimePoint timestamp_;
   std::vector<std::shared_ptr<map::MapPoint>> map_points_;
+
+  // Transformation from the frame coordinate system to the world coordinate system
   geometry::Pose pose_;
  protected:
   static id_type next_id_;

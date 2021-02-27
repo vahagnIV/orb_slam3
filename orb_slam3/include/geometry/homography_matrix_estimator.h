@@ -14,7 +14,7 @@ namespace orb_slam3 {
 namespace geometry {
 
 class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
-  typedef std::vector<std::pair<size_t, size_t>> pairs_t;
+  typedef struct { TMatrix33 R; TVector3D T; } Solution;
  public:
   HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
@@ -45,9 +45,10 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             const std::vector<features::Match> & matches,
                             std::vector<bool> & out_inliers,
                             std::vector<TPoint3D> & out_triangulated,
-                            geometry::Pose & out_pose) const;
+                            TMatrix33 & out_rotation,
+                            TVector3D & out_translation) const;
 
-  size_t CheckRT(const geometry::Pose & solution,
+  size_t CheckRT(const Solution & solution,
                  const std::vector<HomogenousPoint> & points_to,
                  const std::vector<HomogenousPoint> & points_from,
                  const std::vector<features::Match> & matches,
@@ -55,7 +56,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                  precision_t & out_parallax,
                  std::vector<TPoint3D> & out_triangulated) const;
 
-  bool Triangulate(const geometry::Pose & sol,
+  bool Triangulate(const Solution & sol,
                    const HomogenousPoint & point_to,
                    const HomogenousPoint & point_from,
                    TPoint3D & out_trinagulated) const;
@@ -66,7 +67,7 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                  precision_t d3,
                                  const TMatrix33 & U,
                                  const TMatrix33 & VT,
-                                 geometry::Pose solution[4],
+                                 Solution solution[4],
                                  precision_t s) const noexcept;
 
   void FillSolutionsForNegativeD(precision_t d1,
@@ -74,11 +75,11 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                  precision_t d3,
                                  const TMatrix33 & U,
                                  const TMatrix33 & VT,
-                                 geometry::Pose solution[4],
+                                 Solution solution[4],
                                  precision_t s) const noexcept;
 
 
-  precision_t ComputeParallax(const TPoint3D & point, const geometry::Pose & solution) const;
+  precision_t ComputeParallax(const TPoint3D & point, const Solution & solution) const;
 
   precision_t ComputeTriangulatedReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) const;
 

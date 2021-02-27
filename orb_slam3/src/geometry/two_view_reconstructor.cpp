@@ -23,7 +23,8 @@ TwoViewReconstructor::TwoViewReconstructor(const unsigned number_of_ransac_itera
 bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & points_to,
                                        const std::vector<HomogenousPoint> & points_from,
                                        const std::vector<features::Match> & matches,
-                                       Pose & out_pose,
+                                       TMatrix33 & out_rotation,
+                                       TVector3D & out_translation,
                                        std::vector<TPoint3D> & out_points,
                                        std::vector<bool> & out_inliers) const {
 
@@ -56,7 +57,8 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                              matches,
                                                              out_inliers,
                                                              out_points,
-                                                             out_pose);
+                                                             out_rotation,
+                                                             out_translation);
   } else {
     return false;
   }

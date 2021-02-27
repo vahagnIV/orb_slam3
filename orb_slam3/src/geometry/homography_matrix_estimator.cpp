@@ -20,7 +20,8 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
                                                      const std::vector<features::Match> & matches,
                                                      std::vector<bool> & out_inliers,
                                                      std::vector<TPoint3D> & out_triangulated,
-                                                     geometry::Pose & out_pose) const {
+                                                     TMatrix33 & out_rotation,
+                                                     TVector3D & out_translation) const {
 
   Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
   const precision_t d1 = svd.singularValues()[0];
@@ -34,7 +35,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   const TMatrix33 VT = svd.matrixV().transpose();
   precision_t s = U.determinant() * VT.determinant();
 
-  geometry::Pose solution[8];
+  Solution solution[8];
   FillSolutionsForPositiveD(d1, d2, d3, U, VT, solution, s);
   FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution + 4, s);
 
@@ -44,7 +45,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
 //  std::vector<bool> original_inliers = out_inliers;
   for (size_t i = 0; i < 8; ++i) {
     std::vector<TPoint3D> tmp_triangulated;
-    const geometry::Pose & sol = solution[i];
+    const Solution & sol = solution[i];
     std::vector<bool> tmp_inliers(matches.size(), true);
 //    std::vector<bool> tmp_inliers = original_inliers;
     precision_t parallax;
@@ -54,7 +55,8 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
       best_count = no_good;
       out_triangulated = tmp_triangulated;
       out_inliers = tmp_inliers;
-      out_pose = sol;
+      out_rotation = sol.R;
+      out_translation = sol.T;
       best_parallax = parallax;
     } else
       second_best_count = std::max(second_best_count, no_good);
@@ -70,7 +72,7 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
                                                           precision_t d3,
                                                           const TMatrix33 & U,
                                                           const TMatrix33 & VT,
-                                                          geometry::Pose * solution,
+                                                          Solution * solution,
                                                           precision_t s) const noexcept {
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
   const precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
@@ -81,7 +83,7 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
     const precision_t epsilon_1 = epsilon[i][0];
     const precision_t epsilon_3 = epsilon[i][1];
     const precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
-    geometry::Pose & sol = solution[i];
+    Solution & sol = solution[i];
     sol.R << cos_theta, 0, -signed_sin, 0, 1, 0, signed_sin, 0, cos_theta;
     sol.T << (d1 - d3) * epsilon_1 * x1, 0, -(d1 - d3) * epsilon_3 * x3;
 
@@ -96,7 +98,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
                                                           precision_t d3,
                                                           const TMatrix33 & U,
                                                           const TMatrix33 & VT,
-                                                          geometry::Pose * solution,
+                                                          Solution * solution,
                                                           precision_t s) const noexcept {
 
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
@@ -108,7 +110,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
     const precision_t epsilon_1 = epsilon[i][0];
     const precision_t epsilon_3 = epsilon[i][1];
     const precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
-    geometry::Pose & sol = solution[i];
+    Solution & sol = solution[i];
     sol.R << cos_theta, 0, signed_sin, 0, -1, 0, signed_sin, 0, -cos_theta;
     sol.T << (d1 + d3) * epsilon_1 * x1, 0, (d1 + d3) * epsilon_3 * x3;
     sol.R = s * U * sol.R * VT;
@@ -224,7 +226,7 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
 
 }
 
-size_t HomographyMatrixEstimator::CheckRT(const geometry::Pose & solution,
+size_t HomographyMatrixEstimator::CheckRT(const Solution & solution,
                                           const std::vector<HomogenousPoint> & points_to,
                                           const std::vector<HomogenousPoint> & points_from,
                                           const std::vector<features::Match> & matches,
@@ -301,7 +303,7 @@ precision_t HomographyMatrixEstimator::ComputeTriangulatedReprojectionError(cons
 }
 
 precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
-                                                       const geometry::Pose & solution) const {
+                                                       const Solution & solution) const {
   const TVector3D vec1 = point;
   const TVector3D vec2 = point - (solution.T.transpose() * solution.R).transpose();
   return vec1.dot(vec2) / vec1.norm() / vec2.norm();
@@ -336,7 +338,7 @@ precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
  * The solution of this equation is the column of right singular matrix in SVD that corresponds to the minimal
  * singular value. In Eigen the singular values are sorted sorted. Therefore it is the last column.
  * */
-bool HomographyMatrixEstimator::Triangulate(const geometry::Pose & sol,
+bool HomographyMatrixEstimator::Triangulate(const Solution & sol,
                                             const HomogenousPoint & point_to,
                                             const HomogenousPoint & point_from,
                                             TPoint3D & out_trinagulated) const {
