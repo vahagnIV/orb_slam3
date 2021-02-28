@@ -23,10 +23,12 @@ namespace map {
 
 class MapPoint : protected g2o::VertexPointXYZ {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MapPoint(const TPoint3D & point);
   MapPoint() {};
 
-  void AddObservation(const std::shared_ptr<frame::FrameBase> & frame, size_t feature_id);
+  void AddObservation(const frame::FrameBase * frame, size_t feature_id);
+  void EraseObservation(const frame::FrameBase * frame, size_t feature_id);
 
   void Refresh();
 
@@ -37,7 +39,7 @@ class MapPoint : protected g2o::VertexPointXYZ {
   void ComputeDistinctiveDescriptor();
   void UpdateNormalAndDepth();
  private:
-  std::unordered_map<std::shared_ptr<frame::FrameBase>, size_t> obsevations_;
+  std::unordered_map<const frame::FrameBase *, size_t> obsevations_;
   features::DescriptorType descriptor_;
   TVector3D normal_;
 

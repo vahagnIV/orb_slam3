@@ -36,11 +36,11 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame * other_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::SecondNearestNeighborMatcher matcher(300,
+  features::SecondNearestNeighborMatcher matcher(100,
                                                  0.9,
                                                  false);
-  matcher.Match(other_frame->features_, features_, frame_link_.matches);
-  if (frame_link_.matches.size() < 50)
+  matcher.Match(features_, other_frame->features_, frame_link_.matches);
+  if (frame_link_.matches.size() < 100)
     return false;
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
@@ -48,8 +48,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   std::vector<bool> outliers;
   TMatrix33 rotation_matrix;
   TVector3D translation_vector;
-  if (reconstructor.Reconstruct(other_frame->features_.undistorted_keypoints,
-                                features_.undistorted_keypoints,
+  if (reconstructor.Reconstruct(features_.undistorted_keypoints,
+                                other_frame->features_.undistorted_keypoints,
                                 frame_link_.matches,
                                 rotation_matrix,
                                 translation_vector,
@@ -64,18 +64,18 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
         continue;
       const features::Match & match = frame_link_.matches[i];
 
-      if (other->MapPoint(match.to_idx)) {
+      if (other->MapPoint(match.from_idx)) {
         // TODO: do the contistency check
       } else {
 
-        auto map_point = std::make_shared<map::MapPoint>(points[i]);
-        map_points_[match.from_idx] = map_point;
-        other->MapPoint(match.to_idx) = map_points_[match.from_idx];
+        auto map_point = new map::MapPoint(points[i]);
+        map_points_[match.to_idx] = map_point;
+        other->MapPoint(match.from_idx) = map_points_[match.to_idx];
       }
     }
 //    pose_.estimate().rotation().toRotationMatrix()
 
-//    std::cout << "Frame " << Id() << " " << pose_.R << std::endl << pose_.T << std::endl;
+    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl << pose_.estimate().translation() << std::endl;
     return true;
   }
 

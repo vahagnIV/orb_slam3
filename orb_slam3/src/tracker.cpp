@@ -34,12 +34,12 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
         for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
           auto & mp = frame->MapPoint(i);
           if (mp)
-            mp->AddObservation(frame, i);
+            mp->AddObservation(frame.get(), i);
         }
         for (size_t i = 0; i < last_frame_->MapPoints().size(); ++i) {
           auto & mp = last_frame_->MapPoint(i);
           if (mp) {
-            mp->AddObservation(last_frame_, i);
+            mp->AddObservation(last_frame_.get(), i);
             mp->Refresh();
           }
         }

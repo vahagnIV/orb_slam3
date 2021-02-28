@@ -14,8 +14,12 @@ MapPoint::MapPoint(const TPoint3D & point) {
   this->setEstimate(point);
 }
 
-void MapPoint::AddObservation(const std::shared_ptr<frame::FrameBase> & frame, size_t feature_id) {
+void MapPoint::AddObservation(const frame::FrameBase* frame, size_t feature_id) {
   obsevations_[frame] = feature_id;
+}
+
+void MapPoint::EraseObservation(const frame::FrameBase *frame, size_t feature_id) {
+  obsevations_.erase(frame);
 }
 
 void MapPoint::Refresh() {

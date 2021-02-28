@@ -14,6 +14,7 @@
 #include <constants.h>
 #include <camera/kannala_brandt_5.h>
 #include <camera/fish_eye.h>
+#include <random>
 
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
@@ -293,12 +294,12 @@ void TestDrawMonocular(std::string original) {
       for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
         auto & mp = frame->MapPoint(i);
         if (mp)
-          mp->AddObservation(frame, i);
+          mp->AddObservation(frame.get(), i);
       }
       for (size_t i = 0; i < frame_o->MapPoints().size(); ++i) {
         auto & mp = frame_o->MapPoint(i);
         if (mp) {
-          mp->AddObservation(frame_o, i);
+          mp->AddObservation(frame_o.get(), i);
           mp->Refresh();
         }
       }
@@ -358,7 +359,59 @@ bool Triangulate(const Solution & sol,
   return std::isfinite(out_trinagulated[0]) && std::isfinite(out_trinagulated[1]) && std::isfinite(out_trinagulated[2]);
 }
 
+
+void CompareSharedPointerInitializationAndCopyTime(){
+  std::random_device rand_dev;
+  std::mt19937 generator(rand_dev());
+  std::uniform_int_distribution<> distr(-1., 1.);
+  const size_t N = 5000;
+  std::vector<orb_slam3::TPoint3D> random_points(N);
+  std::vector<orb_slam3::map::MapPoint *> map_point_ptrs(N), map_point_ptrs_copy(N);
+  std::vector<std::shared_ptr<orb_slam3::map::MapPoint>> map_point_shared_ptrs(N), map_point_shared_ptrs_copy(N);
+  std::cout << "Generating random points" << std::endl;
+  for (size_t i = 0; i < N; ++i) {
+    random_points[i] << distr(generator),distr(generator),distr(generator);
+  }
+  std::cout << "Done" << std::endl;
+  std::cout << "Creating shared_ptrs" << std::endl;
+  std::chrono::high_resolution_clock::time_point shared_ptr_sart = std::chrono::high_resolution_clock::now();
+  for (size_t j = 0; j < N; ++j) {
+    map_point_shared_ptrs[j] = std::make_shared<orb_slam3::map::MapPoint>(random_points[j]);
+  }
+  std::chrono::high_resolution_clock::time_point shared_ptr_end = std::chrono::high_resolution_clock::now();
+  std::chrono::nanoseconds shared_ptr_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(shared_ptr_end - shared_ptr_sart);
+  std::cout << "Initializing " << N << " objects took " <<  shared_ptr_ns.count() << " nanoseconds" << std::endl;
+  std::cout << "Creating ptrs" << std::endl;
+
+  std::chrono::high_resolution_clock::time_point ptr_sart = std::chrono::high_resolution_clock::now();
+  for (size_t j = 0; j < N; ++j) {
+    map_point_ptrs[j] = new orb_slam3::map::MapPoint(random_points[j]);
+  }
+  std::chrono::high_resolution_clock::time_point ptr_end = std::chrono::high_resolution_clock::now();
+
+  std::chrono::nanoseconds ptr_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(ptr_end - ptr_sart);
+  std::cout << "Initializing " << N << " objects took " <<  ptr_ns.count() << " nanoseconds" << std::endl;
+
+  std::cout << "Copying vector of shared_ptrs" << std::endl;
+  std::chrono::high_resolution_clock::time_point shared_ptr_copy_start = std::chrono::high_resolution_clock::now();
+  map_point_shared_ptrs_copy = map_point_shared_ptrs;
+  std::chrono::high_resolution_clock::time_point shared_ptr_copy_end = std::chrono::high_resolution_clock::now();
+  std::chrono::nanoseconds shared_ptr_copy_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(shared_ptr_copy_end - shared_ptr_copy_start);
+  std::cout << "Copying " << N << " objects took " <<  shared_ptr_copy_ns.count() << " nanoseconds" << std::endl;
+
+
+  std::cout << "Copying vector of ptrs" << std::endl;
+  std::chrono::high_resolution_clock::time_point ptr_copy_start = std::chrono::high_resolution_clock::now();
+  map_point_ptrs_copy = map_point_ptrs;
+  std::chrono::high_resolution_clock::time_point ptr_copy_end = std::chrono::high_resolution_clock::now();
+  std::chrono::nanoseconds ptr_copy_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(ptr_copy_end - ptr_copy_start);
+  std::cout << "Copying " << N << " objects took " <<  ptr_copy_ns.count() << " nanoseconds" << std::endl;
+
+}
+
 int main(int argc, char * argv[]) {
+//  CompareSharedPointerInitializationAndCopyTime();
+//  return 0;
 
 //  Solution s;
 //  s.R << 0.9744130448166306, 0.0079732137968923922, -0.2246233424044147,

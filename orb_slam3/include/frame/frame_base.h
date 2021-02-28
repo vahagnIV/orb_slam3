@@ -68,24 +68,26 @@ class FrameBase {
   virtual bool Link(const std::shared_ptr<FrameBase> & other) = 0;
 
   /*!
-   * Return the map point assiciated with the id. The id is unique within the frame
+   * Return the map point associated with the id. The id is unique within the frame
    * @param id The id of the Map point in the frame
    * @return pointer to the map point
    */
-  const std::shared_ptr<map::MapPoint> & MapPoint(size_t id) const { return map_points_[id]; }
+  const map::MapPoint * const MapPoint(size_t id) const { return map_points_[id]; }
 
   /*!
    * Non const method of the previous
    * @param id
    * @return
    */
-  std::shared_ptr<map::MapPoint> & MapPoint(size_t id) { return map_points_[id]; }
+  map::MapPoint * & MapPoint(size_t id) { return map_points_[id]; }
 
   /*!
    * Returns all map points associated with the frame
    * @return
    */
-  std::vector<std::shared_ptr<map::MapPoint>> & MapPoints() { return map_points_; }
+  std::vector<map::MapPoint *> & MapPoints() { return map_points_; }
+
+//  const std::vector<map::MapPoint * const> & MapPoints() const { return map_points_; }
 
   /*!
    * Appends the descriptors that correspond to the map_point with feature_id to the provided vector.
@@ -114,9 +116,9 @@ class FrameBase {
 
   const id_type id_;
   TimePoint timestamp_;
-  std::vector<std::shared_ptr<map::MapPoint>> map_points_;
+  std::vector<map::MapPoint*> map_points_;
 
-  // Transformation from the frame coordinate system to the world coordinate system
+  // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;
  protected:
   static id_type next_id_;

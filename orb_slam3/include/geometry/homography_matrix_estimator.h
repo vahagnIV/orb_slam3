@@ -39,6 +39,18 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             const std::vector<size_t> & good_match_random_idx,
                             TMatrix33 & out_homography) const;
 
+  /*!
+   * Finds the rotation and translation from homography and matched points
+   * @param homography An estimated homography for a plane in the scene.
+   * @param points_to The points in the r.h.s. coordinate system  of the homogrpahy
+   * @param points_from The points in the l.h.s. coordinate system  of the homogrpahy
+   * @param matches The matches between the poinnts to and from
+   * @param out_inliers output vector of inliers, i.e. matches that passed the rigidity constraints
+   * @param out_triangulated The triangulated points in the "from" coordinate system
+   * @param out_rotation The rotation matrix from points_from to points_to
+   * @param out_translation The translation vector from points_from to points_to
+   * @return
+   */
   bool FindRTTransformation(const TMatrix33 & homography,
                             const std::vector<TPoint3D> & points_to,
                             const std::vector<TPoint3D> & points_from,
