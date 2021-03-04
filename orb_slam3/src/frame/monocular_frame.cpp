@@ -45,7 +45,6 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
   std::vector<TPoint3D> points;
-  std::vector<bool> outliers;
   TMatrix33 rotation_matrix;
   TVector3D translation_vector;
   if (reconstructor.Reconstruct(features_.undistorted_keypoints,

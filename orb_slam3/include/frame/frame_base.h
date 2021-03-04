@@ -72,7 +72,7 @@ class FrameBase {
    * @param id The id of the Map point in the frame
    * @return pointer to the map point
    */
-  const map::MapPoint * const MapPoint(size_t id) const { return map_points_[id]; }
+  const map::MapPoint * MapPoint(size_t id) const { return map_points_[id]; }
 
   /*!
    * Non const method of the previous
@@ -86,6 +86,7 @@ class FrameBase {
    * @return
    */
   std::vector<map::MapPoint *> & MapPoints() { return map_points_; }
+  const std::vector<map::MapPoint *> & MapPoints() const { return map_points_; }
 
 //  const std::vector<map::MapPoint * const> & MapPoints() const { return map_points_; }
 
@@ -103,7 +104,7 @@ class FrameBase {
    * @param point the point
    * @return The normal
    */
-  virtual TPoint3D GetNormal(const TPoint3D & point) const = 0;
+  virtual TVector3D GetNormal(const TPoint3D & point) const = 0;
 
   /*!
    * Destructor

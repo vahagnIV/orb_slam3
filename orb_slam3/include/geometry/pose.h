@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_POSE_H
 #define ORB_SLAM3_POSE_H
 
-// === g2o ===
+// === optimization ===
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/sba/vertex_se3_expmap.h>
 

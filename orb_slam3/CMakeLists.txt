@@ -43,6 +43,8 @@ add_library(orbslam SHARED
         src/geometry/homography_matrix_estimator.cpp
         src/geometry/fundamental_matrix_estimator.cpp
 
+        src/optimization/edges/se3_project_xyz_pose.cpp
+
 
         include/typedefs.h
         include/constants.h
@@ -77,10 +79,13 @@ add_library(orbslam SHARED
         include/features/second_nearest_neighbor_matcher.h
         include/features/match.h
         include/features/feature_utils.h
+        include/frame/iframe_database.h
 
         include/map/map_point.h
         include/map/atlas.h
         include/map/map.h
+
+        include/optimization/edges/se3_project_xyz_pose.h
 
         include/orb_vocabulary.h)
 

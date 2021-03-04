@@ -7,7 +7,7 @@
 // === stl ===
 #include <unordered_map>
 
-// === g2o ===
+// === optimization ===
 #include <g2o/types/slam3d/vertex_pointxyz.h>
 
 // === orb-slam3 ===
@@ -28,7 +28,7 @@ class MapPoint : protected g2o::VertexPointXYZ {
   MapPoint() {};
 
   void AddObservation(const frame::FrameBase * frame, size_t feature_id);
-  void EraseObservation(const frame::FrameBase * frame, size_t feature_id);
+  void EraseObservation(const frame::FrameBase * frame);
 
   void Refresh();
 

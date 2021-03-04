@@ -18,7 +18,7 @@ void MapPoint::AddObservation(const frame::FrameBase* frame, size_t feature_id) 
   obsevations_[frame] = feature_id;
 }
 
-void MapPoint::EraseObservation(const frame::FrameBase *frame, size_t feature_id) {
+void MapPoint::EraseObservation(const frame::FrameBase *frame) {
   obsevations_.erase(frame);
 }
 
