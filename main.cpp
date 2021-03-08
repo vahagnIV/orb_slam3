@@ -130,7 +130,7 @@ void TestMonocular(std::string original) {
   const std::string settings =
       original + "/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
   const std::string data =
-      original + "/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
+      original + "/mav0/cam0/data";
 
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;

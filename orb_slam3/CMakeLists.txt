@@ -44,6 +44,7 @@ add_library(orbslam SHARED
         src/geometry/fundamental_matrix_estimator.cpp
 
         src/optimization/edges/se3_project_xyz_pose.cpp
+        src/optimization/bundle_adjustment.cpp
 
 
         include/typedefs.h
@@ -86,8 +87,9 @@ add_library(orbslam SHARED
         include/map/map.h
 
         include/optimization/edges/se3_project_xyz_pose.h
+        include/optimization/bundle_adjustment.h
 
-        include/orb_vocabulary.h)
+        include/orb_vocabulary.h  )
 
 target_include_directories(orbslam INTERFACE include)
 
