@@ -15,9 +15,8 @@ namespace utils {
 
 typedef Eigen::Matrix<precision_t, 2, 3> ProjectionJacobianType;
 
-template<int DistrortionSize>
 void ComputeJacobian(const TPoint3D &pt,
-                     const camera::IDistortionModel<DistrortionSize> *distortion_model,
+                     const camera::IDistortionModel *distortion_model,
                      ProjectionJacobianType &out_jacobian);
 
 }

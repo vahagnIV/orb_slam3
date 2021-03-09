@@ -9,23 +9,20 @@
 namespace orb_slam3 {
 namespace camera {
 
-KannalaBrandt8::KannalaBrandt8(IDistortionModel<8>::EstimateType * estimate) : IDistortionModel(estimate) {
-}
-
-bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
-  const double & k1 = (*estimate_)[4];
-  const double & k2 = (*estimate_)[5];
-  const double & p1 = (*estimate_)[6];
-  const double & p2 = (*estimate_)[7];
-  const double & k3 = (*estimate_)[8];
-  const double & k4 = (*estimate_)[9];
-  const double & k5 = (*estimate_)[10];
-  const double & k6 = (*estimate_)[11];
+bool KannalaBrandt8::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) {
+  const double &k1 = (*estimate_)[4];
+  const double &k2 = (*estimate_)[5];
+  const double &p1 = (*estimate_)[6];
+  const double &p2 = (*estimate_)[7];
+  const double &k3 = (*estimate_)[8];
+  const double &k4 = (*estimate_)[9];
+  const double &k5 = (*estimate_)[10];
+  const double &k6 = (*estimate_)[11];
 
   const double x = undistorted[0];
   const double y = undistorted[1];
-  double & xd = distorted[0];
-  double & yd = distorted[1];
+  double &xd = distorted[0];
+  double &yd = distorted[1];
 
   double r2 = x * x + y * y;
   double r4 = r2 * r2;
@@ -41,13 +38,13 @@ bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, Homogenou
   return true;
 }
 
-bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
+bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
   return false;
 }
 
 void KannalaBrandt8::GetTransformationJacobian(const HomogenousPoint &point,
-                                               IDistortionModel<8>::JacobianType &out_jacobian) {
+                                               IDistortionModel::JacobianType &out_jacobian) {
 
 }
 

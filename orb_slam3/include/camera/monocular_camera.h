@@ -16,7 +16,11 @@
 namespace orb_slam3 {
 namespace camera {
 
-class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, Eigen::VectorXd> {
+#ifndef DISTORTION_MODEL_PARAMS_MAX
+#define DISTORTION_MODEL_PARAMS_MAX 10
+#endif
+
+class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS_MAX + CAMERA_PARAMS_COUNT, Eigen::VectorXd> {
  public:
 
   typedef decltype(_estimate)::Scalar Scalar;
@@ -26,7 +30,7 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
       height_(height),
       distortion_model_(nullptr) {
 
-    setEstimate(Eigen::Matrix<double, DISTORTION_MODEL_PARAMS + 4, 1>::Zero());
+    setEstimate(Eigen::Matrix<double, DISTORTION_MODEL_PARAMS_MAX + 4, 1>::Zero());
   }
   virtual ~MonocularCamera() { delete distortion_model_; }
 
@@ -46,7 +50,7 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
     assert(!"Set to Origin is not Implemented yet");
   }
 
-  void oplusImpl(const double * update) override {
+  void oplusImpl(const double *update) override {
     Eigen::VectorXd::ConstMapType v(update, MonocularCamera::Dimension);
     this->_estimate += v;
     fx_inv_ = _estimate[0] ? 1 / _estimate[0] : 1;
@@ -56,18 +60,22 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
  public:
 
   template<typename TDistortionModel>
-  TDistortionModel * CreateDistortionModel() {
+  TDistortionModel *CreateDistortionModel() {
+    if (DISTORTION_MODEL_PARAMS_MAX < TDistortionModel::DistrortionSize + CAMERA_PARAMS_COUNT) {
+      throw std::runtime_error("Please increase ...");
+    }
+
     delete distortion_model_;
-    TDistortionModel * model = new TDistortionModel(&_estimate);
+    TDistortionModel *model = new TDistortionModel(&_estimate);
     distortion_model_ = model;
     return model;
   }
 
-  IDistortionModel<DISTORTION_MODEL_PARAMS> * GetDistortionModel() {
+  IDistortionModel *GetDistortionModel() {
     return distortion_model_;
   }
 
-  const IDistortionModel<DISTORTION_MODEL_PARAMS> * GetDistortionModel() const {
+  const IDistortionModel *GetDistortionModel() const {
     return distortion_model_;
   }
 
@@ -88,35 +96,35 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
    */
   unsigned Height() const { return height_; }
 
-  inline const precision_t & ImageBoundMinX() const { return min_X_; }
-  inline const precision_t & ImageBoundMinY() const { return min_Y_; }
-  inline const precision_t & ImageBoundMaxX() const { return max_X_; }
-  inline const precision_t & ImageBoundMaxY() const { return max_Y_; }
+  inline const precision_t &ImageBoundMinX() const { return min_X_; }
+  inline const precision_t &ImageBoundMinY() const { return min_Y_; }
+  inline const precision_t &ImageBoundMaxX() const { return max_X_; }
+  inline const precision_t &ImageBoundMaxY() const { return max_Y_; }
 
   /*!
    * Projects a 3D point on the image plane using the camera model
    * @param point3d The 3D point in the camera frame
    * @return 2D image point
    */
-  TPoint2D Map(const TPoint3D & point3d) const;
+  TPoint2D Map(const TPoint3D &point3d) const;
 
   /*!
    * Undistorts keypoint
    * @param points input
    * @param undistorted_points output
    */
-  bool UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const;
-  bool DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) const;
-  void UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const;
-  void ProjectPoint(const TPoint3D & point, TPoint2D & projected) const;
-  bool UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const;
+  bool UndistortPoint(const TPoint2D &point, TPoint2D &undistorted_point) const;
+  bool DistortPoint(const TPoint2D &undistorted, TPoint2D &distorted) const;
+  void UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const;
+  void ProjectPoint(const TPoint3D &point, TPoint2D &projected) const;
+  bool UnprojectAndUndistort(const TPoint2D &point, HomogenousPoint &unprojected) const;
 
-  inline const Scalar & Fx() const noexcept { return this->_estimate[0]; }
-  inline const Scalar & Fy() const noexcept { return this->_estimate[1]; }
-  inline const Scalar & Cx() const noexcept { return this->_estimate[2]; }
-  inline const Scalar & Cy() const noexcept { return this->_estimate[3]; }
-  inline const Scalar & FxInv() const noexcept { return fx_inv_; }
-  inline const Scalar & FyInv() const noexcept { return fy_inv_; }
+  inline const Scalar &Fx() const noexcept { return this->_estimate[0]; }
+  inline const Scalar &Fy() const noexcept { return this->_estimate[1]; }
+  inline const Scalar &Cx() const noexcept { return this->_estimate[2]; }
+  inline const Scalar &Cy() const noexcept { return this->_estimate[3]; }
+  inline const Scalar &FxInv() const noexcept { return fx_inv_; }
+  inline const Scalar &FyInv() const noexcept { return fy_inv_; }
 
   void SetFx(Scalar fx) noexcept {
     _estimate[0] = fx;
@@ -146,7 +154,7 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS + 4, E
   unsigned height_;
   double min_X_, max_X_, min_Y_, max_Y_;
   double fx_inv_, fy_inv_;
-  IDistortionModel<DISTORTION_MODEL_PARAMS> * distortion_model_;
+  IDistortionModel *distortion_model_;
 
 };
 

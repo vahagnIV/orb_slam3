@@ -31,7 +31,7 @@ void SE3ProjectXYZPose::linearizeOplus() {
       -z, 0.f, x, 0.f, 1.f, 0.f,
       y, -x, 0.f, 0.f, 0.f, 1.f;
   orb_slam3::optimization::utils::ProjectionJacobianType projection_jacobian;
-  orb_slam3::optimization::utils::ComputeJacobian<5>(point->estimate(), nullptr, projection_jacobian);
+  orb_slam3::optimization::utils::ComputeJacobian(point->estimate(), nullptr, projection_jacobian);
   _jacobianOplusXi = -projection_jacobian * se3_jacobian;
 //      BaseFixedSizedEdge::linearizeOplus();
 }

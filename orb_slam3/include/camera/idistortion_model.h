@@ -14,14 +14,11 @@
 namespace orb_slam3 {
 namespace camera {
 
-template<int DistrortionSize>
+
 class IDistortionModel {
  public:
-  typedef typename g2o::BaseVertex<4 + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType EstimateType;
-  typedef Eigen::Matrix<double, 2, 2> JacobianType;
 
-  IDistortionModel(EstimateType *estimate)
-      : estimate_(estimate) {}
+  typedef Eigen::Matrix<double, 2, 2> JacobianType;
 
   virtual bool DistortPoint(const HomogenousPoint &undistorted,
                             HomogenousPoint &distorted) = 0;
@@ -29,8 +26,7 @@ class IDistortionModel {
                               HomogenousPoint &undistorted) = 0;
   virtual void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) = 0;
   virtual ~IDistortionModel() = default;
- protected:
-  EstimateType *estimate_;
+
 };
 
 }

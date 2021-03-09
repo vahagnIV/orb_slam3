@@ -11,15 +11,19 @@
 namespace orb_slam3 {
 namespace camera {
 
-class KannalaBrandt8 : public IDistortionModel<8>{
+class KannalaBrandt8 : public IDistortionModel{
  public:
+  static const int DistrortionSize = 8;
+  typedef typename g2o::BaseVertex<CAMERA_PARAMS_COUNT + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType
+      EstimateType;
   // IDistortion
-  KannalaBrandt8(EstimateType * estimate);
+  KannalaBrandt8(EstimateType *estimate)
+  : estimate_(estimate) {}
   bool DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) override;
   bool UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) override;
   void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) override ;
  public:
-  typedef std::decay<decltype(*estimate_)>::type::Scalar Scalar;
+  typedef EstimateType::Scalar Scalar;
 
   inline const Scalar & K1() const noexcept { return (*estimate_)[4]; }
   inline const Scalar & K2() const noexcept { return (*estimate_)[5]; }
@@ -38,6 +42,8 @@ class KannalaBrandt8 : public IDistortionModel<8>{
   void SetK4(Scalar k4) noexcept { (*estimate_)[9] = k4; }
   void SetK5(Scalar k5) noexcept { (*estimate_)[10] = k5; }
   void SetK6(Scalar k6) noexcept { (*estimate_)[11] = k6; }
+ protected:
+  EstimateType *estimate_;
 
 
 };

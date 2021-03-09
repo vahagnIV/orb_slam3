@@ -11,26 +11,34 @@
 namespace orb_slam3 {
 namespace camera {
 
-class FishEye : public IDistortionModel<4>{
+class FishEye : public IDistortionModel {
  public:
+  static const int DistrortionSize = 4;
+  typedef typename g2o::BaseVertex<CAMERA_PARAMS_COUNT + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType
+      EstimateType;
+  FishEye(EstimateType *estimate)
+      : estimate_(estimate) {}
   // IDistortion
-  FishEye(EstimateType * estimate);
-  bool DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) override;
-  bool UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) override;
+
+  bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) override;
+  bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) override;
   void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) override;
+
  public:
-  typedef std::decay<decltype(*estimate_)>::type::Scalar Scalar;
+  typedef EstimateType::Scalar Scalar;
 
-  inline const Scalar & K1() const noexcept { return (*estimate_)[4]; }
-  inline const Scalar & K2() const noexcept { return (*estimate_)[5]; }
-  inline const Scalar & K3() const noexcept { return (*estimate_)[6]; }
-  inline const Scalar & K4() const noexcept { return (*estimate_)[7]; }
-
+  inline const Scalar &K1() const noexcept { return (*estimate_)[4]; }
+  inline const Scalar &K2() const noexcept { return (*estimate_)[5]; }
+  inline const Scalar &K3() const noexcept { return (*estimate_)[6]; }
+  inline const Scalar &K4() const noexcept { return (*estimate_)[7]; }
 
   void SetK1(Scalar k1) noexcept { (*estimate_)[4] = k1; }
   void SetK2(Scalar k2) noexcept { (*estimate_)[5] = k2; }
   void SetK3(Scalar k3) noexcept { (*estimate_)[6] = k3; }
   void SetK4(Scalar k4) noexcept { (*estimate_)[7] = k4; }
+ protected:
+  EstimateType *estimate_;
+
 };
 
 }

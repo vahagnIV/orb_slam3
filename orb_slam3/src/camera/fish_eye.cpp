@@ -9,10 +9,6 @@
 namespace orb_slam3 {
 namespace camera {
 
-FishEye::FishEye(IDistortionModel<4>::EstimateType *estimate) : IDistortionModel(estimate) {
-
-}
-
 bool FishEye::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) {
 
   /*ACHTUNG: NOT TESTED*/
@@ -85,7 +81,7 @@ bool FishEye::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &
   return true;
 }
 
-void FishEye::GetTransformationJacobian(const HomogenousPoint &point, IDistortionModel<4>::JacobianType &out_jacobian) {
+void FishEye::GetTransformationJacobian(const HomogenousPoint &point, IDistortionModel::JacobianType &out_jacobian) {
   const double &x = point[0];
   const double &y = point[1];
   double x2 = x * x, y2 = y * y;

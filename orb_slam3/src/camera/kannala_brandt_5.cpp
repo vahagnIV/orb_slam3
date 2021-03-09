@@ -8,9 +8,6 @@
 namespace orb_slam3 {
 namespace camera {
 
-KannalaBrandt5::KannalaBrandt5(EstimateType * estimate) : IDistortionModel<5>(estimate) {
-}
-
 bool KannalaBrandt5::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
 
   const Scalar & x = undistorted[0];
@@ -57,7 +54,7 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint & distorted, Homogenou
   return false;
 }
 void KannalaBrandt5::GetTransformationJacobian(const HomogenousPoint &point,
-                                               IDistortionModel<5>::JacobianType &out_jacobian) {
+                                               IDistortionModel::JacobianType &out_jacobian) {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
 }
 

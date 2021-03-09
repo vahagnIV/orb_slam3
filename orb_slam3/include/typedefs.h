@@ -13,9 +13,7 @@
 #include <Eigen/Eigen>
 
 namespace orb_slam3 {
-#ifndef DISTORTION_MODEL_PARAMS
-#define DISTORTION_MODEL_PARAMS 4
-#endif
+#define CAMERA_PARAMS_COUNT 4
 
 typedef double precision_t;
 

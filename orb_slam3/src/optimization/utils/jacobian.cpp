@@ -8,9 +8,8 @@ namespace orb_slam3 {
 namespace optimization {
 namespace utils {
 
-template<int DistrortionSize>
 void ComputeJacobian(const TPoint3D &pt,
-                     const camera::IDistortionModel<DistrortionSize> *distortion_model,
+                     const camera::IDistortionModel *distortion_model,
                      ProjectionJacobianType &out_jacobian) {
   const double &x = pt[0];
   const double &y = pt[1];
@@ -25,17 +24,6 @@ void ComputeJacobian(const TPoint3D &pt,
 
 }
 
-template void ComputeJacobian<5>(const TPoint3D &pt,
-                                 const camera::IDistortionModel<5> *distortion_model,
-                                 ProjectionJacobianType &out_jacobian);
-
-template void ComputeJacobian<4>(const TPoint3D &pt,
-                                 const camera::IDistortionModel<4> *distortion_model,
-                                 ProjectionJacobianType &out_jacobian);
-
-template void ComputeJacobian<6>(const TPoint3D &pt,
-                                 const camera::IDistortionModel<6> *distortion_model,
-                                 ProjectionJacobianType &out_jacobian);
 }
 }
 }
