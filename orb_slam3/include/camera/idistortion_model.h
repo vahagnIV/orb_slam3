@@ -21,10 +21,10 @@ class IDistortionModel {
   typedef Eigen::Matrix<double, 2, 2> JacobianType;
 
   virtual bool DistortPoint(const HomogenousPoint &undistorted,
-                            HomogenousPoint &distorted) = 0;
+                            HomogenousPoint &distorted) const = 0;
   virtual bool UnDistortPoint(const HomogenousPoint &distorted,
-                              HomogenousPoint &undistorted) = 0;
-  virtual void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) = 0;
+                              HomogenousPoint &undistorted) const = 0;
+  virtual void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const = 0;
   virtual ~IDistortionModel() = default;
 
 };

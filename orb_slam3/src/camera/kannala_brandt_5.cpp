@@ -8,10 +8,10 @@
 namespace orb_slam3 {
 namespace camera {
 
-bool KannalaBrandt5::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
+bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
 
-  const Scalar & x = undistorted[0];
-  const Scalar & y = undistorted[1];
+  const Scalar &x = undistorted[0];
+  const Scalar &y = undistorted[1];
 
   double r2 = x * x + y * y;
   double r4 = r2 * r2;
@@ -26,12 +26,12 @@ bool KannalaBrandt5::DistortPoint(const HomogenousPoint & undistorted, Homogenou
   return true;
 }
 
-bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
+bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
 
   undistorted = distorted;
 
-  Scalar & x = undistorted[0];
-  Scalar & y = undistorted[1];
+  Scalar &x = undistorted[0];
+  Scalar &y = undistorted[1];
   undistorted[2] = 1;
   precision_t x0 = x = distorted[0], y0 = y = distorted[1];
 
@@ -53,8 +53,8 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint & distorted, Homogenou
   undistorted = distorted;
   return false;
 }
-void KannalaBrandt5::GetTransformationJacobian(const HomogenousPoint &point,
-                                               IDistortionModel::JacobianType &out_jacobian) {
+void KannalaBrandt5::ComputeJacobian(const TPoint2D &point,
+                                     IDistortionModel::JacobianType &out_jacobian) const {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
 }
 

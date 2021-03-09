@@ -7,13 +7,14 @@
 #include <constants.h>
 #include <features/second_nearest_neighbor_matcher.h>
 #include <geometry/two_view_reconstructor.h>
+#include <optimization/edges/se3_project_xyz_pose.h>
 
 namespace orb_slam3 {
 namespace frame {
 
-MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
-                               const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
-                               const std::shared_ptr<camera::MonocularCamera> & camera) :
+MonocularFrame::MonocularFrame(const TImageGray8U &image, TimePoint timestamp,
+                               const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
+                               const std::shared_ptr<camera::MonocularCamera> &camera) :
     FrameBase(timestamp),
     features_(camera->Width(), camera->Height()),
     camera_(camera) {
@@ -32,10 +33,10 @@ size_t MonocularFrame::FeatureCount() const noexcept {
   return features_.keypoints.size();
 }
 
-bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
+bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
   if (other->Type() != Type())
     return false;
-  MonocularFrame * other_frame = dynamic_cast<MonocularFrame *>(other.get());
+  MonocularFrame *other_frame = dynamic_cast<MonocularFrame *>(other.get());
   features::SecondNearestNeighborMatcher matcher(100,
                                                  0.9,
                                                  false);
@@ -61,7 +62,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     for (size_t i = 0; i < frame_link_.matches.size(); ++i) {
       if (!frame_link_.inliers[i])
         continue;
-      const features::Match & match = frame_link_.matches[i];
+      const features::Match &match = frame_link_.matches[i];
 
       if (other->MapPoint(match.from_idx)) {
         // TODO: do the contistency check
@@ -74,7 +75,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     }
 //    pose_.estimate().rotation().toRotationMatrix()
 
-    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl << pose_.estimate().translation() << std::endl;
+    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+              << pose_.estimate().translation() << std::endl;
     return true;
   }
 
@@ -86,12 +88,39 @@ FrameType MonocularFrame::Type() const {
 }
 
 void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
-                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const {
+                                             std::vector<features::DescriptorType> &out_descriptor_ptr) const {
 
   out_descriptor_ptr.push_back(features_.descriptors.row(feature_id));
 
 }
-TPoint3D MonocularFrame::GetNormal(const TPoint3D & point) const {
+
+const camera::ICamera *MonocularFrame::CameraPtr() const {
+  return camera_.get();
+}
+void MonocularFrame::AddToOptimizer(g2o::SparseOptimizer &optimizer) {
+  this->pose_.setFixed(false);
+  optimizer.addVertex(&pose_);
+  for(size_t i = 0; i < map_points_.size(); ++i){
+    if(nullptr == map_points_[i])
+      continue;
+    g2o::VertexPointXYZ *mp_as_vertex = map_points_[i]->operator g2o::VertexPointXYZ *();
+    optimizer.addVertex(mp_as_vertex);
+
+
+      auto edge = new optimization::edges::SE3ProjectXYZPose(camera_.get());
+      edge->setVertex(0, &pose_);
+      edge->setVertex(1, mp_as_vertex);
+      HomogenousPoint measurement;
+//      camera_->UnprojectPoint(features_.keypoints[i].pt, measurement);
+      edge->setMeasurement(features_.keypoints[i].pt);
+      optimizer.addEdge(edge);
+
+  }
+
+
+}
+
+TPoint3D MonocularFrame::GetNormal(const TPoint3D &point) const {
   TPoint3D normal = pose_.estimate().translation() - point;
   normal.normalize();
   return normal;

@@ -9,7 +9,7 @@
 namespace orb_slam3 {
 namespace camera {
 
-bool KannalaBrandt8::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) {
+bool KannalaBrandt8::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
   const double &k1 = (*estimate_)[4];
   const double &k2 = (*estimate_)[5];
   const double &p1 = (*estimate_)[6];
@@ -38,13 +38,13 @@ bool KannalaBrandt8::DistortPoint(const HomogenousPoint &undistorted, Homogenous
   return true;
 }
 
-bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) {
+bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
   return false;
 }
 
-void KannalaBrandt8::GetTransformationJacobian(const HomogenousPoint &point,
-                                               IDistortionModel::JacobianType &out_jacobian) {
+void KannalaBrandt8::ComputeJacobian(const TPoint2D &point,
+                                     IDistortionModel::JacobianType &out_jacobian) const {
 
 }
 

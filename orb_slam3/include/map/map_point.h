@@ -12,6 +12,7 @@
 
 // === orb-slam3 ===
 #include <typedefs.h>
+#include <identifiable.h>
 #include <features/features.h>
 //#include <frame/frame_base.h>
 
@@ -21,25 +22,29 @@ class FrameBase;
 }
 namespace map {
 
-class MapPoint : protected g2o::VertexPointXYZ {
+class MapPoint : protected Identifiable, protected g2o::VertexPointXYZ {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MapPoint(const TPoint3D & point);
-  MapPoint() {};
-
-  void AddObservation(const frame::FrameBase * frame, size_t feature_id);
-  void EraseObservation(const frame::FrameBase * frame);
+  typedef std::unordered_map<const frame::FrameBase *, size_t> MapType;
+  MapPoint(const TPoint3D &point);
+  MapPoint() : Identifiable() { setId(id_); };
+  operator g2o::VertexPointXYZ *() { return this; }
+  void AddObservation(const frame::FrameBase *frame, size_t feature_id);
+  void EraseObservation(const frame::FrameBase *frame);
 
   void Refresh();
 
-  const TPoint3D & GetPose() const { return estimate(); }
-  const TVector3D & GetNormal() const { return normal_; }
+  const TPoint3D &GetPose() const { return estimate(); }
+  const TVector3D &GetNormal() const { return normal_; }
+  const MapType &Observations() const {
+    return obsevations_;
+  }
 
  private:
   void ComputeDistinctiveDescriptor();
   void UpdateNormalAndDepth();
  private:
-  std::unordered_map<const frame::FrameBase *, size_t> obsevations_;
+  MapType obsevations_;
   features::DescriptorType descriptor_;
   TVector3D normal_;
 

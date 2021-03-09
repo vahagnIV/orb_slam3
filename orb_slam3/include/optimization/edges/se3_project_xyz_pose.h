@@ -10,15 +10,16 @@
 #include <g2o/types/slam3d/vertex_pointxyz.h>
 #include <camera/monocular_camera.h>
 
-namespace orb_slam {
+namespace orb_slam3 {
 namespace optimization {
 namespace edges {
 
 
-class SE3ProjectXYZPose : g2o::BaseBinaryEdge<2, Eigen::Vector2d,
+class SE3ProjectXYZPose : public g2o::BaseBinaryEdge<2, Eigen::Vector2d,
                                                   g2o::VertexSE3Expmap,
                                                   g2o::VertexPointXYZ> {
  public:
+  SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera);
   bool read(std::istream & is) { return false; }
 
   bool write(std::ostream & os) const { return false; }
@@ -26,6 +27,8 @@ class SE3ProjectXYZPose : g2o::BaseBinaryEdge<2, Eigen::Vector2d,
   void computeError() override;
 
   void linearizeOplus() override;
+ private:
+  const orb_slam3::camera::ICamera * camera_;
 
 };
 

@@ -9,7 +9,7 @@
 namespace orb_slam3 {
 namespace camera {
 
-bool FishEye::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) {
+bool FishEye::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
 
   /*ACHTUNG: NOT TESTED*/
 
@@ -37,7 +37,7 @@ bool FishEye::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &
   return true;
 }
 
-bool FishEye::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) {
+bool FishEye::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
 
   double r_prime = std::sqrt(distorted[0] * distorted[0] + distorted[1] * distorted[1]);
 
@@ -81,7 +81,8 @@ bool FishEye::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &
   return true;
 }
 
-void FishEye::GetTransformationJacobian(const HomogenousPoint &point, IDistortionModel::JacobianType &out_jacobian) {
+void FishEye::ComputeJacobian(const TPoint2D &point,
+                              IDistortionModel::JacobianType &out_jacobian) const {
   const double &x = point[0];
   const double &y = point[1];
   double x2 = x * x, y2 = y * y;

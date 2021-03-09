@@ -20,9 +20,9 @@ class FishEye : public IDistortionModel {
       : estimate_(estimate) {}
   // IDistortion
 
-  bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) override;
-  bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) override;
-  void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) override;
+  bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
+  bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const override;
+  void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const override;
 
  public:
   typedef EstimateType::Scalar Scalar;

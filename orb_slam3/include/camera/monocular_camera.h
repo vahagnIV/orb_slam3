@@ -12,6 +12,7 @@
 #include <typedefs.h>
 #include <features/key_point.h>
 #include "idistortion_model.h"
+#include "icamera.h"
 
 namespace orb_slam3 {
 namespace camera {
@@ -20,7 +21,7 @@ namespace camera {
 #define DISTORTION_MODEL_PARAMS_MAX 10
 #endif
 
-class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS_MAX + CAMERA_PARAMS_COUNT, Eigen::VectorXd> {
+class MonocularCamera : public ICamera, protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS_MAX + CAMERA_PARAMS_COUNT, Eigen::VectorXd> {
  public:
 
   typedef decltype(_estimate)::Scalar Scalar;
@@ -78,6 +79,8 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS_MAX + 
   const IDistortionModel *GetDistortionModel() const {
     return distortion_model_;
   }
+  void ComputeJacobian(const TPoint3D &pt,
+                       ProjectionJacobianType &out_jacobian) const override;
 
   /*!
    *

@@ -7,7 +7,6 @@
 
 namespace orb_slam3 {
 namespace frame {
-FrameBase::id_type FrameBase::next_id_ = 0;
 
 void FrameBase::SetPosition(const geometry::Pose & pose) noexcept {
   pose_ = pose;

@@ -3,16 +3,20 @@
 //
 
 #include <optimization/edges/se3_project_xyz_pose.h>
-#include <optimization/utils/jacobian.h>
-namespace orb_slam {
+namespace orb_slam3 {
 namespace optimization {
 namespace edges {
+
+SE3ProjectXYZPose::SE3ProjectXYZPose(const orb_slam3::camera::ICamera *camera) : camera_(camera) {
+
+}
 
 void SE3ProjectXYZPose::computeError() {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(vertex(1));
 
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(vertex(0));
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
+//  camera_->
   g2o::Vector3::Scalar inv_z = 1. / pt_camera_system[2];
   _error[0] = _measurement[0] - pt_camera_system[0] * inv_z;
   _error[1] = _measurement[1] - pt_camera_system[1] * inv_z;
@@ -30,8 +34,8 @@ void SE3ProjectXYZPose::linearizeOplus() {
   se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
       -z, 0.f, x, 0.f, 1.f, 0.f,
       y, -x, 0.f, 0.f, 0.f, 1.f;
-  orb_slam3::optimization::utils::ProjectionJacobianType projection_jacobian;
-  orb_slam3::optimization::utils::ComputeJacobian(point->estimate(), nullptr, projection_jacobian);
+  camera::ProjectionJacobianType projection_jacobian;
+  camera_->ComputeJacobian(point->estimate(), projection_jacobian);
   _jacobianOplusXi = -projection_jacobian * se3_jacobian;
 //      BaseFixedSizedEdge::linearizeOplus();
 }

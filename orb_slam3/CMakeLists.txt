@@ -20,6 +20,7 @@ endif ()
 include_directories(include g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 
 add_library(orbslam SHARED
+        src/identifiable.cpp
         src/tracker.cpp
 
         src/frame/frame_base.cpp
@@ -45,7 +46,7 @@ add_library(orbslam SHARED
 
         src/optimization/edges/se3_project_xyz_pose.cpp
         src/optimization/bundle_adjustment.cpp
-        src/optimization/utils/jacobian.cpp
+        src/optimization/utils/add_frames.cpp
 
 
         include/typedefs.h
@@ -89,9 +90,10 @@ add_library(orbslam SHARED
 
         include/optimization/edges/se3_project_xyz_pose.h
         include/optimization/bundle_adjustment.h
-        include/optimization/utils/jacobian.h
+        include/optimization/utils/add_frames.h
 
-        include/orb_vocabulary.h)
+        include/orb_vocabulary.h
+        include/identifiable.h include/camera/icamera.h)
 
 target_include_directories(orbslam INTERFACE include)
 

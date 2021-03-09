@@ -9,8 +9,12 @@
 #include <memory>
 #include <unordered_set>
 
+// === g2o ===
+#include <g2o/core/sparse_optimizer.h>
+
 // == orb-slam3 ===
-#include "frame_type.h"
+#include <identifiable.h>
+#include <frame/frame_type.h>
 #include <typedefs.h>
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
@@ -19,20 +23,21 @@
 namespace orb_slam3 {
 namespace frame {
 
-class FrameBase {
+class FrameBase : protected Identifiable {
  public:
-  typedef size_t id_type;
   FrameBase() = delete;
 
   virtual FrameType Type() const = 0;
 
-  FrameBase(const TimePoint & timestamp)
-      : id_(++next_id_), timestamp_(timestamp) {}
+  FrameBase(const TimePoint &timestamp)
+      : Identifiable(), timestamp_(timestamp) {
+    pose_.setId(id_);
+  }
   /*!
   *  Getter for id
   *  @return The id of the frame
   */
-  inline id_type Id() const noexcept { return id_; }
+  inline size_t Id() const noexcept { return id_; }
 
   /*!
    * Getter function
@@ -49,7 +54,7 @@ class FrameBase {
    * Set the position of the frame in the world coordinate system
    * @param pose 4x4 joint transformation matrix
    */
-  void SetPosition(const geometry::Pose & pose) noexcept;
+  void SetPosition(const geometry::Pose &pose) noexcept;
 
   // Get the number of the extracted keypoints
   virtual size_t FeatureCount() const noexcept = 0;
@@ -65,28 +70,28 @@ class FrameBase {
    * Used only for monocular case
    * @return
    */
-  virtual bool Link(const std::shared_ptr<FrameBase> & other) = 0;
+  virtual bool Link(const std::shared_ptr<FrameBase> &other) = 0;
 
   /*!
    * Return the map point associated with the id. The id is unique within the frame
    * @param id The id of the Map point in the frame
    * @return pointer to the map point
    */
-  const map::MapPoint * MapPoint(size_t id) const { return map_points_[id]; }
+  const map::MapPoint *MapPoint(size_t id) const { return map_points_[id]; }
 
   /*!
    * Non const method of the previous
    * @param id
    * @return
    */
-  map::MapPoint * & MapPoint(size_t id) { return map_points_[id]; }
+  map::MapPoint *&MapPoint(size_t id) { return map_points_[id]; }
 
   /*!
    * Returns all map points associated with the frame
    * @return
    */
-  std::vector<map::MapPoint *> & MapPoints() { return map_points_; }
-  const std::vector<map::MapPoint *> & MapPoints() const { return map_points_; }
+  std::vector<map::MapPoint *> &MapPoints() { return map_points_; }
+  const std::vector<map::MapPoint *> &MapPoints() const { return map_points_; }
 
 //  const std::vector<map::MapPoint * const> & MapPoints() const { return map_points_; }
 
@@ -97,14 +102,24 @@ class FrameBase {
    * @param out_descriptor_ptr The vector to which the descriptors will be appended
    */
   virtual void AppendDescriptorsToList(size_t feature_id,
-                                       std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
+                                       std::vector<features::DescriptorType> &out_descriptor_ptr) const = 0;
 
   /*!
    * Computes the normal of the point.
    * @param point the point
    * @return The normal
    */
-  virtual TVector3D GetNormal(const TPoint3D & point) const = 0;
+  virtual TVector3D GetNormal(const TPoint3D &point) const = 0;
+
+  /*!
+   * Getter for pose
+   * @return pose
+   */
+  geometry::Pose *GetPose() { return &pose_; }
+
+  virtual const camera::ICamera *CameraPtr() const= 0;
+
+  virtual void AddToOptimizer(g2o::SparseOptimizer & optimizer)  = 0;
 
   /*!
    * Destructor
@@ -115,14 +130,11 @@ class FrameBase {
 
  protected:
 
-  const id_type id_;
   TimePoint timestamp_;
-  std::vector<map::MapPoint*> map_points_;
+  std::vector<map::MapPoint *> map_points_;
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;
- protected:
-  static id_type next_id_;
 
 };
 
