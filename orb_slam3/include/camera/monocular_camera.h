@@ -62,7 +62,7 @@ class MonocularCamera : protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS_MAX + 
   template<typename TDistortionModel>
   TDistortionModel *CreateDistortionModel() {
     if (DISTORTION_MODEL_PARAMS_MAX < TDistortionModel::DistrortionSize + CAMERA_PARAMS_COUNT) {
-      throw std::runtime_error("Please increase ...");
+      throw std::runtime_error("Please increase DISTORTION_MODEL_PARAMS_MAX and rebuild the program...");
     }
 
     delete distortion_model_;
