@@ -9,11 +9,11 @@
 namespace orb_slam3 {
 namespace camera {
 
-FishEye::FishEye(IDistortionModel<4>::EstimateType * estimate) : IDistortionModel(estimate) {
+FishEye::FishEye(IDistortionModel<4>::EstimateType *estimate) : IDistortionModel(estimate) {
 
 }
 
-bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) {
+bool FishEye::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) {
 
   /*ACHTUNG: NOT TESTED*/
 
@@ -41,7 +41,7 @@ bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint 
   return true;
 }
 
-bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
+bool FishEye::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) {
 
   double r_prime = std::sqrt(distorted[0] * distorted[0] + distorted[1] * distorted[1]);
 
@@ -70,16 +70,46 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
     }
     theta += delta_theta;
   }
-  if(!converged)
+  if (!converged) {
+    undistorted = distorted;
     return false;
+  }
 
   double scale = std::tan(theta) / theta_d;
 
-  if ( scale < 0) {
+  if (scale < 0) {
+    undistorted = distorted;
     return false;
   }
   undistorted << distorted[0] * scale, distorted[1] * scale, 1;
   return true;
+}
+
+void FishEye::GetTransformationJacobian(const HomogenousPoint &point, IDistortionModel<4>::JacobianType &out_jacobian) {
+  const double &x = point[0];
+  const double &y = point[1];
+  double x2 = x * x, y2 = y * y;
+  double r2 = x2 + y2;
+  double r = std::sqrt(r2);
+  double r3 = r2 * r;
+  double theta = std::atan2(r, 1);
+
+  double theta2 = theta * theta, theta3 = theta2 * theta;
+  double theta4 = theta2 * theta2, theta5 = theta4 * theta;
+  double theta6 = theta2 * theta4, theta7 = theta6 * theta;
+  double theta8 = theta4 * theta4, theta9 = theta8 * theta;
+
+  double thetad = theta + theta3 * K1() + theta5 * K2() + theta7 * K3() +
+      theta9 * K4();
+  double Dthetad = 1 + 3 * K1() * theta2 + 5 * K2() * theta4 + 7 * K3() * theta6 +
+      9 * K4() * theta8;
+
+  out_jacobian(0, 0) = (Dthetad * x2 / (r2 * (r2 + 1)) + thetad * y2 / r3);
+
+  out_jacobian(0, 1) = out_jacobian(1, 0) = (Dthetad * y * x / (r2 * (r2 + 1)) - thetad * y * x / r3);
+
+//  out_jacobian(1, 0) = (Dthetad * y * x / (r2 * (r2 + 1)) - thetad * y * x / r3);
+  out_jacobian(1, 1) = (Dthetad * y2 / (r2 * (r2 + 1)) + thetad * x2 / r3);
 }
 
 }

@@ -17,7 +17,7 @@ class KannalaBrandt5 : public IDistortionModel<5> {
   KannalaBrandt5(EstimateType * estimate);
   bool DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) override;
   bool UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) override;
-
+  void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) override;
  public:
   typedef std::decay<decltype(*estimate_)>::type::Scalar Scalar;
 

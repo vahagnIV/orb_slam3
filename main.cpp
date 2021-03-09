@@ -140,18 +140,18 @@ void TestMonocular(std::string original) {
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
 
-  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+  auto distortion = camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
 //  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 
   camera->SetFx(190.97847715128717);
   camera->SetFy(190.9733070521226);
   camera->SetCx(254.93170605935475);
   camera->SetCy(256.8974428996504);
-  distortion->SetK1(3);
-//  distortion->SetK1(0.0034823894022493434);
+//  distortion->SetK1(3);
+  distortion->SetK1(0.0034823894022493434);
   distortion->SetK2(0.0007150348452162257);
   distortion->SetK3(-0.0020532361418706202);
-//  distortion->SetK4(0.00020293673591811182);
+  distortion->SetK4(0.00020293673591811182);
 
   camera->ComputeImageBounds();
 
@@ -225,7 +225,7 @@ cv::Mat DrawMatches(std::shared_ptr<orb_slam3::frame::MonocularFrame> & frame, c
                   cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
   return out;
 }
-
+/*
 void TestDrawMonocular(std::string original) {
 
   const std::string vocabulary =
@@ -242,7 +242,7 @@ void TestDrawMonocular(std::string original) {
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(640, 480);
 
-  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+  auto distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 //  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 
   camera->SetFx(807.29687323230985);
@@ -326,7 +326,7 @@ void TestDrawMonocular(std::string original) {
     }
   }
 
-}
+}*/
 
 typedef struct { orb_slam3::TMatrix33 R; orb_slam3::TVector3D T; } Solution;
 

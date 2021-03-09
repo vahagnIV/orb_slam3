@@ -18,17 +18,19 @@ template<int DistrortionSize>
 class IDistortionModel {
  public:
   typedef typename g2o::BaseVertex<4 + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType EstimateType;
-  IDistortionModel(EstimateType * estimate)
+  typedef Eigen::Matrix<double, 2, 2> JacobianType;
+
+  IDistortionModel(EstimateType *estimate)
       : estimate_(estimate) {}
 
-
-  virtual bool DistortPoint(const HomogenousPoint & undistorted,
-                            HomogenousPoint & distorted) = 0;
-  virtual bool UnDistortPoint(const HomogenousPoint & distorted,
-                              HomogenousPoint & undistorted) = 0;
+  virtual bool DistortPoint(const HomogenousPoint &undistorted,
+                            HomogenousPoint &distorted) = 0;
+  virtual bool UnDistortPoint(const HomogenousPoint &distorted,
+                              HomogenousPoint &undistorted) = 0;
+  virtual void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) = 0;
   virtual ~IDistortionModel() = default;
  protected:
-   EstimateType * estimate_;
+  EstimateType *estimate_;
 };
 
 }

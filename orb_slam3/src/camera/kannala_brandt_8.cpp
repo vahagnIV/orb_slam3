@@ -44,6 +44,10 @@ bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, Homogenou
 bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
   return false;
+}
+
+void KannalaBrandt8::GetTransformationJacobian(const HomogenousPoint &point,
+                                               IDistortionModel<8>::JacobianType &out_jacobian) {
 
 }
 

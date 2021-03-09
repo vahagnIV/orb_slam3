@@ -3,6 +3,7 @@
 //
 
 #include <optimization/edges/se3_project_xyz_pose.h>
+#include <optimization/utils/jacobian.h>
 namespace orb_slam {
 namespace optimization {
 namespace edges {
@@ -29,8 +30,9 @@ void SE3ProjectXYZPose::linearizeOplus() {
   se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
       -z, 0.f, x, 0.f, 1.f, 0.f,
       y, -x, 0.f, 0.f, 0.f, 1.f;
-
-//  _jacobianOplusXi = -pCamera->projectJac(xyz_trans) * se3_jacobian;
+  orb_slam3::optimization::utils::ProjectionJacobianType projection_jacobian;
+  orb_slam3::optimization::utils::ComputeJacobian<5>(point->estimate(), nullptr, projection_jacobian);
+  _jacobianOplusXi = -projection_jacobian * se3_jacobian;
 //      BaseFixedSizedEdge::linearizeOplus();
 }
 

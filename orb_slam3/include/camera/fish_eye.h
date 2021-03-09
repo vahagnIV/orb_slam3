@@ -17,7 +17,7 @@ class FishEye : public IDistortionModel<4>{
   FishEye(EstimateType * estimate);
   bool DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) override;
   bool UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) override;
-
+  void GetTransformationJacobian(const HomogenousPoint &point, JacobianType &out_jacobian) override;
  public:
   typedef std::decay<decltype(*estimate_)>::type::Scalar Scalar;
 

@@ -14,6 +14,7 @@ namespace orb_slam {
 namespace optimization {
 namespace edges {
 
+
 class SE3ProjectXYZPose : g2o::BaseBinaryEdge<2, Eigen::Vector2d,
                                                   g2o::VertexSE3Expmap,
                                                   g2o::VertexPointXYZ> {

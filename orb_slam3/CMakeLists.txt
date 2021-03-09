@@ -11,10 +11,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif ()
 
 #include_directories(include ${DBoW2_INCLUDE_DIRS}) #${OpenCV_INCLUDE_DIRS}
 include_directories(include g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
@@ -45,12 +45,13 @@ add_library(orbslam SHARED
 
         src/optimization/edges/se3_project_xyz_pose.cpp
         src/optimization/bundle_adjustment.cpp
+        src/optimization/utils/jacobian.cpp
 
 
         include/typedefs.h
         include/constants.h
         include/tracker.h
-#        include/image_utils.h
+        #        include/image_utils.h
         include/position_observer.h
 
         include/geometry/two_view_reconstructor.h
@@ -88,18 +89,19 @@ add_library(orbslam SHARED
 
         include/optimization/edges/se3_project_xyz_pose.h
         include/optimization/bundle_adjustment.h
+        include/optimization/utils/jacobian.h
 
-        include/orb_vocabulary.h  )
+        include/orb_vocabulary.h)
 
 target_include_directories(orbslam INTERFACE include)
 
 
-target_link_libraries(orbslam 
-        ${DBoW2_LIBS} 
-        g2o::core 
-        g2o::solver_cholmod 
-        g2o::types_sba 
-        g2o::opengl_helper 
-        Eigen3::Eigen 
+target_link_libraries(orbslam
+        ${DBoW2_LIBS}
+        g2o::core
+        g2o::solver_cholmod
+        g2o::types_sba
+        g2o::opengl_helper
+        Eigen3::Eigen
         ${OpenCV_LIBS}
         pthread) #
