@@ -13,7 +13,6 @@
 #include <g2o/core/optimization_algorithm_levenberg.h>
 
 // === orb_slam3 ===
-#include <optimization/utils/add_frames.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
 
 namespace orb_slam3 {
@@ -30,25 +29,28 @@ void BundleAdjustment(const std::vector<frame::FrameBase *> &key_frames,
 
   g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
-  AddFrames(optimizer, key_frames);
-  size_t last_id = Identifiable::GetNextId();
-  for (auto map_point: map_points) {
 
-    g2o::VertexPointXYZ *mp_as_vertex = map_point->operator g2o::VertexPointXYZ *();
-    optimizer.addVertex(mp_as_vertex);
-    for (auto observation: map_point->Observations()) {
-      auto pose_vertex = optimizer.vertex(observation.first->Id());
-      auto edge = new edges::SE3ProjectXYZPose(observation.first->CameraPtr());
-      edge->setVertex(0, pose_vertex);
-      edge->setVertex(1, mp_as_vertex);
-      edge->setMeasurement(observation.first->)
-      edge->setId(++last_id);
-      optimizer.addEdge(edge);
+//  AddFrames(optimizer, key_frames);
+  size_t last_id = Identifiable::GetNextId();
+  size_t init_frame_id = std::numeric_limits<size_t>::max();
+  for (auto frame: key_frames) {
+    init_frame_id = std::min(init_frame_id, frame->Id());
+    frame->AddToOptimizer(optimizer, last_id);
+  }
+  optimizer.vertex(init_frame_id)->setFixed(true);
+  optimizer.initializeOptimization();
+  optimizer.setVerbose(true);
+  optimizer.optimize(nIterations);
+  for(auto frame: key_frames){
+    for (auto mp: frame->MapPoints()) {
+      if(nullptr == mp)
+        continue;
+      auto mp_as_vertex = mp->operator g2o::VertexPointXYZ *();
+      auto  optimized = dynamic_cast<g2o::VertexPointXYZ* >(optimizer.vertex(mp_as_vertex->id()));
+      mp_as_vertex->setEstimate(optimized->estimate());
     }
   }
-  optimizer.optimize(nIterations);
-//  optimizer.setVerbose(false);
-
+  std::cout << "asd" << std::endl;
 }
 
 }

@@ -10,7 +10,7 @@
 namespace orb_slam3 {
 namespace map {
 
-MapPoint::MapPoint(const TPoint3D & point) {
+MapPoint::MapPoint(const TPoint3D & point): MapPoint() {
   this->setEstimate(point);
 }
 

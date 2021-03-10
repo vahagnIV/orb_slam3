@@ -119,7 +119,7 @@ class FrameBase : protected Identifiable {
 
   virtual const camera::ICamera *CameraPtr() const= 0;
 
-  virtual void AddToOptimizer(g2o::SparseOptimizer & optimizer)  = 0;
+  virtual void AddToOptimizer(g2o::SparseOptimizer & optimizer, size_t & next_id)  = 0;
 
   /*!
    * Destructor

@@ -21,11 +21,11 @@ SecondNearestNeighborMatcher::SecondNearestNeighborMatcher(const size_t window_s
       check_orientation_(check_orientation){
 }
 
-void SecondNearestNeighborMatcher::Match(const features::Features & features1,
-                                        const features::Features & features2,
+void SecondNearestNeighborMatcher::Match(const features::Features & features_to,
+                                        const features::Features & features_from,
                                         std::vector<features::Match> & out_matches) const {
   std::vector<int> matches12;
-  int matches = Match(features1, features2, matches12);
+  int matches = Match(features_to, features_from, matches12);
   out_matches.reserve(matches);
   for (size_t i = 0; i < matches12.size(); ++i) {
     if(matches12[i] >= 0 )

@@ -26,7 +26,7 @@ class SE3ProjectXYZPose : public g2o::BaseBinaryEdge<2, Eigen::Vector2d,
 
   void computeError() override;
 
-  void linearizeOplus() override;
+//  void linearizeOplus() override;
  private:
   const orb_slam3::camera::ICamera * camera_;
 

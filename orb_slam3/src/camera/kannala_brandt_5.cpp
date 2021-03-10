@@ -13,12 +13,12 @@ bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, Homogenous
   const Scalar &x = undistorted[0];
   const Scalar &y = undistorted[1];
 
-  double r2 = x * x + y * y;
-  double r4 = r2 * r2;
-  double r6 = r4 * r2;
+  Scalar r2 = x * x + y * y;
+  Scalar r4 = r2 * r2;
+  Scalar r6 = r4 * r2;
 
-  double cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
-  double a1 = 2 * x * y;
+  Scalar cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
+  Scalar a1 = 2 * x * y;
 
   distorted[0] = x * cdist + P1() * a1 + P2() * (r2 + 2 * x * x);
   distorted[1] = y * cdist + P2() * a1 + P1() * (r2 + 2 * y * y);
@@ -53,9 +53,21 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, Homogenous
   undistorted = distorted;
   return false;
 }
+
 void KannalaBrandt5::ComputeJacobian(const TPoint2D &point,
                                      IDistortionModel::JacobianType &out_jacobian) const {
-  throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
+  const Scalar &x = point[0];
+  const Scalar &y = point[1];
+
+  Scalar r2 = x * x + y * y;
+  Scalar r4 = r2 * r2;
+  Scalar r6 = r4 * r2;
+
+  Scalar cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
+  Scalar a1 = 2 * x * y;
+  Scalar Dcdist = K1() + 2 * K2() * r2 + 3 * K3() * r4;
+  out_jacobian << cdist + 2 * x * x * Dcdist + 2 * y * P1() + 6 * x * P2(), a1 * Dcdist + 2 * x * P1() + 2 * y * P2(),
+      a1 * Dcdist + 2 * y * P2() + 2 * x * P1(), cdist + 2 * y * y * Dcdist + 2 * x * P2() + 6 * y * P1();
 }
 
 }

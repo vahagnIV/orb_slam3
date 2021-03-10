@@ -13,6 +13,7 @@ class ICamera {
  public:
   virtual void ComputeJacobian(const TPoint3D &pt,
                        ProjectionJacobianType &out_jacobian) const = 0;
+  virtual ~ICamera() = default;
 };
 
 }

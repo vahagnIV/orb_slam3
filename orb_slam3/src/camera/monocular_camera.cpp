@@ -9,7 +9,7 @@
 namespace orb_slam3 {
 namespace camera {
 
-void MonocularCamera::UnprojectPoint(const TPoint2D &point, TPoint3D &unprojected) const {
+void MonocularCamera::UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const {
   unprojected << (point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_, 1;
 }
 
@@ -78,7 +78,7 @@ void MonocularCamera::ComputeJacobian(const TPoint3D &pt, ProjectionJacobianType
       0, z_inv, -y * z_inv2;
   IDistortionModel::JacobianType distortion_jacobian;
   TPoint2D projected;
-  ProjectPoint(pt, projected);
+  projected << x * z_inv, y * z_inv;
   distortion_model_->ComputeJacobian(projected, distortion_jacobian);
   out_jacobian = distortion_jacobian * projection_jacobian;
 }

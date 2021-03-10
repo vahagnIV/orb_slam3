@@ -27,7 +27,7 @@ class MapPoint : protected Identifiable, protected g2o::VertexPointXYZ {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef std::unordered_map<const frame::FrameBase *, size_t> MapType;
   MapPoint(const TPoint3D &point);
-  MapPoint() : Identifiable() { setId(id_); };
+  MapPoint() : Identifiable(), VertexPointXYZ() { setId(id_); };
   operator g2o::VertexPointXYZ *() { return this; }
   void AddObservation(const frame::FrameBase *frame, size_t feature_id);
   void EraseObservation(const frame::FrameBase *frame);
