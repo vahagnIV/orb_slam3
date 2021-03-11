@@ -14,19 +14,25 @@ namespace features {
 class SecondNearestNeighborMatcher : public IMatcher {
  public:
   SecondNearestNeighborMatcher(const size_t window_size,
-                const precision_t nearest_neighbour_ratio,
-                const bool check_orientation);
+                               const precision_t nearest_neighbour_ratio,
+                               const bool check_orientation);
 
-  void Match(const features::Features & features_to,
-            const features::Features & features_from,
-            std::vector<features::Match> & out_matches) const override;
+  void Match(const features::Features &features_to,
+             const features::Features &features_from,
+             std::vector<features::Match> &out_matches) const override;
  private:
 
-  void ComputeThreeMaxima(std::vector<int> *histo, const int L, int & ind1, int & ind2, int & ind3) const;
+  void ComputeThreeMaxima(std::vector<int> *histo, const int L, int &ind1, int &ind2, int &ind3) const;
 
-  int Match(const features::Features & features1,
-            const features::Features & features2,
-            std::vector<int> & out_matches_12) const;
+  int Match(const features::Features &features1,
+            const features::Features &features2,
+            std::vector<int> &out_matches_12) const;
+
+  void Match(const DescriptorType &d1,
+            const features::DescriptorSet &features2,
+            const std::vector<size_t> &allowed_inidces,
+            int & idx2,
+            int & dist) const;
 
  private:
   static const int TH_LOW;

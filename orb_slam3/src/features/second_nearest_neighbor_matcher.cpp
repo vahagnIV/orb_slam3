@@ -18,30 +18,29 @@ SecondNearestNeighborMatcher::SecondNearestNeighborMatcher(const size_t window_s
                                                            const bool check_orientation)
     : window_size_(window_size),
       nearest_neighbour_ratio_(nearest_neighbour_ratio),
-      check_orientation_(check_orientation){
+      check_orientation_(check_orientation) {
 }
 
-void SecondNearestNeighborMatcher::Match(const features::Features & features_to,
-                                        const features::Features & features_from,
-                                        std::vector<features::Match> & out_matches) const {
+void SecondNearestNeighborMatcher::Match(const features::Features &features_to,
+                                         const features::Features &features_from,
+                                         std::vector<features::Match> &out_matches) const {
   std::vector<int> matches12;
   int matches = Match(features_to, features_from, matches12);
   out_matches.reserve(matches);
   for (size_t i = 0; i < matches12.size(); ++i) {
-    if(matches12[i] >= 0 )
+    if (matches12[i] >= 0)
       out_matches.push_back(features::Match(i, matches12[i]));
   }
 }
 
-int SecondNearestNeighborMatcher::Match(const features::Features & features1,
-          const features::Features & features2,
-          std::vector<int> & out_matches_12) const {
+int SecondNearestNeighborMatcher::Match(const features::Features &features1,
+                                        const features::Features &features2,
+                                        std::vector<int> &out_matches_12) const {
 
   int nmatches = 0;
   out_matches_12.resize(features1.Size(), -1);
 
   const precision_t factor = 1.0f / HISTO_LENGTH;
-
 
   std::vector<int> matched_distance(features2.Size(), std::numeric_limits<int>::max());
   std::vector<int> matches21(features2.Size(), -1);
@@ -51,9 +50,8 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
       rotation_hostogram[i].reserve(500);
   }
 
-
   for (size_t i1 = 0; i1 < features1.Size(); i1++) {
-    const KeyPoint & kp1 = features1.keypoints[i1];
+    const KeyPoint &kp1 = features1.keypoints[i1];
     int level1 = kp1.level;
     if (level1 > 0)
       continue;
@@ -70,51 +68,24 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
       continue;
 
     auto d1 = features1.descriptors.row(i1);
-    int best_distance = std::numeric_limits<int>::max();
-    int best_distance2 = std::numeric_limits<int>::max();
-    int best_idx2 = -1;
-    for (const size_t & i2:  f2_indices_in_window) {
+    int &best_idx2 = out_matches_12[i1];
+    int distance;
+    Match(d1, features2.descriptors, f2_indices_in_window, best_idx2, distance);
+    if (out_matches_12[i1] < 0 || out_matches_12[i1] > 0)
+      continue;
 
-      auto d2 = features2.descriptors.row(i2);
-      int dist = DescriptorDistance(d1, d2);
-
-      if (matched_distance[i2] <= dist)
-        continue;
-
-      if (dist < best_distance) {
-        best_distance2 = best_distance;
-        best_distance = dist;
-        best_idx2 = i2;
-      } else if (dist < best_distance2) {
-        best_distance2 = dist;
-      }
+    matches21[out_matches_12[i1]] = i1;
+    ++nmatches;
+    if (check_orientation_) {
+      float rot = features1.keypoints[i1].angle - features2.keypoints[best_idx2].angle;
+      if (rot < 0.0)
+        rot += 360.0f;
+      int bin = std::round(rot * factor);
+      if (bin == HISTO_LENGTH)
+        bin = 0;
+      assert(bin >= 0 && bin < HISTO_LENGTH);
+      rotation_hostogram[bin].push_back(i1);
     }
-
-    if (best_distance <= TH_LOW) {
-
-      if (best_distance < (float) best_distance2 * nearest_neighbour_ratio_) {
-        if (matches21[best_idx2] >= 0) {
-          out_matches_12[matches21[best_idx2]] = -1;
-          nmatches--;
-        }
-        out_matches_12[i1] = best_idx2;
-        matches21[best_idx2] = i1;
-        matched_distance[best_idx2] = best_distance;
-        nmatches++;
-
-        if (check_orientation_) {
-          float rot = features1.keypoints[i1].angle - features2.keypoints[best_idx2].angle;
-          if (rot < 0.0)
-            rot += 360.0f;
-          int bin = std::round(rot * factor);
-          if (bin == HISTO_LENGTH)
-            bin = 0;
-          assert(bin >= 0 && bin < HISTO_LENGTH);
-          rotation_hostogram[bin].push_back(i1);
-        }
-      }
-    }
-
   }
 
   if (check_orientation_) {
@@ -141,11 +112,42 @@ int SecondNearestNeighborMatcher::Match(const features::Features & features1,
   return nmatches;
 
 }
-void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> * histo,
+
+void SecondNearestNeighborMatcher::Match(const DescriptorType &d1,
+                                         const DescriptorSet &features2,
+                                         const std::vector<size_t> &allowed_inidces,
+                                         int &idx2,
+                                         int &dist) const {
+
+  int best_distance = std::numeric_limits<int>::max();
+  int best_distance2 = std::numeric_limits<int>::max();
+  int best_idx2 = -1;
+  for (const size_t &i2:  allowed_inidces) {
+
+    auto d2 = features2.row(i2);
+    int dist = DescriptorDistance(d1, d2);
+
+    if (dist < best_distance) {
+      best_distance2 = best_distance;
+      best_distance = dist;
+      best_idx2 = i2;
+    } else if (dist < best_distance2) {
+      best_distance2 = dist;
+    }
+  }
+
+  if (best_distance <= TH_LOW && best_distance < (float) best_distance2 * nearest_neighbour_ratio_) {
+    idx2 = best_idx2;
+    dist = best_distance;
+  }
+  idx2 = -1;
+}
+
+void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> *histo,
                                                       const int L,
-                                                      int & ind1,
-                                                      int & ind2,
-                                                      int & ind3) const {
+                                                      int &ind1,
+                                                      int &ind2,
+                                                      int &ind3) const {
   int max1 = 0;
   int max2 = 0;
   int max3 = 0;
