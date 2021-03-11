@@ -125,13 +125,15 @@ orb_slam3::TImageGray8U FromCvMat(const cv::Mat &cv_mat) {
   return eigen_mat;
 }
 
-void TestMonocular(std::string original) {
-  const std::string vocabulary =
-      original + "/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt";
-  const std::string settings =
-      original + "/Orb_SLAM3_Customized/Examples/Monocular/TUM_512.yaml";
+void TestMonocular(const std::string &data_dit, const std::string &vocabulary_file) {
+
   const std::string data =
-      original + "/mav0/cam0/data";
+      data_dit + "/mav0/cam0/data";
+
+  std::cout << "Loading Vocabulary file" << std::endl;
+  orb_slam3::features::BowVocabulary voc;
+  voc.loadFromTextFile(vocabulary_file);
+  std::cout << "Finished loading Vocabulary file" << std::endl;
 
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
@@ -174,7 +176,7 @@ void TestMonocular(std::string original) {
     auto eigen = FromCvMat(image);
     std::shared_ptr<orb_slam3::frame::FrameBase> frame =
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
-                                                           extractor, camera);
+                                                           extractor, camera, &voc);
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);
@@ -275,9 +277,9 @@ void TestDrawMonocular(std::string original) {
   auto eigen = FromCvMat(image);
   std::shared_ptr<orb_slam3::frame::MonocularFrame> frame =
       std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, std::chrono::system_clock::now(),
-                                                         extractor, camera);
+                                                         extractor, camera, nullptr);
 
-  for (size_t k = 100; k <200; ++k) {
+  for (size_t k = 100; k < 200; ++k) {
 
 //    cv::Mat image_o = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
     cv::Mat image_o = cv::imread("im2.jpg", cv::IMREAD_GRAYSCALE);
@@ -287,7 +289,7 @@ void TestDrawMonocular(std::string original) {
     auto eigen = FromCvMat(image_o);
     std::shared_ptr<orb_slam3::frame::MonocularFrame> frame_o =
         std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, std::chrono::system_clock::now(),
-                                                           extractor, camera);
+                                                           extractor, camera, nullptr);
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     if (frame_o->Link(frame)) {
@@ -319,7 +321,6 @@ void TestDrawMonocular(std::string original) {
         ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
       }
-
 
       orb_slam3::optimization::BundleAdjustment(std::vector<orb_slam3::frame::FrameBase *>{frame.get(), frame_o.get()},
                                                 20);
@@ -449,8 +450,8 @@ int main(int argc, char *argv[]) {
 //  Triangulate(s, pt1,pt2, point_triangulated1);
 //  Triangulate(s, pt2, pt1, point_triangulated2);
 
-  TestDrawMonocular(std::string(argv[1]));
-//  TestMonocular(std::string(argv[1]));
+//  TestDrawMonocular(std::string(argv[1]));
+  TestMonocular(std::string(argv[1]), std::string(argv[2]));
 
   return 0;
 }

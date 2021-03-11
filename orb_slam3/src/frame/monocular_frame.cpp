@@ -14,10 +14,12 @@ namespace frame {
 
 MonocularFrame::MonocularFrame(const TImageGray8U &image, TimePoint timestamp,
                                const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
-                               const std::shared_ptr<camera::MonocularCamera> &camera) :
+                               const std::shared_ptr<camera::MonocularCamera> &camera,
+                               features::BowVocabulary * vocabulary) :
     FrameBase(timestamp),
     features_(camera->Width(), camera->Height()),
-    camera_(camera) {
+    camera_(camera),
+    vocabulary_(vocabulary){
   feature_extractor->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
   features_.AssignFeaturesToGrid();
@@ -147,6 +149,32 @@ TPoint3D MonocularFrame::GetNormal(const TPoint3D &point) const {
   TPoint3D normal = pose_.estimate().translation() - point;
   normal.normalize();
   return normal;
+}
+
+void MonocularFrame::TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) {
+  if (reference_keyframe->Type() != Type())
+    return;
+  auto reference_kf = dynamic_cast<MonocularFrame *>(reference_keyframe.get());
+
+  // Ensure bows are computed
+  reference_kf->ComputeBow();
+  ComputeBow();
+
+
+}
+
+void MonocularFrame::ComputeBow() {
+  if (!feature_vector_.empty() && !bow_vector_.empty())
+    return;
+  std::vector<cv::Mat> current_descriptors;
+  current_descriptors.reserve(features_.descriptors.rows());
+  for (int i = 0; i < features_.descriptors.rows(); ++i) {
+    current_descriptors.push_back(cv::Mat(1,
+                                          features_.descriptors.cols(),
+                                          cv::DataType<decltype(features_.descriptors)::Scalar>::type,
+                                          (void *) features_.descriptors.row(i).data()));
+  }
+  vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);
 }
 
 }

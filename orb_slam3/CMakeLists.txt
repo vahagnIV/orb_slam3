@@ -1,4 +1,3 @@
-find_package(DBoW2 REQUIRED)
 find_package(g2o REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP)
@@ -82,6 +81,7 @@ add_library(orbslam SHARED
         include/features/match.h
         include/features/feature_utils.h
         include/frame/iframe_database.h
+        include/features/bow_vocabulary.h
 
         include/map/map_point.h
         include/map/atlas.h
@@ -91,17 +91,17 @@ add_library(orbslam SHARED
         include/optimization/bundle_adjustment.h
 
         include/orb_vocabulary.h
-        include/identifiable.h include/camera/icamera.h)
+        include/identifiable.h include/camera/icamera.h )
 
 target_include_directories(orbslam INTERFACE include)
 
 
 target_link_libraries(orbslam
-        ${DBoW2_LIBS}
         g2o::core
         g2o::solver_cholmod
         g2o::types_sba
         g2o::opengl_helper
         Eigen3::Eigen
         ${OpenCV_LIBS}
+        DBoW2
         pthread) #

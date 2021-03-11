@@ -113,8 +113,21 @@ class FrameBase : public Identifiable {
 
   virtual const camera::ICamera *CameraPtr() const = 0;
 
+  /*!
+   * Append necessary vertices and edges for BA
+   * @param optimizer the g2o::Sparseoptimizer
+   * @param next_id The nonce that is used to assign ids to the g2o objects
+   */
   virtual void AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &next_id) = 0;
+
+  /*!
+   * Collect the optimized values from the optimizer
+   * @param optimizer
+   */
   virtual void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) = 0;
+
+
+  virtual void TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
 
   /*!
    * Destructor

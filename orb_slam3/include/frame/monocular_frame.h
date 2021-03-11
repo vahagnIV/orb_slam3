@@ -4,11 +4,15 @@
 
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_MONOCULAR_FRAME_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_MONOCULAR_FRAME_H_
+// == dbow2 ===
+#include <DBoW2/BowVector.h>
+#include <DBoW2/FeatureVector.h>
 
 // == orb-slam3 ===
 #include <frame/frame_base.h>
-#include <camera/monocular_camera.h>
 #include <frame/frame_link.h>
+#include <camera/monocular_camera.h>
+#include <features/bow_vocabulary.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -18,7 +22,8 @@ class MonocularFrame : public FrameBase {
   MonocularFrame(const TImageGray8U &image,
                  TimePoint timestamp,
                  const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
-                 const std::shared_ptr<camera::MonocularCamera> &camera);
+                 const std::shared_ptr<camera::MonocularCamera> &camera,
+                 features::BowVocabulary * vocabulary);
 
   // ==== FrameBase =========
   size_t FeatureCount() const noexcept override;
@@ -34,11 +39,18 @@ class MonocularFrame : public FrameBase {
   const features::Features &GetFeatures() const { return features_; }
   const FrameLink &GetFrameLink() const { return frame_link_; }
   void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) override;
+  void TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) override;
+
+ protected:
+  void ComputeBow();
 
  protected:
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;
+  features::BowVocabulary *vocabulary_;
   FrameLink frame_link_;
+  DBoW2::BowVector bow_vector_;
+  DBoW2::FeatureVector feature_vector_;
 };
 
 }

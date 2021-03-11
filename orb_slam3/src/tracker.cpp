@@ -15,7 +15,7 @@ Tracker::Tracker()
 
 Tracker::~Tracker() { delete atlas_; }
 
-TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
+TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
   switch (state_) {
     case NOT_INITIALIZED: {
       if (frame->IsValid()) {
@@ -27,16 +27,16 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
       break;
     case FIRST_IMAGE: {
       if (frame->Link(last_frame_)) {
-        map::Map * current_map = atlas_->GetCurrentMap();
+        map::Map *current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
         current_map->SetInitialKeyFrame(last_frame_);
         for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
-          auto & mp = frame->MapPoint(i);
+          auto &mp = frame->MapPoint(i);
           if (mp)
             mp->AddObservation(frame.get(), i);
         }
         for (size_t i = 0; i < last_frame_->MapPoints().size(); ++i) {
-          auto & mp = last_frame_->MapPoint(i);
+          auto &mp = last_frame_->MapPoint(i);
           if (mp) {
             mp->AddObservation(last_frame_.get(), i);
             mp->Refresh();
@@ -48,18 +48,23 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
         state_ = OK;
         NotifyObservers(frame, MessageType::Initial);
       }
+    }
+      break;
+    case OK: {
+      frame->TrackReferenceKeyFrame(last_frame_);
+    }
       break;
 
-      default:break;
-    }
+    default:break;
+
   }
   return TrackingResult::OK;
 }
 
 bool Tracker::TrackReferenceKeyFrame() { return false; }
 
-void Tracker::NotifyObservers(const std::shared_ptr<const FrameBase> & frame, MessageType type) {
-  for (PositionObserver * observer: observers_) {
+void Tracker::NotifyObservers(const std::shared_ptr<const FrameBase> &frame, MessageType type) {
+  for (PositionObserver *observer: observers_) {
     observer->GetUpdateQueue()->enqueue(UpdateMessage{type:type, frame:frame});
   }
 }
