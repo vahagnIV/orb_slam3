@@ -4,6 +4,9 @@
 
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_ICAMERA_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_ICAMERA_H_
+
+#include <camera/idistortion_model.h>
+
 namespace orb_slam3 {
 namespace camera{
 
@@ -13,6 +16,7 @@ class ICamera {
  public:
   virtual void ComputeJacobian(const TPoint3D &pt,
                        ProjectionJacobianType &out_jacobian) const = 0;
+  const virtual IDistortionModel * GetDistortionModel() const = 0;
   virtual ~ICamera() = default;
 };
 

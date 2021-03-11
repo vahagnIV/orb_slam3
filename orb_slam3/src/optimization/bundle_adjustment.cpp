@@ -39,7 +39,7 @@ void BundleAdjustment(const std::vector<frame::FrameBase *> &key_frames,
   }
   optimizer.vertex(init_frame_id)->setFixed(true);
   optimizer.initializeOptimization();
-  optimizer.setVerbose(true);
+//  optimizer.setVerbose(true);
   optimizer.optimize(nIterations);
   for(auto frame: key_frames){
     for (auto mp: frame->MapPoints()) {
@@ -50,7 +50,6 @@ void BundleAdjustment(const std::vector<frame::FrameBase *> &key_frames,
       mp_as_vertex->setEstimate(optimized->estimate());
     }
   }
-  std::cout << "asd" << std::endl;
 }
 
 }

@@ -72,13 +72,10 @@ class MonocularCamera : public ICamera, protected g2o::BaseVertex<DISTORTION_MOD
     return model;
   }
 
-  IDistortionModel *GetDistortionModel() {
+  const IDistortionModel *GetDistortionModel() const override{
     return distortion_model_;
   }
 
-  const IDistortionModel *GetDistortionModel() const {
-    return distortion_model_;
-  }
   void ComputeJacobian(const TPoint3D &pt,
                        ProjectionJacobianType &out_jacobian) const override;
 

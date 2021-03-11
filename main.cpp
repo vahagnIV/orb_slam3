@@ -304,9 +304,6 @@ void TestDrawMonocular(std::string original) {
           mp->Refresh();
         }
       }
-      orb_slam3::optimization::BundleAdjustment(std::vector<orb_slam3::frame::FrameBase *>{frame.get(), frame_o.get()},
-                                                {},
-                                                50);
 
       std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);
 
@@ -321,6 +318,26 @@ void TestDrawMonocular(std::string original) {
         ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
+      }
+
+
+      orb_slam3::optimization::BundleAdjustment(std::vector<orb_slam3::frame::FrameBase *>{frame.get(), frame_o.get()},
+                                                {},
+                                                20);
+
+      std::ofstream ofstream1("map_points.bin_ba", std::ios::binary | std::ios::out);
+
+      for (const auto &mp: frame_o->MapPoints()) {
+        if (!mp)
+          continue;
+        orb_slam3::TPoint3D pose = mp->GetPose();
+        ofstream1.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
+        ofstream1.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
+        ofstream1.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
+        orb_slam3::TVector3D normal = mp->GetNormal();
+        ofstream1.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
+        ofstream1.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
+        ofstream1.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
       }
 
       cv::imshow("matches", DrawMatches(frame_o, image_o, image));
