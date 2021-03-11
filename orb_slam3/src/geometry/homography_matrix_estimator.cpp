@@ -312,7 +312,7 @@ precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
 
 /*
  * Zisserman 12.2 Linear triangulation methods p. 312
- * The preojection of a 3D point X = (X,Y,Z,1) is given by a 3x4 projection matrix P, i.e. pt =~ PX,
+ * The projection of a 3D point X = (X,Y,Z,1) is given by a 3x4 projection matrix P, i.e. pt =~ PX,
  * where =~ means the projective equality. To eliminatie the multiplier we can rewrite the equation as
  * a vector product pt x PX = 0. This is an overdetermined set of 3 equations.
  *

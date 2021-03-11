@@ -3,9 +3,8 @@
 //
 
 #include "tracker.h"
-
 #include <constants.h>
-
+#include <optimization/bundle_adjustment.h>
 namespace orb_slam3 {
 
 Tracker::Tracker()
@@ -43,6 +42,8 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
             mp->Refresh();
           }
         }
+        optimization::BundleAdjustment({last_frame_.get(), frame.get()}, 20);
+        // TODO: normalize T
         last_frame_ = frame;
         state_ = OK;
         NotifyObservers(frame, MessageType::Initial);

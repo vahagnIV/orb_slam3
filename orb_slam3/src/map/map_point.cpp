@@ -10,16 +10,15 @@
 namespace orb_slam3 {
 namespace map {
 
-MapPoint::MapPoint(const TPoint3D & point): MapPoint() {
-  this->setEstimate(point);
+MapPoint::MapPoint(const TPoint3D &point) : Identifiable(), position_(point) {
 }
 
-void MapPoint::AddObservation(const frame::FrameBase* frame, size_t feature_id) {
-  obsevations_[frame] = feature_id;
+void MapPoint::AddObservation(const frame::FrameBase *frame, size_t feature_id) {
+  observations_[frame] = feature_id;
 }
 
 void MapPoint::EraseObservation(const frame::FrameBase *frame) {
-  obsevations_.erase(frame);
+  observations_.erase(frame);
 }
 
 void MapPoint::Refresh() {
@@ -30,7 +29,7 @@ void MapPoint::Refresh() {
 void MapPoint::ComputeDistinctiveDescriptor() {
 
   std::vector<features::DescriptorType> descriptors;
-  for (const auto & frame_id_pair: obsevations_) {
+  for (const auto &frame_id_pair: observations_) {
     frame_id_pair.first->AppendDescriptorsToList(frame_id_pair.second, descriptors);
   }
   const unsigned N = descriptors.size();
@@ -62,12 +61,15 @@ void MapPoint::ComputeDistinctiveDescriptor() {
 void MapPoint::UpdateNormalAndDepth() {
   std::vector<TVector3D> normals;
   normal_.setZero();
-  for (const auto & frame_id_pair: obsevations_) {
-    const auto & mp = frame_id_pair.first->MapPoint(frame_id_pair.second);
-    auto normal = frame_id_pair.first->GetNormal(mp->estimate());
+  for (const auto &frame_id_pair: observations_) {
+    auto normal = frame_id_pair.first->GetNormal(position_);
     normal_ += normal;
   }
   normal_.normalize();
+}
+
+void MapPoint::SetPosition(const TPoint3D &position) {
+  position_ = position;
 }
 
 }

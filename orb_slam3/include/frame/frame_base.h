@@ -23,7 +23,7 @@
 namespace orb_slam3 {
 namespace frame {
 
-class FrameBase : protected Identifiable {
+class FrameBase : public Identifiable {
  public:
   FrameBase() = delete;
 
@@ -33,12 +33,6 @@ class FrameBase : protected Identifiable {
       : Identifiable(), timestamp_(timestamp) {
     pose_.setId(id_);
   }
-  /*!
-  *  Getter for id
-  *  @return The id of the frame
-  */
-  inline size_t Id() const noexcept { return id_; }
-
   /*!
    * Getter function
    * @return the value of timestamp associated with the frame instance
@@ -117,9 +111,10 @@ class FrameBase : protected Identifiable {
    */
   geometry::Pose *GetPose() { return &pose_; }
 
-  virtual const camera::ICamera *CameraPtr() const= 0;
+  virtual const camera::ICamera *CameraPtr() const = 0;
 
-  virtual void AddToOptimizer(g2o::SparseOptimizer & optimizer, size_t & next_id)  = 0;
+  virtual void AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &next_id) = 0;
+  virtual void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) = 0;
 
   /*!
    * Destructor

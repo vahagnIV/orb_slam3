@@ -33,6 +33,7 @@ class MonocularFrame : public FrameBase {
   // ==== Monocular
   const features::Features &GetFeatures() const { return features_; }
   const FrameLink &GetFrameLink() const { return frame_link_; }
+  void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) override;
 
  protected:
   features::Features features_;

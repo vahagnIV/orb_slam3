@@ -73,8 +73,6 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
         other->MapPoint(match.from_idx) = map_points_[match.to_idx];
       }
     }
-//    pose_.estimate().rotation().toRotationMatrix()
-
     std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
               << pose_.estimate().translation() << std::endl;
     return true;
@@ -100,49 +98,49 @@ const camera::ICamera *MonocularFrame::CameraPtr() const {
 
 void MonocularFrame::AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &next_id) {
   this->pose_.setFixed(false);
-//  g2o::VertexSE3Expmap *pose = &pose_;
-//  optimizer.addVertex(&pose_);
   g2o::VertexSE3Expmap *pose = new g2o::VertexSE3Expmap();
   pose->setEstimate(pose_.estimate());
   pose->setId(pose_.id());
   optimizer.addVertex(pose);
-//  pose->
   for (size_t i = 0; i < map_points_.size(); ++i) {
     if (nullptr == map_points_[i])
       continue;
+    map::MapPoint *map_point = map_points_[i];
 
-    g2o::VertexPointXYZ *mp_as_vertex = map_points_[i]->operator g2o::VertexPointXYZ *();
     g2o::VertexPointXYZ *mp;
-    if (nullptr == optimizer.vertex(mp_as_vertex->id())) {
+    if (nullptr == optimizer.vertex(map_point->Id())) {
       mp = new g2o::VertexPointXYZ();
-      mp->setId(mp_as_vertex->id());
+      mp->setId(map_point->Id());
       mp->setMarginalized(true);
-      mp->setEstimate(mp_as_vertex->estimate());
+      mp->setEstimate(map_point->GetPosition());
       mp->setFixed(false);
-//      mp_as_vertex->setMarginalized(true);
-//      optimizer.addVertex(mp_as_vertex);
       optimizer.addVertex(mp);
-      std::cout << mp_as_vertex->id() << std::endl;
     } else
-      mp = dynamic_cast< g2o::VertexPointXYZ *>(optimizer.vertex(mp_as_vertex->id()));
+      mp = dynamic_cast< g2o::VertexPointXYZ *>(optimizer.vertex(map_point->Id()));
 
     auto edge = new optimization::edges::SE3ProjectXYZPose(camera_.get());
-//    edge->setVertex(0, &pose_);
     edge->setVertex(0, pose);
     edge->setVertex(1, mp);
     edge->setId(next_id++);
     edge->setInformation(Eigen::Matrix2d::Identity());
     HomogenousPoint measurement;
     camera_->UnprojectPoint(features_.keypoints[i].pt, measurement);
-    edge->setMeasurement(Eigen::Matrix<double, 2, 1>{measurement[0], measurement[1]});
+    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
     optimizer.addEdge(edge);
-    auto vrt = optimizer.vertices();
-//    for (auto id_v: vrt) {
-//      optimizer.removeVertex(id_v.second, true);
-//    }
-
   }
+}
 
+void MonocularFrame::CollectFromOptimizer(g2o::SparseOptimizer &optimizer) {
+  auto pose = dynamic_cast<g2o::VertexSE3Expmap *> (optimizer.vertex(Id()));
+  pose_.setEstimate(pose->estimate());
+  for (auto mp: map_points_) {
+    if (nullptr == mp)
+      continue;
+    if (mp->Observations().begin()->first->Id() == Id()) {
+      auto position = dynamic_cast<g2o::VertexPointXYZ *> (optimizer.vertex(mp->Id()));
+      mp->SetPosition(position->estimate());
+    }
+  }
 }
 
 TPoint3D MonocularFrame::GetNormal(const TPoint3D &point) const {

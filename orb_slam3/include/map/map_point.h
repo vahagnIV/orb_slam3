@@ -22,29 +22,34 @@ class FrameBase;
 }
 namespace map {
 
-class MapPoint : protected Identifiable, protected g2o::VertexPointXYZ {
+class MapPoint : public Identifiable {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef std::unordered_map<const frame::FrameBase *, size_t> MapType;
   MapPoint(const TPoint3D &point);
-  MapPoint() : Identifiable(), VertexPointXYZ() { setId(id_); };
-  operator g2o::VertexPointXYZ *() { return this; }
+
   void AddObservation(const frame::FrameBase *frame, size_t feature_id);
+
   void EraseObservation(const frame::FrameBase *frame);
 
   void Refresh();
 
-  const TPoint3D &GetPose() const { return estimate(); }
+  const TPoint3D &GetPosition() const { return position_; }
+
+  void SetPosition(const TPoint3D &position);
+
   const TVector3D &GetNormal() const { return normal_; }
-  const MapType &Observations() const {
-    return obsevations_;
-  }
+
+  const MapType &Observations() const { return observations_; }
 
  private:
   void ComputeDistinctiveDescriptor();
+
   void UpdateNormalAndDepth();
+
  private:
-  MapType obsevations_;
+  // Position in the world coordinate system
+  TPoint3D position_;
+  MapType observations_;
   features::DescriptorType descriptor_;
   TVector3D normal_;
 

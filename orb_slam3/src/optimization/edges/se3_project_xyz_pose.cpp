@@ -23,7 +23,7 @@ void SE3ProjectXYZPose::computeError() {
   _error[1] = distorted[1] - _measurement[1];
 }
 
-// https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+
 void SE3ProjectXYZPose::linearizeOplus() {
 //  BaseFixedSizedEdge::linearizeOplus();
 //      return;
@@ -41,6 +41,7 @@ void SE3ProjectXYZPose::linearizeOplus() {
     _jacobianOplusXi.setZero();
   else {
     Eigen::Matrix<double, 3, 6> se3_jacobian;
+    // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
         -z, 0.f, x, 0.f, 1.f, 0.f,
         y, -x, 0.f, 0.f, 0.f, 1.f;

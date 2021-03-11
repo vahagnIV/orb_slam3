@@ -13,6 +13,7 @@ class Identifiable {
  public:
   Identifiable();
   static size_t GetNextId() { return next_id_; }
+  size_t Id() const { return id_; }
  protected:
   const size_t id_;
  private:

@@ -46,7 +46,6 @@ add_library(orbslam SHARED
 
         src/optimization/edges/se3_project_xyz_pose.cpp
         src/optimization/bundle_adjustment.cpp
-        src/optimization/utils/add_frames.cpp
 
 
         include/typedefs.h
@@ -90,7 +89,6 @@ add_library(orbslam SHARED
 
         include/optimization/edges/se3_project_xyz_pose.h
         include/optimization/bundle_adjustment.h
-        include/optimization/utils/add_frames.h
 
         include/orb_vocabulary.h
         include/identifiable.h include/camera/icamera.h)
