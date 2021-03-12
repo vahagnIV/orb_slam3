@@ -20,6 +20,10 @@ class SNNMatcher : public IMatcher {
   void Match(const features::Features &features_to,
              const features::Features &features_from,
              std::vector<features::Match> &out_matches) const override;
+  // returns the number of filtered matches
+  static int FilterByOrientation(std::vector<int> &inout_matches_12,
+                                 const Features &features1,
+                                 const Features &features2);
 
  private:
 
@@ -35,20 +39,16 @@ class SNNMatcher : public IMatcher {
              int &out_idx2,
              unsigned &dist) const;
 
-  // returns the number of filtered matches
-  static int FilterByOrientation(std::vector<int> &inout_matches_12,
-                                 const Features &features1,
-                                 const Features &features2);
-
   static inline void ComputeRotationHistogram(std::vector<int> *rotation_histogram,
                                               const std::vector<int> &inout_matches_12,
                                               const Features &features1,
                                               const Features &features2);
- private:
-  static const int TH_LOW;
+ public:
+  static const unsigned TH_LOW;
   static const int TH_HIGH;
   static const int HISTO_LENGTH;
 
+ private:
   const size_t window_size_;
   const precision_t nearest_neighbour_ratio_;
   const bool check_orientation_;

@@ -8,6 +8,7 @@
 #include <features/second_nearest_neighbor_matcher.h>
 #include <geometry/two_view_reconstructor.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
+#include <features/bow_matcher.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -15,11 +16,11 @@ namespace frame {
 MonocularFrame::MonocularFrame(const TImageGray8U &image, TimePoint timestamp,
                                const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
                                const std::shared_ptr<camera::MonocularCamera> &camera,
-                               features::BowVocabulary * vocabulary) :
+                               features::BowVocabulary *vocabulary) :
     FrameBase(timestamp),
     features_(camera->Width(), camera->Height()),
     camera_(camera),
-    vocabulary_(vocabulary){
+    vocabulary_(vocabulary) {
   feature_extractor->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
   features_.AssignFeaturesToGrid();
@@ -159,6 +160,20 @@ void MonocularFrame::TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> &re
   // Ensure bows are computed
   reference_kf->ComputeBow();
   ComputeBow();
+
+  features::BowMatcher bow_matcher(0.7);
+  std::vector<bool> rf_mask(features_.descriptors.size());
+  std::vector<bool> mask(features_.descriptors.size());
+  std::transform(map_points_.begin(),
+                 map_points_.end(),
+                 mask.begin(),
+                 [](const map::MapPoint *mp) -> bool { return mp != nullptr; });
+  std::transform(reference_kf->map_points_.begin(),
+                 reference_kf->map_points_.end(),
+                 rf_mask.begin(),
+                 [](const map::MapPoint *mp) -> bool { return mp != nullptr; });
+  std::vector<features::Match> matches;
+  bow_matcher.Match(feature_vector_, features_, reference_kf->feature_vector_, reference_kf->features_, mask, rf_mask, matches);
 
 
 }

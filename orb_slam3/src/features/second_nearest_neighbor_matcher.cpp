@@ -10,16 +10,14 @@ namespace orb_slam3 {
 namespace features {
 
 const int SNNMatcher::TH_HIGH = 100;
-const int SNNMatcher::TH_LOW = 50;
+const unsigned SNNMatcher::TH_LOW = 50;
 const int SNNMatcher::HISTO_LENGTH = 30;
 
 SNNMatcher::SNNMatcher(const size_t window_size,
                        const precision_t nearest_neighbour_ratio,
                        const bool check_orientation) : window_size_(window_size),
-                                                       nearest_neighbour_ratio_(
-                                                           nearest_neighbour_ratio),
-                                                       check_orientation_(
-                                                           check_orientation) {
+                                                       nearest_neighbour_ratio_(nearest_neighbour_ratio),
+                                                       check_orientation_(check_orientation) {
 }
 
 void SNNMatcher::Match(const features::Features &features_to,
@@ -41,7 +39,7 @@ int SNNMatcher::Match(const features::Features &features1,
   int number_of_matches = 0;
   out_matches_12.resize(features1.Size(), -1);
 
-  std::vector<unsigned > matched_distance(features2.Size(), std::numeric_limits<unsigned >::max());
+  std::vector<unsigned> matched_distance(features2.Size(), std::numeric_limits<unsigned>::max());
   std::vector<int> matches21(features2.Size(), -1);
 
   for (size_t i1 = 0; i1 < features1.Size(); i1++) {
@@ -89,8 +87,8 @@ void SNNMatcher::Match(const DescriptorType &d1,
                        int &out_idx2,
                        unsigned &dist) const {
 
-  unsigned best_distance = std::numeric_limits<unsigned >::max();
-  unsigned best_distance2 = std::numeric_limits<unsigned >::max();
+  unsigned best_distance = std::numeric_limits<unsigned>::max();
+  unsigned best_distance2 = std::numeric_limits<unsigned>::max();
   int best_idx2 = -1;
   for (const size_t &i2:  allowed_inidces) {
 
