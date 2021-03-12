@@ -2,7 +2,7 @@
 
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-
+make -j
 sudo mkdir /usr/local/include/DBoW2
 sudo mkdir /usr/local/include/DBoW2/DUtils
 

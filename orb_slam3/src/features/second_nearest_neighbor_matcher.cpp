@@ -29,7 +29,7 @@ void SecondNearestNeighborMatcher::Match(const features::Features &features_to,
   out_matches.reserve(matches);
   for (size_t i = 0; i < matches12.size(); ++i) {
     if (matches12[i] >= 0)
-      out_matches.push_back(features::Match(i, matches12[i]));
+      out_matches.emplace_back(i, matches12[i]);
   }
 }
 
@@ -37,18 +37,11 @@ int SecondNearestNeighborMatcher::Match(const features::Features &features1,
                                         const features::Features &features2,
                                         std::vector<int> &out_matches_12) const {
 
-  int nmatches = 0;
+  int number_of_matches = 0;
   out_matches_12.resize(features1.Size(), -1);
-
-  const precision_t factor = 1.0f / HISTO_LENGTH;
 
   std::vector<int> matched_distance(features2.Size(), std::numeric_limits<int>::max());
   std::vector<int> matches21(features2.Size(), -1);
-  std::vector<int> rotation_hostogram[HISTO_LENGTH];
-  if (check_orientation_) {
-    for (int i = 0; i < HISTO_LENGTH; i++)
-      rotation_hostogram[i].reserve(500);
-  }
 
   for (size_t i1 = 0; i1 < features1.Size(); i1++) {
     const KeyPoint &kp1 = features1.keypoints[i1];
@@ -70,53 +63,29 @@ int SecondNearestNeighborMatcher::Match(const features::Features &features1,
     auto d1 = features1.descriptors.row(i1);
     int &best_idx2 = out_matches_12[i1];
     int distance;
+
     Match(d1, features2.descriptors, f2_indices_in_window, best_idx2, distance);
-    if (out_matches_12[i1] < 0 || out_matches_12[i1] > 0)
+    if (best_idx2 < 0)
+      continue;
+    if (matched_distance[best_idx2] < distance)
       continue;
 
-    matches21[out_matches_12[i1]] = i1;
-    ++nmatches;
-    if (check_orientation_) {
-      float rot = features1.keypoints[i1].angle - features2.keypoints[best_idx2].angle;
-      if (rot < 0.0)
-        rot += 360.0f;
-      int bin = std::round(rot * factor);
-      if (bin == HISTO_LENGTH)
-        bin = 0;
-      assert(bin >= 0 && bin < HISTO_LENGTH);
-      rotation_hostogram[bin].push_back(i1);
-    }
+    matched_distance[best_idx2] = best_idx2;
+
+    matches21[best_idx2] = i1;
+    ++number_of_matches;
   }
+  if(check_orientation_)
+    return number_of_matches - FilterByOrientation(out_matches_12, features1, features2);
 
-  if (check_orientation_) {
-    int ind1 = -1;
-    int ind2 = -1;
-    int ind3 = -1;
-
-    ComputeThreeMaxima(rotation_hostogram, HISTO_LENGTH, ind1, ind2, ind3);
-
-    for (int i = 0; i < HISTO_LENGTH; i++) {
-      if (i == ind1 || i == ind2 || i == ind3)
-        continue;
-      for (size_t j = 0, jend = rotation_hostogram[i].size(); j < jend; j++) {
-        int idx1 = rotation_hostogram[i][j];
-        if (out_matches_12[idx1] >= 0) {
-          out_matches_12[idx1] = -1;
-          nmatches--;
-        }
-      }
-    }
-
-  }
-
-  return nmatches;
+  return number_of_matches;
 
 }
 
 void SecondNearestNeighborMatcher::Match(const DescriptorType &d1,
-                                         const DescriptorSet &features2,
+                                         const DescriptorSet &descriptors2,
                                          const std::vector<size_t> &allowed_inidces,
-                                         int &idx2,
+                                         int &out_idx2,
                                          int &dist) const {
 
   int best_distance = std::numeric_limits<int>::max();
@@ -124,7 +93,7 @@ void SecondNearestNeighborMatcher::Match(const DescriptorType &d1,
   int best_idx2 = -1;
   for (const size_t &i2:  allowed_inidces) {
 
-    auto d2 = features2.row(i2);
+    auto d2 = descriptors2.row(i2);
     int dist = DescriptorDistance(d1, d2);
 
     if (dist < best_distance) {
@@ -137,17 +106,17 @@ void SecondNearestNeighborMatcher::Match(const DescriptorType &d1,
   }
 
   if (best_distance <= TH_LOW && best_distance < (float) best_distance2 * nearest_neighbour_ratio_) {
-    idx2 = best_idx2;
+    out_idx2 = best_idx2;
     dist = best_distance;
-  }
-  idx2 = -1;
+  } else
+    out_idx2 = -1;
 }
 
 void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> *histo,
                                                       const int L,
                                                       int &ind1,
                                                       int &ind2,
-                                                      int &ind3) const {
+                                                      int &ind3) {
   int max1 = 0;
   int max2 = 0;
   int max3 = 0;
@@ -178,6 +147,58 @@ void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> *histo,
   } else if (max3 < 0.1f * (float) max1) {
     ind3 = -1;
   }
+}
+
+void SecondNearestNeighborMatcher::ComputeRotationHistogram(std::vector<int> *rotation_histogram,
+                                                            const std::vector<int> &inout_matches_12,
+                                                            const Features &features1,
+                                                            const Features &features2) {
+  const precision_t factor = 1.0f / HISTO_LENGTH;
+  for (int i = 0; i < HISTO_LENGTH; i++)
+    rotation_histogram[i].reserve(500);
+
+  for (size_t i = 0; i < inout_matches_12.size(); ++i) {
+    if (inout_matches_12[i] > 0) {
+
+      float rot = features1.keypoints[i].angle - features2.keypoints[inout_matches_12[i]].angle;
+      if (rot < 0.0)
+        rot += 360.0f;
+      int bin = std::round(rot * factor);
+      if (bin == HISTO_LENGTH)
+        bin = 0;
+      assert(bin >= 0 && bin < HISTO_LENGTH);
+      rotation_histogram[bin].push_back(i);
+    }
+  }
+
+}
+
+int SecondNearestNeighborMatcher::FilterByOrientation(std::vector<int> &inout_matches_12,
+                                                      const Features &features1,
+                                                      const Features &features2) const {
+  std::vector<int> rotation_histogram[HISTO_LENGTH];
+  ComputeRotationHistogram(rotation_histogram, inout_matches_12, features1, features2);
+  int number_of_discarded_matches = 0;
+
+  int ind1 = -1;
+  int ind2 = -1;
+  int ind3 = -1;
+
+  ComputeThreeMaxima(rotation_histogram, HISTO_LENGTH, ind1, ind2, ind3);
+
+  for (int i = 0; i < HISTO_LENGTH; i++) {
+
+    if (i == ind1 || i == ind2 || i == ind3)
+      continue;
+    for (size_t j = 0, jend = rotation_histogram[i].size(); j < jend; j++) {
+      int idx1 = rotation_histogram[i][j];
+      if (inout_matches_12[idx1] >= 0) {
+        inout_matches_12[idx1] = -1;
+        number_of_discarded_matches++;
+      }
+    }
+  }
+  return number_of_discarded_matches;
 }
 
 }

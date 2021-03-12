@@ -39,11 +39,11 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::SecondNearestNeighborMatcher matcher(300,
+  features::SecondNearestNeighborMatcher matcher(100,
                                                  0.9,
-                                                 false);
+                                                 true);
   matcher.Match(features_, from_frame->features_, frame_link_.matches);
-  if (frame_link_.matches.size() < 50)
+  if (frame_link_.matches.size() < 100)
     return false;
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
@@ -90,7 +90,7 @@ FrameType MonocularFrame::Type() const {
 void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
                                              std::vector<features::DescriptorType> &out_descriptor_ptr) const {
 
-  out_descriptor_ptr.push_back(features_.descriptors.row(feature_id));
+  out_descriptor_ptr.emplace_back(features_.descriptors.row(feature_id));
 
 }
 
