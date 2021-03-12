@@ -11,18 +11,19 @@
 namespace orb_slam3 {
 namespace features {
 
-class SecondNearestNeighborMatcher : public IMatcher {
+class SNNMatcher : public IMatcher {
  public:
-  SecondNearestNeighborMatcher(const size_t window_size,
-                               const precision_t nearest_neighbour_ratio,
-                               const bool check_orientation);
+  SNNMatcher(const size_t window_size,
+             const precision_t nearest_neighbour_ratio,
+             const bool check_orientation);
 
   void Match(const features::Features &features_to,
              const features::Features &features_from,
              std::vector<features::Match> &out_matches) const override;
+
  private:
 
-  static void ComputeThreeMaxima(std::vector<int> *histo, const int L, int &ind1, int &ind2, int &ind3);
+  static void ComputeThreeMaxima(std::vector<int> *histo, int &ind1, int &ind2, int &ind3);
 
   int Match(const features::Features &features1,
             const features::Features &features2,
@@ -32,17 +33,17 @@ class SecondNearestNeighborMatcher : public IMatcher {
              const features::DescriptorSet &descriptors2,
              const std::vector<size_t> &allowed_inidces,
              int &out_idx2,
-             int &dist) const;
+             unsigned &dist) const;
 
   // returns the number of filtered matches
-  int FilterByOrientation(std::vector<int> &inout_matches_12,
-                           const Features &features1,
-                           const Features &features2) const;
+  static int FilterByOrientation(std::vector<int> &inout_matches_12,
+                                 const Features &features1,
+                                 const Features &features2);
 
   static inline void ComputeRotationHistogram(std::vector<int> *rotation_histogram,
-                                       const std::vector<int> &inout_matches_12,
-                                       const Features &features1,
-                                       const Features &features2) ;
+                                              const std::vector<int> &inout_matches_12,
+                                              const Features &features1,
+                                              const Features &features2);
  private:
   static const int TH_LOW;
   static const int TH_HIGH;

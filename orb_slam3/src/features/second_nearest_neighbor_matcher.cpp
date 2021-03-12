@@ -9,21 +9,22 @@
 namespace orb_slam3 {
 namespace features {
 
-const int SecondNearestNeighborMatcher::TH_HIGH = 100;
-const int SecondNearestNeighborMatcher::TH_LOW = 50;
-const int SecondNearestNeighborMatcher::HISTO_LENGTH = 30;
+const int SNNMatcher::TH_HIGH = 100;
+const int SNNMatcher::TH_LOW = 50;
+const int SNNMatcher::HISTO_LENGTH = 30;
 
-SecondNearestNeighborMatcher::SecondNearestNeighborMatcher(const size_t window_size,
-                                                           const precision_t nearest_neighbour_ratio,
-                                                           const bool check_orientation)
-    : window_size_(window_size),
-      nearest_neighbour_ratio_(nearest_neighbour_ratio),
-      check_orientation_(check_orientation) {
+SNNMatcher::SNNMatcher(const size_t window_size,
+                       const precision_t nearest_neighbour_ratio,
+                       const bool check_orientation) : window_size_(window_size),
+                                                       nearest_neighbour_ratio_(
+                                                           nearest_neighbour_ratio),
+                                                       check_orientation_(
+                                                           check_orientation) {
 }
 
-void SecondNearestNeighborMatcher::Match(const features::Features &features_to,
-                                         const features::Features &features_from,
-                                         std::vector<features::Match> &out_matches) const {
+void SNNMatcher::Match(const features::Features &features_to,
+                       const features::Features &features_from,
+                       std::vector<features::Match> &out_matches) const {
   std::vector<int> matches12;
   int matches = Match(features_to, features_from, matches12);
   out_matches.reserve(matches);
@@ -33,14 +34,14 @@ void SecondNearestNeighborMatcher::Match(const features::Features &features_to,
   }
 }
 
-int SecondNearestNeighborMatcher::Match(const features::Features &features1,
-                                        const features::Features &features2,
-                                        std::vector<int> &out_matches_12) const {
+int SNNMatcher::Match(const features::Features &features1,
+                      const features::Features &features2,
+                      std::vector<int> &out_matches_12) const {
 
   int number_of_matches = 0;
   out_matches_12.resize(features1.Size(), -1);
 
-  std::vector<int> matched_distance(features2.Size(), std::numeric_limits<int>::max());
+  std::vector<unsigned > matched_distance(features2.Size(), std::numeric_limits<unsigned >::max());
   std::vector<int> matches21(features2.Size(), -1);
 
   for (size_t i1 = 0; i1 < features1.Size(); i1++) {
@@ -62,7 +63,7 @@ int SecondNearestNeighborMatcher::Match(const features::Features &features1,
 
     auto d1 = features1.descriptors.row(i1);
     int &best_idx2 = out_matches_12[i1];
-    int distance;
+    unsigned distance;
 
     Match(d1, features2.descriptors, f2_indices_in_window, best_idx2, distance);
     if (best_idx2 < 0)
@@ -75,26 +76,26 @@ int SecondNearestNeighborMatcher::Match(const features::Features &features1,
     matches21[best_idx2] = i1;
     ++number_of_matches;
   }
-  if(check_orientation_)
+  if (check_orientation_)
     return number_of_matches - FilterByOrientation(out_matches_12, features1, features2);
 
   return number_of_matches;
 
 }
 
-void SecondNearestNeighborMatcher::Match(const DescriptorType &d1,
-                                         const DescriptorSet &descriptors2,
-                                         const std::vector<size_t> &allowed_inidces,
-                                         int &out_idx2,
-                                         int &dist) const {
+void SNNMatcher::Match(const DescriptorType &d1,
+                       const DescriptorSet &descriptors2,
+                       const std::vector<size_t> &allowed_inidces,
+                       int &out_idx2,
+                       unsigned &dist) const {
 
-  int best_distance = std::numeric_limits<int>::max();
-  int best_distance2 = std::numeric_limits<int>::max();
+  unsigned best_distance = std::numeric_limits<unsigned >::max();
+  unsigned best_distance2 = std::numeric_limits<unsigned >::max();
   int best_idx2 = -1;
   for (const size_t &i2:  allowed_inidces) {
 
     auto d2 = descriptors2.row(i2);
-    int dist = DescriptorDistance(d1, d2);
+    unsigned dist = DescriptorDistance(d1, d2);
 
     if (dist < best_distance) {
       best_distance2 = best_distance;
@@ -112,16 +113,15 @@ void SecondNearestNeighborMatcher::Match(const DescriptorType &d1,
     out_idx2 = -1;
 }
 
-void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> *histo,
-                                                      const int L,
-                                                      int &ind1,
-                                                      int &ind2,
-                                                      int &ind3) {
+void SNNMatcher::ComputeThreeMaxima(std::vector<int> *histo,
+                                    int &ind1,
+                                    int &ind2,
+                                    int &ind3) {
   int max1 = 0;
   int max2 = 0;
   int max3 = 0;
 
-  for (int i = 0; i < L; i++) {
+  for (int i = 0; i < HISTO_LENGTH; i++) {
     const int s = histo[i].size();
     if (s > max1) {
       max3 = max2;
@@ -141,18 +141,18 @@ void SecondNearestNeighborMatcher::ComputeThreeMaxima(std::vector<int> *histo,
     }
   }
 
-  if (max2 < 0.1f * (float) max1) {
+  if (static_cast<float>(max2) < 0.1f * static_cast<float>(max1)) {
     ind2 = -1;
     ind3 = -1;
-  } else if (max3 < 0.1f * (float) max1) {
+  } else if (static_cast<float>(max3) < 0.1f * static_cast<float>(max1)) {
     ind3 = -1;
   }
 }
 
-void SecondNearestNeighborMatcher::ComputeRotationHistogram(std::vector<int> *rotation_histogram,
-                                                            const std::vector<int> &inout_matches_12,
-                                                            const Features &features1,
-                                                            const Features &features2) {
+void SNNMatcher::ComputeRotationHistogram(std::vector<int> *rotation_histogram,
+                                          const std::vector<int> &inout_matches_12,
+                                          const Features &features1,
+                                          const Features &features2) {
   const precision_t factor = 1.0f / HISTO_LENGTH;
   for (int i = 0; i < HISTO_LENGTH; i++)
     rotation_histogram[i].reserve(500);
@@ -173,9 +173,9 @@ void SecondNearestNeighborMatcher::ComputeRotationHistogram(std::vector<int> *ro
 
 }
 
-int SecondNearestNeighborMatcher::FilterByOrientation(std::vector<int> &inout_matches_12,
-                                                      const Features &features1,
-                                                      const Features &features2) const {
+int SNNMatcher::FilterByOrientation(std::vector<int> &inout_matches_12,
+                                    const Features &features1,
+                                    const Features &features2) {
   std::vector<int> rotation_histogram[HISTO_LENGTH];
   ComputeRotationHistogram(rotation_histogram, inout_matches_12, features1, features2);
   int number_of_discarded_matches = 0;
@@ -184,7 +184,7 @@ int SecondNearestNeighborMatcher::FilterByOrientation(std::vector<int> &inout_ma
   int ind2 = -1;
   int ind3 = -1;
 
-  ComputeThreeMaxima(rotation_histogram, HISTO_LENGTH, ind1, ind2, ind3);
+  ComputeThreeMaxima(rotation_histogram, ind1, ind2, ind3);
 
   for (int i = 0; i < HISTO_LENGTH; i++) {
 

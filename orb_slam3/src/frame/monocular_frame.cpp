@@ -39,9 +39,9 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::SecondNearestNeighborMatcher matcher(100,
-                                                 0.9,
-                                                 true);
+  features::SNNMatcher matcher(100,
+                               0.9,
+                               true);
   matcher.Match(features_, from_frame->features_, frame_link_.matches);
   if (frame_link_.matches.size() < 100)
     return false;
