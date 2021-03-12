@@ -38,12 +38,11 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
     }
       break;
     case OK: {
-      if(frame->TrackWithReferenceKeyFrame(last_frame_)) {
+      if (frame->TrackWithReferenceKeyFrame(last_frame_)) {
         map::Map *current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
         last_frame_ = frame;
       }
-
     }
       break;
 
