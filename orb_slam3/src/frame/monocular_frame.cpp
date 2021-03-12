@@ -9,6 +9,7 @@
 #include <geometry/two_view_reconstructor.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include <features/bow_matcher.h>
+#include <optimization/bundle_adjustment.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -74,8 +75,15 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
         auto map_point = new map::MapPoint(points[i]);
         map_points_[match.to_idx] = map_point;
         other->MapPoint(match.from_idx) = map_points_[match.to_idx];
+        map_point->AddObservation(this, frame_link_.matches[i].to_idx);
+        map_point->AddObservation(from_frame, frame_link_.matches[i].from_idx);
+        map_point->Refresh();
       }
     }
+    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+              << pose_.estimate().translation() << std::endl;
+    optimization::BundleAdjustment({this, from_frame}, 20);
+    // TODO: normalize T
     std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
               << pose_.estimate().translation() << std::endl;
     return true;
@@ -152,9 +160,9 @@ TPoint3D MonocularFrame::GetNormal(const TPoint3D &point) const {
   return normal;
 }
 
-void MonocularFrame::TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) {
+bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) {
   if (reference_keyframe->Type() != Type())
-    return;
+    return false;
   auto reference_kf = dynamic_cast<MonocularFrame *>(reference_keyframe.get());
 
   // Ensure bows are computed
@@ -173,9 +181,23 @@ void MonocularFrame::TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> &re
                  rf_mask.begin(),
                  [](const map::MapPoint *mp) -> bool { return mp != nullptr; });
   std::vector<features::Match> matches;
-  bow_matcher.Match(feature_vector_, features_, reference_kf->feature_vector_, reference_kf->features_, mask, rf_mask, matches);
+  bow_matcher.Match(feature_vector_,
+                    features_,
+                    reference_kf->feature_vector_,
+                    reference_kf->features_,
+                    mask,
+                    rf_mask,
+                    matches);
+  if (matches.size() < 15)
+    return false;
 
-
+  for (const auto &match: matches) {
+    auto map_point = reference_kf->map_points_[match.to_idx];
+    map_points_[match.from_idx] = map_point;
+    map_point->AddObservation(this, match.from_idx);
+    map_point->Refresh();
+  }
+  return true;
 }
 
 void MonocularFrame::ComputeBow() {

@@ -127,7 +127,7 @@ class FrameBase : public Identifiable {
   virtual void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) = 0;
 
 
-  virtual void TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
+  virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
 
   /*!
    * Destructor

@@ -35,11 +35,12 @@ class MonocularFrame : public FrameBase {
   TPoint3D GetNormal(const TPoint3D &point) const override;
   const camera::ICamera *CameraPtr() const override;
   void AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t & next_id) override;
+  bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) override;
+
   // ==== Monocular
   const features::Features &GetFeatures() const { return features_; }
   const FrameLink &GetFrameLink() const { return frame_link_; }
   void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) override;
-  void TrackReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) override;
 
  protected:
   void ComputeBow();

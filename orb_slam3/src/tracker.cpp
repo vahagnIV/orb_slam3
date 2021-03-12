@@ -30,20 +30,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
         map::Map *current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
         current_map->SetInitialKeyFrame(last_frame_);
-        for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
-          auto &mp = frame->MapPoint(i);
-          if (mp)
-            mp->AddObservation(frame.get(), i);
-        }
-        for (size_t i = 0; i < last_frame_->MapPoints().size(); ++i) {
-          auto &mp = last_frame_->MapPoint(i);
-          if (mp) {
-            mp->AddObservation(last_frame_.get(), i);
-            mp->Refresh();
-          }
-        }
-        optimization::BundleAdjustment({last_frame_.get(), frame.get()}, 20);
-        // TODO: normalize T
+
         last_frame_ = frame;
         state_ = OK;
         NotifyObservers(frame, MessageType::Initial);
@@ -51,7 +38,12 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
     }
       break;
     case OK: {
-      frame->TrackReferenceKeyFrame(last_frame_);
+      if(frame->TrackWithReferenceKeyFrame(last_frame_)) {
+        map::Map *current_map = atlas_->GetCurrentMap();
+        current_map->AddKeyFrame(frame);
+        last_frame_ = frame;
+      }
+
     }
       break;
 
