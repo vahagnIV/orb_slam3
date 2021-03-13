@@ -118,16 +118,15 @@ class FrameBase : public Identifiable {
    * @param optimizer the g2o::Sparseoptimizer
    * @param next_id The nonce that is used to assign ids to the g2o objects
    */
-  virtual void AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &next_id) = 0;
+  virtual void AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) = 0;
 
   /*!
    * Collect the optimized values from the optimizer
    * @param optimizer
    */
-  virtual void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) = 0;
+  virtual void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) = 0;
 
-
-  virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
+  virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) = 0;
 
   /*!
    * Destructor
@@ -135,11 +134,13 @@ class FrameBase : public Identifiable {
   virtual ~FrameBase() = default;
 
  protected:
+  g2o::VertexSE3Expmap *CreatePoseVertex() const;
 
  protected:
 
   TimePoint timestamp_;
   std::vector<map::MapPoint *> map_points_;
+  std::vector<bool> inliers_;
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;

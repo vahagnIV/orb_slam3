@@ -1,6 +1,9 @@
 #!/bin/bash
 
-mkdir build && cd build
+echo `pwd`
+mkdir build  
+cd build
+echo `pwd`
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j
 sudo mkdir /usr/local/include/DBoW2

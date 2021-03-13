@@ -2,13 +2,20 @@
 // Created by vahagn on 1/23/21.
 //
 
+// === g2o ===
+#include <g2o/core/block_solver.h>
+#include <g2o/solvers/eigen/linear_solver_eigen.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+#include <g2o/core/robust_kernel_impl.h>
+
 // == orb-slam3 ===
 #include <frame/monocular_frame.h>
 #include <constants.h>
 #include <features/second_nearest_neighbor_matcher.h>
 #include <geometry/two_view_reconstructor.h>
-#include <optimization/edges/se3_project_xyz_pose.h>
 #include <features/bow_matcher.h>
+#include <optimization/edges/se3_project_xyz_pose.h>
+#include <optimization/edges/se3_project_xyz_pose_only.h>
 #include <optimization/bundle_adjustment.h>
 
 namespace orb_slam3 {
@@ -27,6 +34,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U &image, TimePoint timestamp,
   features_.AssignFeaturesToGrid();
   map_points_.resize(features_.undistorted_keypoints.size());
   std::fill(map_points_.begin(), map_points_.end(), nullptr);
+  inliers_.resize(map_points_.size(), false);
 }
 
 bool MonocularFrame::IsValid() const {
@@ -77,7 +85,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
         other->MapPoint(match.from_idx) = map_points_[match.to_idx];
         map_point->AddObservation(this, frame_link_.matches[i].to_idx);
         map_point->AddObservation(from_frame, frame_link_.matches[i].from_idx);
-        map_point->Refresh();
+        inliers_[match.to_idx] = from_frame->inliers_[match.to_idx] = true;
+
       }
     }
     std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
@@ -107,11 +116,8 @@ const camera::ICamera *MonocularFrame::CameraPtr() const {
   return camera_.get();
 }
 
-void MonocularFrame::AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &next_id) {
-  this->pose_.setFixed(false);
-  g2o::VertexSE3Expmap *pose = new g2o::VertexSE3Expmap();
-  pose->setEstimate(pose_.estimate());
-  pose->setId(pose_.id());
+void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) {
+  g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   for (size_t i = 0; i < map_points_.size(); ++i) {
     if (nullptr == map_points_[i])
@@ -120,11 +126,7 @@ void MonocularFrame::AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &nex
 
     g2o::VertexPointXYZ *mp;
     if (nullptr == optimizer.vertex(map_point->Id())) {
-      mp = new g2o::VertexPointXYZ();
-      mp->setId(map_point->Id());
-      mp->setMarginalized(true);
-      mp->setEstimate(map_point->GetPosition());
-      mp->setFixed(false);
+      mp = map_point->CreateVertex();
       optimizer.addVertex(mp);
     } else
       mp = dynamic_cast< g2o::VertexPointXYZ *>(optimizer.vertex(map_point->Id()));
@@ -141,7 +143,7 @@ void MonocularFrame::AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t &nex
   }
 }
 
-void MonocularFrame::CollectFromOptimizer(g2o::SparseOptimizer &optimizer) {
+void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) {
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *> (optimizer.vertex(Id()));
   pose_.setEstimate(pose->estimate());
   for (auto mp: map_points_) {
@@ -150,6 +152,7 @@ void MonocularFrame::CollectFromOptimizer(g2o::SparseOptimizer &optimizer) {
     if (mp->Observations().begin()->first->Id() == Id()) {
       auto position = dynamic_cast<g2o::VertexPointXYZ *> (optimizer.vertex(mp->Id()));
       mp->SetPosition(position->estimate());
+      mp->Refresh();
     }
   }
 }
@@ -170,23 +173,13 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   ComputeBow();
 
   features::BowMatcher bow_matcher(0.7);
-  std::vector<bool> rf_mask(features_.descriptors.size());
-  std::vector<bool> mask(features_.descriptors.size());
-  std::transform(map_points_.begin(),
-                 map_points_.end(),
-                 mask.begin(),
-                 [](const map::MapPoint *mp) -> bool { return mp != nullptr; });
-  std::transform(reference_kf->map_points_.begin(),
-                 reference_kf->map_points_.end(),
-                 rf_mask.begin(),
-                 [](const map::MapPoint *mp) -> bool { return mp != nullptr; });
   std::vector<features::Match> matches;
   bow_matcher.Match(feature_vector_,
                     features_,
                     reference_kf->feature_vector_,
                     reference_kf->features_,
-                    mask,
-                    rf_mask,
+                    inliers_,
+                    reference_kf->inliers_,
                     matches);
   if (matches.size() < 15)
     return false;
@@ -195,9 +188,11 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     auto map_point = reference_kf->map_points_[match.to_idx];
     map_points_[match.from_idx] = map_point;
     map_point->AddObservation(this, match.from_idx);
+    inliers_[match.from_idx] = true;
   }
+  SetPosition(*(reference_kf->GetPose()));
+  OptimizePose();
 
-  //map_point->Refresh();
   return true;
 }
 
@@ -213,6 +208,46 @@ void MonocularFrame::ComputeBow() {
                                           (void *) features_.descriptors.row(i).data()));
   }
   vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);
+}
+
+void MonocularFrame::OptimizePose() {
+  static const precision_t delta_mono = std::sqrt(5.991);
+  g2o::SparseOptimizer optimizer;
+  std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
+      linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
+
+  std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
+
+  auto *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  optimizer.setAlgorithm(solver);
+  g2o::VertexSE3Expmap *pose = CreatePoseVertex();
+  optimizer.addVertex(pose);
+  size_t last_id = Identifiable::GetNextId();
+  for (size_t i = 0; i < map_points_.size(); ++i) {
+    map::MapPoint *map_point = map_points_[i];
+    if (nullptr == map_point || !inliers_[i])
+      continue;
+    auto edge = new optimization::edges::SE3ProjectXYZPoseOnly(camera_.get(), map_point->GetPosition());
+    edge->setVertex(0, pose);
+    edge->setInformation(Eigen::Matrix<double, 2, 2>::Identity());
+    edge->setId(last_id++);
+    edge->setRobustKernel(new g2o::RobustKernelHuber);
+    edge->robustKernel()->setDelta(delta_mono);
+    HomogenousPoint measurement;
+    camera_->UnprojectPoint(features_.keypoints[i].pt, measurement);
+    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
+    optimizer.addEdge(edge);
+  }
+  std::cout << "Frame " << Id() << std::endl;
+  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
+  std::cout << pose_.estimate().translation() << std::endl;
+  optimizer.initializeOptimization();
+//  optimizer.setVerbose(true);
+  optimizer.optimize(20);
+  SetPosition(*pose);
+  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
+  std::cout << pose_.estimate().translation() << std::endl;
+
 }
 
 }

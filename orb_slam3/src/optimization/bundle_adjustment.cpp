@@ -33,7 +33,7 @@ void BundleAdjustment(const std::vector<frame::FrameBase *> &key_frames,
   size_t init_frame_id = std::numeric_limits<size_t>::max();
   for (auto frame: key_frames) {
     init_frame_id = std::min(init_frame_id, frame->Id());
-    frame->AddToOptimizer(optimizer, last_id);
+    frame->AppendToOptimizerBA(optimizer, last_id);
   }
   optimizer.vertex(init_frame_id)->setFixed(true);
   optimizer.initializeOptimization();
@@ -42,7 +42,7 @@ void BundleAdjustment(const std::vector<frame::FrameBase *> &key_frames,
   optimizer.optimize(nIterations);
 
   for (auto frame: key_frames) {
-    frame->CollectFromOptimizer(optimizer);
+    frame->CollectFromOptimizerBA(optimizer);
   }
 }
 

@@ -41,6 +41,8 @@ class MapPoint : public Identifiable {
 
   const MapType &Observations() const { return observations_; }
 
+  g2o::VertexPointXYZ * CreateVertex() const;
+
  private:
   void ComputeDistinctiveDescriptor();
 

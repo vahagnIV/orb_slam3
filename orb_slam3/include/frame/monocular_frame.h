@@ -23,7 +23,7 @@ class MonocularFrame : public FrameBase {
                  TimePoint timestamp,
                  const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
                  const std::shared_ptr<camera::MonocularCamera> &camera,
-                 features::BowVocabulary * vocabulary);
+                 features::BowVocabulary *vocabulary);
 
   // ==== FrameBase =========
   size_t FeatureCount() const noexcept override;
@@ -34,16 +34,17 @@ class MonocularFrame : public FrameBase {
                                std::vector<features::DescriptorType> &out_descriptor_ptr) const override;
   TPoint3D GetNormal(const TPoint3D &point) const override;
   const camera::ICamera *CameraPtr() const override;
-  void AddToOptimizer(g2o::SparseOptimizer &optimizer, size_t & next_id) override;
   bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) override;
-
-  // ==== Monocular
   const features::Features &GetFeatures() const { return features_; }
-  const FrameLink &GetFrameLink() const { return frame_link_; }
-  void CollectFromOptimizer(g2o::SparseOptimizer &optimizer) override;
 
+  // ==== Monocular ====
+  const FrameLink &GetFrameLink() const { return frame_link_; }
+  void AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) override;
+  void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) override;
+  void OptimizePose();
  protected:
   void ComputeBow();
+
 
  protected:
   features::Features features_;

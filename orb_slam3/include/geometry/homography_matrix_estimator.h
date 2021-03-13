@@ -74,21 +74,21 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                    TPoint3D & out_trinagulated) const;
  private:
 
-  void FillSolutionsForPositiveD(precision_t d1,
+  static void FillSolutionsForPositiveD(precision_t d1,
                                  precision_t d2,
                                  precision_t d3,
                                  const TMatrix33 & U,
                                  const TMatrix33 & VT,
                                  Solution solution[4],
-                                 precision_t s) const noexcept;
+                                 precision_t s) noexcept;
 
-  void FillSolutionsForNegativeD(precision_t d1,
+  static void FillSolutionsForNegativeD(precision_t d1,
                                  precision_t d2,
                                  precision_t d3,
                                  const TMatrix33 & U,
                                  const TMatrix33 & VT,
                                  Solution solution[4],
-                                 precision_t s) const noexcept;
+                                 precision_t s) noexcept;
 
 
   precision_t ComputeParallax(const TPoint3D & point, const Solution & solution) const;

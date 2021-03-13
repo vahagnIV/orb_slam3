@@ -20,6 +20,7 @@ class SE3ProjectXYZPoseOnly : public g2o::BaseUnaryEdge<2, Eigen::Vector2d, g2o:
  public:
   SE3ProjectXYZPoseOnly(const camera::ICamera * camera, const TPoint3D & point);
   void computeError() override;
+  void linearizeOplus() override;
   bool read(std::istream &is) override;
   bool write(std::ostream &os) const override;
  private:

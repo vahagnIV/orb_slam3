@@ -73,7 +73,7 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
                                                           const TMatrix33 & U,
                                                           const TMatrix33 & VT,
                                                           Solution * solution,
-                                                          precision_t s) const noexcept {
+                                                          precision_t s) noexcept {
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
   const precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
   const precision_t sin_theta = std::sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / ((d1 + d3) * d2);
@@ -99,7 +99,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
                                                           const TMatrix33 & U,
                                                           const TMatrix33 & VT,
                                                           Solution * solution,
-                                                          precision_t s) const noexcept {
+                                                          precision_t s) noexcept {
 
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
   const precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
