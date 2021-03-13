@@ -195,8 +195,9 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     auto map_point = reference_kf->map_points_[match.to_idx];
     map_points_[match.from_idx] = map_point;
     map_point->AddObservation(this, match.from_idx);
-    map_point->Refresh();
   }
+
+  //map_point->Refresh();
   return true;
 }
 
