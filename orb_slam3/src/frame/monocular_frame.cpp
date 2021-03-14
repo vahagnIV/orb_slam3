@@ -212,6 +212,7 @@ void MonocularFrame::ComputeBow() {
 
 void MonocularFrame::OptimizePose() {
   static const precision_t delta_mono = std::sqrt(5.991);
+  static const precision_t chi2[4] = {5.991, 5.991, 5.991, 5.991};
   g2o::SparseOptimizer optimizer;
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
       linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
@@ -223,6 +224,7 @@ void MonocularFrame::OptimizePose() {
   g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   size_t last_id = Identifiable::GetNextId();
+  std::unordered_map<optimization::edges::SE3ProjectXYZPoseOnly *, std::size_t> edges;
   for (size_t i = 0; i < map_points_.size(); ++i) {
     map::MapPoint *map_point = map_points_[i];
     if (nullptr == map_point || !inliers_[i])
@@ -237,13 +239,28 @@ void MonocularFrame::OptimizePose() {
     camera_->UnprojectPoint(features_.keypoints[i].pt, measurement);
     edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
     optimizer.addEdge(edge);
+    edges[edge] = i;
   }
   std::cout << "Frame " << Id() << std::endl;
   std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
   std::cout << pose_.estimate().translation() << std::endl;
-  optimizer.initializeOptimization();
-//  optimizer.setVerbose(true);
-  optimizer.optimize(20);
+  optimizer.initializeOptimization(0);
+  optimizer.setVerbose(true);
+  for (int i = 0; i < 4; ++i) {
+    pose->setEstimate(pose_.estimate());
+    optimizer.optimize(10);
+    for(auto edge: edges){
+
+      if(!inliers_[edge.second]){ // If  the edge was not included in the optimization
+        edge.first->computeError();
+      }
+      inliers_[edge.second] = edge.first->chi2() < chi2[i];
+      edge.first->setLevel(!inliers_[edge.second]);
+      if(i == 2)
+        edge.first->setRobustKernel(nullptr);
+    }
+  }
+
   SetPosition(*pose);
   std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
   std::cout << pose_.estimate().translation() << std::endl;
