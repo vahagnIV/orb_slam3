@@ -103,10 +103,6 @@ void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
 
 }
 
-const camera::ICamera *MonocularFrame::CameraPtr() const {
-  return camera_.get();
-}
-
 void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) {
   g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);

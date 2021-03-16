@@ -14,11 +14,11 @@ MapPoint::MapPoint(const TPoint3D &point) : Identifiable(), position_(point) {
 }
 
 void MapPoint::AddObservation(const frame::FrameBase *frame, size_t feature_id) {
-  observations_[frame] = feature_id;
+  observations_[(frame::FrameBase *)frame] = feature_id;
 }
 
 void MapPoint::EraseObservation(const frame::FrameBase *frame) {
-  observations_.erase(frame);
+  observations_.erase((frame::FrameBase*)frame);
 }
 
 void MapPoint::Refresh() {

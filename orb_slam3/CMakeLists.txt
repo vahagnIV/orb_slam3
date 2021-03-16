@@ -25,6 +25,7 @@ add_library(orbslam SHARED
 
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
+        src/frame/covisibility_container.cpp
 
         src/camera/monocular_camera.cpp
         src/camera/kannala_brandt_5.cpp
@@ -100,7 +101,7 @@ add_library(orbslam SHARED
         include/optimization/edges/se3_project_xyz_pose_only.h
 
         include/orb_vocabulary.h
-        include/identifiable.h   )
+        include/identifiable.h )
 
 target_include_directories(orbslam INTERFACE include)
 

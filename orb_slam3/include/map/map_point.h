@@ -24,7 +24,7 @@ namespace map {
 
 class MapPoint : public Identifiable {
  public:
-  typedef std::unordered_map<const frame::FrameBase *, size_t> MapType;
+  typedef std::unordered_map< frame::FrameBase *, size_t> MapType;
   MapPoint(const TPoint3D &point);
 
   void AddObservation(const frame::FrameBase *frame, size_t feature_id);
@@ -40,6 +40,7 @@ class MapPoint : public Identifiable {
   const TVector3D &GetNormal() const { return normal_; }
 
   const MapType &Observations() const { return observations_; }
+  MapType &Observations() { return observations_; }
 
   g2o::VertexPointXYZ * CreateVertex() const;
 

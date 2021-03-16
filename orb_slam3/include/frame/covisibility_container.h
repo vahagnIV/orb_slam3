@@ -5,14 +5,18 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_COVISIBILITY_CONTAINER_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_COVISIBILITY_CONTAINER_H_
 #include <vector>
+#include <unordered_map>
+#include <map>
 
 namespace orb_slam3 {
 namespace frame {
 class FrameBase;
 
 struct CovisibilityContainer {
+
+  void Update(std::unordered_map<FrameBase *, unsigned > & frame_weights);
   std::map<FrameBase*, unsigned > connected_frame_weights;
-  std::vectot<FrameBase*> connected_frames;
+  std::vector<FrameBase*> connected_frames;
 };
 
 }

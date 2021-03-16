@@ -32,7 +32,6 @@ class MonocularFrame : public FrameBase {
   void AppendDescriptorsToList(size_t feature_id,
                                std::vector<features::DescriptorType> &out_descriptor_ptr) const override;
   TPoint3D GetNormal(const TPoint3D &point) const override;
-  const camera::ICamera *CameraPtr() const override;
   bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) override;
   const features::Features &GetFeatures() const { return features_; }
 

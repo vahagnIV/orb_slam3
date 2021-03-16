@@ -29,5 +29,21 @@ const map::MapPoint *FrameBase::MapPoint(size_t id) const {
   return map_point == map_points_.end() ? nullptr : map_point->second;
 }
 
+void FrameBase::UpdateConnections() {
+  std::unordered_map<FrameBase *, unsigned> frame_weights;
+  for (const auto &mp_id: map_points_) {
+    if (nullptr == mp_id.second)
+      continue;
+    for (const auto &fr_id: mp_id.second->Observations()) {
+      if (fr_id.first == this)
+        continue;
+      ++frame_weights.at(fr_id.first);
+    }
+  }
+
+  covisibility_connections_.Update(frame_weights);
+//  covisibility_connections_.connected_frame_weights
+}
+
 }
 }  // namespace orb_slam3

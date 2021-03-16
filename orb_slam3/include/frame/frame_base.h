@@ -109,8 +109,6 @@ class FrameBase : public Identifiable {
    */
   geometry::Pose *GetPose() { return &pose_; }
 
-  virtual const camera::ICamera *CameraPtr() const = 0;
-
   /*!
    * Append necessary vertices and edges for BA
    * @param optimizer the g2o::Sparseoptimizer
@@ -124,7 +122,18 @@ class FrameBase : public Identifiable {
    */
   virtual void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) = 0;
 
+  /*!
+   * Restores the position of the current frame with comparison to the reference keyframe.
+   * Leves reference_keyframe untouches on fail.
+   * @param reference_keyframe The reference keyframe
+   * @return true on success
+   */
   virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) = 0;
+
+  /*!
+   * Updates the covisibility graph.
+   */
+  void UpdateConnections();
 
   /*!
    * Destructor
