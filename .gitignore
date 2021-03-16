@@ -1,3 +1,6 @@
 /build/*
 /cmake-build-debug/*
 .idea/*
+/DBoW2/build/
+/DBoW2/CMakeFiles/
+/DBoW2/lib/
