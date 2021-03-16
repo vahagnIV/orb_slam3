@@ -14,8 +14,8 @@ void BowMatcher::Match(const DBoW2::FeatureVector &fv_from,
                        const Features &features_from,
                        const DBoW2::FeatureVector &fv_to,
                        const Features &features_to,
-                       const std::vector<bool> &mask_from,
-                       const std::vector<bool> &mask_to,
+                       const std::unordered_set<size_t> &mask_from,
+                       const std::unordered_set<size_t> &mask_to,
                        std::vector<features::Match> &out_matches) const {
   // We perform the matching over ORB that belong to the same vocabulary node (at a certain level)
   auto to_it = fv_to.begin();
@@ -31,7 +31,7 @@ void BowMatcher::Match(const DBoW2::FeatureVector &fv_from,
       const std::vector<unsigned int> &from_indices = from_it->second;
       for (size_t i_to = 0; i_to < to_indices.size(); i_to++) {
         const unsigned int real_idx_to = to_indices[i_to];
-        if (!mask_to[real_idx_to])
+        if (mask_to.find(real_idx_to) == mask_to.end())
           continue;
 
         const auto &descriptor_to = features_to.descriptors.row(real_idx_to);
@@ -40,7 +40,7 @@ void BowMatcher::Match(const DBoW2::FeatureVector &fv_from,
         int best_idx_from;
 
         for (unsigned int real_idx_from : from_indices) {
-          if (mask_from[real_idx_from])
+          if (mask_from.find(real_idx_from) != mask_from.end())
             continue;
 
           const auto &descriptor_from = features_from.descriptors.row(real_idx_from);

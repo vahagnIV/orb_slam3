@@ -5,6 +5,9 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_BOW_MATCHER_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_BOW_MATCHER_H_
 
+// === stl ===
+#include <unordered_set>
+
 // === dbow2 ===
 #include <DBoW2/FeatureVector.h>
 
@@ -22,8 +25,8 @@ class BowMatcher {
              const Features &features_from,
              const DBoW2::FeatureVector &fv_to,
              const Features &features_to,
-             const std::vector<bool> &mask_from,
-             const std::vector<bool> &mask_to,
+             const std::unordered_set<size_t> &mask_from,
+             const std::unordered_set<size_t> &mask_to,
              std::vector<Match> &out_matches) const;
  private:
   static bool BelongToTheSameNode(DBoW2::FeatureVector::const_iterator &it1, DBoW2::FeatureVector::const_iterator &it2);

@@ -19,6 +19,7 @@
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
 #include <map/map_point.h>
+#include "covisibility_container.h"
 
 namespace orb_slam3 {
 namespace frame {
@@ -50,9 +51,6 @@ class FrameBase : public Identifiable {
    */
   void SetPosition(const geometry::Pose &pose) noexcept;
 
-  // Get the number of the extracted keypoints
-  virtual size_t FeatureCount() const noexcept = 0;
-
   /*!
    * If frame passed certain checks like the number of features etc
    * @return true if valid
@@ -71,7 +69,7 @@ class FrameBase : public Identifiable {
    * @param id The id of the Map point in the frame
    * @return pointer to the map point
    */
-  const map::MapPoint *MapPoint(size_t id) const { return map_points_[id]; }
+  const map::MapPoint *MapPoint(size_t id) const;
 
   /*!
    * Non const method of the previous
@@ -84,8 +82,8 @@ class FrameBase : public Identifiable {
    * Returns all map points associated with the frame
    * @return
    */
-  std::vector<map::MapPoint *> &MapPoints() { return map_points_; }
-  const std::vector<map::MapPoint *> &MapPoints() const { return map_points_; }
+  std::map<size_t, map::MapPoint *> &MapPoints() { return map_points_; }
+  const std::map<size_t, map::MapPoint *> &MapPoints() const { return map_points_; }
 
 //  const std::vector<map::MapPoint * const> & MapPoints() const { return map_points_; }
 
@@ -139,8 +137,12 @@ class FrameBase : public Identifiable {
  protected:
 
   TimePoint timestamp_;
-  std::vector<map::MapPoint *> map_points_;
-  std::vector<bool> inliers_;
+
+  // Feature id to MapPoint ptr
+  std::map<size_t, map::MapPoint *> map_points_;
+
+  CovisibilityContainer covisibility_connections_;
+
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;

@@ -21,6 +21,7 @@ include_directories(include g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_
 add_library(orbslam SHARED
         src/identifiable.cpp
         src/tracker.cpp
+        src/local_mapper.cpp
 
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
@@ -53,8 +54,8 @@ add_library(orbslam SHARED
         include/typedefs.h
         include/constants.h
         include/tracker.h
-        #        include/image_utils.h
         include/position_observer.h
+        include/local_mapper.h
 
         include/geometry/two_view_reconstructor.h
         include/geometry/pose.h
@@ -67,11 +68,13 @@ add_library(orbslam SHARED
         include/camera/kannala_brandt_5.h
         include/camera/kannala_brandt_8.h
         include/camera/fish_eye.h
+        include/camera/icamera.h
 
         include/frame/frame_base.h
         include/frame/monocular_frame.h
         include/frame/frame_type.h
         include/frame/frame_link.h
+        include/frame/covisibility_container.h
 
         include/features/key_point.h
         include/features/orb_feature_extractor.h
@@ -97,7 +100,7 @@ add_library(orbslam SHARED
         include/optimization/edges/se3_project_xyz_pose_only.h
 
         include/orb_vocabulary.h
-        include/identifiable.h include/camera/icamera.h  )
+        include/identifiable.h   )
 
 target_include_directories(orbslam INTERFACE include)
 

@@ -206,7 +206,8 @@ cv::KeyPoint ToCvKeypoint(const orb_slam3::features::KeyPoint &keypoint) {
 
 cv::Mat DrawMatches(std::shared_ptr<orb_slam3::frame::MonocularFrame> &frame, cv::Mat &im1, cv::Mat &im2) {
   std::vector<cv::DMatch> matches = ToCvMatches(frame->GetFrameLink().matches, frame->GetFrameLink().inliers);
-  std::vector<cv::KeyPoint> kp1(frame->FeatureCount()), kp2(frame->GetFrameLink().other->FeatureCount());
+  std::vector<cv::KeyPoint> kp1(frame->GetFeatures().keypoints.size()), kp2
+      (dynamic_cast<orb_slam3::frame::MonocularFrame *>(frame->GetFrameLink().other.get())->GetFeatures().keypoints.size());
   std::transform(frame->GetFeatures().keypoints.begin(),
                  frame->GetFeatures().keypoints.end(),
                  kp1.begin(),
@@ -310,13 +311,13 @@ void TestDrawMonocular(std::string original) {
       std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);
 
       for (const auto &mp: frame_o->MapPoints()) {
-        if (!mp)
+        if (mp.second == nullptr)
           continue;
-        orb_slam3::TPoint3D pose = mp->GetPosition();
+        orb_slam3::TPoint3D pose = mp.second->GetPosition();
         ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
         ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
         ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
-        orb_slam3::TVector3D normal = mp->GetNormal();
+        orb_slam3::TVector3D normal = mp.second->GetNormal();
         ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
@@ -328,13 +329,13 @@ void TestDrawMonocular(std::string original) {
       std::ofstream ofstream1("map_points.bin_ba", std::ios::binary | std::ios::out);
 
       for (const auto &mp: frame_o->MapPoints()) {
-        if (!mp)
+        if (!mp.second)
           continue;
-        orb_slam3::TPoint3D pose = mp->GetPosition();
+        orb_slam3::TPoint3D pose = mp.second->GetPosition();
         ofstream1.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
         ofstream1.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
         ofstream1.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
-        orb_slam3::TVector3D normal = mp->GetNormal();
+        orb_slam3::TVector3D normal = mp.second->GetNormal();
         ofstream1.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
         ofstream1.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
         ofstream1.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));

@@ -42,6 +42,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
         map::Map *current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
         last_frame_ = frame;
+        NotifyObservers(last_frame_, MessageType::Update);
       }
     }
       break;
@@ -56,7 +57,7 @@ bool Tracker::TrackReferenceKeyFrame() { return false; }
 
 void Tracker::NotifyObservers(const std::shared_ptr<const FrameBase> &frame, MessageType type) {
   for (PositionObserver *observer: observers_) {
-    observer->GetUpdateQueue()->enqueue(UpdateMessage{type:type, frame:frame});
+    observer->GetUpdateQueue().enqueue(UpdateMessage{type:type, frame:frame});
   }
 }
 

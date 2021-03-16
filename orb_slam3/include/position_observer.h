@@ -25,8 +25,8 @@ typedef moodycamel::BlockingConcurrentQueue<UpdateMessage> UpdateQueue;
 class PositionObserver {
  public:
   PositionObserver(): queue_(){}
-  UpdateQueue * GetUpdateQueue(){
-    return &queue_;
+  UpdateQueue & GetUpdateQueue(){
+    return queue_;
   }
 
  private:

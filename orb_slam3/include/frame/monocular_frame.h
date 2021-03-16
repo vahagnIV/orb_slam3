@@ -26,7 +26,6 @@ class MonocularFrame : public FrameBase {
                  features::BowVocabulary *vocabulary);
 
   // ==== FrameBase =========
-  size_t FeatureCount() const noexcept override;
   bool IsValid() const override;
   FrameType Type() const override;
   bool Link(const std::shared_ptr<FrameBase> &other) override;
@@ -41,7 +40,7 @@ class MonocularFrame : public FrameBase {
   const FrameLink &GetFrameLink() const { return frame_link_; }
   void AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) override;
   void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) override;
-  void OptimizePose();
+  void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
  protected:
   void ComputeBow();
 

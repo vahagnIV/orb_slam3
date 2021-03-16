@@ -8,7 +8,7 @@
 namespace orb_slam3 {
 namespace frame {
 
-void FrameBase::SetPosition(const geometry::Pose & pose) noexcept {
+void FrameBase::SetPosition(const geometry::Pose &pose) noexcept {
   pose_.setEstimate(pose.estimate());
 }
 
@@ -22,6 +22,11 @@ g2o::VertexSE3Expmap *FrameBase::CreatePoseVertex() const {
   pose_vertex->setId(Id());
   pose_vertex->setFixed(false);
   return pose_vertex;
+}
+
+const map::MapPoint *FrameBase::MapPoint(size_t id) const {
+  auto map_point = map_points_.find(id);
+  return map_point == map_points_.end() ? nullptr : map_point->second;
 }
 
 }
