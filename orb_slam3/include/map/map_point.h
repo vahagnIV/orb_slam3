@@ -27,9 +27,9 @@ class MapPoint : public Identifiable {
   typedef std::unordered_map< frame::FrameBase *, size_t> MapType;
   MapPoint(const TPoint3D &point);
 
-  void AddObservation(const frame::FrameBase *frame, size_t feature_id);
+  void AddObservation(frame::FrameBase *frame, size_t feature_id);
 
-  void EraseObservation(const frame::FrameBase *frame);
+  void EraseObservation(frame::FrameBase *frame);
 
   void Refresh();
 

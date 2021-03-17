@@ -31,7 +31,7 @@ class FrameBase : public Identifiable {
   virtual FrameType Type() const = 0;
 
   FrameBase(const TimePoint &timestamp)
-      : Identifiable(), timestamp_(timestamp) {
+      : Identifiable(), timestamp_(timestamp), covisibility_connections_() {
     pose_.setId(id_);
   }
   /*!
@@ -131,6 +131,11 @@ class FrameBase : public Identifiable {
   virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) = 0;
 
   /*!
+   * Non-const getter for the covisibility graph
+   * @return
+   */
+  CovisibilityContainer &CovisibilityGraph() { return covisibility_connections_; }
+  /*!
    * Updates the covisibility graph.
    */
   void UpdateConnections();
@@ -151,7 +156,6 @@ class FrameBase : public Identifiable {
   std::map<size_t, map::MapPoint *> map_points_;
 
   CovisibilityContainer covisibility_connections_;
-
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;

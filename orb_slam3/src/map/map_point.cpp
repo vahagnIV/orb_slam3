@@ -13,11 +13,19 @@ namespace map {
 MapPoint::MapPoint(const TPoint3D &point) : Identifiable(), position_(point) {
 }
 
-void MapPoint::AddObservation(const frame::FrameBase *frame, size_t feature_id) {
+void MapPoint::AddObservation(frame::FrameBase *frame, size_t feature_id) {
+  for(auto & obs : observations_){
+    obs.first->CovisibilityGraph().AddConnection(frame);
+    frame->CovisibilityGraph().AddConnection(obs.first);
+  }
   observations_[(frame::FrameBase *)frame] = feature_id;
 }
 
-void MapPoint::EraseObservation(const frame::FrameBase *frame) {
+void MapPoint::EraseObservation(frame::FrameBase *frame) {
+  for(auto & obs : observations_){
+    obs.first->CovisibilityGraph().RemoveConnection(frame);
+    frame->CovisibilityGraph().RemoveConnection(obs.first);
+  }
   observations_.erase((frame::FrameBase*)frame);
 }
 
