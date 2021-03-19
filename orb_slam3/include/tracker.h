@@ -31,7 +31,7 @@ class Tracker {
     OK
   };
  public: 
-  Tracker();
+  Tracker(orb_slam3::map::Atlas * atlas);
 
   /*!
    * Processes the frame

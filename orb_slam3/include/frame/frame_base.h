@@ -19,7 +19,7 @@
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
 #include <map/map_point.h>
-#include "covisibility_container.h"
+#include "covisibility_graph_node.h"
 
 namespace orb_slam3 {
 namespace frame {
@@ -134,16 +134,23 @@ class FrameBase : public Identifiable {
    * Non-const getter for the covisibility graph
    * @return
    */
-  CovisibilityContainer &CovisibilityGraph() { return covisibility_connections_; }
+  CovisibilityGraphNode &CovisibilityGraph() { return covisibility_connections_; }
+
   /*!
-   * Updates the covisibility graph.
+   * Creates new map points from the neighbouring frames
    */
-  void UpdateConnections();
+  virtual void FindNewMapPoints() = 0;
+
+  /*!
+   * Computes the median of z coordinates of all visible map points
+   * @return
+   */
+  virtual precision_t ComputeMedianDepth() const = 0;
 
   /*!
    * Destructor
    */
-  virtual ~FrameBase() = default;
+  virtual ~FrameBase();
 
  protected:
   g2o::VertexSE3Expmap *CreatePoseVertex() const;
@@ -155,7 +162,7 @@ class FrameBase : public Identifiable {
   // Feature id to MapPoint ptr
   std::map<size_t, map::MapPoint *> map_points_;
 
-  CovisibilityContainer covisibility_connections_;
+  CovisibilityGraphNode covisibility_connections_;
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;

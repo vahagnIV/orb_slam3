@@ -29,7 +29,12 @@ const map::MapPoint *FrameBase::MapPoint(size_t id) const {
   return map_point == map_points_.end() ? nullptr : map_point->second;
 }
 
-void FrameBase::UpdateConnections() {
+FrameBase::~FrameBase() {
+  for(auto & mp_id: map_points_){
+    mp_id.second->EraseObservation(this);
+    if(mp_id.second->Observations().empty())
+      delete mp_id.second;
+  }
 }
 
 }

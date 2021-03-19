@@ -80,6 +80,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
         map_point->AddObservation(from_frame, frame_link_.matches[i].from_idx);
       }
     }
+    from_frame->CovisibilityGraph().Update();
+    this->CovisibilityGraph().Update();
     std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
               << pose_.estimate().translation() << std::endl;
     optimization::BundleAdjustment({this, from_frame}, 20);
@@ -164,13 +166,13 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   std::vector<features::Match> matches;
   std::unordered_set<std::size_t> inliers, rf_inliers;
   std::transform(map_points_.begin(),
-            map_points_.end(),
-            std::inserter(inliers, inliers.begin()),
-            [](decltype(map_points_)::value_type & it) { return it.first; });
+                 map_points_.end(),
+                 std::inserter(inliers, inliers.begin()),
+                 [](decltype(map_points_)::value_type &it) { return it.first; });
   std::transform(reference_kf->map_points_.begin(),
                  reference_kf->map_points_.end(),
-            std::inserter(rf_inliers, rf_inliers.begin()),
-            [](decltype(map_points_)::value_type & it) { return it.first; });
+                 std::inserter(rf_inliers, rf_inliers.begin()),
+                 [](decltype(map_points_)::value_type &it) { return it.first; });
   bow_matcher.Match(feature_vector_,
                     features_,
                     reference_kf->feature_vector_,
@@ -186,18 +188,14 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     map_points_[match.from_idx] = map_point;
   }
   SetPosition(*(reference_kf->GetPose()));
-//  std::unordered_map<std::size_t, bool> mp_inliers;
   OptimizePose(inliers);
   for (const auto &match: matches) {
-    if(inliers.find(match.from_idx)!= inliers.end()) {
+    if (inliers.find(match.from_idx) != inliers.end()) {
       map_points_[match.from_idx]->AddObservation(this, match.from_idx);
       map_points_[match.from_idx]->Refresh();
-    }
-    else
+    } else
       map_points_.erase(match.from_idx);
   }
-
-
   return inliers.size() > 3u;
 }
 
@@ -215,7 +213,7 @@ void MonocularFrame::ComputeBow() {
   vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);
 }
 
-void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
+void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) {
   static const precision_t delta_mono = std::sqrt(5.991);
   static const precision_t chi2[4] = {5.991, 5.991, 5.991, 5.991};
   g2o::SparseOptimizer optimizer;
@@ -263,15 +261,13 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
       if (out_inliers.find(edge.second) == out_inliers.end()) { // If  the edge was not included in the optimization
         edge.first->computeError();
       }
-      if( edge.first->chi2() < chi2[i]) {
+      if (edge.first->chi2() < chi2[i]) {
         out_inliers.insert(edge.second);
         edge.first->setLevel(0);
-      }
-      else {
+      } else {
         out_inliers.erase(edge.second);
         edge.first->setLevel(1);
       }
-
 
       if (i == 2)
         edge.first->setRobustKernel(nullptr);
@@ -279,9 +275,33 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
   }
 
   SetPosition(*pose);
-  std::cout << "Tracking Frame " << Id()  << std::endl;
+  std::cout << "Tracking Frame " << Id() << std::endl;
   std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
   std::cout << pose_.estimate().translation() << std::endl;
+
+}
+
+precision_t MonocularFrame::ComputeMedianDepth() const {
+  const g2o::SE3Quat &pose_quat = pose_.estimate();
+  std::vector<precision_t> depths(map_points_.size());
+  std::transform(map_points_.begin(),
+                 map_points_.end(),
+                 depths.begin(),
+                 [&pose_quat](const std::pair<size_t, map::MapPoint *> &mp_id) -> precision_t {
+                   return pose_quat.map(mp_id.second->GetPosition())[2];
+                 });
+  return depths[(depths.size() - 1) / 2];
+}
+
+void MonocularFrame::FindNewMapPoints() {
+  std::vector<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
+  for(frame::FrameBase * frame : neighbour_keyframes){
+    TVector3D baseline = pose_.estimate().translation() - frame->GetPose()->estimate().translation();
+    precision_t baseline_length = baseline.norm();
+    precision_t frame_median_depth = frame->ComputeMedianDepth();
+    if(baseline_length / frame_median_depth < 1e-2)
+      continue;
+  }
 
 }
 

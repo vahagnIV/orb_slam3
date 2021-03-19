@@ -31,7 +31,7 @@ class MonocularFrame : public FrameBase {
   bool Link(const std::shared_ptr<FrameBase> &other) override;
   void AppendDescriptorsToList(size_t feature_id,
                                std::vector<features::DescriptorType> &out_descriptor_ptr) const override;
-  TPoint3D GetNormal(const TPoint3D &point) const override;
+  TPoint3D GetNormal(const TVector3D &point) const override;
   bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) override;
   const features::Features &GetFeatures() const { return features_; }
 
@@ -40,6 +40,8 @@ class MonocularFrame : public FrameBase {
   void AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) override;
   void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) override;
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
+  void FindNewMapPoints() override;
+  precision_t ComputeMedianDepth() const override;
  protected:
   void ComputeBow();
 

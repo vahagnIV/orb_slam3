@@ -25,7 +25,7 @@ add_library(orbslam SHARED
 
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
-        src/frame/covisibility_container.cpp
+        src/frame/covisibility_graph_node.cpp
 
         src/camera/monocular_camera.cpp
         src/camera/kannala_brandt_5.cpp
@@ -75,7 +75,7 @@ add_library(orbslam SHARED
         include/frame/monocular_frame.h
         include/frame/frame_type.h
         include/frame/frame_link.h
-        include/frame/covisibility_container.h
+        include/frame/covisibility_graph_node.h
 
         include/features/key_point.h
         include/features/orb_feature_extractor.h
