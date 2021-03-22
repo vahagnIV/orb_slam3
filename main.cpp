@@ -17,6 +17,8 @@
 #include <random>
 #include <optimization/bundle_adjustment.h>
 #include <local_mapper.h>
+#include <geometry/utils.h>
+#include <geometry/fundamental_matrix_estimator.h>
 
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
@@ -139,7 +141,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImages(data, filenames, timestamps);
-  auto * atlas = new orb_slam3::map::Atlas;
+  auto *atlas = new orb_slam3::map::Atlas;
   orb_slam3::Tracker tracker(atlas);
 
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
@@ -439,7 +441,27 @@ void CompareSharedPointerInitializationAndCopyTime() {
 
 }
 
+void TestFundamental() {
+  orb_slam3::TMatrix33 R;
+  R << 0.9986295, -0.0000000, 0.0523360,
+      0.0144257, 0.9612617, -0.2752596,
+      -0.0503086, 0.2756374, 0.9599443;
+  std::cout << R * R.transpose() << std::endl;
+  orb_slam3::TVector3D T;
+  T << 500, 223, 198;
+
+  orb_slam3::TPoint3D p1{12, 27, 68};
+  orb_slam3::TPoint3D p2 = R * p1 - T;
+
+  std::cout << p2 << std::endl;
+  auto F = orb_slam3::geometry::FundamentalMatrixEstimator::FromEuclideanTransformations(R, T);
+
+  std::cout << (p2 / p2[2]).dot(F * (p1 / p1[2])) << std::endl;
+  std::cout << p2.dot(F * p1) << std::endl;
+}
+
 int main(int argc, char *argv[]) {
+  TestFundamental();
 //  CompareSharedPointerInitializationAndCopyTime();
 //  return 0;
 

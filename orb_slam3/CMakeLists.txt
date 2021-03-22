@@ -45,6 +45,7 @@ add_library(orbslam SHARED
         src/geometry/two_view_reconstructor.cpp
         src/geometry/homography_matrix_estimator.cpp
         src/geometry/fundamental_matrix_estimator.cpp
+        src/geometry/utils.cpp
 
         src/optimization/edges/se3_project_xyz_pose.cpp
         src/optimization/edges/se3_project_xyz_pose_only.cpp
@@ -63,6 +64,7 @@ add_library(orbslam SHARED
         include/geometry/homography_matrix_estimator.h
         include/geometry/transfromation_estimator_base.h
         include/geometry/fundamental_matrix_estimator.h
+        include/geometry/utils.h
 
         include/camera/monocular_camera.h
         include/camera/idistortion_model.h
@@ -101,7 +103,7 @@ add_library(orbslam SHARED
         include/optimization/edges/se3_project_xyz_pose_only.h
 
         include/orb_vocabulary.h
-        include/identifiable.h )
+        include/identifiable.h  )
 
 target_include_directories(orbslam INTERFACE include)
 
