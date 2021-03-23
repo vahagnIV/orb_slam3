@@ -21,9 +21,7 @@ namespace features {
 class BowMatcher {
  public:
   BowMatcher(precision_t nearest_neighbour_ratio) : nearest_neighbour_ratio_(nearest_neighbour_ratio) {}
-  void Match(const DBoW2::FeatureVector &fv_from,
-             const Features &features_from,
-             const DBoW2::FeatureVector &fv_to,
+  void Match(const Features &features_from,
              const Features &features_to,
              const std::unordered_set<size_t> &mask_from,
              const std::unordered_set<size_t> &mask_to,

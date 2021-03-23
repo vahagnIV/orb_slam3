@@ -174,9 +174,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
                  reference_kf->map_points_.end(),
                  std::inserter(rf_inliers, rf_inliers.begin()),
                  [](decltype(map_points_)::value_type &it) { return it.first; });
-  bow_matcher.Match(features_.bow_container.feature_vector,
-                    features_,
-                    reference_kf->features_.bow_container.feature_vector,
+  bow_matcher.Match(features_,
                     reference_kf->features_,
                     inliers,
                     rf_inliers,

@@ -10,18 +10,16 @@
 namespace orb_slam3 {
 namespace features {
 
-void BowMatcher::Match(const DBoW2::FeatureVector &fv_from,
-                       const Features &features_from,
-                       const DBoW2::FeatureVector &fv_to,
+void BowMatcher::Match(const Features &features_from,
                        const Features &features_to,
                        const std::unordered_set<size_t> &mask_from,
                        const std::unordered_set<size_t> &mask_to,
                        std::vector<features::Match> &out_matches) const {
   // We perform the matching over ORB that belong to the same vocabulary node (at a certain level)
-  auto to_it = fv_to.begin();
-  auto from_it = fv_from.begin();
-  auto to_end = fv_to.end();
-  auto from_end = fv_from.end();
+  auto to_it = features_to.bow_container.feature_vector.begin();
+  auto from_it = features_from.bow_container.feature_vector.begin();
+  auto to_end = features_to.bow_container.feature_vector.end();
+  auto from_end = features_to.bow_container.feature_vector.end();
 
   std::vector<int> matches12(features_to.descriptors.size(), -1);
   int number_of_matches = 0;
@@ -65,9 +63,9 @@ void BowMatcher::Match(const DBoW2::FeatureVector &fv_from,
       from_it++;
 
     } else if (to_it->first < from_it->first) {
-      to_it = fv_to.lower_bound(from_it->first);
+      to_it = features_to.bow_container.feature_vector.lower_bound(from_it->first);
     } else {
-      from_it = fv_from.lower_bound(to_it->first);
+      from_it = features_to.bow_container.feature_vector.lower_bound(to_it->first);
     }
   }
 
