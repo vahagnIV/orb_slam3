@@ -15,58 +15,47 @@ void BowMatcher::Match(const Features &features_from,
                        const std::unordered_set<size_t> &mask_from,
                        const std::unordered_set<size_t> &mask_to,
                        std::vector<features::Match> &out_matches) const {
-  // We perform the matching over ORB that belong to the same vocabulary node (at a certain level)
-  auto to_it = features_to.bow_container.feature_vector.begin();
-  auto from_it = features_from.bow_container.feature_vector.begin();
-  auto to_end = features_to.bow_container.feature_vector.end();
-  auto from_end = features_to.bow_container.feature_vector.end();
 
   std::vector<int> matches12(features_to.descriptors.size(), -1);
   int number_of_matches = 0;
-  while (to_it != to_end && from_it != from_end) {
-    if (BelongToTheSameNode(from_it, to_it)) {
-      const std::vector<unsigned int> &to_indices = to_it->second;
-      const std::vector<unsigned int> &from_indices = from_it->second;
-      for (size_t i_to = 0; i_to < to_indices.size(); i_to++) {
-        const unsigned int real_idx_to = to_indices[i_to];
-        if (mask_to.find(real_idx_to) == mask_to.end())
+  for (auto joint_iterator = features_to.bow_container.Begin(features_from.bow_container);
+       joint_iterator != features_to.bow_container.End(); ++joint_iterator) {
+
+    const std::vector<unsigned int> &to_indices = joint_iterator.ToIdx();
+    const std::vector<unsigned int> &from_indices = joint_iterator.FromIdx();
+    for (size_t i_to = 0; i_to < to_indices.size(); i_to++) {
+      const unsigned int real_idx_to = to_indices[i_to];
+      if (mask_to.find(real_idx_to) == mask_to.end())
+        continue;
+
+      const auto &descriptor_to = features_to.descriptors.row(real_idx_to);
+
+      unsigned best_distance1 = 256, best_distance2 = 256;
+      int best_idx_from;
+
+      for (unsigned int real_idx_from : from_indices) {
+        if (mask_from.find(real_idx_from) != mask_from.end())
           continue;
 
-        const auto &descriptor_to = features_to.descriptors.row(real_idx_to);
+        const auto &descriptor_from = features_from.descriptors.row(real_idx_from);
 
-        unsigned best_distance1 = 256, best_distance2 = 256;
-        int best_idx_from;
+        const unsigned distance = DescriptorDistance(descriptor_to, descriptor_from);
 
-        for (unsigned int real_idx_from : from_indices) {
-          if (mask_from.find(real_idx_from) != mask_from.end())
-            continue;
-
-          const auto &descriptor_from = features_from.descriptors.row(real_idx_from);
-
-          const unsigned distance = DescriptorDistance(descriptor_to, descriptor_from);
-
-          if (distance < best_distance1) {
-            best_distance2 = best_distance1;
-            best_distance1 = distance;
-            best_idx_from = real_idx_from;
-          } else if (distance < best_distance2) {
-            best_distance2 = distance;
-          }
-        }
-        if (best_distance1 <= SNNMatcher::TH_LOW
-            && static_cast<float>(best_distance1) < nearest_neighbour_ratio_ * static_cast<float>(best_distance2)) {
-          matches12[real_idx_to] = best_idx_from;
-          ++number_of_matches;
+        if (distance < best_distance1) {
+          best_distance2 = best_distance1;
+          best_distance1 = distance;
+          best_idx_from = real_idx_from;
+        } else if (distance < best_distance2) {
+          best_distance2 = distance;
         }
       }
-      to_it++;
-      from_it++;
-
-    } else if (to_it->first < from_it->first) {
-      to_it = features_to.bow_container.feature_vector.lower_bound(from_it->first);
-    } else {
-      from_it = features_to.bow_container.feature_vector.lower_bound(to_it->first);
+      if (best_distance1 <= SNNMatcher::TH_LOW
+          && static_cast<float>(best_distance1) < nearest_neighbour_ratio_ * static_cast<float>(best_distance2)) {
+        matches12[real_idx_to] = best_idx_from;
+        ++number_of_matches;
+      }
     }
+
   }
 
   number_of_matches -= SNNMatcher::FilterByOrientation(matches12, features_to, features_from);
