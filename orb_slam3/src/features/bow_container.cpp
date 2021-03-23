@@ -5,12 +5,20 @@
 namespace orb_slam3 {
 namespace features {
 
+BowContainer::BowContainer() : end_iterator_(this->feature_vector, this->feature_vector) {
+  end_iterator_.to_it = this->feature_vector.end();
+}
+
 void BowContainer::ComputeBow(const vector<cv::Mat> &descriptors) {
   vocabulary->transform(descriptors, bow_vector, feature_vector, 4);
 }
+
 BowContainer::iterator::iterator(const DBoW2::FeatureVector &first, const DBoW2::FeatureVector &second)
-    : to_feature_vec_ptr_(&first), from_feature_vec_ptr_(&second), to_it(first.begin()), from_it(second.begin()) {
+    : to_feature_vec_ptr_(&first),
+      from_feature_vec_ptr_(&second),
+      to_it(first.begin()), from_it(second.begin()) {
   AdvanceEquilize();
+
 }
 
 BowContainer::iterator &BowContainer::iterator::operator++() {
@@ -72,9 +80,7 @@ BowContainer::iterator BowContainer::Begin(const BowContainer &other) const {
 }
 
 BowContainer::iterator BowContainer::End() const {
-  auto it = BowContainer::iterator(this->feature_vector, this->feature_vector);
-  it.to_it = this->feature_vector.end();
-  return it;
+  return end_iterator_;
 }
 
 }

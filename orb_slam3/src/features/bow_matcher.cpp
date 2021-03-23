@@ -67,10 +67,5 @@ void BowMatcher::Match(const Features &features_from,
 
 }
 
-bool BowMatcher::BelongToTheSameNode(DBoW2::FeatureVector::const_iterator &it1,
-                                     DBoW2::FeatureVector::const_iterator &it2) {
-  return it1->first == it2->first;
-}
-
 }
 }

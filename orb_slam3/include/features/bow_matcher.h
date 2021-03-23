@@ -27,8 +27,6 @@ class BowMatcher {
              const std::unordered_set<size_t> &mask_to,
              std::vector<Match> &out_matches) const;
  private:
-  static bool BelongToTheSameNode(DBoW2::FeatureVector::const_iterator &it1, DBoW2::FeatureVector::const_iterator &it2);
- private:
   precision_t nearest_neighbour_ratio_;
 
 };

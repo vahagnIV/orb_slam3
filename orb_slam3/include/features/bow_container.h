@@ -16,6 +16,7 @@ namespace orb_slam3 {
 namespace features {
 
 struct BowContainer {
+  BowContainer();
   DBoW2::FeatureVector feature_vector;
   DBoW2::BowVector bow_vector;
   BowVocabulary *vocabulary;
@@ -42,6 +43,8 @@ struct BowContainer {
   };
   iterator Begin(const BowContainer & other) const;
   iterator End() const;
+ private:
+  iterator end_iterator_;
 
 };
 
