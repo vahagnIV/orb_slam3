@@ -63,7 +63,7 @@ class Tracker {
 
  private:
   bool TrackReferenceKeyFrame();
-  void NotifyObservers(const std::shared_ptr<const FrameBase> & frame, MessageType type);
+  void NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type);
   
  private:  
   map::Atlas * atlas_;

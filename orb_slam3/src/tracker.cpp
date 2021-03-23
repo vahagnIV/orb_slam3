@@ -55,7 +55,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
 
 bool Tracker::TrackReferenceKeyFrame() { return false; }
 
-void Tracker::NotifyObservers(const std::shared_ptr<const FrameBase> &frame, MessageType type) {
+void Tracker::NotifyObservers(const std::shared_ptr<FrameBase> &frame, MessageType type) {
   for (PositionObserver *observer: observers_) {
     observer->GetUpdateQueue().enqueue(UpdateMessage{type:type, frame:frame});
   }

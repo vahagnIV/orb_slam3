@@ -17,7 +17,7 @@ enum MessageType{
 
 struct UpdateMessage{
   MessageType type;
-  std::shared_ptr<const frame::FrameBase> frame;
+  std::shared_ptr<frame::FrameBase> frame;
 };
 
 typedef moodycamel::BlockingConcurrentQueue<UpdateMessage> UpdateQueue;

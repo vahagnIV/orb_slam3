@@ -21,6 +21,7 @@ void LocalMapper::Run() {
       case MessageType::Initial:continue;
       case MessageType::Update: {
         std::cout << message.frame->Id() << std::endl;
+        CreateNewMapPoints(message.frame);
       }
     }
   }
