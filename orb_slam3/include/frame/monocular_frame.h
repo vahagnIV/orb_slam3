@@ -39,20 +39,19 @@ class MonocularFrame : public FrameBase {
   const FrameLink &GetFrameLink() const { return frame_link_; }
   void AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) override;
   void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) override;
-  void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
+  void OptimizePose(std::unordered_set<std::size_t> &out_inliers);
   void FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
  protected:
   void ComputeBow();
-
+  bool BaselineIsNotEnough(const MonocularFrame *other) const;
+  TMatrix33 ComputeRelativeFundamentalMatrix(const MonocularFrame *other) const;
 
  protected:
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;
-  features::BowVocabulary *vocabulary_;
   FrameLink frame_link_;
-  DBoW2::BowVector bow_vector_;
-  DBoW2::FeatureVector feature_vector_;
+
 };
 
 }

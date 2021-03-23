@@ -16,7 +16,7 @@ class FundamentalMatrixEstimator : protected TransfromationEstimatorBase {
  public:
   FundamentalMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
-  precision_t ComputeFundamentalReprojectionError(const TMatrix33 &homography,
+  precision_t ComputeFundamentalReprojectionError(const TMatrix33 &f,
                                                   const std::vector<HomogenousPoint> &kp1,
                                                   const std::vector<HomogenousPoint> &kp2,
                                                   const std::vector<features::Match> &matches,
@@ -35,6 +35,7 @@ class FundamentalMatrixEstimator : protected TransfromationEstimatorBase {
                                  TMatrix33 &out_fundamental,
                                  std::vector<bool> &out_inliers,
                                  precision_t &out_error) const;
+
 
   static TMatrix33 FromEuclideanTransformations(const TMatrix33 &R, const TVector3D &T);
 

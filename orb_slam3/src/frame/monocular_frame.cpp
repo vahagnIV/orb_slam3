@@ -13,6 +13,7 @@
 #include <constants.h>
 #include <features/second_nearest_neighbor_matcher.h>
 #include <geometry/two_view_reconstructor.h>
+#include <geometry/utils.h>
 #include <features/bow_matcher.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include <optimization/edges/se3_project_xyz_pose_only.h>
@@ -27,11 +28,11 @@ MonocularFrame::MonocularFrame(const TImageGray8U &image, TimePoint timestamp,
                                features::BowVocabulary *vocabulary) :
     FrameBase(timestamp),
     features_(camera->Width(), camera->Height()),
-    camera_(camera),
-    vocabulary_(vocabulary) {
+    camera_(camera) {
   feature_extractor->Extract(image, features_);
   features_.UndistortKeyPoints(camera_);
   features_.AssignFeaturesToGrid();
+  features_.SetVocabulary(vocabulary);
 }
 
 bool MonocularFrame::IsValid() const {
@@ -173,9 +174,9 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
                  reference_kf->map_points_.end(),
                  std::inserter(rf_inliers, rf_inliers.begin()),
                  [](decltype(map_points_)::value_type &it) { return it.first; });
-  bow_matcher.Match(feature_vector_,
+  bow_matcher.Match(features_.bow_container.feature_vector,
                     features_,
-                    reference_kf->feature_vector_,
+                    reference_kf->features_.bow_container.feature_vector,
                     reference_kf->features_,
                     inliers,
                     rf_inliers,
@@ -200,17 +201,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
 }
 
 void MonocularFrame::ComputeBow() {
-  if (!feature_vector_.empty() && !bow_vector_.empty())
-    return;
-  std::vector<cv::Mat> current_descriptors;
-  current_descriptors.reserve(features_.descriptors.rows());
-  for (int i = 0; i < features_.descriptors.rows(); ++i) {
-    current_descriptors.push_back(cv::Mat(1,
-                                          features_.descriptors.cols(),
-                                          cv::DataType<decltype(features_.descriptors)::Scalar>::type,
-                                          (void *) features_.descriptors.row(i).data()));
-  }
-  vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);
+  features_.ComputeBow();
 }
 
 void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) {
@@ -293,14 +284,37 @@ precision_t MonocularFrame::ComputeMedianDepth() const {
   return depths[(depths.size() - 1) / 2];
 }
 
+bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame *other) const {
+  TVector3D baseline = pose_.estimate().translation() - other->pose_.estimate().translation();
+  precision_t baseline_length = baseline.norm();
+  precision_t frame_median_depth = other->ComputeMedianDepth();
+  return baseline_length / frame_median_depth < 1e-2;
+}
+
+TMatrix33 MonocularFrame::ComputeRelativeFundamentalMatrix(const MonocularFrame *other) const {
+  TMatrix33 R;
+  TVector3D T;
+  geometry::utils::ComputeRelativeTransformation(pose_.estimate().rotation().toRotationMatrix(),
+                                                 pose_.estimate().translation(),
+                                                 other->pose_.estimate().rotation().toRotationMatrix(),
+                                                 other->pose_.estimate().translation(),
+                                                 R,
+                                                 T);
+
+  return geometry::FundamentalMatrixEstimator::FromEuclideanTransformations(R, T);
+}
+
 void MonocularFrame::FindNewMapPoints() {
   std::vector<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
-  for(frame::FrameBase * frame : neighbour_keyframes){
-    TVector3D baseline = pose_.estimate().translation() - frame->GetPose()->estimate().translation();
-    precision_t baseline_length = baseline.norm();
-    precision_t frame_median_depth = frame->ComputeMedianDepth();
-    if(baseline_length / frame_median_depth < 1e-2)
+  for (frame::FrameBase *frame : neighbour_keyframes) {
+    if (frame->Type() != Type())
       continue;
+    auto keyframe = dynamic_cast<MonocularFrame *>(frame);
+    if (BaselineIsNotEnough(keyframe))
+      continue;
+    TMatrix33 F12 = ComputeRelativeFundamentalMatrix(keyframe);
+    precision_t th = 0.6f;
+    features::SNNMatcher matcher(100, th, false);
   }
 
 }

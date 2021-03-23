@@ -15,13 +15,12 @@ Features::Features(size_t image_width, size_t image_height)
 
 }
 
-void Features::ListFeaturesInArea(const precision_t & x,
-                                  const precision_t & y,
-                                  const size_t & window_size,
-                                  const precision_t & minLevel,
-                                  const precision_t & maxLevel,
-                                  std::vector<size_t> & out_idx) const {
-
+void Features::ListFeaturesInArea(const precision_t &x,
+                                  const precision_t &y,
+                                  const size_t &window_size,
+                                  const precision_t &minLevel,
+                                  const precision_t &maxLevel,
+                                  std::vector<size_t> &out_idx) const {
 
   const precision_t min_X = 0;
   const precision_t min_Y = 0;
@@ -64,12 +63,12 @@ void Features::ListFeaturesInArea(const precision_t & x,
 
   for (int ix = nMinCellX; ix <= nMaxCellX; ix++) {
     for (int iy = nMinCellY; iy <= nMaxCellY; iy++) {
-      const std::vector<size_t> & vCell = grid[ix][iy];
+      const std::vector<size_t> &vCell = grid[ix][iy];
       if (vCell.empty())
         continue;
 
       for (size_t j = 0, jend = vCell.size(); j < jend; j++) {
-        const KeyPoint & kpUn = keypoints[vCell[j]];
+        const KeyPoint &kpUn = keypoints[vCell[j]];
 
         if (bCheckLevels) {
           if (kpUn.level < minLevel)
@@ -95,7 +94,7 @@ void Features::AssignFeaturesToGrid() {
   const precision_t min_Y = 0;
 
   for (size_t i = 0; i < keypoints.size(); i++) {
-    const TPoint2D & kp = keypoints[i].pt;
+    const TPoint2D &kp = keypoints[i].pt;
     size_t pos_X, pos_Y;
     if (PosInGrid(kp, min_X, min_Y, pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);
@@ -103,11 +102,11 @@ void Features::AssignFeaturesToGrid() {
   }
 }
 
-bool Features::PosInGrid(const TPoint2D & kp,
-                         const precision_t & min_X,
-                         const precision_t & min_Y,
-                         size_t & posX,
-                         size_t & posY) const {
+bool Features::PosInGrid(const TPoint2D &kp,
+                         const precision_t &min_X,
+                         const precision_t &min_Y,
+                         size_t &posX,
+                         size_t &posY) const {
   if (kp[0] < min_X || kp[1] < min_Y)
     return false;
 
@@ -119,6 +118,30 @@ bool Features::PosInGrid(const TPoint2D & kp,
     return false;
 
   return true;
+}
+
+void Features::UndistortKeyPoints(const shared_ptr<camera::MonocularCamera> &camera) {
+  undistorted_keypoints.resize(keypoints.size());
+  for (size_t i = 0; i < undistorted_keypoints.size(); ++i) {
+    camera->UnprojectAndUndistort(keypoints[i].pt, undistorted_keypoints[i]);
+  }
+}
+void Features::SetVocabulary(BowVocabulary *vocabulary) {
+  bow_container.vocabulary = vocabulary;
+}
+
+void Features::ComputeBow() {
+  if (!bow_container.feature_vector.empty() && !bow_container.bow_vector.empty())
+    return;
+  std::vector<cv::Mat> current_descriptors;
+  current_descriptors.reserve(descriptors.rows());
+  for (int i = 0; i < descriptors.rows(); ++i) {
+    current_descriptors.push_back(cv::Mat(1,
+                                          descriptors.cols(),
+                                          cv::DataType<decltype(descriptors)::Scalar>::type,
+                                          (void *) descriptors.row(i).data()));
+  }
+  bow_container.ComputeBow(current_descriptors);
 }
 
 }

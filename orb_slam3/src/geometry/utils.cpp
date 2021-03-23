@@ -16,6 +16,16 @@ TMatrix33 SkewSymmetricMatrix(const TVector3D &vector) {
   return result;
 }
 
+void ComputeRelativeTransformation(const TMatrix33 &R_to,
+                                   const TVector3D &T_to,
+                                   const TMatrix33 &R_from,
+                                   const TVector3D &T_from,
+                                   TMatrix33 &out_R,
+                                   TVector3D &out_T) {
+  out_R = R_to * R_from.transpose();
+  out_T = -out_R * T_from + T_to;
+}
+
 }
 }
 }

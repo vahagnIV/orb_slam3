@@ -16,6 +16,7 @@
 #include <constants.h>
 #include <camera/monocular_camera.h>
 #include "key_point.h"
+#include <features/bow_container.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -32,30 +33,27 @@ class Features {
   std::vector<KeyPoint> keypoints;
   std::vector<HomogenousPoint> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
+  BowContainer bow_container;
 
+  void SetVocabulary(BowVocabulary *vocabulary);
+  void ComputeBow();
   size_t Size() const { return keypoints.size(); }
-
-  void ListFeaturesInArea(const precision_t & x,
-                          const precision_t & y,
-                          const size_t & window_size,
-                          const precision_t & minLevel,
-                          const precision_t & maxLevel,
-                          std::vector<size_t> & out_idx) const;
+  void ListFeaturesInArea(const precision_t &x,
+                          const precision_t &y,
+                          const size_t &window_size,
+                          const precision_t &minLevel,
+                          const precision_t &maxLevel,
+                          std::vector<size_t> &out_idx) const;
 
   void AssignFeaturesToGrid();
 
-  void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera) {
-    undistorted_keypoints.resize(keypoints.size());
-    for (size_t i = 0; i < undistorted_keypoints.size(); ++i) {
-      camera->UnprojectAndUndistort(keypoints[i].pt, undistorted_keypoints[i]);
-    }
-  }
+  void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> &camera);
  private:
-  bool PosInGrid(const TPoint2D & kp,
-                 const precision_t & min_X,
-                 const precision_t & min_Y,
-                 size_t & posX,
-                 size_t & posY) const;
+  bool PosInGrid(const TPoint2D &kp,
+                 const precision_t &min_X,
+                 const precision_t &min_Y,
+                 size_t &posX,
+                 size_t &posY) const;
 
  private:
   const size_t image_width_;
