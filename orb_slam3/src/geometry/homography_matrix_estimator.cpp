@@ -43,9 +43,8 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 & homograph
   precision_t best_parallax = -1;
 
 //  std::vector<bool> original_inliers = out_inliers;
-  for (size_t i = 0; i < 8; ++i) {
+  for (const auto & sol : solution) {
     std::vector<TPoint3D> tmp_triangulated;
-    const Solution & sol = solution[i];
     std::vector<bool> tmp_inliers(matches.size(), true);
 //    std::vector<bool> tmp_inliers = original_inliers;
     precision_t parallax;
@@ -129,8 +128,7 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<Homog
   out_score = std::numeric_limits<precision_t>::min();
   TMatrix33 tmp_homography;
 
-  for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const std::vector<size_t> & good_matches_rnd = good_match_random_idx[i];
+  for (const auto & good_matches_rnd : good_match_random_idx) {
     std::vector<bool> tmp_inliers(matches.size());
     std::fill(tmp_inliers.begin(), tmp_inliers.end(), true);
     FindHomographyMatrix(points_to, points_from, matches, good_matches_rnd, tmp_homography);
@@ -295,7 +293,7 @@ size_t HomographyMatrixEstimator::CheckRT(const Solution & solution,
 }
 
 precision_t HomographyMatrixEstimator::ComputeTriangulatedReprojectionError(const TPoint3D & point,
-                                                                            const HomogenousPoint & original_point) const {
+                                                                            const HomogenousPoint & original_point) {
   precision_t z2_inv = 1. / point[2];
   TPoint2D projected{point[0] * z2_inv, point[1] * z2_inv};
 
@@ -304,7 +302,7 @@ precision_t HomographyMatrixEstimator::ComputeTriangulatedReprojectionError(cons
 }
 
 precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
-                                                       const Solution & solution) const {
+                                                       const Solution & solution) {
   const TVector3D vec1 = point;
   const TVector3D vec2 = point - (solution.T.transpose() * solution.R).transpose();
   return vec1.dot(vec2) / vec1.norm() / vec2.norm();
@@ -342,7 +340,7 @@ precision_t HomographyMatrixEstimator::ComputeParallax(const TPoint3D & point,
 bool HomographyMatrixEstimator::Triangulate(const Solution & sol,
                                             const HomogenousPoint & point_from,
                                             const HomogenousPoint & point_to,
-                                            TPoint3D & out_trinagulated) const {
+                                            TPoint3D & out_trinagulated) {
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
 
   A << 0, -1, point_from[1], 0,

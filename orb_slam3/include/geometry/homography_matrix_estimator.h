@@ -68,10 +68,10 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                  precision_t & out_parallax,
                  std::vector<TPoint3D> & out_triangulated) const;
 
-  bool Triangulate(const Solution & sol,
+  static bool Triangulate(const Solution & sol,
                    const HomogenousPoint & point_from,
                    const HomogenousPoint & point_to,
-                   TPoint3D & out_trinagulated) const;
+                   TPoint3D & out_trinagulated) ;
  private:
 
   static void FillSolutionsForPositiveD(precision_t d1,
@@ -91,9 +91,9 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                  precision_t s) noexcept;
 
 
-  precision_t ComputeParallax(const TPoint3D & point, const Solution & solution) const;
+  static precision_t ComputeParallax(const TPoint3D & point, const Solution & solution) ;
 
-  precision_t ComputeTriangulatedReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) const;
+  static precision_t ComputeTriangulatedReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) ;
 
   static const precision_t HOMOGRAPHY_SCORE;
   static const precision_t PARALLAX_THRESHOLD;
