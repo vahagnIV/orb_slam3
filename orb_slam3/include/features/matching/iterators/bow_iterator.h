@@ -6,12 +6,12 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_ITERATORS_BOW_ITERATOR_H_
 
 #include <unordered_set>
-
-#include "idescriptor_iterator.h"
+#include <features/matching/iterators/idescriptor_iterator.h>
 #include <features/features.h>
 
 namespace orb_slam3 {
 namespace features {
+namespace matching {
 namespace iterators {
 
 class FeatureVectorTraverseIterator {
@@ -27,7 +27,7 @@ class FeatureVectorTraverseIterator {
   FeatureVectorTraverseIterator() = default;
  private:
   std::vector<unsigned>::const_iterator vector_it_;
-  const std::vector<unsigned> * vector_to_iterate_ptr_;
+  const std::vector<unsigned> *vector_to_iterate_ptr_;
 };
 
 class BowIterator : public IJointDescriptorIterator<FeatureVectorTraverseIterator> {
@@ -52,6 +52,7 @@ class BowIterator : public IJointDescriptorIterator<FeatureVectorTraverseIterato
   FeatureVectorTraverseIterator from_traversal_iterator_end_;
 };
 
+}
 }
 }
 }

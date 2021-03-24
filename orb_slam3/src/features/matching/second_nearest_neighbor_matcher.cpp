@@ -3,13 +3,13 @@
 //
 
 // == orb-slam3 ===
-#include "features/second_nearest_neighbor_matcher.h"
-#include "features/feature_utils.h"
-
-#include <features/iterators/bow_iterator.h>
+#include <features/matching/second_nearest_neighbor_matcher.h>
+#include <features/matching/iterators/bow_iterator.h>
+#include <features/feature_utils.h>
 
 namespace orb_slam3 {
 namespace features {
+namespace matching {
 
 const int SNNMatcher::TH_HIGH = 100;
 const unsigned SNNMatcher::TH_LOW = 50;
@@ -267,7 +267,7 @@ template<typename IteratorType>
 void SNNMatcher::MatchWithIterator(const DescriptorSet &descriptors_to,
                                    const DescriptorSet &descriptors_from,
                                    vector<features::Match> &out_matches,
-                                   IJointDescriptorIterator<IteratorType> *iterator) {
+                                   iterators::IJointDescriptorIterator<IteratorType> *iterator) {
   vector<int> matches;
   size_t nmatches = MatchWithIteratorInternal(descriptors_to, descriptors_from, matches, iterator);
   out_matches.reserve(nmatches);
@@ -281,7 +281,7 @@ template<typename IteratorType>
 size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to,
                                              const DescriptorSet &descriptors_from,
                                              std::vector<int> &out_matches,
-                                             IJointDescriptorIterator<IteratorType> *iterator) {
+                                             iterators::IJointDescriptorIterator<IteratorType> *iterator) {
   size_t number_of_matches = 0;
   out_matches.resize(descriptors_to.rows());
   std::vector<unsigned> best_distances_from(descriptors_from.rows(), std::numeric_limits<unsigned>::max());
@@ -318,12 +318,13 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to
 template void SNNMatcher::MatchWithIterator<std::vector<size_t>::iterator>(const DescriptorSet &descriptors_to,
                                                                            const DescriptorSet &descriptors_from,
                                                                            vector<features::Match> &out_matches,
-                                                                           IJointDescriptorIterator<std::vector<size_t>::iterator> *iterator);
+                                                                           iterators::IJointDescriptorIterator<std::vector<size_t>::iterator> *iterator);
 
 template void SNNMatcher::MatchWithIterator<iterators::FeatureVectorTraverseIterator>(const DescriptorSet &descriptors_to,
-                                                                           const DescriptorSet &descriptors_from,
-                                                                           vector<features::Match> &out_matches,
-                                                                           IJointDescriptorIterator<iterators::FeatureVectorTraverseIterator> *iterator);
+                                                                                      const DescriptorSet &descriptors_from,
+                                                                                      vector<features::Match> &out_matches,
+                                                                                      iterators::IJointDescriptorIterator<iterators::FeatureVectorTraverseIterator> *iterator);
 
+}
 }
 }

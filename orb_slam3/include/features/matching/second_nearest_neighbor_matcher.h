@@ -9,11 +9,12 @@
 #include <unordered_set>
 
 // == orb-slam3 ===
-#include <features/imatcher.h>
-#include <features/iterators/idescriptor_iterator.h>
+#include <features/matching/imatcher.h>
+#include <features/matching/iterators/idescriptor_iterator.h>
 
 namespace orb_slam3 {
 namespace features {
+namespace matching {
 
 class SNNMatcher : public IMatcher {
  public:
@@ -22,14 +23,14 @@ class SNNMatcher : public IMatcher {
 
   template<typename IteratorType>
   void MatchWithIterator(const DescriptorSet &descriptors_to,
-                                 const DescriptorSet &descriptors_from,
-                                 std::vector<features::Match> &out_matches,
-                                 IJointDescriptorIterator<IteratorType> *iterator);
+                         const DescriptorSet &descriptors_from,
+                         std::vector<features::Match> &out_matches,
+                         iterators::IJointDescriptorIterator<IteratorType> *iterator);
   template<typename IteratorType>
   size_t MatchWithIteratorInternal(const DescriptorSet &descriptors_to,
-                                 const DescriptorSet &descriptors_from,
-                                 std::vector<int> &out_matches,
-                                 IJointDescriptorIterator<IteratorType> *iterator);
+                                   const DescriptorSet &descriptors_from,
+                                   std::vector<int> &out_matches,
+                                   iterators::IJointDescriptorIterator<IteratorType> *iterator);
 
   /*!
  * Matches descriptors using Lowe's second nearest neighbour algorithm
@@ -97,6 +98,7 @@ class SNNMatcher : public IMatcher {
 
 };
 
+}
 }
 }
 

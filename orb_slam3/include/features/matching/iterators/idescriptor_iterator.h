@@ -9,6 +9,8 @@
 
 namespace orb_slam3 {
 namespace features {
+namespace matching {
+namespace iterators {
 
 template<typename IteratorType>
 class IJointDescriptorIterator {
@@ -22,5 +24,6 @@ class IJointDescriptorIterator {
 
 }
 }
-
+}
+}
 #endif //ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_I_DESCRIPTOR_ITERATOR_H_

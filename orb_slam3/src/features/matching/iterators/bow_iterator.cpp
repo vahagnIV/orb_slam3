@@ -2,10 +2,11 @@
 // Created by vahagn on 24/03/2021.
 //
 
-#include "features/iterators/bow_iterator.h"
+#include "features/matching/iterators/bow_iterator.h"
 
 namespace orb_slam3 {
 namespace features {
+namespace matching {
 namespace iterators {
 
 FeatureVectorTraverseIterator &FeatureVectorTraverseIterator::operator++() {
@@ -71,7 +72,7 @@ bool BowIterator::IsValid() {
 
 void BowIterator::AdvanceEqualizeNodes() {
   while (true) {
-    if (!IsValid() ) {
+    if (!IsValid()) {
       break;
     }
 
@@ -92,6 +93,7 @@ void BowIterator::AdvanceEqualizeNodes() {
   }
 }
 
+}
 }
 }
 }

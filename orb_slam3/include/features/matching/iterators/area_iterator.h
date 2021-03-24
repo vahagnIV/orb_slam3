@@ -10,6 +10,7 @@
 
 namespace orb_slam3 {
 namespace features {
+namespace matching {
 namespace iterators {
 
 class AreaIterator : public IJointDescriptorIterator<std::vector<std::size_t>::iterator> {
@@ -23,13 +24,14 @@ class AreaIterator : public IJointDescriptorIterator<std::vector<std::size_t>::i
  private:
   size_t to_idx_;
   std::vector<std::size_t> selected_features_;
-  const Features * features_from_;
-  const Features * features_to_;
+  const Features *features_from_;
+  const Features *features_to_;
   bool is_valid_;
   size_t window_size_;
 
 };
 
+}
 }
 }
 }
