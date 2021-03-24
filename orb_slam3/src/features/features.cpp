@@ -21,6 +21,7 @@ void Features::ListFeaturesInArea(const precision_t &x,
                                   const precision_t &minLevel,
                                   const precision_t &maxLevel,
                                   std::vector<size_t> &out_idx) const {
+  out_idx.clear();
 
   const precision_t min_X = 0;
   const precision_t min_Y = 0;

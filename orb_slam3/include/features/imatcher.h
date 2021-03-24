@@ -16,7 +16,8 @@ class IMatcher {
  public:
   virtual void Match(const features::Features & features1,
                     const features::Features & features2,
-                    std::vector<Match> & out_matches) const = 0;
+                    std::vector<Match> & out_matches,
+                    size_t window_size) const = 0;
 
   virtual ~IMatcher() = default;
 

@@ -6,6 +6,8 @@
 #include "features/second_nearest_neighbor_matcher.h"
 #include "features/feature_utils.h"
 
+#include <features/iterators/bow_iterator.h>
+
 namespace orb_slam3 {
 namespace features {
 
@@ -13,18 +15,17 @@ const int SNNMatcher::TH_HIGH = 100;
 const unsigned SNNMatcher::TH_LOW = 50;
 const int SNNMatcher::HISTO_LENGTH = 30;
 
-SNNMatcher::SNNMatcher(const size_t window_size,
-                       const precision_t nearest_neighbour_ratio,
-                       const bool check_orientation) : window_size_(window_size),
-                                                       nearest_neighbour_ratio_(nearest_neighbour_ratio),
+SNNMatcher::SNNMatcher(const precision_t nearest_neighbour_ratio,
+                       const bool check_orientation) : nearest_neighbour_ratio_(nearest_neighbour_ratio),
                                                        check_orientation_(check_orientation) {
 }
 
 void SNNMatcher::Match(const features::Features &features_to,
                        const features::Features &features_from,
-                       std::vector<features::Match> &out_matches) const {
+                       std::vector<features::Match> &out_matches,
+                       size_t window_size) const {
   std::vector<int> matches12;
-  int matches = Match(features_to, features_from, matches12);
+  int matches = SNNMatch(features_to, features_from, matches12, window_size);
   out_matches.reserve(matches);
   for (size_t i = 0; i < matches12.size(); ++i) {
     if (matches12[i] >= 0)
@@ -32,9 +33,10 @@ void SNNMatcher::Match(const features::Features &features_to,
   }
 }
 
-int SNNMatcher::Match(const features::Features &features1,
-                      const features::Features &features2,
-                      std::vector<int> &out_matches_12) const {
+int SNNMatcher::SNNMatch(const features::Features &features1,
+                         const features::Features &features2,
+                         std::vector<int> &out_matches_12,
+                         size_t window_size) const {
 
   int number_of_matches = 0;
   out_matches_12.resize(features1.Size(), -1);
@@ -49,12 +51,17 @@ int SNNMatcher::Match(const features::Features &features1,
       continue;
 
     std::vector<size_t> f2_indices_in_window;
-    features2.ListFeaturesInArea(kp1.X(),
-                                 kp1.Y(),
-                                 window_size_,
-                                 level1,
-                                 level1,
-                                 f2_indices_in_window);
+    if (window_size != 0) {
+      features2.ListFeaturesInArea(kp1.X(),
+                                   kp1.Y(),
+                                   window_size,
+                                   level1,
+                                   level1,
+                                   f2_indices_in_window);
+    } else {
+      f2_indices_in_window.resize(features2.Size());
+      std::iota(f2_indices_in_window.begin(), f2_indices_in_window.end(), 0);
+    }
 
     if (f2_indices_in_window.empty())
       continue;
@@ -63,7 +70,7 @@ int SNNMatcher::Match(const features::Features &features1,
     int &best_idx2 = out_matches_12[i1];
     unsigned distance;
 
-    Match(d1, features2.descriptors, f2_indices_in_window, best_idx2, distance);
+    FindDescriptorInSet(d1, features2.descriptors, f2_indices_in_window, best_idx2, distance);
     if (best_idx2 < 0)
       continue;
     if (matched_distance[best_idx2] < distance)
@@ -81,11 +88,11 @@ int SNNMatcher::Match(const features::Features &features1,
 
 }
 
-void SNNMatcher::Match(const DescriptorType &d1,
-                       const DescriptorSet &descriptors2,
-                       const std::vector<size_t> &allowed_inidces,
-                       int &out_idx2,
-                       unsigned &dist) const {
+void SNNMatcher::FindDescriptorInSet(const DescriptorType &d1,
+                                     const DescriptorSet &descriptors2,
+                                     const std::vector<size_t> &allowed_inidces,
+                                     int &out_idx2,
+                                     unsigned &dist) const {
 
   unsigned best_distance = std::numeric_limits<unsigned>::max();
   unsigned best_distance2 = std::numeric_limits<unsigned>::max();
@@ -198,6 +205,125 @@ int SNNMatcher::FilterByOrientation(std::vector<int> &inout_matches_12,
   }
   return number_of_discarded_matches;
 }
+
+void SNNMatcher::MatchByBoW(const Features &features_from,
+                            const Features &features_to,
+                            const std::unordered_set<size_t> &mask_from,
+                            const std::unordered_set<size_t> &mask_to,
+                            std::vector<features::Match> &out_matches) const {
+
+  std::vector<int> matches12(features_to.descriptors.size(), -1);
+  int number_of_matches = 0;
+  for (auto joint_iterator = features_to.bow_container.Begin(features_from.bow_container);
+       joint_iterator != features_to.bow_container.End(); ++joint_iterator) {
+
+    const std::vector<unsigned int> &to_indices = joint_iterator.ToIdx();
+    const std::vector<unsigned int> &from_indices = joint_iterator.FromIdx();
+    for (size_t i_to = 0; i_to < to_indices.size(); i_to++) {
+      const unsigned int real_idx_to = to_indices[i_to];
+      if (mask_to.find(real_idx_to) == mask_to.end())
+        continue;
+
+      const auto &descriptor_to = features_to.descriptors.row(real_idx_to);
+
+      unsigned best_distance1 = 256, best_distance2 = 256;
+      int best_idx_from;
+
+      for (unsigned int real_idx_from : from_indices) {
+        if (mask_from.find(real_idx_from) != mask_from.end())
+          continue;
+
+        const auto &descriptor_from = features_from.descriptors.row(real_idx_from);
+
+        const unsigned distance = DescriptorDistance(descriptor_to, descriptor_from);
+
+        if (distance < best_distance1) {
+          best_distance2 = best_distance1;
+          best_distance1 = distance;
+          best_idx_from = real_idx_from;
+        } else if (distance < best_distance2) {
+          best_distance2 = distance;
+        }
+      }
+      if (best_distance1 <= TH_LOW
+          && static_cast<float>(best_distance1) < nearest_neighbour_ratio_ * static_cast<float>(best_distance2)) {
+        matches12[real_idx_to] = best_idx_from;
+        ++number_of_matches;
+      }
+    }
+
+  }
+
+  number_of_matches -= FilterByOrientation(matches12, features_to, features_from);
+  out_matches.reserve(number_of_matches);
+  for (size_t i_to = 0; i_to < features_to.keypoints.size(); ++i_to) {
+    if (matches12[i_to] > 0)
+      out_matches.emplace_back(i_to, matches12[i_to]);
+  }
+
+}
+
+template<typename IteratorType>
+void SNNMatcher::MatchWithIterator(const DescriptorSet &descriptors_to,
+                                   const DescriptorSet &descriptors_from,
+                                   vector<features::Match> &out_matches,
+                                   IJointDescriptorIterator<IteratorType> *iterator) {
+  vector<int> matches;
+  size_t nmatches = MatchWithIteratorInternal(descriptors_to, descriptors_from, matches, iterator);
+  out_matches.reserve(nmatches);
+  for (int i = 0; i < descriptors_to.rows(); ++i) {
+    if (matches[i] >= 0)
+      out_matches.emplace_back(i, matches[i]);
+  }
+}
+
+template<typename IteratorType>
+size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to,
+                                             const DescriptorSet &descriptors_from,
+                                             std::vector<int> &out_matches,
+                                             IJointDescriptorIterator<IteratorType> *iterator) {
+  size_t number_of_matches = 0;
+  out_matches.resize(descriptors_to.rows());
+  std::vector<unsigned> best_distances_from(descriptors_from.rows(), std::numeric_limits<unsigned>::max());
+  std::vector<int> matches_from_to(descriptors_from.size(), -1);
+  for (; iterator->IsValid(); ++(*iterator)) {
+    size_t to_id = iterator->IdxTo(), best_from_idx;
+    unsigned best_distance = std::numeric_limits<unsigned>::max(),
+        best_distance2 = std::numeric_limits<unsigned>::max();
+    for (size_t idx_from: *iterator) {
+      unsigned dist = DescriptorDistance(descriptors_to.row(to_id), descriptors_from.row(idx_from));
+      if (dist < best_distance) {
+        best_distance2 = best_distance;
+        best_distance = dist;
+        best_from_idx = idx_from;
+      } else if (dist < best_distance2) {
+        best_distance2 = dist;
+      }
+    }
+    if (best_distance <= TH_LOW && best_distance < (float) best_distance2 * nearest_neighbour_ratio_) {
+      if (best_distance2 > best_distances_from[best_from_idx])
+        continue;
+      if (matches_from_to[best_from_idx] > 0)
+        out_matches[matches_from_to[best_from_idx]] = -1;
+      ++number_of_matches;
+      out_matches[to_id] = best_from_idx;
+    } else
+      out_matches[to_id] = -1;
+  }
+//  if(check_orientation_)
+//    return number_of_matches - FilterByOrientation(out_matches, )
+  return number_of_matches;
+}
+
+template void SNNMatcher::MatchWithIterator<std::vector<size_t>::iterator>(const DescriptorSet &descriptors_to,
+                                                                           const DescriptorSet &descriptors_from,
+                                                                           vector<features::Match> &out_matches,
+                                                                           IJointDescriptorIterator<std::vector<size_t>::iterator> *iterator);
+
+template void SNNMatcher::MatchWithIterator<iterators::FeatureVectorTraverseIterator>(const DescriptorSet &descriptors_to,
+                                                                           const DescriptorSet &descriptors_from,
+                                                                           vector<features::Match> &out_matches,
+                                                                           IJointDescriptorIterator<iterators::FeatureVectorTraverseIterator> *iterator);
 
 }
 }

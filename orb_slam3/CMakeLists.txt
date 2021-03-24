@@ -36,8 +36,9 @@ add_library(orbslam SHARED
         src/features/features.cpp
         src/features/second_nearest_neighbor_matcher.cpp
         src/features/feature_utils.cpp
-        src/features/bow_matcher.cpp
         src/features/bow_container.cpp
+        src/features/iterators/area_iterator.cpp
+        src/features/iterators/bow_iterator.cpp
 
         src/map/map_point.cpp
         src/map/map.cpp
@@ -92,8 +93,10 @@ add_library(orbslam SHARED
         include/features/feature_utils.h
         include/frame/iframe_database.h
         include/features/bow_vocabulary.h
-        include/features/bow_matcher.h
         include/features/bow_container.h
+        include/features/iterators/idescriptor_iterator.h
+        include/features/iterators/area_iterator.h
+        include/features/iterators/bow_iterator.h
 
         include/map/map_point.h
         include/map/atlas.h

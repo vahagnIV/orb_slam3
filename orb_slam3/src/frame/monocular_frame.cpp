@@ -12,9 +12,10 @@
 #include <frame/monocular_frame.h>
 #include <constants.h>
 #include <features/second_nearest_neighbor_matcher.h>
+#include <features/iterators/area_iterator.h>
+#include <features/iterators/bow_iterator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <geometry/utils.h>
-#include <features/bow_matcher.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include <optimization/edges/se3_project_xyz_pose_only.h>
 #include <optimization/bundle_adjustment.h>
@@ -43,10 +44,15 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::SNNMatcher matcher(100,
-                               0.9,
+  features::SNNMatcher matcher(0.9,
                                true);
-  matcher.Match(features_, from_frame->features_, frame_link_.matches);
+  features::iterators::AreaIterator area_iterator(from_frame->features_, features_, 100);
+  matcher.MatchWithIterator(features_.descriptors,
+                            from_frame->features_.descriptors,
+                            frame_link_.matches,
+                            &area_iterator);
+
+  matcher.Match(features_, from_frame->features_, frame_link_.matches, 100);
   if (frame_link_.matches.size() < 100)
     return false;
 
@@ -163,9 +169,14 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::BowMatcher bow_matcher(0.7);
+  features::SNNMatcher bow_matcher(0.7, true);
   std::vector<features::Match> matches;
-  std::unordered_set<std::size_t> inliers, rf_inliers;
+  features::iterators::BowIterator
+      bow_it(features_.bow_container.feature_vector, reference_kf->features_.bow_container.feature_vector);
+  bow_matcher.MatchWithIterator(features_.descriptors, reference_kf->features_.descriptors, matches, & bow_it);
+
+  // Initialize inlier sets
+  /*std::unordered_set<std::size_t> inliers, rf_inliers;
   std::transform(map_points_.begin(),
                  map_points_.end(),
                  std::inserter(inliers, inliers.begin()),
@@ -174,11 +185,11 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
                  reference_kf->map_points_.end(),
                  std::inserter(rf_inliers, rf_inliers.begin()),
                  [](decltype(map_points_)::value_type &it) { return it.first; });
-  bow_matcher.Match(features_,
-                    reference_kf->features_,
-                    inliers,
-                    rf_inliers,
-                    matches);
+  bow_matcher.MatchByBoW(features_,
+                         reference_kf->features_,
+                         inliers,
+                         rf_inliers,
+                         matches);*/
   if (matches.size() < 15)
     return false;
 
@@ -187,7 +198,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     map_points_[match.from_idx] = map_point;
   }
   SetPosition(*(reference_kf->GetPose()));
-  OptimizePose(inliers);
+  /*OptimizePose(inliers);
   for (const auto &match: matches) {
     if (inliers.find(match.from_idx) != inliers.end()) {
       map_points_[match.from_idx]->AddObservation(this, match.from_idx);
@@ -195,7 +206,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     } else
       map_points_.erase(match.from_idx);
   }
-  return inliers.size() > 3u;
+  return inliers.size() > 3u;*/
 }
 
 void MonocularFrame::ComputeBow() {
@@ -312,7 +323,8 @@ void MonocularFrame::FindNewMapPoints() {
       continue;
     TMatrix33 F12 = ComputeRelativeFundamentalMatrix(keyframe);
     precision_t th = 0.6f;
-    features::SNNMatcher matcher(100, th, false);
+    features::SNNMatcher matcher(th, false);
+
   }
 
 }
