@@ -3,7 +3,7 @@
 //
 
 // == stl ===
-#include <math.h>
+#include <cmath>
 
 // == orb-slam3 ===
 #include <geometry/homography_matrix_estimator.h>
@@ -183,7 +183,7 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
                                                      const std::vector<HomogenousPoint> & points_from,
                                                      const std::vector<features::Match> & matches,
                                                      const std::vector<size_t> & good_match_random_idx,
-                                                     TMatrix33 & out_homography) const {
+                                                     TMatrix33 & out_homography) {
 
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size() * 2, Eigen::NoChange);

@@ -20,7 +20,20 @@ namespace features {
 
 class BowMatcher {
  public:
+  /*!
+   * Constructor
+   * @param nearest_neighbour_ratio The ratio threshold for nearest neighbour matching
+   */
   BowMatcher(precision_t nearest_neighbour_ratio) : nearest_neighbour_ratio_(nearest_neighbour_ratio) {}
+
+  /*!
+   * Matches using Bag of Words.
+   * @param features_from Features container for the first images.
+   * @param features_to Features container for the second images.
+   * @param mask_from Mask for the first container. The feature should be matched if its id exists in mask_from.
+   * @param mask_to Negative mask for the second container. The feature should NOT be matched if its id is in mask_to.
+   * @param out_matches The output vector of matches.
+   */
   void Match(const Features &features_from,
              const Features &features_to,
              const std::unordered_set<size_t> &mask_from,

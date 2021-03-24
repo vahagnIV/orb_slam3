@@ -33,11 +33,11 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                                  std::vector<bool> & out_inliers,
                                                  bool inverse) const;
 
-  void FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
+  static void FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                             const std::vector<HomogenousPoint> & points_from,
                             const std::vector<features::Match> & matches,
                             const std::vector<size_t> & good_match_random_idx,
-                            TMatrix33 & out_homography) const;
+                            TMatrix33 & out_homography) ;
 
   /*!
    * Finds the rotation and translation from homography and matched points
