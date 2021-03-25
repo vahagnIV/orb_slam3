@@ -13,6 +13,7 @@ namespace validators {
 class IMatchResultValidator {
  public:
   virtual int Validate(std::vector<int> &inout_matches_12) = 0;
+  virtual ~IMatchResultValidator() = default;
 };
 
 }

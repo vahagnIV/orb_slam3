@@ -20,6 +20,7 @@ class IJointDescriptorIterator {
   virtual IteratorType begin() = 0;
   virtual IteratorType end() = 0;
   virtual bool IsValid() = 0;
+  virtual ~IJointDescriptorIterator() = default;
 };
 
 }
