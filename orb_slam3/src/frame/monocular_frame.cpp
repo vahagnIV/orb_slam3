@@ -14,6 +14,8 @@
 #include <features/matching/second_nearest_neighbor_matcher.h>
 #include <features/matching/iterators/area_iterator.h>
 #include <features/matching/iterators/bow_iterator.h>
+#include <features/matching/validators/bow_match_validator.h>
+#include <features/matching/validators/orientation_validator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <geometry/utils.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
@@ -44,15 +46,18 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::matching::SNNMatcher matcher(0.9,
-                               true);
+  features::matching::SNNMatcher matcher(0.9);
   features::matching::iterators::AreaIterator area_iterator(from_frame->features_, features_, 100);
+  features::matching::validators::OrientationValidator
+      orientation_validator(features_.keypoints, from_frame->features_.keypoints);
+
   matcher.MatchWithIterator(features_.descriptors,
                             from_frame->features_.descriptors,
                             frame_link_.matches,
-                            &area_iterator);
+                            &area_iterator,
+                            nullptr,
+                            &orientation_validator);
 
-  matcher.Match(features_, from_frame->features_, frame_link_.matches, 100);
   if (frame_link_.matches.size() < 100)
     return false;
 
@@ -169,11 +174,22 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::matching::SNNMatcher bow_matcher(0.7, true);
+  features::matching::SNNMatcher bow_matcher(0.7);
   std::vector<features::Match> matches;
   features::matching::iterators::BowIterator
       bow_it(features_.bow_container.feature_vector, reference_kf->features_.bow_container.feature_vector);
-  bow_matcher.MatchWithIterator(features_.descriptors, reference_kf->features_.descriptors, matches, & bow_it);
+
+  features::matching::validators::BowMatchValidator validator(map_points_, reference_kf->map_points_);
+  features::matching::validators::OrientationValidator
+      orientation_validator(features_.keypoints, reference_kf->features_.keypoints);
+
+  bow_matcher.MatchWithIterator(features_.descriptors,
+                                reference_kf->features_.descriptors,
+                                matches,
+                                &bow_it,
+                                &validator,
+                                &orientation_validator);
+
 
   // Initialize inlier sets
   /*std::unordered_set<std::size_t> inliers, rf_inliers;
@@ -323,7 +339,7 @@ void MonocularFrame::FindNewMapPoints() {
       continue;
     TMatrix33 F12 = ComputeRelativeFundamentalMatrix(keyframe);
     precision_t th = 0.6f;
-    features::matching::SNNMatcher matcher(th, false);
+    features::matching::SNNMatcher matcher(th);
 
   }
 

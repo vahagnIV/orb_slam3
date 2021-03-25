@@ -7,18 +7,20 @@
 namespace orb_slam3 {
 namespace features {
 namespace matching {
-namespace iterators {
+namespace validators {
+
+BowMatchValidator::BowMatchValidator(const std::map<size_t, map::MapPoint *> &map_points_to,
+                                     const std::map<size_t, map::MapPoint *> &map_points_from)
+    : map_points_to_(&map_points_to), map_points_from_from_(&map_points_from) {
+
+}
 
 bool BowMatchValidator::ValidateIdxTo(size_t idx) const {
-  return false;
+  return map_points_to_->find(idx) == map_points_to_->end();
 }
 
-bool BowMatchValidator::ValidateIdxFrom(size_t idx) const {
-  return false;
-}
-
-bool BowMatchValidator::ValidateIindices(size_t idx) const {
-  return false;
+bool BowMatchValidator::ValidateIindices(size_t idx_to, size_t idx_from) const {
+  return map_points_from_from_->find(idx_from) != map_points_from_from_->end();
 }
 
 }

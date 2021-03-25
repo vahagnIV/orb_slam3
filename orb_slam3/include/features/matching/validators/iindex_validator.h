@@ -8,15 +8,15 @@
 namespace orb_slam3 {
 namespace features {
 namespace matching {
+namespace validators {
 
 class IIndexValidator {
  public:
   virtual bool ValidateIdxTo(size_t idx) const = 0;
-  virtual bool ValidateIdxFrom(size_t idx) const = 0;
-  virtual bool ValidateIindices(size_t idx) const = 0;
-
+  virtual bool ValidateIindices(size_t idx_to, size_t idx_from) const = 0;
 };
 
+}
 }
 }
 }

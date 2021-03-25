@@ -40,6 +40,7 @@ add_library(orbslam SHARED
         src/features/matching/iterators/area_iterator.cpp
         src/features/matching/iterators/bow_iterator.cpp
         src/features/matching/validators/bow_match_validator.cpp
+        src/features/matching/validators/orientation_validator.cpp
 
         src/map/map_point.cpp
         src/map/map.cpp
@@ -100,6 +101,8 @@ add_library(orbslam SHARED
         include/features/matching/iterators/bow_iterator.h
         include/features/matching/validators/iindex_validator.h
         include/features/matching/validators/bow_match_validator.h
+        include/features/matching/validators/imatch_result_validator.h
+        include/features/matching/validators/orientation_validator.h
 
         include/map/map_point.h
         include/map/atlas.h
