@@ -24,7 +24,7 @@ void SNNMatcher::MatchWithIterator(const DescriptorSet &descriptors_to,
                                    iterators::IJointDescriptorIterator<IteratorType> *iterator,
                                    validators::IIndexValidator *validotor,
                                    validators::IMatchResultValidator *result_validator) {
-  vector<int> matches;
+  std::vector<int> matches;
   size_t nmatches =
       MatchWithIteratorInternal(descriptors_to, descriptors_from, matches, iterator, validotor, result_validator);
   out_matches.reserve(nmatches);
@@ -42,7 +42,7 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to
                                              validators::IIndexValidator *validator,
                                              validators::IMatchResultValidator *result_validator) {
   size_t number_of_matches = 0;
-  out_matches.resize(descriptors_to.rows());
+  out_matches.resize(descriptors_to.rows(), -1);
   std::vector<unsigned> best_distances_from(descriptors_from.rows(), std::numeric_limits<unsigned>::max());
   std::vector<int> matches_from_to(descriptors_from.size(), -1);
   for (; iterator->IsValid(); ++(*iterator)) {

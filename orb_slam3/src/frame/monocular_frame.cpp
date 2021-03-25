@@ -81,25 +81,26 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
         continue;
       const features::Match &match = frame_link_.matches[i];
 
-      if (other->MapPoint(match.from_idx)) {
+      if (from_frame->map_points_.find(match.from_idx) != from_frame->map_points_.end()) {
         // TODO: do the contistency check
       } else {
 
         auto map_point = new map::MapPoint(points[i]);
         map_points_[match.to_idx] = map_point;
-        other->MapPoint(match.from_idx) = map_points_[match.to_idx];
+        from_frame->map_points_[match.from_idx] = map_points_[match.to_idx];
         map_point->AddObservation(this, frame_link_.matches[i].to_idx);
         map_point->AddObservation(from_frame, frame_link_.matches[i].from_idx);
+        map_point->Refresh();
       }
     }
     from_frame->CovisibilityGraph().Update();
     this->CovisibilityGraph().Update();
-    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-              << pose_.estimate().translation() << std::endl;
+//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+//              << pose_.estimate().translation() << std::endl;
     optimization::BundleAdjustment({this, from_frame}, 20);
     // TODO: normalize T
-    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-              << pose_.estimate().translation() << std::endl;
+//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+//              << pose_.estimate().translation() << std::endl;
     return true;
   }
 
@@ -190,39 +191,25 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
                                 &validator,
                                 &orientation_validator);
 
-
-  // Initialize inlier sets
-  /*std::unordered_set<std::size_t> inliers, rf_inliers;
-  std::transform(map_points_.begin(),
-                 map_points_.end(),
-                 std::inserter(inliers, inliers.begin()),
-                 [](decltype(map_points_)::value_type &it) { return it.first; });
-  std::transform(reference_kf->map_points_.begin(),
-                 reference_kf->map_points_.end(),
-                 std::inserter(rf_inliers, rf_inliers.begin()),
-                 [](decltype(map_points_)::value_type &it) { return it.first; });
-  bow_matcher.MatchByBoW(features_,
-                         reference_kf->features_,
-                         inliers,
-                         rf_inliers,
-                         matches);*/
-  if (matches.size() < 15)
+  if (matches.size() < 15) {
     return false;
+  }
 
   for (const auto &match: matches) {
-    auto map_point = reference_kf->map_points_[match.to_idx];
-    map_points_[match.from_idx] = map_point;
+    auto map_point = reference_kf->map_points_[match.from_idx];
+    map_points_[match.to_idx] = map_point;
   }
+  std::unordered_set<std::size_t> inliers;
   SetPosition(*(reference_kf->GetPose()));
-  /*OptimizePose(inliers);
+  OptimizePose(inliers);
   for (const auto &match: matches) {
-    if (inliers.find(match.from_idx) != inliers.end()) {
-      map_points_[match.from_idx]->AddObservation(this, match.from_idx);
-      map_points_[match.from_idx]->Refresh();
+    if (inliers.find(match.to_idx) != inliers.end()) {
+      map_points_[match.to_idx]->AddObservation(this, match.to_idx);
+      map_points_[match.to_idx]->Refresh();
     } else
-      map_points_.erase(match.from_idx);
+      map_points_.erase(match.to_idx);
   }
-  return inliers.size() > 3u;*/
+  return inliers.size() > 3u;
 }
 
 void MonocularFrame::ComputeBow() {
@@ -263,14 +250,16 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) 
     optimizer.addEdge(edge);
     edges[edge] = feature_id;
   }
-//  std::cout << "Frame " << Id() << std::endl;
-//  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
-//  std::cout << pose_.estimate().translation() << std::endl;
+  std::cout << "Frame " << Id() << std::endl;
+  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
+  std::cout << pose_.estimate().translation() << std::endl;
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
   for (int i = 0; i < 4; ++i) {
     pose->setEstimate(pose_.estimate());
+    if(out_inliers.empty())
+      return;
     optimizer.optimize(10);
     for (auto edge: edges) {
 

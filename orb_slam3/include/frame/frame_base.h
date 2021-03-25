@@ -76,7 +76,7 @@ class FrameBase : public Identifiable {
    * @param id
    * @return
    */
-  map::MapPoint *&MapPoint(size_t id) { return map_points_[id]; }
+//  map::MapPoint *&MapPoint(size_t id) const { return map_points_[id]; }
 
   /*!
    * Returns all map points associated with the frame
