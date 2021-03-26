@@ -302,20 +302,6 @@ void TestDrawMonocular(std::string original) {
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     if (frame_o->Link(frame)) {
-
-      for (size_t i = 0; i < frame->MapPoints().size(); ++i) {
-        auto &mp = frame->MapPoint(i);
-        if (mp)
-          mp->AddObservation(frame.get(), i);
-      }
-      for (size_t i = 0; i < frame_o->MapPoints().size(); ++i) {
-        auto &mp = frame_o->MapPoint(i);
-        if (mp) {
-          mp->AddObservation(frame_o.get(), i);
-          mp->Refresh();
-        }
-      }
-
       std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);
 
       for (const auto &mp: frame_o->MapPoints()) {

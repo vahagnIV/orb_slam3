@@ -11,10 +11,13 @@
 // == orb-slam3 ===
 #include <frame/monocular_frame.h>
 #include <constants.h>
-#include <features/second_nearest_neighbor_matcher.h>
+#include <features/matching/second_nearest_neighbor_matcher.h>
+#include <features/matching/iterators/area_iterator.h>
+#include <features/matching/iterators/bow_iterator.h>
+#include <features/matching/validators/bow_match_validator.h>
+#include <features/matching/validators/orientation_validator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <geometry/utils.h>
-#include <features/bow_matcher.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include <optimization/edges/se3_project_xyz_pose_only.h>
 #include <optimization/bundle_adjustment.h>
@@ -43,10 +46,18 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::SNNMatcher matcher(100,
-                               0.9,
-                               true);
-  matcher.Match(features_, from_frame->features_, frame_link_.matches);
+  features::matching::SNNMatcher matcher(0.9);
+  features::matching::iterators::AreaIterator area_iterator(from_frame->features_, features_, 100);
+  features::matching::validators::OrientationValidator
+      orientation_validator(features_.keypoints, from_frame->features_.keypoints);
+
+  matcher.MatchWithIterator(features_.descriptors,
+                            from_frame->features_.descriptors,
+                            frame_link_.matches,
+                            &area_iterator,
+                            nullptr,
+                            &orientation_validator);
+
   if (frame_link_.matches.size() < 100)
     return false;
 
@@ -70,25 +81,26 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
         continue;
       const features::Match &match = frame_link_.matches[i];
 
-      if (other->MapPoint(match.from_idx)) {
+      if (from_frame->map_points_.find(match.from_idx) != from_frame->map_points_.end()) {
         // TODO: do the contistency check
       } else {
 
         auto map_point = new map::MapPoint(points[i]);
         map_points_[match.to_idx] = map_point;
-        other->MapPoint(match.from_idx) = map_points_[match.to_idx];
+        from_frame->map_points_[match.from_idx] = map_points_[match.to_idx];
         map_point->AddObservation(this, frame_link_.matches[i].to_idx);
         map_point->AddObservation(from_frame, frame_link_.matches[i].from_idx);
+        map_point->Refresh();
       }
     }
     from_frame->CovisibilityGraph().Update();
     this->CovisibilityGraph().Update();
-    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-              << pose_.estimate().translation() << std::endl;
+//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+//              << pose_.estimate().translation() << std::endl;
     optimization::BundleAdjustment({this, from_frame}, 20);
     // TODO: normalize T
-    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-              << pose_.estimate().translation() << std::endl;
+//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+//              << pose_.estimate().translation() << std::endl;
     return true;
   }
 
@@ -163,37 +175,39 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::BowMatcher bow_matcher(0.7);
+  features::matching::SNNMatcher bow_matcher(0.7);
   std::vector<features::Match> matches;
-  std::unordered_set<std::size_t> inliers, rf_inliers;
-  std::transform(map_points_.begin(),
-                 map_points_.end(),
-                 std::inserter(inliers, inliers.begin()),
-                 [](decltype(map_points_)::value_type &it) { return it.first; });
-  std::transform(reference_kf->map_points_.begin(),
-                 reference_kf->map_points_.end(),
-                 std::inserter(rf_inliers, rf_inliers.begin()),
-                 [](decltype(map_points_)::value_type &it) { return it.first; });
-  bow_matcher.Match(features_,
-                    reference_kf->features_,
-                    inliers,
-                    rf_inliers,
-                    matches);
-  if (matches.size() < 15)
+  features::matching::iterators::BowIterator
+      bow_it(features_.bow_container.feature_vector, reference_kf->features_.bow_container.feature_vector);
+
+  features::matching::validators::BowMatchValidator validator(map_points_, reference_kf->map_points_);
+  features::matching::validators::OrientationValidator
+      orientation_validator(features_.keypoints, reference_kf->features_.keypoints);
+
+  bow_matcher.MatchWithIterator(features_.descriptors,
+                                reference_kf->features_.descriptors,
+                                matches,
+                                &bow_it,
+                                &validator,
+                                &orientation_validator);
+
+  if (matches.size() < 15) {
     return false;
+  }
 
   for (const auto &match: matches) {
-    auto map_point = reference_kf->map_points_[match.to_idx];
-    map_points_[match.from_idx] = map_point;
+    auto map_point = reference_kf->map_points_[match.from_idx];
+    map_points_[match.to_idx] = map_point;
   }
+  std::unordered_set<std::size_t> inliers;
   SetPosition(*(reference_kf->GetPose()));
   OptimizePose(inliers);
   for (const auto &match: matches) {
-    if (inliers.find(match.from_idx) != inliers.end()) {
-      map_points_[match.from_idx]->AddObservation(this, match.from_idx);
-      map_points_[match.from_idx]->Refresh();
+    if (inliers.find(match.to_idx) != inliers.end()) {
+      map_points_[match.to_idx]->AddObservation(this, match.to_idx);
+      map_points_[match.to_idx]->Refresh();
     } else
-      map_points_.erase(match.from_idx);
+      map_points_.erase(match.to_idx);
   }
   return inliers.size() > 3u;
 }
@@ -236,14 +250,16 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) 
     optimizer.addEdge(edge);
     edges[edge] = feature_id;
   }
-//  std::cout << "Frame " << Id() << std::endl;
-//  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
-//  std::cout << pose_.estimate().translation() << std::endl;
+  std::cout << "Frame " << Id() << std::endl;
+  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
+  std::cout << pose_.estimate().translation() << std::endl;
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
   for (int i = 0; i < 4; ++i) {
     pose->setEstimate(pose_.estimate());
+    if(out_inliers.empty())
+      return;
     optimizer.optimize(10);
     for (auto edge: edges) {
 
@@ -312,7 +328,8 @@ void MonocularFrame::FindNewMapPoints() {
       continue;
     TMatrix33 F12 = ComputeRelativeFundamentalMatrix(keyframe);
     precision_t th = 0.6f;
-    features::SNNMatcher matcher(100, th, false);
+    features::matching::SNNMatcher matcher(th);
+
   }
 
 }

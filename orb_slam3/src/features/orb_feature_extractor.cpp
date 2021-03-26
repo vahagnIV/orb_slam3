@@ -8,7 +8,7 @@
 
 namespace orb_slam3 {
 namespace features {
-const float factorPI = (float)(CV_PI / 180.f);
+const precision_t factorPI = (M_PI / 180.);
 ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
                                          unsigned image_height, size_t features,
                                          precision_t scale_factor,
@@ -61,7 +61,7 @@ void ORBFeatureExtractor::AllocatePyramid() {
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     precision_t scale = inv_scale_factors_[level];
     int width = std::round(image_width_ * scale);
-    int height = std::round(image_height_ * scale);   
+    int height = std::round(image_height_ * scale);
     image_pyramid_[level].create(width,
                                  height, CV_8U);
   }
@@ -71,7 +71,7 @@ void ORBFeatureExtractor::computeOrientation(
     const cv::Mat &image, std::vector<features::KeyPoint> &keypoints,
     const int *umax) {
   for (std::vector<features::KeyPoint>::iterator keypoint = keypoints.begin(),
-                                           keypointEnd = keypoints.end();
+           keypointEnd = keypoints.end();
        keypoint != keypointEnd; ++keypoint) {
     IC_Angle(image, *keypoint, umax);
   }
@@ -81,11 +81,11 @@ void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint &kpt,
                                                const cv::Mat &img,
                                                const cv::Point *pattern,
                                                uchar *desc) {
-  float angle = (float)kpt.angle * factorPI;
-  float a = (float)cos(angle), b = (float)sin(angle);
+  float angle = (float) kpt.angle * factorPI;
+  float a = (float) cos(angle), b = (float) sin(angle);
 
   const uchar *center = &img.at<uchar>(cvRound(kpt.Y()), cvRound(kpt.X()));
-  const int step = (int)img.step;
+  const int step = (int) img.step;
 
 #define GET_VALUE(idx)                                             \
   center[cvRound(pattern[idx].x * b + pattern[idx].y * a) * step + \
@@ -118,7 +118,7 @@ void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint &kpt,
     t1 = GET_VALUE(15);
     val |= (t0 < t1) << 7;
 
-    desc[i] = (uchar)val;
+    desc[i] = (uchar) val;
   }
 
 #undef GET_VALUE
@@ -127,15 +127,15 @@ void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint &kpt,
 void ORBFeatureExtractor::computeDescriptors(
     const cv::Mat &image, std::vector<features::KeyPoint> &keypoints,
     cv::Mat &descriptors, const std::vector<cv::Point> &pattern) {
-  descriptors = cv::Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
+  descriptors = cv::Mat::zeros((int) keypoints.size(), 32, CV_8UC1);
 
   for (size_t i = 0; i < keypoints.size(); i++)
     computeOrbDescriptor(keypoints[i], image, &pattern[0],
-                         descriptors.ptr((int)i));
+                         descriptors.ptr((int) i));
 }
 
-void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, features::KeyPoint & pt,
-                                    const int *u_max) {
+void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, features::KeyPoint &pt,
+                                   const int *u_max) {
   int m_01 = 0, m_10 = 0;
 
   const uchar *center = &image.at<uchar>(cvRound(pt.Y()), cvRound(pt.X()));
@@ -145,7 +145,7 @@ void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, features::KeyPoint & pt
     m_10 += u * center[u];
 
   // Go line by line in the circuI853lar patch
-  int step = (int)image.step1();
+  int step = (int) image.step1();
   for (int v = 1; v <= HALF_PATCH_SIZE; ++v) {
     // Proceed over the two lines
     int v_sum = 0;
@@ -158,7 +158,7 @@ void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, features::KeyPoint & pt
     m_01 += v * v_sum;
   }
 
-  pt.angle = cv::fastAtan2((float)m_01, (float)m_10);
+  pt.angle = cv::fastAtan2((float) m_01, (float) m_10);
 }
 
 void ORBFeatureExtractor::ComputeKeyPointsOctTree(
@@ -201,11 +201,11 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 
         cv::FAST(
             image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-            vKeysCell, init_threshold_FAST_, true);        
+            vKeysCell, init_threshold_FAST_, true);
 
         if (vKeysCell.empty()) {
           FAST(image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-               vKeysCell, min_threshold_FAST_, true);          
+               vKeysCell, min_threshold_FAST_, true);
         }
 
         if (!vKeysCell.empty()) {
@@ -223,7 +223,7 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
     keypoints.reserve(features_);
 
     DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX, minBorderY,
-                          maxBorderY, features_per_level_[level], level, keypoints);
+                      maxBorderY, features_per_level_[level], level, keypoints);
 
     const int scaledPatchSize = PATCH_SIZE * scale_factors_[level];
 
@@ -242,14 +242,14 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 }
 
 void ORBFeatureExtractor::DistributeOctTree(
-    const std::vector<cv::KeyPoint> &vToDistributeKeys, 
+    const std::vector<cv::KeyPoint> &vToDistributeKeys,
     const int &minX,
-    const int &maxX, 
-    const int &minY, 
-    const int &maxY, 
+    const int &maxX,
+    const int &minY,
+    const int &maxY,
     const int &nFeatures,
     const int &level,
-    std::vector<features::KeyPoint> & out_map_points) {
+    std::vector<features::KeyPoint> &out_map_points) {
   // Compute how many initial nodes
   const int nIni = round(static_cast<float>(maxX - minX) / (maxY - minY));
 
@@ -363,9 +363,9 @@ void ORBFeatureExtractor::DistributeOctTree(
 
     // Finish if there are more nodes than required features
     // or all nodes contain just one point
-    if ((int)lNodes.size() >= nFeatures || (int)lNodes.size() == prevSize) {
+    if ((int) lNodes.size() >= nFeatures || (int) lNodes.size() == prevSize) {
       bFinish = true;
-    } else if (((int)lNodes.size() + nToExpand * 3) > nFeatures) {
+    } else if (((int) lNodes.size() + nToExpand * 3) > nFeatures) {
       while (!bFinish) {
         prevSize = lNodes.size();
 
@@ -415,17 +415,17 @@ void ORBFeatureExtractor::DistributeOctTree(
 
           lNodes.erase(vPrevSizeAndPointerToNode[j].second->lit);
 
-          if ((int)lNodes.size() >= nFeatures) break;
+          if ((int) lNodes.size() >= nFeatures) break;
         }
 
-        if ((int)lNodes.size() >= nFeatures || (int)lNodes.size() == prevSize)
+        if ((int) lNodes.size() >= nFeatures || (int) lNodes.size() == prevSize)
           bFinish = true;
       }
     }
   }
 
   // Retain the best point in each node
-  
+
   out_map_points.reserve(features_);
   for (std::list<ExtractorNode>::iterator lit = lNodes.begin();
        lit != lNodes.end(); lit++) {
@@ -450,8 +450,8 @@ void ORBFeatureExtractor::DistributeOctTree(
 void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     float scale = inv_scale_factors_[level];
-    cv::Size sz(cvRound((float)image.cols * scale),
-                cvRound((float)image.rows * scale));
+    cv::Size sz(cvRound((float) image.cols * scale),
+                cvRound((float) image.rows * scale));
     cv::Size wholeSize(sz.width + EDGE_THRESHOLD * 2,
                        sz.height + EDGE_THRESHOLD * 2);
     cv::Mat temp(wholeSize, CV_8U), masktemp;
@@ -461,7 +461,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
     // Compute the resized image
     if (level != 0) {
       cv::resize(image_pyramid_[level - 1], image_pyramid_[level], sz, 0, 0,
-             cv::INTER_LINEAR);
+                 cv::INTER_LINEAR);
 
       cv::copyMakeBorder(image_pyramid_[level], temp, EDGE_THRESHOLD,
                          EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
@@ -474,8 +474,8 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
 }
 
 int ORBFeatureExtractor::Extract(const TImageGray8U &img,
-                                 Features & out_features) {
-  cv::Mat image(img.rows(), img.cols(), CV_8U, (void *)img.data());
+                                 Features &out_features) {
+  cv::Mat image(img.rows(), img.cols(), CV_8U, (void *) img.data());
   // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
   if (image.empty()) return -1;
 
@@ -487,7 +487,7 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
   // ComputeKeyPointsOld(allKeypoints);
   int nkeypoints = 0;
   for (size_t level = 0; level < scale_factors_.size(); ++level)
-    nkeypoints += (int)allKeypoints[level].size();
+    nkeypoints += (int) allKeypoints[level].size();
 
   out_features.descriptors.resize(nkeypoints, 32);
   out_features.keypoints.resize(nkeypoints);
@@ -497,7 +497,7 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
   int monoIndex = 0, stereoIndex = nkeypoints - 1;
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     std::vector<features::KeyPoint> &keypoints = allKeypoints[level];
-    int nkeypointsLevel = (int)keypoints.size();
+    int nkeypointsLevel = (int) keypoints.size();
 
     if (nkeypointsLevel == 0) continue;
 
@@ -516,7 +516,7 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
         scale_factors_[level];  // getScale(level, firstLevel, scaleFactor);
     int i = 0;
     for (std::vector<features::KeyPoint>::iterator keypoint = keypoints.begin(),
-                                             keypointEnd = keypoints.end();
+             keypointEnd = keypoints.end();
          keypoint != keypointEnd; ++keypoint) {
       // Scale keypoint coordinates
       if (level != 0) {
@@ -618,177 +618,177 @@ const int ORBFeatureExtractor::umax_[HALF_PATCH_SIZE + 1] = {
     15, 15, 15, 15, 14, 14, 14, 13, 13, 12, 11, 10, 9, 8, 6, 3};
 
 const std::vector<cv::Point> ORBFeatureExtractor::pattern_ = {
-    cv::Point(8, -3),    cv::Point(9, 5),     cv::Point(4, 2),
-    cv::Point(7, -12),   cv::Point(-11, 9),   cv::Point(-8, 2),
-    cv::Point(7, -12),   cv::Point(12, -13),  cv::Point(2, -13),
-    cv::Point(2, 12),    cv::Point(1, -7),    cv::Point(1, 6),
-    cv::Point(-2, -10),  cv::Point(-2, -4),   cv::Point(-13, -13),
-    cv::Point(-11, -8),  cv::Point(-13, -3),  cv::Point(-12, -9),
-    cv::Point(10, 4),    cv::Point(11, 9),    cv::Point(-13, -8),
-    cv::Point(-8, -9),   cv::Point(-11, 7),   cv::Point(-9, 12),
-    cv::Point(7, 7),     cv::Point(12, 6),    cv::Point(-4, -5),
-    cv::Point(-3, 0),    cv::Point(-13, 2),   cv::Point(-12, -3),
-    cv::Point(-9, 0),    cv::Point(-7, 5),    cv::Point(12, -6),
-    cv::Point(12, -1),   cv::Point(-3, 6),    cv::Point(-2, 12),
-    cv::Point(-6, -13),  cv::Point(-4, -8),   cv::Point(11, -13),
-    cv::Point(12, -8),   cv::Point(4, 7),     cv::Point(5, 1),
-    cv::Point(5, -3),    cv::Point(10, -3),   cv::Point(3, -7),
-    cv::Point(6, 12),    cv::Point(-8, -7),   cv::Point(-6, -2),
-    cv::Point(-2, 11),   cv::Point(-1, -10),  cv::Point(-13, 12),
-    cv::Point(-8, 10),   cv::Point(-7, 3),    cv::Point(-5, -3),
-    cv::Point(-4, 2),    cv::Point(-3, 7),    cv::Point(-10, -12),
-    cv::Point(-6, 11),   cv::Point(5, -12),   cv::Point(6, -7),
-    cv::Point(5, -6),    cv::Point(7, -1),    cv::Point(1, 0),
-    cv::Point(4, -5),    cv::Point(9, 11),    cv::Point(11, -13),
-    cv::Point(4, 7),     cv::Point(4, 12),    cv::Point(2, -1),
-    cv::Point(4, 4),     cv::Point(-4, -12),  cv::Point(-2, 7),
-    cv::Point(-8, -5),   cv::Point(-7, -10),  cv::Point(4, 11),
-    cv::Point(9, 12),    cv::Point(0, -8),    cv::Point(1, -13),
-    cv::Point(-13, -2),  cv::Point(-8, 2),    cv::Point(-3, -2),
-    cv::Point(-2, 3),    cv::Point(-6, 9),    cv::Point(-4, -9),
-    cv::Point(8, 12),    cv::Point(10, 7),    cv::Point(0, 9),
-    cv::Point(1, 3),     cv::Point(7, -5),    cv::Point(11, -10),
-    cv::Point(-13, -6),  cv::Point(-11, 0),   cv::Point(10, 7),
-    cv::Point(12, 1),    cv::Point(-6, -3),   cv::Point(-6, 12),
-    cv::Point(10, -9),   cv::Point(12, -4),   cv::Point(-13, 8),
-    cv::Point(-8, -12),  cv::Point(-13, 0),   cv::Point(-8, -4),
-    cv::Point(3, 3),     cv::Point(7, 8),     cv::Point(5, 7),
-    cv::Point(10, -7),   cv::Point(-1, 7),    cv::Point(1, -12),
-    cv::Point(3, -10),   cv::Point(5, 6),     cv::Point(2, -4),
-    cv::Point(3, -10),   cv::Point(-13, 0),   cv::Point(-13, 5),
-    cv::Point(-13, -7),  cv::Point(-12, 12),  cv::Point(-13, 3),
-    cv::Point(-11, 8),   cv::Point(-7, 12),   cv::Point(-4, 7),
-    cv::Point(6, -10),   cv::Point(12, 8),    cv::Point(-9, -1),
-    cv::Point(-7, -6),   cv::Point(-2, -5),   cv::Point(0, 12),
-    cv::Point(-12, 5),   cv::Point(-7, 5),    cv::Point(3, -10),
-    cv::Point(8, -13),   cv::Point(-7, -7),   cv::Point(-4, 5),
-    cv::Point(-3, -2),   cv::Point(-1, -7),   cv::Point(2, 9),
-    cv::Point(5, -11),   cv::Point(-11, -13), cv::Point(-5, -13),
-    cv::Point(-1, 6),    cv::Point(0, -1),    cv::Point(5, -3),
-    cv::Point(5, 2),     cv::Point(-4, -13),  cv::Point(-4, 12),
-    cv::Point(-9, -6),   cv::Point(-9, 6),    cv::Point(-12, -10),
-    cv::Point(-8, -4),   cv::Point(10, 2),    cv::Point(12, -3),
-    cv::Point(7, 12),    cv::Point(12, 12),   cv::Point(-7, -13),
-    cv::Point(-6, 5),    cv::Point(-4, 9),    cv::Point(-3, 4),
-    cv::Point(7, -1),    cv::Point(12, 2),    cv::Point(-7, 6),
-    cv::Point(-5, 1),    cv::Point(-13, 11),  cv::Point(-12, 5),
-    cv::Point(-3, 7),    cv::Point(-2, -6),   cv::Point(7, -8),
-    cv::Point(12, -7),   cv::Point(-13, -7),  cv::Point(-11, -12),
-    cv::Point(1, -3),    cv::Point(12, 12),   cv::Point(2, -6),
-    cv::Point(3, 0),     cv::Point(-4, 3),    cv::Point(-2, -13),
-    cv::Point(-1, -13),  cv::Point(1, 9),     cv::Point(7, 1),
-    cv::Point(8, -6),    cv::Point(1, -1),    cv::Point(3, 12),
-    cv::Point(9, 1),     cv::Point(12, 6),    cv::Point(-1, -9),
-    cv::Point(-1, 3),    cv::Point(-13, -13), cv::Point(-10, 5),
-    cv::Point(7, 7),     cv::Point(10, 12),   cv::Point(12, -5),
-    cv::Point(12, 9),    cv::Point(6, 3),     cv::Point(7, 11),
-    cv::Point(5, -13),   cv::Point(6, 10),    cv::Point(2, -12),
-    cv::Point(2, 3),     cv::Point(3, 8),     cv::Point(4, -6),
-    cv::Point(2, 6),     cv::Point(12, -13),  cv::Point(9, -12),
-    cv::Point(10, 3),    cv::Point(-8, 4),    cv::Point(-7, 9),
-    cv::Point(-11, 12),  cv::Point(-4, -6),   cv::Point(1, 12),
-    cv::Point(2, -8),    cv::Point(6, -9),    cv::Point(7, -4),
-    cv::Point(2, 3),     cv::Point(3, -2),    cv::Point(6, 3),
-    cv::Point(11, 0),    cv::Point(3, -3),    cv::Point(8, -8),
-    cv::Point(7, 8),     cv::Point(9, 3),     cv::Point(-11, -5),
-    cv::Point(-6, -4),   cv::Point(-10, 11),  cv::Point(-5, 10),
-    cv::Point(-5, -8),   cv::Point(-3, 12),   cv::Point(-10, 5),
-    cv::Point(-9, 0),    cv::Point(8, -1),    cv::Point(12, -6),
-    cv::Point(4, -6),    cv::Point(6, -11),   cv::Point(-10, 12),
-    cv::Point(-8, 7),    cv::Point(4, -2),    cv::Point(6, 7),
-    cv::Point(-2, 0),    cv::Point(-2, 12),   cv::Point(-5, -8),
-    cv::Point(-5, 2),    cv::Point(7, -6),    cv::Point(10, 12),
-    cv::Point(-9, -13),  cv::Point(-8, -8),   cv::Point(-5, -13),
-    cv::Point(-5, -2),   cv::Point(8, -8),    cv::Point(9, -13),
-    cv::Point(-9, -11),  cv::Point(-9, 0),    cv::Point(1, -8),
-    cv::Point(1, -2),    cv::Point(7, -4),    cv::Point(9, 1),
-    cv::Point(-2, 1),    cv::Point(-1, -4),   cv::Point(11, -6),
-    cv::Point(12, -11),  cv::Point(-12, -9),  cv::Point(-6, 4),
-    cv::Point(3, 7),     cv::Point(7, 12),    cv::Point(5, 5),
-    cv::Point(10, 8),    cv::Point(0, -4),    cv::Point(2, 8),
-    cv::Point(-9, 12),   cv::Point(-5, -13),  cv::Point(0, 7),
-    cv::Point(2, 12),    cv::Point(-1, 2),    cv::Point(1, 7),
-    cv::Point(5, 11),    cv::Point(7, -9),    cv::Point(3, 5),
-    cv::Point(6, -8),    cv::Point(-13, -4),  cv::Point(-8, 9),
-    cv::Point(-5, 9),    cv::Point(-3, -3),   cv::Point(-4, -7),
-    cv::Point(-3, -12),  cv::Point(6, 5),     cv::Point(8, 0),
-    cv::Point(-7, 6),    cv::Point(-6, 12),   cv::Point(-13, 6),
-    cv::Point(-5, -2),   cv::Point(1, -10),   cv::Point(3, 10),
-    cv::Point(4, 1),     cv::Point(8, -4),    cv::Point(-2, -2),
-    cv::Point(2, -13),   cv::Point(2, -12),   cv::Point(12, 12),
-    cv::Point(-2, -13),  cv::Point(0, -6),    cv::Point(4, 1),
-    cv::Point(9, 3),     cv::Point(-6, -10),  cv::Point(-3, -5),
-    cv::Point(-3, -13),  cv::Point(-1, 1),    cv::Point(7, 5),
-    cv::Point(12, -11),  cv::Point(4, -2),    cv::Point(5, -7),
-    cv::Point(-13, 9),   cv::Point(-9, -5),   cv::Point(7, 1),
-    cv::Point(8, 6),     cv::Point(7, -8),    cv::Point(7, 6),
-    cv::Point(-7, -4),   cv::Point(-7, 1),    cv::Point(-8, 11),
-    cv::Point(-7, -8),   cv::Point(-13, 6),   cv::Point(-12, -8),
-    cv::Point(2, 4),     cv::Point(3, 9),     cv::Point(10, -5),
-    cv::Point(12, 3),    cv::Point(-6, -5),   cv::Point(-6, 7),
-    cv::Point(8, -3),    cv::Point(9, -8),    cv::Point(2, -12),
-    cv::Point(2, 8),     cv::Point(-11, -2),  cv::Point(-10, 3),
-    cv::Point(-12, -13), cv::Point(-7, -9),   cv::Point(-11, 0),
-    cv::Point(-10, -5),  cv::Point(5, -3),    cv::Point(11, 8),
-    cv::Point(-2, -13),  cv::Point(-1, 12),   cv::Point(-1, -8),
-    cv::Point(0, 9),     cv::Point(-13, -11), cv::Point(-12, -5),
-    cv::Point(-10, -2),  cv::Point(-10, 11),  cv::Point(-3, 9),
-    cv::Point(-2, -13),  cv::Point(2, -3),    cv::Point(3, 2),
-    cv::Point(-9, -13),  cv::Point(-4, 0),    cv::Point(-4, 6),
-    cv::Point(-3, -10),  cv::Point(-4, 12),   cv::Point(-2, -7),
-    cv::Point(-6, -11),  cv::Point(-4, 9),    cv::Point(6, -3),
-    cv::Point(6, 11),    cv::Point(-13, 11),  cv::Point(-5, 5),
-    cv::Point(11, 11),   cv::Point(12, 6),    cv::Point(7, -5),
-    cv::Point(12, -2),   cv::Point(-1, 12),   cv::Point(0, 7),
-    cv::Point(-4, -8),   cv::Point(-3, -2),   cv::Point(-7, 1),
-    cv::Point(-6, 7),    cv::Point(-13, -12), cv::Point(-8, -13),
-    cv::Point(-7, -2),   cv::Point(-6, -8),   cv::Point(-8, 5),
-    cv::Point(-6, -9),   cv::Point(-5, -1),   cv::Point(-4, 5),
-    cv::Point(-13, 7),   cv::Point(-8, 10),   cv::Point(1, 5),
-    cv::Point(5, -13),   cv::Point(1, 0),     cv::Point(10, -13),
-    cv::Point(9, 12),    cv::Point(10, -1),   cv::Point(5, -8),
-    cv::Point(10, -9),   cv::Point(-1, 11),   cv::Point(1, -13),
-    cv::Point(-9, -3),   cv::Point(-6, 2),    cv::Point(-1, -10),
-    cv::Point(1, 12),    cv::Point(-13, 1),   cv::Point(-8, -10),
-    cv::Point(8, -11),   cv::Point(10, -6),   cv::Point(2, -13),
-    cv::Point(3, -6),    cv::Point(7, -13),   cv::Point(12, -9),
-    cv::Point(-10, -10), cv::Point(-5, -7),   cv::Point(-10, -8),
-    cv::Point(-8, -13),  cv::Point(4, -6),    cv::Point(8, 5),
-    cv::Point(3, 12),    cv::Point(8, -13),   cv::Point(-4, 2),
-    cv::Point(-3, -3),   cv::Point(5, -13),   cv::Point(10, -12),
-    cv::Point(4, -13),   cv::Point(5, -1),    cv::Point(-9, 9),
-    cv::Point(-4, 3),    cv::Point(0, 3),     cv::Point(3, -9),
-    cv::Point(-12, 1),   cv::Point(-6, 1),    cv::Point(3, 2),
-    cv::Point(4, -8),    cv::Point(-10, -10), cv::Point(-10, 9),
-    cv::Point(8, -13),   cv::Point(12, 12),   cv::Point(-8, -12),
-    cv::Point(-6, -5),   cv::Point(2, 2),     cv::Point(3, 7),
-    cv::Point(10, 6),    cv::Point(11, -8),   cv::Point(6, 8),
-    cv::Point(8, -12),   cv::Point(-7, 10),   cv::Point(-6, 5),
-    cv::Point(-3, -9),   cv::Point(-3, 9),    cv::Point(-1, -13),
-    cv::Point(-1, 5),    cv::Point(-3, -7),   cv::Point(-3, 4),
-    cv::Point(-8, -2),   cv::Point(-8, 3),    cv::Point(4, 2),
-    cv::Point(12, 12),   cv::Point(2, -5),    cv::Point(3, 11),
-    cv::Point(6, -9),    cv::Point(11, -13),  cv::Point(3, -1),
-    cv::Point(7, 12),    cv::Point(11, -1),   cv::Point(12, 4),
-    cv::Point(-3, 0),    cv::Point(-3, 6),    cv::Point(4, -11),
-    cv::Point(4, 12),    cv::Point(2, -4),    cv::Point(2, 1),
-    cv::Point(-10, -6),  cv::Point(-8, 1),    cv::Point(-13, 7),
-    cv::Point(-11, 1),   cv::Point(-13, 12),  cv::Point(-11, -13),
-    cv::Point(6, 0),     cv::Point(11, -13),  cv::Point(0, -1),
-    cv::Point(1, 4),     cv::Point(-13, 3),   cv::Point(-9, -2),
-    cv::Point(-9, 8),    cv::Point(-6, -3),   cv::Point(-13, -6),
-    cv::Point(-8, -2),   cv::Point(5, -9),    cv::Point(8, 10),
-    cv::Point(2, 7),     cv::Point(3, -9),    cv::Point(-1, -6),
-    cv::Point(-1, -1),   cv::Point(9, 5),     cv::Point(11, -2),
-    cv::Point(11, -3),   cv::Point(12, -8),   cv::Point(3, 0),
-    cv::Point(3, 5),     cv::Point(-1, 4),    cv::Point(0, 10),
-    cv::Point(3, -6),    cv::Point(4, 5),     cv::Point(-13, 0),
-    cv::Point(-10, 5),   cv::Point(5, 8),     cv::Point(12, 11),
-    cv::Point(8, 9),     cv::Point(9, -6),    cv::Point(7, -4),
-    cv::Point(8, -12),   cv::Point(-10, 4),   cv::Point(-10, 9),
-    cv::Point(7, 3),     cv::Point(12, 4),    cv::Point(9, -7),
-    cv::Point(10, -2),   cv::Point(7, 0),     cv::Point(12, -2),
-    cv::Point(-1, -6),   cv::Point(0, -11)};
+    cv::Point(8, -3), cv::Point(9, 5), cv::Point(4, 2),
+    cv::Point(7, -12), cv::Point(-11, 9), cv::Point(-8, 2),
+    cv::Point(7, -12), cv::Point(12, -13), cv::Point(2, -13),
+    cv::Point(2, 12), cv::Point(1, -7), cv::Point(1, 6),
+    cv::Point(-2, -10), cv::Point(-2, -4), cv::Point(-13, -13),
+    cv::Point(-11, -8), cv::Point(-13, -3), cv::Point(-12, -9),
+    cv::Point(10, 4), cv::Point(11, 9), cv::Point(-13, -8),
+    cv::Point(-8, -9), cv::Point(-11, 7), cv::Point(-9, 12),
+    cv::Point(7, 7), cv::Point(12, 6), cv::Point(-4, -5),
+    cv::Point(-3, 0), cv::Point(-13, 2), cv::Point(-12, -3),
+    cv::Point(-9, 0), cv::Point(-7, 5), cv::Point(12, -6),
+    cv::Point(12, -1), cv::Point(-3, 6), cv::Point(-2, 12),
+    cv::Point(-6, -13), cv::Point(-4, -8), cv::Point(11, -13),
+    cv::Point(12, -8), cv::Point(4, 7), cv::Point(5, 1),
+    cv::Point(5, -3), cv::Point(10, -3), cv::Point(3, -7),
+    cv::Point(6, 12), cv::Point(-8, -7), cv::Point(-6, -2),
+    cv::Point(-2, 11), cv::Point(-1, -10), cv::Point(-13, 12),
+    cv::Point(-8, 10), cv::Point(-7, 3), cv::Point(-5, -3),
+    cv::Point(-4, 2), cv::Point(-3, 7), cv::Point(-10, -12),
+    cv::Point(-6, 11), cv::Point(5, -12), cv::Point(6, -7),
+    cv::Point(5, -6), cv::Point(7, -1), cv::Point(1, 0),
+    cv::Point(4, -5), cv::Point(9, 11), cv::Point(11, -13),
+    cv::Point(4, 7), cv::Point(4, 12), cv::Point(2, -1),
+    cv::Point(4, 4), cv::Point(-4, -12), cv::Point(-2, 7),
+    cv::Point(-8, -5), cv::Point(-7, -10), cv::Point(4, 11),
+    cv::Point(9, 12), cv::Point(0, -8), cv::Point(1, -13),
+    cv::Point(-13, -2), cv::Point(-8, 2), cv::Point(-3, -2),
+    cv::Point(-2, 3), cv::Point(-6, 9), cv::Point(-4, -9),
+    cv::Point(8, 12), cv::Point(10, 7), cv::Point(0, 9),
+    cv::Point(1, 3), cv::Point(7, -5), cv::Point(11, -10),
+    cv::Point(-13, -6), cv::Point(-11, 0), cv::Point(10, 7),
+    cv::Point(12, 1), cv::Point(-6, -3), cv::Point(-6, 12),
+    cv::Point(10, -9), cv::Point(12, -4), cv::Point(-13, 8),
+    cv::Point(-8, -12), cv::Point(-13, 0), cv::Point(-8, -4),
+    cv::Point(3, 3), cv::Point(7, 8), cv::Point(5, 7),
+    cv::Point(10, -7), cv::Point(-1, 7), cv::Point(1, -12),
+    cv::Point(3, -10), cv::Point(5, 6), cv::Point(2, -4),
+    cv::Point(3, -10), cv::Point(-13, 0), cv::Point(-13, 5),
+    cv::Point(-13, -7), cv::Point(-12, 12), cv::Point(-13, 3),
+    cv::Point(-11, 8), cv::Point(-7, 12), cv::Point(-4, 7),
+    cv::Point(6, -10), cv::Point(12, 8), cv::Point(-9, -1),
+    cv::Point(-7, -6), cv::Point(-2, -5), cv::Point(0, 12),
+    cv::Point(-12, 5), cv::Point(-7, 5), cv::Point(3, -10),
+    cv::Point(8, -13), cv::Point(-7, -7), cv::Point(-4, 5),
+    cv::Point(-3, -2), cv::Point(-1, -7), cv::Point(2, 9),
+    cv::Point(5, -11), cv::Point(-11, -13), cv::Point(-5, -13),
+    cv::Point(-1, 6), cv::Point(0, -1), cv::Point(5, -3),
+    cv::Point(5, 2), cv::Point(-4, -13), cv::Point(-4, 12),
+    cv::Point(-9, -6), cv::Point(-9, 6), cv::Point(-12, -10),
+    cv::Point(-8, -4), cv::Point(10, 2), cv::Point(12, -3),
+    cv::Point(7, 12), cv::Point(12, 12), cv::Point(-7, -13),
+    cv::Point(-6, 5), cv::Point(-4, 9), cv::Point(-3, 4),
+    cv::Point(7, -1), cv::Point(12, 2), cv::Point(-7, 6),
+    cv::Point(-5, 1), cv::Point(-13, 11), cv::Point(-12, 5),
+    cv::Point(-3, 7), cv::Point(-2, -6), cv::Point(7, -8),
+    cv::Point(12, -7), cv::Point(-13, -7), cv::Point(-11, -12),
+    cv::Point(1, -3), cv::Point(12, 12), cv::Point(2, -6),
+    cv::Point(3, 0), cv::Point(-4, 3), cv::Point(-2, -13),
+    cv::Point(-1, -13), cv::Point(1, 9), cv::Point(7, 1),
+    cv::Point(8, -6), cv::Point(1, -1), cv::Point(3, 12),
+    cv::Point(9, 1), cv::Point(12, 6), cv::Point(-1, -9),
+    cv::Point(-1, 3), cv::Point(-13, -13), cv::Point(-10, 5),
+    cv::Point(7, 7), cv::Point(10, 12), cv::Point(12, -5),
+    cv::Point(12, 9), cv::Point(6, 3), cv::Point(7, 11),
+    cv::Point(5, -13), cv::Point(6, 10), cv::Point(2, -12),
+    cv::Point(2, 3), cv::Point(3, 8), cv::Point(4, -6),
+    cv::Point(2, 6), cv::Point(12, -13), cv::Point(9, -12),
+    cv::Point(10, 3), cv::Point(-8, 4), cv::Point(-7, 9),
+    cv::Point(-11, 12), cv::Point(-4, -6), cv::Point(1, 12),
+    cv::Point(2, -8), cv::Point(6, -9), cv::Point(7, -4),
+    cv::Point(2, 3), cv::Point(3, -2), cv::Point(6, 3),
+    cv::Point(11, 0), cv::Point(3, -3), cv::Point(8, -8),
+    cv::Point(7, 8), cv::Point(9, 3), cv::Point(-11, -5),
+    cv::Point(-6, -4), cv::Point(-10, 11), cv::Point(-5, 10),
+    cv::Point(-5, -8), cv::Point(-3, 12), cv::Point(-10, 5),
+    cv::Point(-9, 0), cv::Point(8, -1), cv::Point(12, -6),
+    cv::Point(4, -6), cv::Point(6, -11), cv::Point(-10, 12),
+    cv::Point(-8, 7), cv::Point(4, -2), cv::Point(6, 7),
+    cv::Point(-2, 0), cv::Point(-2, 12), cv::Point(-5, -8),
+    cv::Point(-5, 2), cv::Point(7, -6), cv::Point(10, 12),
+    cv::Point(-9, -13), cv::Point(-8, -8), cv::Point(-5, -13),
+    cv::Point(-5, -2), cv::Point(8, -8), cv::Point(9, -13),
+    cv::Point(-9, -11), cv::Point(-9, 0), cv::Point(1, -8),
+    cv::Point(1, -2), cv::Point(7, -4), cv::Point(9, 1),
+    cv::Point(-2, 1), cv::Point(-1, -4), cv::Point(11, -6),
+    cv::Point(12, -11), cv::Point(-12, -9), cv::Point(-6, 4),
+    cv::Point(3, 7), cv::Point(7, 12), cv::Point(5, 5),
+    cv::Point(10, 8), cv::Point(0, -4), cv::Point(2, 8),
+    cv::Point(-9, 12), cv::Point(-5, -13), cv::Point(0, 7),
+    cv::Point(2, 12), cv::Point(-1, 2), cv::Point(1, 7),
+    cv::Point(5, 11), cv::Point(7, -9), cv::Point(3, 5),
+    cv::Point(6, -8), cv::Point(-13, -4), cv::Point(-8, 9),
+    cv::Point(-5, 9), cv::Point(-3, -3), cv::Point(-4, -7),
+    cv::Point(-3, -12), cv::Point(6, 5), cv::Point(8, 0),
+    cv::Point(-7, 6), cv::Point(-6, 12), cv::Point(-13, 6),
+    cv::Point(-5, -2), cv::Point(1, -10), cv::Point(3, 10),
+    cv::Point(4, 1), cv::Point(8, -4), cv::Point(-2, -2),
+    cv::Point(2, -13), cv::Point(2, -12), cv::Point(12, 12),
+    cv::Point(-2, -13), cv::Point(0, -6), cv::Point(4, 1),
+    cv::Point(9, 3), cv::Point(-6, -10), cv::Point(-3, -5),
+    cv::Point(-3, -13), cv::Point(-1, 1), cv::Point(7, 5),
+    cv::Point(12, -11), cv::Point(4, -2), cv::Point(5, -7),
+    cv::Point(-13, 9), cv::Point(-9, -5), cv::Point(7, 1),
+    cv::Point(8, 6), cv::Point(7, -8), cv::Point(7, 6),
+    cv::Point(-7, -4), cv::Point(-7, 1), cv::Point(-8, 11),
+    cv::Point(-7, -8), cv::Point(-13, 6), cv::Point(-12, -8),
+    cv::Point(2, 4), cv::Point(3, 9), cv::Point(10, -5),
+    cv::Point(12, 3), cv::Point(-6, -5), cv::Point(-6, 7),
+    cv::Point(8, -3), cv::Point(9, -8), cv::Point(2, -12),
+    cv::Point(2, 8), cv::Point(-11, -2), cv::Point(-10, 3),
+    cv::Point(-12, -13), cv::Point(-7, -9), cv::Point(-11, 0),
+    cv::Point(-10, -5), cv::Point(5, -3), cv::Point(11, 8),
+    cv::Point(-2, -13), cv::Point(-1, 12), cv::Point(-1, -8),
+    cv::Point(0, 9), cv::Point(-13, -11), cv::Point(-12, -5),
+    cv::Point(-10, -2), cv::Point(-10, 11), cv::Point(-3, 9),
+    cv::Point(-2, -13), cv::Point(2, -3), cv::Point(3, 2),
+    cv::Point(-9, -13), cv::Point(-4, 0), cv::Point(-4, 6),
+    cv::Point(-3, -10), cv::Point(-4, 12), cv::Point(-2, -7),
+    cv::Point(-6, -11), cv::Point(-4, 9), cv::Point(6, -3),
+    cv::Point(6, 11), cv::Point(-13, 11), cv::Point(-5, 5),
+    cv::Point(11, 11), cv::Point(12, 6), cv::Point(7, -5),
+    cv::Point(12, -2), cv::Point(-1, 12), cv::Point(0, 7),
+    cv::Point(-4, -8), cv::Point(-3, -2), cv::Point(-7, 1),
+    cv::Point(-6, 7), cv::Point(-13, -12), cv::Point(-8, -13),
+    cv::Point(-7, -2), cv::Point(-6, -8), cv::Point(-8, 5),
+    cv::Point(-6, -9), cv::Point(-5, -1), cv::Point(-4, 5),
+    cv::Point(-13, 7), cv::Point(-8, 10), cv::Point(1, 5),
+    cv::Point(5, -13), cv::Point(1, 0), cv::Point(10, -13),
+    cv::Point(9, 12), cv::Point(10, -1), cv::Point(5, -8),
+    cv::Point(10, -9), cv::Point(-1, 11), cv::Point(1, -13),
+    cv::Point(-9, -3), cv::Point(-6, 2), cv::Point(-1, -10),
+    cv::Point(1, 12), cv::Point(-13, 1), cv::Point(-8, -10),
+    cv::Point(8, -11), cv::Point(10, -6), cv::Point(2, -13),
+    cv::Point(3, -6), cv::Point(7, -13), cv::Point(12, -9),
+    cv::Point(-10, -10), cv::Point(-5, -7), cv::Point(-10, -8),
+    cv::Point(-8, -13), cv::Point(4, -6), cv::Point(8, 5),
+    cv::Point(3, 12), cv::Point(8, -13), cv::Point(-4, 2),
+    cv::Point(-3, -3), cv::Point(5, -13), cv::Point(10, -12),
+    cv::Point(4, -13), cv::Point(5, -1), cv::Point(-9, 9),
+    cv::Point(-4, 3), cv::Point(0, 3), cv::Point(3, -9),
+    cv::Point(-12, 1), cv::Point(-6, 1), cv::Point(3, 2),
+    cv::Point(4, -8), cv::Point(-10, -10), cv::Point(-10, 9),
+    cv::Point(8, -13), cv::Point(12, 12), cv::Point(-8, -12),
+    cv::Point(-6, -5), cv::Point(2, 2), cv::Point(3, 7),
+    cv::Point(10, 6), cv::Point(11, -8), cv::Point(6, 8),
+    cv::Point(8, -12), cv::Point(-7, 10), cv::Point(-6, 5),
+    cv::Point(-3, -9), cv::Point(-3, 9), cv::Point(-1, -13),
+    cv::Point(-1, 5), cv::Point(-3, -7), cv::Point(-3, 4),
+    cv::Point(-8, -2), cv::Point(-8, 3), cv::Point(4, 2),
+    cv::Point(12, 12), cv::Point(2, -5), cv::Point(3, 11),
+    cv::Point(6, -9), cv::Point(11, -13), cv::Point(3, -1),
+    cv::Point(7, 12), cv::Point(11, -1), cv::Point(12, 4),
+    cv::Point(-3, 0), cv::Point(-3, 6), cv::Point(4, -11),
+    cv::Point(4, 12), cv::Point(2, -4), cv::Point(2, 1),
+    cv::Point(-10, -6), cv::Point(-8, 1), cv::Point(-13, 7),
+    cv::Point(-11, 1), cv::Point(-13, 12), cv::Point(-11, -13),
+    cv::Point(6, 0), cv::Point(11, -13), cv::Point(0, -1),
+    cv::Point(1, 4), cv::Point(-13, 3), cv::Point(-9, -2),
+    cv::Point(-9, 8), cv::Point(-6, -3), cv::Point(-13, -6),
+    cv::Point(-8, -2), cv::Point(5, -9), cv::Point(8, 10),
+    cv::Point(2, 7), cv::Point(3, -9), cv::Point(-1, -6),
+    cv::Point(-1, -1), cv::Point(9, 5), cv::Point(11, -2),
+    cv::Point(11, -3), cv::Point(12, -8), cv::Point(3, 0),
+    cv::Point(3, 5), cv::Point(-1, 4), cv::Point(0, 10),
+    cv::Point(3, -6), cv::Point(4, 5), cv::Point(-13, 0),
+    cv::Point(-10, 5), cv::Point(5, 8), cv::Point(12, 11),
+    cv::Point(8, 9), cv::Point(9, -6), cv::Point(7, -4),
+    cv::Point(8, -12), cv::Point(-10, 4), cv::Point(-10, 9),
+    cv::Point(7, 3), cv::Point(12, 4), cv::Point(9, -7),
+    cv::Point(10, -2), cv::Point(7, 0), cv::Point(12, -2),
+    cv::Point(-1, -6), cv::Point(0, -11)};
 
 // const Eigen::Matrix<int, 256 * 2, 2> ORBFeatureExtractor::pattern_(
 //     (Eigen::Matrix<int, 256 * 2, 2>() <<
