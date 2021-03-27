@@ -16,7 +16,7 @@ namespace geometry {
 class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   typedef struct { TMatrix33 R; TVector3D T; } Solution;
  public:
-  HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
+  explicit HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
   void FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                 const std::vector<HomogenousPoint> & points_from,
@@ -52,8 +52,8 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
    * @return
    */
   bool FindRTTransformation(const TMatrix33 & homography,
-                            const std::vector<TPoint3D> & points_to,
-                            const std::vector<TPoint3D> & points_from,
+                            const std::vector<HomogenousPoint> & points_to,
+                            const std::vector<HomogenousPoint> & points_from,
                             const std::vector<features::Match> & matches,
                             std::vector<bool> & out_inliers,
                             std::vector<TPoint3D> & out_triangulated,
@@ -68,10 +68,8 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                  precision_t & out_parallax,
                  std::vector<TPoint3D> & out_triangulated) const;
 
-  static bool Triangulate(const Solution & sol,
-                   const HomogenousPoint & point_from,
-                   const HomogenousPoint & point_to,
-                   TPoint3D & out_trinagulated) ;
+
+
  private:
 
   static void FillSolutionsForPositiveD(precision_t d1,
@@ -90,10 +88,6 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                  Solution solution[4],
                                  precision_t s) noexcept;
 
-
-  static precision_t ComputeParallax(const TPoint3D & point, const Solution & solution) ;
-
-  static precision_t ComputeTriangulatedReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) ;
 
   static const precision_t HOMOGRAPHY_SCORE;
   static const precision_t PARALLAX_THRESHOLD;
