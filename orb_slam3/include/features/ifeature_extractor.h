@@ -28,6 +28,12 @@ class IFeatureExtractor {
   virtual int Extract(const TImageGray8U & image,
                       Features & features) = 0;
 
+
+  virtual precision_t GetAcceptableSquareError(unsigned level) const = 0;
+
+  /*!
+   * Virtual destructor
+   */
   virtual ~IFeatureExtractor() = default;
 
 };

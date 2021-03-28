@@ -18,15 +18,15 @@ SNNMatcher::SNNMatcher(const precision_t nearest_neighbour_ratio) : nearest_neig
 }
 
 template<typename IteratorType>
-void SNNMatcher::MatchWithIterator(const DescriptorSet &descriptors_to,
-                                   const DescriptorSet &descriptors_from,
-                                   vector<features::Match> &out_matches,
+void SNNMatcher::MatchWithIterator(const DescriptorSet & descriptors_to,
+                                   const DescriptorSet & descriptors_from,
+                                   vector<features::Match> & out_matches,
                                    iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                                   validators::IIndexValidator *validotor,
+                                   std::vector<validators::IIndexValidator *> validators,
                                    validators::IMatchResultValidator *result_validator) {
   std::vector<int> matches;
   size_t nmatches =
-      MatchWithIteratorInternal(descriptors_to, descriptors_from, matches, iterator, validotor, result_validator);
+      MatchWithIteratorInternal(descriptors_to, descriptors_from, matches, iterator, validators, result_validator);
   out_matches.reserve(nmatches);
   for (int i = 0; i < descriptors_to.rows(); ++i) {
     if (matches[i] >= 0)
@@ -35,11 +35,11 @@ void SNNMatcher::MatchWithIterator(const DescriptorSet &descriptors_to,
 }
 
 template<typename IteratorType>
-size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to,
-                                             const DescriptorSet &descriptors_from,
-                                             std::vector<int> &out_matches,
+size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet & descriptors_to,
+                                             const DescriptorSet & descriptors_from,
+                                             std::vector<int> & out_matches,
                                              iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                                             validators::IIndexValidator *validator,
+                                             std::vector<validators::IIndexValidator *> validators,
                                              validators::IMatchResultValidator *result_validator) {
   size_t number_of_matches = 0;
   out_matches.resize(descriptors_to.rows(), -1);
@@ -47,13 +47,24 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to
   std::vector<int> matches_from_to(descriptors_from.size(), -1);
   for (; iterator->IsValid(); ++(*iterator)) {
     size_t to_id = iterator->IdxTo(), best_from_idx;
-    if (validator && !validator->ValidateIdxTo(to_id))
-      continue;
+    for (auto validator: validators)
+      if (validator && !validator->ValidateIdxTo(to_id))
+        continue;
+
     unsigned best_distance = std::numeric_limits<unsigned>::max(),
         best_distance2 = std::numeric_limits<unsigned>::max();
     for (size_t idx_from: *iterator) {
-      if (validator && !validator->ValidateIindices(to_id, idx_from))
+
+      bool indices_are_valid = true;
+      for (auto validator: validators) {
+        if (validator && !validator->ValidateIindices(to_id, idx_from)) {
+          indices_are_valid = false;
+          break;
+        }
+      }
+      if (!indices_are_valid)
         continue;
+
       unsigned dist = DescriptorDistance(descriptors_to.row(to_id), descriptors_from.row(idx_from));
       if (dist < best_distance) {
         best_distance2 = best_distance;
@@ -70,6 +81,7 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to
         out_matches[matches_from_to[best_from_idx]] = -1;
       ++number_of_matches;
       out_matches[to_id] = best_from_idx;
+      matches_from_to[best_from_idx] = to_id;
     } else
       out_matches[to_id] = -1;
   }
@@ -78,20 +90,20 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet &descriptors_to
   return number_of_matches;
 }
 
-template void SNNMatcher::MatchWithIterator<std::vector<size_t>::iterator>(const DescriptorSet &descriptors_to,
-                                                                           const DescriptorSet &descriptors_from,
-                                                                           vector<features::Match> &out_matches,
+template void SNNMatcher::MatchWithIterator<std::vector<size_t>::iterator>(const DescriptorSet & descriptors_to,
+                                                                           const DescriptorSet & descriptors_from,
+                                                                           vector<features::Match> & out_matches,
                                                                            iterators::IJointDescriptorIterator<std::vector<
                                                                                size_t>::iterator> *iterator,
-                                                                           validators::IIndexValidator *,
+                                                                           std::vector<validators::IIndexValidator *>,
                                                                            validators::IMatchResultValidator *);
 
-template void SNNMatcher::MatchWithIterator<iterators::FeatureVectorTraverseIterator>(const DescriptorSet &descriptors_to,
-                                                                                      const DescriptorSet &descriptors_from,
-                                                                                      vector<features::Match> &out_matches,
+template void SNNMatcher::MatchWithIterator<iterators::FeatureVectorTraverseIterator>(const DescriptorSet & descriptors_to,
+                                                                                      const DescriptorSet & descriptors_from,
+                                                                                      vector<features::Match> & out_matches,
                                                                                       iterators::IJointDescriptorIterator<
                                                                                           iterators::FeatureVectorTraverseIterator> *iterator,
-                                                                                      validators::IIndexValidator *,
+                                                                                      std::vector<validators::IIndexValidator *>,
                                                                                       validators::IMatchResultValidator *);
 
 }

@@ -19,7 +19,8 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
   switch (state_) {
     case NOT_INITIALIZED: {
       if (frame->IsValid()) {
-        initial_frame_ = last_frame_ = frame;
+        initial_frame_ = frame;
+        last_frame_ = frame;
         last_frame_->InitializeIdentity();
         state_ = FIRST_IMAGE;
       }

@@ -45,8 +45,6 @@ class MonocularFrame : public FrameBase {
  protected:
   void ComputeBow();
   bool BaselineIsNotEnough(const MonocularFrame *other) const;
-  TMatrix33 ComputeRelativeFundamentalMatrix(const MonocularFrame *other) const;
-
  protected:
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;

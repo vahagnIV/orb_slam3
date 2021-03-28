@@ -25,6 +25,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
   int Extract(const TImageGray8U & image, Features & out_features) override;
+  precision_t GetAcceptableSquareError(unsigned int level) const override;
 
  private:
   class ExtractorNode {

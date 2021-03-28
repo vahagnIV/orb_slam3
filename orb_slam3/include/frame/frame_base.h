@@ -13,13 +13,13 @@
 #include <g2o/core/sparse_optimizer.h>
 
 // == orb-slam3 ===
+#include <typedefs.h>
 #include <identifiable.h>
 #include <frame/frame_type.h>
-#include <typedefs.h>
+#include <frame/covisibility_graph_node.h>
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
 #include <map/map_point.h>
-#include "covisibility_graph_node.h"
 
 namespace orb_slam3 {
 namespace frame {
@@ -30,8 +30,8 @@ class FrameBase : public Identifiable {
 
   virtual FrameType Type() const = 0;
 
-  FrameBase(const TimePoint &timestamp)
-      : Identifiable(), timestamp_(timestamp), covisibility_connections_() {
+  FrameBase(const TimePoint &timestamp, const std::shared_ptr<features::IFeatureExtractor> & feature_extractor)
+      : Identifiable(), timestamp_(timestamp), covisibility_connections_(), feature_extractor_(feature_extractor) {
     pose_.setId(id_);
   }
   /*!
@@ -166,6 +166,8 @@ class FrameBase : public Identifiable {
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;
+
+  std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
 
 };
 

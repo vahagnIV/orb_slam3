@@ -254,6 +254,7 @@ size_t HomographyMatrixEstimator::CheckRT(const Solution &solution,
                                        solution.R,
                                        solution.T,
                                        4 * sigma_threshold__square_,
+                                       4 * sigma_threshold__square_,
                                        PARALLAX_THRESHOLD,
                                        point_parallax,
                                        triangulated))

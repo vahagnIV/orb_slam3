@@ -75,7 +75,7 @@ precision_t ComputeReprojectionError(const TPoint3D &point, const HomogenousPoin
  * @param point_to The projection of the point in the second coordinate system
  * @param R The rotation matrix between "from" and "to" coordinate systems
  * @param T The translation vector between "from" and "to" coordinate systems
- * @param reprojection_threshold The threshold to be validated against
+ * @param reprojection_threshold_to The threshold to be validated against
  * @param parallax_threshold The parallax threshold to be validated against
  * @param out_parallax The computed parallax of the poinr
  * @param out_triangulated The output triangulated point
@@ -85,7 +85,8 @@ bool TriangulateAndValidate(const HomogenousPoint &point_from,
                                    const HomogenousPoint &point_to,
                                    const TMatrix33 &R,
                                    const TVector3D &T,
-                                   precision_t reprojection_threshold,
+                                   precision_t reprojection_threshold_to,
+                                   precision_t reprojection_threshold_from,
                                    precision_t parallax_threshold,
                                    precision_t & out_parallax,
                                    TPoint3D &out_triangulated);

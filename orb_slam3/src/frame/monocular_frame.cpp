@@ -14,7 +14,8 @@
 #include <features/matching/second_nearest_neighbor_matcher.h>
 #include <features/matching/iterators/area_iterator.h>
 #include <features/matching/iterators/bow_iterator.h>
-#include <features/matching/validators/bow_match_validator.h>
+#include <features/matching/validators/bow_match_tracking_validator.h>
+#include <features/matching/validators/bow_match_local_mapping_validator.h>
 #include <features/matching/validators/orientation_validator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <geometry/utils.h>
@@ -25,11 +26,11 @@
 namespace orb_slam3 {
 namespace frame {
 
-MonocularFrame::MonocularFrame(const TImageGray8U &image, TimePoint timestamp,
-                               const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
-                               const std::shared_ptr<camera::MonocularCamera> &camera,
+MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
+                               const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
+                               const std::shared_ptr<camera::MonocularCamera> & camera,
                                features::BowVocabulary *vocabulary) :
-    FrameBase(timestamp),
+    FrameBase(timestamp, feature_extractor),
     features_(camera->Width(), camera->Height()),
     camera_(camera) {
   feature_extractor->Extract(image, features_);
@@ -42,7 +43,7 @@ bool MonocularFrame::IsValid() const {
   return features_.descriptors.size() > constants::MINIMAL_FEATURE_COUNT_PER_FRAME_MONOCULAR;
 }
 
-bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
+bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   if (other->Type() != Type())
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
@@ -55,7 +56,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
                             from_frame->features_.descriptors,
                             frame_link_.matches,
                             &area_iterator,
-                            nullptr,
+                            {},
                             &orientation_validator);
 
   if (frame_link_.matches.size() < 100)
@@ -79,7 +80,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> &other) {
     for (size_t i = 0; i < frame_link_.matches.size(); ++i) {
       if (!frame_link_.inliers[i])
         continue;
-      const features::Match &match = frame_link_.matches[i];
+      const features::Match & match = frame_link_.matches[i];
 
       if (from_frame->map_points_.find(match.from_idx) != from_frame->map_points_.end()) {
         // TODO: do the contistency check
@@ -112,16 +113,16 @@ FrameType MonocularFrame::Type() const {
 }
 
 void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
-                                             std::vector<features::DescriptorType> &out_descriptor_ptr) const {
+                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const {
 
   out_descriptor_ptr.emplace_back(features_.descriptors.row(feature_id));
 
 }
 
-void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) {
+void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) {
   g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
-  for (auto &mp_id:map_points_) {
+  for (auto & mp_id:map_points_) {
     if (nullptr == mp_id.second)
       continue;
     map::MapPoint *map_point = mp_id.second;
@@ -146,7 +147,7 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t
   }
 }
 
-void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) {
+void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) {
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *> (optimizer.vertex(Id()));
   pose_.setEstimate(pose->estimate());
   for (auto mp: map_points_) {
@@ -160,13 +161,13 @@ void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) {
   }
 }
 
-TPoint3D MonocularFrame::GetNormal(const TPoint3D &point) const {
+TPoint3D MonocularFrame::GetNormal(const TPoint3D & point) const {
   TPoint3D normal = pose_.estimate().translation() - point;
   normal.normalize();
   return normal;
 }
 
-bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) {
+bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) {
   if (reference_keyframe->Type() != Type())
     return false;
   auto reference_kf = dynamic_cast<MonocularFrame *>(reference_keyframe.get());
@@ -180,7 +181,8 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   features::matching::iterators::BowIterator
       bow_it(features_.bow_container.feature_vector, reference_kf->features_.bow_container.feature_vector);
 
-  features::matching::validators::BowMatchValidator validator(map_points_, reference_kf->map_points_);
+  features::matching::validators::BowMatchTrackingValidator
+      validator(map_points_, reference_kf->map_points_, false, true);
   features::matching::validators::OrientationValidator
       orientation_validator(features_.keypoints, reference_kf->features_.keypoints);
 
@@ -188,27 +190,29 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
                                 reference_kf->features_.descriptors,
                                 matches,
                                 &bow_it,
-                                &validator,
+                                {&validator},
                                 &orientation_validator);
 
   if (matches.size() < 15) {
     return false;
   }
 
-  for (const auto &match: matches) {
+  for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_[match.from_idx];
     map_points_[match.to_idx] = map_point;
   }
   std::unordered_set<std::size_t> inliers;
   SetPosition(*(reference_kf->GetPose()));
   OptimizePose(inliers);
-  for (const auto &match: matches) {
+  for (const auto & match: matches) {
     if (inliers.find(match.to_idx) != inliers.end()) {
       map_points_[match.to_idx]->AddObservation(this, match.to_idx);
       map_points_[match.to_idx]->Refresh();
     } else
       map_points_.erase(match.to_idx);
   }
+  covisibility_connections_.Update();
+  reference_kf->covisibility_connections_.Update();
   return inliers.size() > 3u;
 }
 
@@ -216,7 +220,7 @@ void MonocularFrame::ComputeBow() {
   features_.ComputeBow();
 }
 
-void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) {
+void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
   static const precision_t delta_mono = std::sqrt(5.991);
   static const precision_t chi2[4] = {5.991, 5.991, 5.991, 5.991};
   g2o::SparseOptimizer optimizer;
@@ -258,7 +262,7 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) 
 
   for (int i = 0; i < 4; ++i) {
     pose->setEstimate(pose_.estimate());
-    if(out_inliers.empty())
+    if (out_inliers.empty())
       return;
     optimizer.optimize(10);
     for (auto edge: edges) {
@@ -287,12 +291,12 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> &out_inliers) 
 }
 
 precision_t MonocularFrame::ComputeMedianDepth() const {
-  const g2o::SE3Quat &pose_quat = pose_.estimate();
+  const g2o::SE3Quat & pose_quat = pose_.estimate();
   std::vector<precision_t> depths(map_points_.size());
   std::transform(map_points_.begin(),
                  map_points_.end(),
                  depths.begin(),
-                 [&pose_quat](const std::pair<size_t, map::MapPoint *> &mp_id) -> precision_t {
+                 [&pose_quat](const std::pair<size_t, map::MapPoint *> & mp_id) -> precision_t {
                    return pose_quat.map(mp_id.second->GetPosition())[2];
                  });
   return depths[(depths.size() - 1) / 2];
@@ -302,20 +306,7 @@ bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame *other) const {
   TVector3D baseline = pose_.estimate().translation() - other->pose_.estimate().translation();
   precision_t baseline_length = baseline.norm();
   precision_t frame_median_depth = other->ComputeMedianDepth();
-  return baseline_length / frame_median_depth < 1e-2;
-}
-
-TMatrix33 MonocularFrame::ComputeRelativeFundamentalMatrix(const MonocularFrame *other) const {
-  TMatrix33 R;
-  TVector3D T;
-  geometry::utils::ComputeRelativeTransformation(pose_.estimate().rotation().toRotationMatrix(),
-                                                 pose_.estimate().translation(),
-                                                 other->pose_.estimate().rotation().toRotationMatrix(),
-                                                 other->pose_.estimate().translation(),
-                                                 R,
-                                                 T);
-
-  return geometry::FundamentalMatrixEstimator::FromEuclideanTransformations(R, T);
+  return baseline_length / frame_median_depth < 1e-3;
 }
 
 void MonocularFrame::FindNewMapPoints() {
@@ -324,11 +315,62 @@ void MonocularFrame::FindNewMapPoints() {
     if (frame->Type() != Type())
       continue;
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
-    if (BaselineIsNotEnough(keyframe))
+    ComputeBow();
+    keyframe->ComputeBow();
+    if (BaselineIsNotEnough(keyframe)) {
+      std::cout << "Baseline between frames  " << Id() << " and " << keyframe->Id() << " Is not enough" << std::endl;
       continue;
-    TMatrix33 F12 = ComputeRelativeFundamentalMatrix(keyframe);
-    precision_t th = 0.6f;
+    }
+    const precision_t th = 0.6f;
     features::matching::SNNMatcher matcher(th);
+    features::matching::validators::BowMatchTrackingValidator
+        validator(map_points_, keyframe->map_points_, false, false);
+    TMatrix33 R;
+    TVector3D T;
+    geometry::utils::ComputeRelativeTransformation(pose_.estimate().rotation().toRotationMatrix(),
+                                                   pose_.estimate().translation(),
+                                                   keyframe->pose_.estimate().rotation().toRotationMatrix(),
+                                                   keyframe->pose_.estimate().translation(),
+                                                   R,
+                                                   T);
+    features::matching::validators::BowMatchLocalMappingValidator lm_validator(features_,
+                                                                               keyframe->features_,
+                                                                               feature_extractor_.get(),
+                                                                               keyframe->feature_extractor_.get(),
+                                                                               camera_->FxInv(),
+                                                                               keyframe->camera_->FxInv(),
+                                                                               &R,
+                                                                               &T);
+    features::matching::iterators::BowIterator
+        bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
+    features::matching::validators::OrientationValidator
+        orientation_validator(features_.keypoints, keyframe->features_.keypoints);
+    std::vector<features::Match> matches;
+    matcher.MatchWithIterator(features_.descriptors,
+                              keyframe->features_.descriptors,
+                              matches,
+                              &bow_iterator,
+                              {&validator, &lm_validator},
+                              &orientation_validator);
+    std::cout << " Local mapper:  Found " << matches.size() << " new map-points between " << Id() << " and "
+              << keyframe->Id() << ". Appending" << std::endl;
+    for (auto & match:matches) {
+      TPoint3D pt;
+      geometry::utils::Triangulate(R,
+                                   T,
+                                   keyframe->features_.undistorted_keypoints[match.from_idx],
+                                   features_.undistorted_keypoints[match.to_idx],
+                                   pt);
+      auto mp = new map::MapPoint(keyframe->pose_.estimate().rotation().toRotationMatrix().transpose()
+                                      * (pt - keyframe->pose_.estimate().translation()));
+      map_points_[match.to_idx] = mp;
+      keyframe->map_points_[match.from_idx] = mp;
+      mp->AddObservation(this, match.to_idx);
+      mp->AddObservation(keyframe, match.from_idx);
+      mp->Refresh();
+      covisibility_connections_.Update();
+      keyframe->covisibility_connections_.Update();
+    }
 
   }
 

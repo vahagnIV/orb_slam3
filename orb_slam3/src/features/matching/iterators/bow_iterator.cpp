@@ -80,10 +80,10 @@ void BowIterator::AdvanceEqualizeNodes() {
       break;
     }
 
-    if (to_it->first > from_it->first) {
-      from_it = from_feature_vec_ptr_->lower_bound(to_it->first);
-    } else
+    if (to_it->first < from_it->first) {
       to_it = to_feature_vec_ptr_->lower_bound(from_it->first);
+    } else
+      from_it = from_feature_vec_ptr_->lower_bound(to_it->first);
   }
 
   if (IsValid()) {

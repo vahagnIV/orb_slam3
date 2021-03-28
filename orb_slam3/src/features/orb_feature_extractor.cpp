@@ -68,7 +68,7 @@ void ORBFeatureExtractor::AllocatePyramid() {
 }
 
 void ORBFeatureExtractor::computeOrientation(
-    const cv::Mat &image, std::vector<features::KeyPoint> &keypoints,
+    const cv::Mat & image, std::vector<features::KeyPoint> & keypoints,
     const int *umax) {
   for (std::vector<features::KeyPoint>::iterator keypoint = keypoints.begin(),
            keypointEnd = keypoints.end();
@@ -77,8 +77,8 @@ void ORBFeatureExtractor::computeOrientation(
   }
 }
 
-void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint &kpt,
-                                               const cv::Mat &img,
+void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint & kpt,
+                                               const cv::Mat & img,
                                                const cv::Point *pattern,
                                                uchar *desc) {
   float angle = (float) kpt.angle * factorPI;
@@ -125,8 +125,8 @@ void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint &kpt,
 }
 
 void ORBFeatureExtractor::computeDescriptors(
-    const cv::Mat &image, std::vector<features::KeyPoint> &keypoints,
-    cv::Mat &descriptors, const std::vector<cv::Point> &pattern) {
+    const cv::Mat & image, std::vector<features::KeyPoint> & keypoints,
+    cv::Mat & descriptors, const std::vector<cv::Point> & pattern) {
   descriptors = cv::Mat::zeros((int) keypoints.size(), 32, CV_8UC1);
 
   for (size_t i = 0; i < keypoints.size(); i++)
@@ -134,7 +134,7 @@ void ORBFeatureExtractor::computeDescriptors(
                          descriptors.ptr((int) i));
 }
 
-void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, features::KeyPoint &pt,
+void ORBFeatureExtractor::IC_Angle(const cv::Mat & image, features::KeyPoint & pt,
                                    const int *u_max) {
   int m_01 = 0, m_10 = 0;
 
@@ -162,7 +162,7 @@ void ORBFeatureExtractor::IC_Angle(const cv::Mat &image, features::KeyPoint &pt,
 }
 
 void ORBFeatureExtractor::ComputeKeyPointsOctTree(
-    std::vector<std::vector<features::KeyPoint> > &out_all_keypoints) {
+    std::vector<std::vector<features::KeyPoint> > & out_all_keypoints) {
   out_all_keypoints.resize(scale_factors_.size());
 
   const float W = 30;
@@ -219,7 +219,7 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
       }
     }
 
-    std::vector<features::KeyPoint> &keypoints = out_all_keypoints[level];
+    std::vector<features::KeyPoint> & keypoints = out_all_keypoints[level];
     keypoints.reserve(features_);
 
     DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX, minBorderY,
@@ -242,14 +242,14 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 }
 
 void ORBFeatureExtractor::DistributeOctTree(
-    const std::vector<cv::KeyPoint> &vToDistributeKeys,
-    const int &minX,
-    const int &maxX,
-    const int &minY,
-    const int &maxY,
-    const int &nFeatures,
-    const int &level,
-    std::vector<features::KeyPoint> &out_map_points) {
+    const std::vector<cv::KeyPoint> & vToDistributeKeys,
+    const int & minX,
+    const int & maxX,
+    const int & minY,
+    const int & maxY,
+    const int & nFeatures,
+    const int & level,
+    std::vector<features::KeyPoint> & out_map_points) {
   // Compute how many initial nodes
   const int nIni = round(static_cast<float>(maxX - minX) / (maxY - minY));
 
@@ -274,7 +274,7 @@ void ORBFeatureExtractor::DistributeOctTree(
 
   // Associate points to childs
   for (size_t i = 0; i < vToDistributeKeys.size(); i++) {
-    const cv::KeyPoint &kp = vToDistributeKeys[i];
+    const cv::KeyPoint & kp = vToDistributeKeys[i];
     vpIniNodes[kp.pt.x / hX]->vKeys.push_back(kp);
   }
 
@@ -429,7 +429,7 @@ void ORBFeatureExtractor::DistributeOctTree(
   out_map_points.reserve(features_);
   for (std::list<ExtractorNode>::iterator lit = lNodes.begin();
        lit != lNodes.end(); lit++) {
-    std::vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
+    std::vector<cv::KeyPoint> & vNodeKeys = lit->vKeys;
     cv::KeyPoint *pKP = &vNodeKeys[0];
     float maxResponse = pKP->response;
 
@@ -447,7 +447,7 @@ void ORBFeatureExtractor::DistributeOctTree(
   }
 }
 
-void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
+void ORBFeatureExtractor::BuildImagePyramid(cv::Mat & image) {
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     float scale = inv_scale_factors_[level];
     cv::Size sz(cvRound((float) image.cols * scale),
@@ -473,8 +473,8 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat &image) {
   }
 }
 
-int ORBFeatureExtractor::Extract(const TImageGray8U &img,
-                                 Features &out_features) {
+int ORBFeatureExtractor::Extract(const TImageGray8U & img,
+                                 Features & out_features) {
   cv::Mat image(img.rows(), img.cols(), CV_8U, (void *) img.data());
   // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
   if (image.empty()) return -1;
@@ -496,7 +496,7 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
   // Modified for speeding up stereo fisheye matching
   int monoIndex = 0, stereoIndex = nkeypoints - 1;
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
-    std::vector<features::KeyPoint> &keypoints = allKeypoints[level];
+    std::vector<features::KeyPoint> & keypoints = allKeypoints[level];
     int nkeypointsLevel = (int) keypoints.size();
 
     if (nkeypointsLevel == 0) continue;
@@ -546,10 +546,10 @@ int ORBFeatureExtractor::Extract(const TImageGray8U &img,
   return monoIndex;
 }
 
-void ORBFeatureExtractor::ExtractorNode::DivideNode(ExtractorNode &n1,
-                                                    ExtractorNode &n2,
-                                                    ExtractorNode &n3,
-                                                    ExtractorNode &n4) {
+void ORBFeatureExtractor::ExtractorNode::DivideNode(ExtractorNode & n1,
+                                                    ExtractorNode & n2,
+                                                    ExtractorNode & n3,
+                                                    ExtractorNode & n4) {
   const int halfX = ceil(static_cast<float>(UR.x - UL.x) / 2);
   const int halfY = ceil(static_cast<float>(BR.y - UL.y) / 2);
 
@@ -580,7 +580,7 @@ void ORBFeatureExtractor::ExtractorNode::DivideNode(ExtractorNode &n1,
 
   // Associate points to childs
   for (size_t i = 0; i < vKeys.size(); i++) {
-    const cv::KeyPoint &kp = vKeys[i];
+    const cv::KeyPoint & kp = vKeys[i];
     if (kp.pt.x < n1.UR.x) {
       if (kp.pt.y < n1.BR.y)
         n1.vKeys.push_back(kp);
@@ -596,6 +596,10 @@ void ORBFeatureExtractor::ExtractorNode::DivideNode(ExtractorNode &n1,
   if (n2.vKeys.size() == 1) n2.bNoMore = true;
   if (n3.vKeys.size() == 1) n3.bNoMore = true;
   if (n4.vKeys.size() == 1) n4.bNoMore = true;
+}
+
+precision_t ORBFeatureExtractor::GetAcceptableSquareError(unsigned int level) const {
+  return level_sigma2_[level];
 }
 /*
   umax.resize(HALF_PATCH_SIZE + 1);

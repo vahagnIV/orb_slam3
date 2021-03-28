@@ -6,8 +6,8 @@ find_package(OpenMP)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 
 if (OPENMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -39,8 +39,9 @@ add_library(orbslam SHARED
         src/features/bow_container.cpp
         src/features/matching/iterators/area_iterator.cpp
         src/features/matching/iterators/bow_iterator.cpp
-        src/features/matching/validators/bow_match_validator.cpp
+        src/features/matching/validators/bow_match_tracking_validator.cpp
         src/features/matching/validators/orientation_validator.cpp
+        src/features/matching/validators/bow_match_local_mapping_validator.cpp
 
         src/map/map_point.cpp
         src/map/map.cpp
@@ -100,9 +101,10 @@ add_library(orbslam SHARED
         include/features/matching/iterators/area_iterator.h
         include/features/matching/iterators/bow_iterator.h
         include/features/matching/validators/iindex_validator.h
-        include/features/matching/validators/bow_match_validator.h
+        include/features/matching/validators/bow_match_tracking_validator.h
         include/features/matching/validators/imatch_result_validator.h
         include/features/matching/validators/orientation_validator.h
+        include/features/matching/validators/bow_match_local_mapping_validator.h
 
         include/map/map_point.h
         include/map/atlas.h

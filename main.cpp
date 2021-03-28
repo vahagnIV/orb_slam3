@@ -188,6 +188,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000/25));
 //    cv::waitKey();
   }
 }
@@ -345,36 +346,6 @@ void TestDrawMonocular(std::string original) {
 }
 
 typedef struct { orb_slam3::TMatrix33 R; orb_slam3::TVector3D T; } Solution;
-
-bool Triangulate(const Solution &sol,
-                 const orb_slam3::HomogenousPoint &point_to,
-                 const orb_slam3::HomogenousPoint &point_from,
-                 orb_slam3::TPoint3D &out_trinagulated) {
-  Eigen::Matrix<double, 4, 4, Eigen::RowMajor> A;
-
-  A << 0, -1, point_to[1], 0,
-      1, 0, -point_to[0], 0,
-      point_from[1] * sol.R(2, 0) - sol.R(1, 0), point_from[1] * sol.R(2, 1) - sol.R(1, 1), point_from[1] * sol.R(2, 2)
-      - sol.R(1, 2), point_from[1] * sol.T[2] - sol.T[1],
-      -point_from[0] * sol.R(2, 0) + sol.R(0, 0), -point_from[0] * sol.R(2, 1) + sol.R(0, 1),
-      -point_from[0] * sol.R(2, 2)
-          + sol.R(0, 2), -point_from[0] * sol.T[2] + sol.T[0];
-//  A << 0, -1, point_from[1], 0,
-//      -1, 0, point_from[0], 0,
-//      point_to[1] * sol.R(2, 0) - sol.R(1, 0), point_to[1] * sol.R(2, 1) - sol.R(1, 1), point_to[1] * sol.R(2, 2)
-//      - sol.R(1, 2),
-//      point_to[1] * sol.T[2] - sol.T[1],
-//      point_to[0] * sol.R(2, 0) - sol.R(0, 0), point_to[0] * sol.R(2, 1) - sol.R(0, 1), point_to[0] * sol.R(2, 2)
-//      - sol.R(0, 2),
-//      point_to[0] * sol.T[2] - sol.T[0];
-
-  Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
-  double l_inv = 1 / svd.matrixV()(3, 3);
-  std::cout << svd.matrixV() << std::endl;
-  out_trinagulated << svd.matrixV()(0, 3) * l_inv, svd.matrixV()(1, 3) * l_inv, svd.matrixV()(2, 3) * l_inv;
-
-  return std::isfinite(out_trinagulated[0]) && std::isfinite(out_trinagulated[1]) && std::isfinite(out_trinagulated[2]);
-}
 
 void CompareSharedPointerInitializationAndCopyTime() {
   std::random_device rand_dev;

@@ -8,7 +8,7 @@ namespace orb_slam3 {
 namespace geometry {
 namespace utils {
 
-TMatrix33 SkewSymmetricMatrix(const TVector3D &vector) {
+TMatrix33 SkewSymmetricMatrix(const TVector3D & vector) {
   TMatrix33 result;
   result << 0, -vector[2], vector[1],
       vector[2], 0, -vector[0],
@@ -16,12 +16,12 @@ TMatrix33 SkewSymmetricMatrix(const TVector3D &vector) {
   return result;
 }
 
-void ComputeRelativeTransformation(const TMatrix33 &R_to,
-                                   const TVector3D &T_to,
-                                   const TMatrix33 &R_from,
-                                   const TVector3D &T_from,
-                                   TMatrix33 &out_R,
-                                   TVector3D &out_T) {
+void ComputeRelativeTransformation(const TMatrix33 & R_to,
+                                   const TVector3D & T_to,
+                                   const TMatrix33 & R_from,
+                                   const TVector3D & T_from,
+                                   TMatrix33 & out_R,
+                                   TVector3D & out_T) {
   out_R = R_to * R_from.transpose();
   out_T = -out_R * T_from + T_to;
 }
@@ -55,11 +55,11 @@ void ComputeRelativeTransformation(const TMatrix33 &R_to,
  * The solution of this equation is the column of right singular matrix in SVD that corresponds to the minimal
  * singular value. In Eigen the singular values are sorted sorted. Therefore it is the last column.
  * */
-bool Triangulate(const TMatrix33 &R,
-                 const TVector3D &T,
-                 const HomogenousPoint &point_from,
-                 const HomogenousPoint &point_to,
-                 TPoint3D &out_trinagulated) {
+bool Triangulate(const TMatrix33 & R,
+                 const TVector3D & T,
+                 const HomogenousPoint & point_from,
+                 const HomogenousPoint & point_to,
+                 TPoint3D & out_trinagulated) {
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
 
   A << 0, -1, point_from[1], 0,
@@ -76,13 +76,13 @@ bool Triangulate(const TMatrix33 &R,
   return std::isfinite(out_trinagulated[0]) && std::isfinite(out_trinagulated[1]) && std::isfinite(out_trinagulated[2]);
 }
 
-precision_t ComputeParallax(const TMatrix33 &R, const TVector3D &T, const TPoint3D &point) {
+precision_t ComputeParallax(const TMatrix33 & R, const TVector3D & T, const TPoint3D & point) {
   const TVector3D vec1 = point;
   const TVector3D vec2 = point - (T.transpose() * R).transpose();
   return vec1.dot(vec2) / vec1.norm() / vec2.norm();
 }
 
-precision_t ComputeReprojectionError(const TPoint3D &point, const HomogenousPoint &original_point) {
+precision_t ComputeReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) {
   precision_t z2_inv = 1. / point[2];
   TPoint2D projected{point[0] * z2_inv, point[1] * z2_inv};
 
@@ -90,14 +90,15 @@ precision_t ComputeReprojectionError(const TPoint3D &point, const HomogenousPoin
       + (original_point[1] - projected[1]) * (original_point[1] - projected[1]);
 }
 
-bool TriangulateAndValidate(const HomogenousPoint &point_from,
-                            const HomogenousPoint &point_to,
-                            const TMatrix33 &R,
-                            const TVector3D &T,
-                            precision_t reprojection_threshold,
+bool TriangulateAndValidate(const HomogenousPoint & point_from,
+                            const HomogenousPoint & point_to,
+                            const TMatrix33 & R,
+                            const TVector3D & T,
+                            precision_t reprojection_threshold_to,
+                            precision_t reprojection_threshold_from,
                             precision_t parallax_threshold,
-                            precision_t &out_parallax,
-                            TPoint3D &out_triangulated) {
+                            precision_t & out_parallax,
+                            TPoint3D & out_triangulated) {
   if (!utils::Triangulate(R, T, point_from, point_to, out_triangulated))
     return false;
 
@@ -111,9 +112,10 @@ bool TriangulateAndValidate(const HomogenousPoint &point_from,
   const TVector3D triangulated2 = R * out_triangulated + T;
   if (triangulated2[2] < 0) return false;
 
-  precision_t error = std::max(utils::ComputeReprojectionError(out_triangulated, point_from),
-                               utils::ComputeReprojectionError(triangulated2, point_to));
-  if (error > reprojection_threshold) return false;
+  if (utils::ComputeReprojectionError(out_triangulated, point_from) > reprojection_threshold_from
+      || utils::ComputeReprojectionError(triangulated2, point_to) > reprojection_threshold_to)
+    return false;
+
   return true;
 }
 

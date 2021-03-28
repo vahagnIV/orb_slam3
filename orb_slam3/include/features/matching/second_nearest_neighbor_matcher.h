@@ -28,7 +28,7 @@ class SNNMatcher {
                          const DescriptorSet &descriptors_from,
                          std::vector<features::Match> &out_matches,
                          iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                         validators::IIndexValidator *validator = nullptr,
+                         std::vector<validators::IIndexValidator *> validators = {},
                          validators::IMatchResultValidator *result_validator = nullptr);
 
  private:
@@ -37,7 +37,7 @@ class SNNMatcher {
                                    const DescriptorSet &descriptors_from,
                                    std::vector<int> &out_matches,
                                    iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                                   validators::IIndexValidator *validator,
+                                   std::vector<validators::IIndexValidator *> validators ,
                                    validators::IMatchResultValidator *result_validator);
  public:
   static const unsigned TH_LOW;

@@ -18,7 +18,7 @@ void MapPoint::AddObservation(frame::FrameBase *frame, size_t feature_id) {
     obs.first->CovisibilityGraph().AddConnection(frame);
     frame->CovisibilityGraph().AddConnection(obs.first);
   }
-  observations_[(frame::FrameBase *)frame] = feature_id;
+  observations_[frame] = feature_id;
 }
 
 void MapPoint::EraseObservation(frame::FrameBase *frame) {
