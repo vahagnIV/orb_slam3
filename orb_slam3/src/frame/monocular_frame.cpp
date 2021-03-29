@@ -93,12 +93,12 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     }
     from_frame->CovisibilityGraph().Update();
     this->CovisibilityGraph().Update();
-//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-//              << pose_.estimate().translation() << std::endl;
+    /*std::cout << "Frame " << Id() << " " << pose_.R << std::endl
+              << pose_.T << std::endl;*/
     optimization::BundleAdjustment({this, from_frame}, 20);
     // TODO: normalize T
-//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-//              << pose_.estimate().translation() << std::endl;
+    /*std::cout << "Frame " << Id() << " " << pose_.R << std::endl
+              << pose_.T << std::endl;*/
     return true;
   }
 

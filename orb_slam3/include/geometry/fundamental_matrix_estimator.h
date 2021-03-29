@@ -22,11 +22,11 @@ class FundamentalMatrixEstimator : protected TransfromationEstimatorBase {
                                                   const std::vector<features::Match> &matches,
                                                   std::vector<bool> &out_inliers) const;
 
-  void FindFundamentalMatrix(const std::vector<HomogenousPoint> &kp1,
-                             const std::vector<HomogenousPoint> &kp2,
-                             const std::vector<features::Match> &matches,
-                             const std::vector<size_t> &good_match_random_idx,
-                             TMatrix33 &out_fundamental) const;
+  static void FindFundamentalMatrix(const std::vector<HomogenousPoint> &kp1,
+                                    const std::vector<HomogenousPoint> &kp2,
+                                    const std::vector<features::Match> &matches,
+                                    const std::vector<size_t> &good_match_random_idx,
+                                    TMatrix33 &out_fundamental);
 
   void FindBestFundamentalMatrix(const std::vector<HomogenousPoint> &kp1,
                                  const std::vector<HomogenousPoint> &kp2,
@@ -36,6 +36,13 @@ class FundamentalMatrixEstimator : protected TransfromationEstimatorBase {
                                  std::vector<bool> &out_inliers,
                                  precision_t &out_error) const;
 
+  bool FindPose(const TMatrix33 &essential,
+                const std::vector<HomogenousPoint> &points_to,
+                const std::vector<HomogenousPoint> &points_from,
+                const std::vector<features::Match> &matches,
+                std::vector<bool> &out_inliers,
+                std::vector<TPoint3D> &out_triangulated,
+                Pose &out_pose) const;
 
   static TMatrix33 FromEuclideanTransformations(const TMatrix33 &R, const TVector3D &T);
 

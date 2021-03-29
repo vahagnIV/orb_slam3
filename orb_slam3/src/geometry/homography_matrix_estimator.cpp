@@ -13,15 +13,14 @@ namespace orb_slam3 {
 namespace geometry {
 
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_SCORE = 5.991;
-const precision_t HomographyMatrixEstimator::PARALLAX_THRESHOLD = 0.99998;
 
-bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 &homography,
-                                                     const std::vector<HomogenousPoint> &points_to,
-                                                     const std::vector<HomogenousPoint> &points_from,
-                                                     const std::vector<features::Match> &matches,
-                                                     std::vector<bool> &out_inliers,
-                                                     std::vector<TPoint3D> &out_triangulated,
-                                                     Pose & out_pose) const {
+bool HomographyMatrixEstimator::FindPose(const TMatrix33 &homography,
+                                         const std::vector<HomogenousPoint> &points_to,
+                                         const std::vector<HomogenousPoint> &points_from,
+                                         const std::vector<features::Match> &matches,
+                                         std::vector<bool> &out_inliers,
+                                         std::vector<TPoint3D> &out_triangulated,
+                                         Pose &out_pose) const {
 
   Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
   const precision_t d1 = svd.singularValues()[0];
@@ -48,7 +47,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 &homography
     std::vector<bool> tmp_inliers(matches.size(), true);
 //    std::vector<bool> tmp_inliers = original_inliers;
     precision_t parallax;
-    size_t no_good = CheckRT(sol, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
+    size_t no_good = CheckPose(sol, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
     if (best_count < no_good) {
       second_best_count = best_count;
       best_count = no_good;
@@ -221,53 +220,6 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
       v(6, 8), v(7, 8), v(8, 8);
   out_homography /= out_homography(2, 2);
 
-}
-
-size_t HomographyMatrixEstimator::CheckRT(const Pose &solution,
-                                          const std::vector<HomogenousPoint> &points_to,
-                                          const std::vector<HomogenousPoint> &points_from,
-                                          const std::vector<features::Match> &matches,
-                                          std::vector<bool> &inliers,
-                                          precision_t &out_parallax,
-                                          std::vector<TPoint3D> &out_triangulated) const {
-  size_t count = 0;
-  out_triangulated.resize(matches.size());
-  std::vector<precision_t> triangulated_parallax;
-  triangulated_parallax.reserve(matches.size());
-
-  for (size_t i = 0; i < matches.size(); ++i) {
-
-    if (!inliers[i])
-      continue;
-
-    const auto &match = matches[i];
-    const HomogenousPoint point_to = points_to[match.to_idx];
-    const HomogenousPoint point_from = points_from[match.from_idx];
-
-    TPoint3D &triangulated = out_triangulated[i];
-
-    precision_t point_parallax;
-    if (!utils::TriangulateAndValidate(point_from,
-                                       point_to,
-                                       solution,
-                                       4 * sigma_threshold__square_,
-                                       4 * sigma_threshold__square_,
-                                       PARALLAX_THRESHOLD,
-                                       point_parallax,
-                                       triangulated))
-      continue;
-
-    triangulated_parallax.push_back(point_parallax);
-    ++count;
-  }
-  if (!count)
-    return count;
-
-  std::sort(triangulated_parallax.begin(), triangulated_parallax.end());
-  out_parallax =
-      std::acos(triangulated_parallax.size() < 50 ? triangulated_parallax.back() : triangulated_parallax[50]);
-
-  return count;
 }
 
 }

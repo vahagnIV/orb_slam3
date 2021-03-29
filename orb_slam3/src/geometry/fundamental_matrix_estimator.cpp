@@ -12,6 +12,58 @@ namespace geometry {
 const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD = 3.841;
 const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD_SCORE = 5.991;
 
+bool FundamentalMatrixEstimator::FindPose(const TMatrix33 &essential,
+                                          const std::vector<HomogenousPoint> &points_to,
+                                          const std::vector<HomogenousPoint> &points_from,
+                                          const std::vector<features::Match> &matches,
+                                          std::vector<bool> &out_inliers,
+                                          std::vector<TPoint3D> &out_triangulated,
+                                          Pose &out_pose) const {
+  // Hartley - Zisserman (page 258, 259)
+  Eigen::JacobiSVD<TMatrix33> svd(essential, Eigen::ComputeFullV | Eigen::ComputeFullU);
+  const TMatrix33 &U = svd.matrixU();
+  const TMatrix33 VT = svd.matrixV().transpose();
+  //precision_t s = U.determinant() * VT.determinant();
+  TMatrix33 W;
+  W << 0, -1, 0,
+      1, 0, 0,
+      0, 0, 1;
+
+  Pose possibleSolutions[8];
+  possibleSolutions[0].R = U * W * VT;
+  possibleSolutions[0].T = U.col(2);
+  possibleSolutions[1].R = U * W * VT;
+  possibleSolutions[1].T = -U.col(2);
+  TMatrix33 WT = W.transpose();
+  possibleSolutions[2].R = U * WT * VT;
+  possibleSolutions[2].T = U.col(2);
+  possibleSolutions[3].R = U * WT * VT;
+  possibleSolutions[3].T = -U.col(2);
+
+  size_t best_count = 0, second_best_count = 0;
+  precision_t best_parallax = -1;
+
+//  std::vector<bool> original_inliers = out_inliers;
+  for (const auto &sol : possibleSolutions) {
+    std::vector<TPoint3D> tmp_triangulated;
+    std::vector<bool> tmp_inliers(matches.size(), true);
+//    std::vector<bool> tmp_inliers = original_inliers;
+    precision_t parallax;
+    size_t no_good = CheckPose(sol, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
+    if (best_count < no_good) {
+      second_best_count = best_count;
+      best_count = no_good;
+      out_triangulated = tmp_triangulated;
+      out_inliers = tmp_inliers;
+      out_pose = sol;
+      best_parallax = parallax;
+    } else
+      second_best_count = std::max(second_best_count, no_good);
+  }
+  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;
+
+}
+
 precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(const TMatrix33 &f,
                                                                             const std::vector<HomogenousPoint> &kp1,
                                                                             const std::vector<HomogenousPoint> &kp2,
@@ -49,7 +101,7 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<Homogen
                                                        const std::vector<HomogenousPoint> &kp2,
                                                        const std::vector<features::Match> &matches,
                                                        const std::vector<size_t> &good_match_random_idx,
-                                                       TMatrix33 &out_fundamental) const {
+                                                       TMatrix33 &out_fundamental) {
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size(), Eigen::NoChange);
 
@@ -112,7 +164,7 @@ void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<Hom
 }
 
 TMatrix33 FundamentalMatrixEstimator::FromEuclideanTransformations(const TMatrix33 &R, const TVector3D &T) {
-  return R * geometry::utils::SkewSymmetricMatrix(R.transpose() * T) ;
+  return R * geometry::utils::SkewSymmetricMatrix(R.transpose() * T);
 }
 
 }
