@@ -45,11 +45,14 @@ void CovisibilityGraphNode::Update() {
   }
 }
 
-std::vector<FrameBase *> CovisibilityGraphNode::GetCovisibleKeyFrames(unsigned int count) {
+std::unordered_set<FrameBase *> CovisibilityGraphNode::GetCovisibleKeyFrames(unsigned int count) {
   std::lock_guard<std::mutex> m(mutex_);
-  return std::vector<FrameBase *>(sorted_connected_frames_.begin(),
-                                  count > sorted_connected_frames_.size() ? sorted_connected_frames_.end() :
-                                  sorted_connected_frames_.begin() + count);
+  std::unordered_set<FrameBase *> result;
+  std::copy_if(sorted_connected_frames_.begin(),
+               sorted_connected_frames_.end(),
+               std::inserter(result, result.begin()),
+               [](const FrameBase *frame) { return frame->IsValid(); });
+  return result;
 
 }
 

@@ -35,6 +35,42 @@ const map::MapPoint *FrameBase::MapPoint(size_t id) const {
   return map_point == map_points_.end() ? nullptr : map_point->second;
 }
 
+void FrameBase::ListMapPoints(const unordered_set<FrameBase *> & frames, set<map::MapPoint *> & out_map_points) {
+  out_map_points.clear();
+  for (auto frame: frames) {
+    for (auto mp: frame->MapPoints()) {
+      if (mp.second->IsValid())
+        out_map_points.insert(mp.second);
+    }
+  }
+}
+
+void FrameBase::FixedFrames(const set<map::MapPoint *> & map_points,
+                            const std::unordered_set<FrameBase *> & frames,
+                            unordered_set<FrameBase *> & out_fixed_frames) {
+  for (auto mp: map_points) {
+    for (auto obs: mp->Observations()) {
+      if (frames.find(obs.first) == frames.end())
+        out_fixed_frames.insert(obs.first);
+    }
+  }
+
+  if (out_fixed_frames.size() < 2) {
+    FrameBase *earliest = nullptr, *second_earilest = nullptr;
+    for (auto frame: frames) {
+      if (nullptr == earliest || earliest->Id() < frame->Id()) {
+        earliest = frame;
+      } else if (nullptr == second_earilest || second_earilest->Id() < frame->Id()) {
+        second_earilest = frame;
+      }
+    }
+
+    out_fixed_frames.insert(earliest);
+    if (out_fixed_frames.size() < 2)
+      out_fixed_frames.insert(second_earilest);
+  }
+}
+
 FrameBase::~FrameBase() {
   for (auto & mp_id: map_points_) {
     mp_id.second->EraseObservation(this);

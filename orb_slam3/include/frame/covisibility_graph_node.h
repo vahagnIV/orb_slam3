@@ -7,6 +7,7 @@
 
 // === stl ===
 #include <mutex>
+#include <unordered_set>
 #include <vector>
 #include <unordered_map>
 #include <map>
@@ -20,7 +21,7 @@ struct CovisibilityGraphNode {
   void Update();
   void AddConnection(FrameBase * frame);
   void RemoveConnection(FrameBase * frame);
-  std::vector<FrameBase *> GetCovisibleKeyFrames(unsigned count);
+  std::unordered_set<FrameBase *> GetCovisibleKeyFrames(unsigned count);
 
  private:
   std::unordered_map<FrameBase *, unsigned> connected_frame_weights_;

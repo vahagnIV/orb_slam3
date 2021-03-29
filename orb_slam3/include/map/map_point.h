@@ -24,25 +24,30 @@ namespace map {
 
 class MapPoint : public Identifiable {
  public:
-  typedef std::unordered_map< frame::FrameBase *, size_t> MapType;
-  MapPoint(const TPoint3D &point);
+  typedef std::unordered_map<frame::FrameBase *, size_t> MapType;
+  MapPoint(const TPoint3D & point);
 
+  /*!
+   * Adds frame to the map points observations and increases the corresponding weights
+   * in the frame covidibility weight counter
+   * @param frame The frame
+   * @param feature_id The id of the corresponding keypoint withing the frame
+   */
   void AddObservation(frame::FrameBase *frame, size_t feature_id);
 
   void EraseObservation(frame::FrameBase *frame);
 
   void Refresh();
 
-  const TPoint3D &GetPosition() const { return position_; }
+  void SetPosition(const TPoint3D & position);
 
-  void SetPosition(const TPoint3D &position);
+  const TPoint3D & GetPosition() const { return position_; }
+  const TVector3D & GetNormal() const { return normal_; }
+  const MapType & Observations() const { return observations_; }
+  MapType & Observations() { return observations_; }
+  bool IsValid() const { return true; }
 
-  const TVector3D &GetNormal() const { return normal_; }
-
-  const MapType &Observations() const { return observations_; }
-  MapType &Observations() { return observations_; }
-
-  g2o::VertexPointXYZ * CreateVertex() const;
+  g2o::VertexPointXYZ *CreateVertex() const;
 
  private:
   void ComputeDistinctiveDescriptor();

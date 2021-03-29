@@ -93,12 +93,12 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     }
     from_frame->CovisibilityGraph().Update();
     this->CovisibilityGraph().Update();
-    /*std::cout << "Frame " << Id() << " " << pose_.R << std::endl
-              << pose_.T << std::endl;*/
+//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+//              << pose_.estimate().translation() << std::endl;
     optimization::BundleAdjustment({this, from_frame}, 20);
     // TODO: normalize T
-    /*std::cout << "Frame " << Id() << " " << pose_.R << std::endl
-              << pose_.T << std::endl;*/
+//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
+//              << pose_.estimate().translation() << std::endl;
     return true;
   }
 
@@ -335,10 +335,11 @@ void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
                             &bow_iterator,
                             {&validator, &lm_validator},
                             &orientation_validator);
+
 }
 
 void MonocularFrame::FindNewMapPoints() {
-  std::vector<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
+  std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
   for (frame::FrameBase *frame : neighbour_keyframes) {
     if (frame->Type() != Type())
       continue;
@@ -372,6 +373,14 @@ void MonocularFrame::FindNewMapPoints() {
       keyframe->covisibility_connections_.Update();
     }
   }
+
+  std::set<map::MapPoint *> map_points;
+  this->ListMapPoints(neighbour_keyframes, map_points);
+  std::unordered_set<FrameBase *> fixed_frames;
+  this->FixedFrames(map_points, neighbour_keyframes, fixed_frames);
+
+  std::cout << "asdf" << std::endl;
+
 }
 
 }

@@ -49,6 +49,10 @@ class FrameBase : public Identifiable {
    * @param pose 4x4 joint transformation matrix
    */
   void SetPosition(const geometry::Pose & pose) noexcept;
+  /*!
+ * Set the position of the frame in the world coordinate system
+ * @param pose g2o Quaternion
+ */
   void SetPosition(const geometry::Quaternion & pose) noexcept;
 
   /*!
@@ -154,6 +158,8 @@ class FrameBase : public Identifiable {
 
  protected:
   g2o::VertexSE3Expmap *CreatePoseVertex() const;
+  static void ListMapPoints(const std::unordered_set<FrameBase *> & frames, std::set<map::MapPoint *> & out_map_points);
+  static void FixedFrames(const std::set<map::MapPoint *> & map_points, const std::unordered_set<FrameBase *> & frames, std::unordered_set<FrameBase *> & out_fixed_frames);
 
  protected:
 
