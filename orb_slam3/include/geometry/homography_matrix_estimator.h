@@ -14,7 +14,7 @@ namespace orb_slam3 {
 namespace geometry {
 
 class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
-  typedef struct { TMatrix33 R; TVector3D T; } Solution;
+
  public:
   explicit HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
@@ -34,10 +34,10 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                                                  bool inverse) const;
 
   static void FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
-                            const std::vector<HomogenousPoint> & points_from,
-                            const std::vector<features::Match> & matches,
-                            const std::vector<size_t> & good_match_random_idx,
-                            TMatrix33 & out_homography) ;
+                                   const std::vector<HomogenousPoint> & points_from,
+                                   const std::vector<features::Match> & matches,
+                                   const std::vector<size_t> & good_match_random_idx,
+                                   TMatrix33 & out_homography);
 
   /*!
    * Finds the rotation and translation from homography and matched points
@@ -57,10 +57,9 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                             const std::vector<features::Match> & matches,
                             std::vector<bool> & out_inliers,
                             std::vector<TPoint3D> & out_triangulated,
-                            TMatrix33 & out_rotation,
-                            TVector3D & out_translation) const;
+                            Pose & out_pose) const;
 
-  size_t CheckRT(const Solution & solution,
+  size_t CheckRT(const Pose & solution,
                  const std::vector<HomogenousPoint> & points_to,
                  const std::vector<HomogenousPoint> & points_from,
                  const std::vector<features::Match> & matches,
@@ -68,26 +67,23 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
                  precision_t & out_parallax,
                  std::vector<TPoint3D> & out_triangulated) const;
 
-
-
  private:
 
   static void FillSolutionsForPositiveD(precision_t d1,
-                                 precision_t d2,
-                                 precision_t d3,
-                                 const TMatrix33 & U,
-                                 const TMatrix33 & VT,
-                                 Solution solution[4],
-                                 precision_t s) noexcept;
+                                        precision_t d2,
+                                        precision_t d3,
+                                        const TMatrix33 & U,
+                                        const TMatrix33 & VT,
+                                        Pose solution[4],
+                                        precision_t s) noexcept;
 
   static void FillSolutionsForNegativeD(precision_t d1,
-                                 precision_t d2,
-                                 precision_t d3,
-                                 const TMatrix33 & U,
-                                 const TMatrix33 & VT,
-                                 Solution solution[4],
-                                 precision_t s) noexcept;
-
+                                        precision_t d2,
+                                        precision_t d3,
+                                        const TMatrix33 & U,
+                                        const TMatrix33 & VT,
+                                        Pose solution[4],
+                                        precision_t s) noexcept;
 
   static const precision_t HOMOGRAPHY_SCORE;
   static const precision_t PARALLAX_THRESHOLD;

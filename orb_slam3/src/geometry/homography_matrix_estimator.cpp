@@ -21,8 +21,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 &homography
                                                      const std::vector<features::Match> &matches,
                                                      std::vector<bool> &out_inliers,
                                                      std::vector<TPoint3D> &out_triangulated,
-                                                     TMatrix33 &out_rotation,
-                                                     TVector3D &out_translation) const {
+                                                     Pose & out_pose) const {
 
   Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
   const precision_t d1 = svd.singularValues()[0];
@@ -36,7 +35,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 &homography
   const TMatrix33 VT = svd.matrixV().transpose();
   precision_t s = U.determinant() * VT.determinant();
 
-  Solution solution[8];
+  Pose solution[8];
   FillSolutionsForPositiveD(d1, d2, d3, U, VT, solution, s);
   FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution + 4, s);
 
@@ -55,8 +54,7 @@ bool HomographyMatrixEstimator::FindRTTransformation(const TMatrix33 &homography
       best_count = no_good;
       out_triangulated = tmp_triangulated;
       out_inliers = tmp_inliers;
-      out_rotation = sol.R;
-      out_translation = sol.T;
+      out_pose = sol;
       best_parallax = parallax;
     } else
       second_best_count = std::max(second_best_count, no_good);
@@ -72,7 +70,7 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
                                                           precision_t d3,
                                                           const TMatrix33 &U,
                                                           const TMatrix33 &VT,
-                                                          Solution *solution,
+                                                          Pose *solution,
                                                           precision_t s) noexcept {
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
   const precision_t x3 = std::sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
@@ -83,7 +81,7 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
     const precision_t epsilon_1 = epsilon[i][0];
     const precision_t epsilon_3 = epsilon[i][1];
     const precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
-    Solution &sol = solution[i];
+    Pose &sol = solution[i];
     sol.R << cos_theta, 0, -signed_sin, 0, 1, 0, signed_sin, 0, cos_theta;
     sol.T << (d1 - d3) * epsilon_1 * x1, 0, -(d1 - d3) * epsilon_3 * x3;
 
@@ -98,7 +96,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
                                                           precision_t d3,
                                                           const TMatrix33 &U,
                                                           const TMatrix33 &VT,
-                                                          Solution *solution,
+                                                          Pose *solution,
                                                           precision_t s) noexcept {
 
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
@@ -110,7 +108,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
     const precision_t epsilon_1 = epsilon[i][0];
     const precision_t epsilon_3 = epsilon[i][1];
     const precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
-    Solution &sol = solution[i];
+    Pose &sol = solution[i];
     sol.R << cos_theta, 0, signed_sin, 0, -1, 0, signed_sin, 0, -cos_theta;
     sol.T << (d1 + d3) * epsilon_1 * x1, 0, (d1 + d3) * epsilon_3 * x3;
     sol.R = s * U * sol.R * VT;
@@ -225,7 +223,7 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
 
 }
 
-size_t HomographyMatrixEstimator::CheckRT(const Solution &solution,
+size_t HomographyMatrixEstimator::CheckRT(const Pose &solution,
                                           const std::vector<HomogenousPoint> &points_to,
                                           const std::vector<HomogenousPoint> &points_from,
                                           const std::vector<features::Match> &matches,
@@ -251,8 +249,7 @@ size_t HomographyMatrixEstimator::CheckRT(const Solution &solution,
     precision_t point_parallax;
     if (!utils::TriangulateAndValidate(point_from,
                                        point_to,
-                                       solution.R,
-                                       solution.T,
+                                       solution,
                                        4 * sigma_threshold__square_,
                                        4 * sigma_threshold__square_,
                                        PARALLAX_THRESHOLD,

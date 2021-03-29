@@ -45,6 +45,7 @@ class MonocularFrame : public FrameBase {
  protected:
   void ComputeBow();
   bool BaselineIsNotEnough(const MonocularFrame *other) const;
+  void ComputeMatches(const MonocularFrame * other, std::vector<features::Match> & out_matches, geometry::Pose & out_pose) const;
  protected:
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;

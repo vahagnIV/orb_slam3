@@ -16,14 +16,11 @@ TMatrix33 SkewSymmetricMatrix(const TVector3D & vector) {
   return result;
 }
 
-void ComputeRelativeTransformation(const TMatrix33 & R_to,
-                                   const TVector3D & T_to,
-                                   const TMatrix33 & R_from,
-                                   const TVector3D & T_from,
-                                   TMatrix33 & out_R,
-                                   TVector3D & out_T) {
-  out_R = R_to * R_from.transpose();
-  out_T = -out_R * T_from + T_to;
+void ComputeRelativeTransformation(const Pose & pose_to,
+                                   const Pose & pose_from,
+                                   Pose & out_pose) {
+  out_pose.R = pose_to.R * pose_from.R.transpose();
+  out_pose.T = -out_pose.R * pose_from.T + pose_to.T;
 }
 
 /*
@@ -55,8 +52,7 @@ void ComputeRelativeTransformation(const TMatrix33 & R_to,
  * The solution of this equation is the column of right singular matrix in SVD that corresponds to the minimal
  * singular value. In Eigen the singular values are sorted sorted. Therefore it is the last column.
  * */
-bool Triangulate(const TMatrix33 & R,
-                 const TVector3D & T,
+bool Triangulate(const Pose & pose,
                  const HomogenousPoint & point_from,
                  const HomogenousPoint & point_to,
                  TPoint3D & out_trinagulated) {
@@ -64,10 +60,10 @@ bool Triangulate(const TMatrix33 & R,
 
   A << 0, -1, point_from[1], 0,
       -1, 0, point_from[0], 0,
-      point_to[1] * R(2, 0) - R(1, 0), point_to[1] * R(2, 1) - R(1, 1), point_to[1] * R(2, 2)
-      - R(1, 2), point_to[1] * T[2] - T[1],
-      point_to[0] * R(2, 0) - R(0, 0), point_to[0] * R(2, 1) - R(0, 1), point_to[0] * R(2, 2)
-      - R(0, 2), point_to[0] * T[2] - T[0];
+      point_to[1] * pose.R(2, 0) - pose.R(1, 0), point_to[1] * pose.R(2, 1) - pose.R(1, 1), point_to[1] * pose.R(2, 2)
+      - pose.R(1, 2), point_to[1] * pose.T[2] - pose.T[1],
+      point_to[0] * pose.R(2, 0) - pose.R(0, 0), point_to[0] * pose.R(2, 1) - pose.R(0, 1), point_to[0] * pose.R(2, 2)
+      - pose.R(0, 2), point_to[0] * pose.T[2] - pose.T[0];
 
   Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
   precision_t l_inv = 1 / svd.matrixV()(3, 3);
@@ -76,9 +72,9 @@ bool Triangulate(const TMatrix33 & R,
   return std::isfinite(out_trinagulated[0]) && std::isfinite(out_trinagulated[1]) && std::isfinite(out_trinagulated[2]);
 }
 
-precision_t ComputeParallax(const TMatrix33 & R, const TVector3D & T, const TPoint3D & point) {
+precision_t ComputeParallax(const Pose & pose, const TPoint3D & point) {
   const TVector3D vec1 = point;
-  const TVector3D vec2 = point - (T.transpose() * R).transpose();
+  const TVector3D vec2 = point - (pose.T.transpose() * pose.R).transpose();
   return vec1.dot(vec2) / vec1.norm() / vec2.norm();
 }
 
@@ -92,24 +88,23 @@ precision_t ComputeReprojectionError(const TPoint3D & point, const HomogenousPoi
 
 bool TriangulateAndValidate(const HomogenousPoint & point_from,
                             const HomogenousPoint & point_to,
-                            const TMatrix33 & R,
-                            const TVector3D & T,
+                            const Pose & pose,
                             precision_t reprojection_threshold_to,
                             precision_t reprojection_threshold_from,
                             precision_t parallax_threshold,
                             precision_t & out_parallax,
                             TPoint3D & out_triangulated) {
-  if (!utils::Triangulate(R, T, point_from, point_to, out_triangulated))
+  if (!utils::Triangulate(pose, point_from, point_to, out_triangulated))
     return false;
 
   if (out_triangulated[2] < 0)
     return false;
 
-  out_parallax = utils::ComputeParallax(R, T, out_triangulated);
+  out_parallax = utils::ComputeParallax(pose, out_triangulated);
   if (out_parallax > parallax_threshold || std::isnan(out_parallax))
     return false;
 
-  const TVector3D triangulated2 = R * out_triangulated + T;
+  const TVector3D triangulated2 = pose.Transform(out_triangulated);
   if (triangulated2[2] < 0) return false;
 
   if (utils::ComputeReprojectionError(out_triangulated, point_from) > reprojection_threshold_from

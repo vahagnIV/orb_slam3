@@ -16,16 +16,14 @@ BowMatchLocalMappingValidator::BowMatchLocalMappingValidator(const Features & fe
                                                              const IFeatureExtractor *extractor_from,
                                                              const precision_t f_to,
                                                              const precision_t f_from,
-                                                             TMatrix33 *R,
-                                                             TVector3D *T)
+                                                             const geometry::Pose *pose)
     : features_to_(&features_to),
       features_from_(&features_from),
       extractor_to_(extractor_to),
       extractor_from_(extractor_from),
       f_inv_to_(f_to),
       f_inv_from_(f_from),
-      R_(R),
-      T_(T) {
+      pose_(pose) {
 
 }
 
@@ -39,8 +37,7 @@ bool BowMatchLocalMappingValidator::ValidateIindices(size_t idx_to, size_t idx_f
   TPoint3D triangulated;
   return geometry::utils::TriangulateAndValidate(features_from_->undistorted_keypoints[idx_from],
                                                  features_to_->undistorted_keypoints[idx_to],
-                                                 *R_,
-                                                 *T_,
+                                                 *pose_,
                                                  f_inv_to_ * f_inv_to_
                                                      * extractor_to_->GetAcceptableSquareError(features_to_->keypoints[idx_to].level),
                                                  f_inv_from_ * f_inv_from_

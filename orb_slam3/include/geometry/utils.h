@@ -6,6 +6,7 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_GEOMETRY_UTILS_H_
 
 #include <typedefs.h>
+#include <geometry/pose.h>
 
 namespace orb_slam3 {
 namespace geometry {
@@ -28,12 +29,9 @@ TMatrix33 SkewSymmetricMatrix(const TVector3D &vector);
  * @param out_R The output relative rotation matrix
  * @param out_T The output relative translation vector
  */
-void ComputeRelativeTransformation(const TMatrix33 &R_to,
-                                   const TVector3D &T_to,
-                                   const TMatrix33 &R_from,
-                                   const TVector3D &T_from,
-                                   TMatrix33 &out_R,
-                                   TVector3D &out_T);
+void ComputeRelativeTransformation(const Pose & pose_to,
+                                   const Pose & pose_from,
+                                   Pose & out_pose);
 
 /*!
  * Triangulates the point given its 2 projections
@@ -44,8 +42,7 @@ void ComputeRelativeTransformation(const TMatrix33 &R_to,
  * @param out_trinagulated The triangulated point in the "from" coordinate system
  * @return true if triangulation successful
  */
-bool Triangulate(const TMatrix33 &R,
-                 const TVector3D &T,
+bool Triangulate(const Pose & pose,
                  const HomogenousPoint &point_from,
                  const HomogenousPoint &point_to,
                  TPoint3D &out_trinagulated);
@@ -57,8 +54,7 @@ bool Triangulate(const TMatrix33 &R,
  * @param point The point
  * @return The parallax
  */
-precision_t ComputeParallax(const TMatrix33 &R,
-                            const TVector3D &T,
+precision_t ComputeParallax(const Pose & pose,
                             const TPoint3D &point);
 
 /*!
@@ -83,8 +79,7 @@ precision_t ComputeReprojectionError(const TPoint3D &point, const HomogenousPoin
  */
 bool TriangulateAndValidate(const HomogenousPoint &point_from,
                                    const HomogenousPoint &point_to,
-                                   const TMatrix33 &R,
-                                   const TVector3D &T,
+                                   const Pose & pose,
                                    precision_t reprojection_threshold_to,
                                    precision_t reprojection_threshold_from,
                                    precision_t parallax_threshold,

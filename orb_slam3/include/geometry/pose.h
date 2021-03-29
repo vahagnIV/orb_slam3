@@ -15,8 +15,17 @@
 namespace orb_slam3 {
 namespace geometry {
 
-typedef g2o::VertexSE3Expmap Pose;
 typedef g2o::SE3Quat Quaternion;
+struct Pose {
+  g2o::SE3Quat GetQuaternion() {
+    return Quaternion(R, T);
+  }
+  TVector3D Transform(const TPoint3D & point) const {
+    return R * point + T;
+  }
+  TMatrix33 R;
+  TVector3D T;
+};
 
 }
 }

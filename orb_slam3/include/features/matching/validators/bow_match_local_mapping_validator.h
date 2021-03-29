@@ -9,6 +9,7 @@
 #include <features/features.h>
 #include <features/ifeature_extractor.h>
 #include <cstddef>
+#include <geometry/pose.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -24,8 +25,7 @@ class BowMatchLocalMappingValidator: public IIndexValidator {
                                 const IFeatureExtractor * extractor_from,
                                 precision_t f_to,
                                 precision_t f_from,
-                                TMatrix33 *R,
-                                TVector3D *T);
+                                const geometry::Pose * pose);
   bool ValidateIdxTo(size_t idx) const override;
   bool ValidateIindices(size_t idx_to, size_t idx_from) const override;
  private:
@@ -35,8 +35,7 @@ class BowMatchLocalMappingValidator: public IIndexValidator {
   const IFeatureExtractor * extractor_from_;
   precision_t f_inv_to_;
   precision_t f_inv_from_;
-  TMatrix33 *R_;
-  TVector3D *T_;
+  const geometry::Pose * pose_;
 
 };
 

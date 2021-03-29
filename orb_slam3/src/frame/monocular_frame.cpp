@@ -64,16 +64,13 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
   std::vector<TPoint3D> points;
-  TMatrix33 rotation_matrix;
-  TVector3D translation_vector;
   if (reconstructor.Reconstruct(features_.undistorted_keypoints,
                                 from_frame->features_.undistorted_keypoints,
                                 frame_link_.matches,
-                                rotation_matrix,
-                                translation_vector,
+                                pose_,
                                 points,
                                 frame_link_.inliers)) {
-    pose_.setEstimate(geometry::Quaternion(rotation_matrix, translation_vector));
+
     // TODO: pass to asolute R,T
     frame_link_.other = other;
 
@@ -149,7 +146,7 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_
 
 void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) {
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *> (optimizer.vertex(Id()));
-  pose_.setEstimate(pose->estimate());
+  SetPosition(pose->estimate());
   for (auto mp: map_points_) {
     if (nullptr == mp.second)
       continue;
@@ -162,7 +159,7 @@ void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) {
 }
 
 TPoint3D MonocularFrame::GetNormal(const TPoint3D & point) const {
-  TPoint3D normal = pose_.estimate().translation() - point;
+  TPoint3D normal = pose_.T - point;
   normal.normalize();
   return normal;
 }
@@ -255,13 +252,13 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     edges[edge] = feature_id;
   }
   std::cout << "Frame " << Id() << std::endl;
-  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
-  std::cout << pose_.estimate().translation() << std::endl;
+  std::cout << pose_.R << std::endl;
+  std::cout << pose_.T << std::endl;
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
   for (int i = 0; i < 4; ++i) {
-    pose->setEstimate(pose_.estimate());
+    pose->setEstimate(pose_.GetQuaternion());
     if (out_inliers.empty())
       return;
     optimizer.optimize(10);
@@ -283,15 +280,15 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     }
   }
 
-  SetPosition(*pose);
+  SetPosition(pose->estimate());
   std::cout << "Tracking Frame " << Id() << std::endl;
-  std::cout << pose_.estimate().rotation().toRotationMatrix() << std::endl;
-  std::cout << pose_.estimate().translation() << std::endl;
+  std::cout << pose_.R << std::endl;
+  std::cout << pose_.T << std::endl;
 
 }
 
 precision_t MonocularFrame::ComputeMedianDepth() const {
-  const g2o::SE3Quat & pose_quat = pose_.estimate();
+  const g2o::SE3Quat pose_quat(pose_.R, pose_.T);
   std::vector<precision_t> depths(map_points_.size());
   std::transform(map_points_.begin(),
                  map_points_.end(),
@@ -303,10 +300,41 @@ precision_t MonocularFrame::ComputeMedianDepth() const {
 }
 
 bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame *other) const {
-  TVector3D baseline = pose_.estimate().translation() - other->pose_.estimate().translation();
+  TVector3D baseline = pose_.T - other->pose_.T;
   precision_t baseline_length = baseline.norm();
   precision_t frame_median_depth = other->ComputeMedianDepth();
   return baseline_length / frame_median_depth < 1e-3;
+}
+
+void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
+                                    vector<features::Match> & out_matches,
+                                    geometry::Pose & out_pose) const {
+  const precision_t th = 0.6f;
+  features::matching::SNNMatcher matcher(th);
+  features::matching::validators::BowMatchTrackingValidator
+      validator(map_points_, keyframe->map_points_, false, false);
+
+  geometry::utils::ComputeRelativeTransformation(pose_,
+                                                 keyframe->pose_,
+                                                 out_pose);
+  features::matching::validators::BowMatchLocalMappingValidator lm_validator(features_,
+                                                                             keyframe->features_,
+                                                                             feature_extractor_.get(),
+                                                                             keyframe->feature_extractor_.get(),
+                                                                             camera_->FxInv(),
+                                                                             keyframe->camera_->FxInv(),
+                                                                             &pose_);
+  features::matching::iterators::BowIterator
+      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
+  features::matching::validators::OrientationValidator
+      orientation_validator(features_.keypoints, keyframe->features_.keypoints);
+
+  matcher.MatchWithIterator(features_.descriptors,
+                            keyframe->features_.descriptors,
+                            out_matches,
+                            &bow_iterator,
+                            {&validator, &lm_validator},
+                            &orientation_validator);
 }
 
 void MonocularFrame::FindNewMapPoints() {
@@ -317,52 +345,24 @@ void MonocularFrame::FindNewMapPoints() {
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
     ComputeBow();
     keyframe->ComputeBow();
+
     if (BaselineIsNotEnough(keyframe)) {
       std::cout << "Baseline between frames  " << Id() << " and " << keyframe->Id() << " Is not enough" << std::endl;
       continue;
     }
-    const precision_t th = 0.6f;
-    features::matching::SNNMatcher matcher(th);
-    features::matching::validators::BowMatchTrackingValidator
-        validator(map_points_, keyframe->map_points_, false, false);
-    TMatrix33 R;
-    TVector3D T;
-    geometry::utils::ComputeRelativeTransformation(pose_.estimate().rotation().toRotationMatrix(),
-                                                   pose_.estimate().translation(),
-                                                   keyframe->pose_.estimate().rotation().toRotationMatrix(),
-                                                   keyframe->pose_.estimate().translation(),
-                                                   R,
-                                                   T);
-    features::matching::validators::BowMatchLocalMappingValidator lm_validator(features_,
-                                                                               keyframe->features_,
-                                                                               feature_extractor_.get(),
-                                                                               keyframe->feature_extractor_.get(),
-                                                                               camera_->FxInv(),
-                                                                               keyframe->camera_->FxInv(),
-                                                                               &R,
-                                                                               &T);
-    features::matching::iterators::BowIterator
-        bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
-    features::matching::validators::OrientationValidator
-        orientation_validator(features_.keypoints, keyframe->features_.keypoints);
     std::vector<features::Match> matches;
-    matcher.MatchWithIterator(features_.descriptors,
-                              keyframe->features_.descriptors,
-                              matches,
-                              &bow_iterator,
-                              {&validator, &lm_validator},
-                              &orientation_validator);
+    geometry::Pose relative_pose;
+    ComputeMatches(keyframe, matches, relative_pose);
     std::cout << " Local mapper:  Found " << matches.size() << " new map-points between " << Id() << " and "
               << keyframe->Id() << ". Appending" << std::endl;
     for (auto & match:matches) {
       TPoint3D pt;
-      geometry::utils::Triangulate(R,
-                                   T,
+      geometry::utils::Triangulate(relative_pose,
                                    keyframe->features_.undistorted_keypoints[match.from_idx],
                                    features_.undistorted_keypoints[match.to_idx],
                                    pt);
-      auto mp = new map::MapPoint(keyframe->pose_.estimate().rotation().toRotationMatrix().transpose()
-                                      * (pt - keyframe->pose_.estimate().translation()));
+      auto mp = new map::MapPoint(keyframe->pose_.R.transpose()
+                                      * (pt - keyframe->pose_.T));
       map_points_[match.to_idx] = mp;
       keyframe->map_points_[match.from_idx] = mp;
       mp->AddObservation(this, match.to_idx);
@@ -371,9 +371,7 @@ void MonocularFrame::FindNewMapPoints() {
       covisibility_connections_.Update();
       keyframe->covisibility_connections_.Update();
     }
-
   }
-
 }
 
 }

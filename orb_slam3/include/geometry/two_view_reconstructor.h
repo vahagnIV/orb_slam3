@@ -25,8 +25,7 @@ class TwoViewReconstructor {
   bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
                    const std::vector<HomogenousPoint> & points_from,
                    const std::vector<features::Match> & matches,
-                   TMatrix33 & out_rotation,
-                   TVector3D & out_translation,
+                   Pose & out_pose,
                    std::vector<TPoint3D> & out_points,
                    std::vector<bool> & out_outliers) const;
  private:
