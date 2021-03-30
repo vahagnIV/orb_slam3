@@ -30,7 +30,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &point
   out_inliers.resize(matches.size(), false);
   std::vector<std::vector<size_t>> random_match_subset_idx;
   GenerateRandomSubsets(0, matches.size(), 8, number_of_ransac_iterations_, random_match_subset_idx);
-  precision_t h_error, f_error;
+  precision_t h_score, f_score;
   TMatrix33 homography, fundamental;
   std::vector<bool> homography_inliers, fundamental_inliers;
 
@@ -41,15 +41,15 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &point
                                                           random_match_subset_idx,
                                                           fundamental,
                                                           fundamental_inliers,
-                                                          f_error);
+                                                          f_score);
   homography_matrix_sstimator_.FindBestHomographyMatrix(points_to,
                                                         points_from,
                                                         matches,
                                                         random_match_subset_idx,
                                                         homography,
                                                         homography_inliers,
-                                                        h_error);
-  if (true ) {
+                                                        h_score);
+  if (h_score > f_score) {
     return homography_matrix_sstimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,
