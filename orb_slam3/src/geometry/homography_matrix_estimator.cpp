@@ -14,13 +14,13 @@ namespace geometry {
 
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_SCORE = 5.991;
 
-bool HomographyMatrixEstimator::FindPose(const TMatrix33 &homography,
-                                         const std::vector<HomogenousPoint> &points_to,
-                                         const std::vector<HomogenousPoint> &points_from,
-                                         const std::vector<features::Match> &matches,
-                                         std::vector<bool> &out_inliers,
-                                         std::vector<TPoint3D> &out_triangulated,
-                                         Pose &out_pose) const {
+bool HomographyMatrixEstimator::FindPose(const TMatrix33 & homography,
+                                         const std::vector<HomogenousPoint> & points_to,
+                                         const std::vector<HomogenousPoint> & points_from,
+                                         const std::vector<features::Match> & matches,
+                                         std::vector<bool> & out_inliers,
+                                         std::vector<TPoint3D> & out_triangulated,
+                                         Pose & out_pose) const {
 
   Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
   const precision_t d1 = svd.singularValues()[0];
@@ -30,7 +30,7 @@ bool HomographyMatrixEstimator::FindPose(const TMatrix33 &homography,
   if (d1 / d2 < 1.0001 || d2 / d3 < 1.0001)
     return false;
 
-  const TMatrix33 &U = svd.matrixU();
+  const TMatrix33 & U = svd.matrixU();
   const TMatrix33 VT = svd.matrixV().transpose();
   precision_t s = U.determinant() * VT.determinant();
 
@@ -38,37 +38,15 @@ bool HomographyMatrixEstimator::FindPose(const TMatrix33 &homography,
   FillSolutionsForPositiveD(d1, d2, d3, U, VT, solution, s);
   FillSolutionsForNegativeD(d1, d2, d3, U, VT, solution + 4, s);
 
-  size_t best_count = 0, second_best_count = 0;
-  precision_t best_parallax = -1;
-
-//  std::vector<bool> original_inliers = out_inliers;
-  for (const auto &sol : solution) {
-    std::vector<TPoint3D> tmp_triangulated;
-    std::vector<bool> tmp_inliers(matches.size(), true);
-//    std::vector<bool> tmp_inliers = original_inliers;
-    precision_t parallax;
-    size_t no_good = CheckPose(sol, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
-    if (best_count < no_good) {
-      second_best_count = best_count;
-      best_count = no_good;
-      out_triangulated = tmp_triangulated;
-      out_inliers = tmp_inliers;
-      out_pose = sol;
-      best_parallax = parallax;
-    } else
-      second_best_count = std::max(second_best_count, no_good);
-  }
-
-  //secondBestGood<0.75*bestGood && bestParallax>=minParallax && bestGood>minTriangulated && bestGood>0.9*N
-  // TODO: address this issue
-  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;
+  return this->FindCorrectPose(solution, 8, points_to, points_from, matches, out_inliers,
+                               out_triangulated, out_pose);
 }
 
 void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
                                                           precision_t d2,
                                                           precision_t d3,
-                                                          const TMatrix33 &U,
-                                                          const TMatrix33 &VT,
+                                                          const TMatrix33 & U,
+                                                          const TMatrix33 & VT,
                                                           Pose *solution,
                                                           precision_t s) noexcept {
   const precision_t x1 = std::sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
@@ -80,7 +58,7 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
     const precision_t epsilon_1 = epsilon[i][0];
     const precision_t epsilon_3 = epsilon[i][1];
     const precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
-    Pose &sol = solution[i];
+    Pose & sol = solution[i];
     sol.R << cos_theta, 0, -signed_sin, 0, 1, 0, signed_sin, 0, cos_theta;
     sol.T << (d1 - d3) * epsilon_1 * x1, 0, -(d1 - d3) * epsilon_3 * x3;
 
@@ -93,8 +71,8 @@ void HomographyMatrixEstimator::FillSolutionsForPositiveD(precision_t d1,
 void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
                                                           precision_t d2,
                                                           precision_t d3,
-                                                          const TMatrix33 &U,
-                                                          const TMatrix33 &VT,
+                                                          const TMatrix33 & U,
+                                                          const TMatrix33 & VT,
                                                           Pose *solution,
                                                           precision_t s) noexcept {
 
@@ -107,7 +85,7 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
     const precision_t epsilon_1 = epsilon[i][0];
     const precision_t epsilon_3 = epsilon[i][1];
     const precision_t signed_sin = epsilon_1 * epsilon_3 * sin_theta;
-    Pose &sol = solution[i];
+    Pose & sol = solution[i];
     sol.R << cos_theta, 0, signed_sin, 0, -1, 0, signed_sin, 0, -cos_theta;
     sol.T << (d1 + d3) * epsilon_1 * x1, 0, (d1 + d3) * epsilon_3 * x3;
     sol.R = s * U * sol.R * VT;
@@ -116,17 +94,17 @@ void HomographyMatrixEstimator::FillSolutionsForNegativeD(precision_t d1,
   }
 }
 
-void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<HomogenousPoint> &points_to,
-                                                         const std::vector<HomogenousPoint> &points_from,
-                                                         const std::vector<features::Match> &matches,
-                                                         const std::vector<std::vector<size_t>> &good_match_random_idx,
-                                                         TMatrix33 &out_homography,
-                                                         std::vector<bool> &out_inliers,
-                                                         precision_t &out_score) const {
+void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
+                                                         const std::vector<HomogenousPoint> & points_from,
+                                                         const std::vector<features::Match> & matches,
+                                                         const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                                         TMatrix33 & out_homography,
+                                                         std::vector<bool> & out_inliers,
+                                                         precision_t & out_score) const {
   out_score = std::numeric_limits<precision_t>::min();
   TMatrix33 tmp_homography;
 
-  for (const auto &good_matches_rnd : good_match_random_idx) {
+  for (const auto & good_matches_rnd : good_match_random_idx) {
     std::vector<bool> tmp_inliers(matches.size());
     std::fill(tmp_inliers.begin(), tmp_inliers.end(), true);
     FindHomographyMatrix(points_to, points_from, matches, good_matches_rnd, tmp_homography);
@@ -147,19 +125,19 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<Homog
   }
 }
 
-precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const TMatrix33 &h,
-                                                                          const std::vector<HomogenousPoint> &points_to,
-                                                                          const std::vector<HomogenousPoint> &points_from,
-                                                                          const std::vector<features::Match> &matches,
-                                                                          std::vector<bool> &out_inliers,
+precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const TMatrix33 & h,
+                                                                          const std::vector<HomogenousPoint> & points_to,
+                                                                          const std::vector<HomogenousPoint> & points_from,
+                                                                          const std::vector<features::Match> & matches,
+                                                                          std::vector<bool> & out_inliers,
                                                                           bool inverse) const {
   precision_t score = 0;
   for (size_t i = 0; i < matches.size(); ++i) {
     if (!out_inliers[i])
       continue;
-    const auto &match = matches[i];
-    const HomogenousPoint &point_from = (inverse ? points_to[match.to_idx] : points_from[match.from_idx]);
-    const HomogenousPoint &point_to = (inverse ? points_from[match.from_idx] : points_to[match.to_idx]);
+    const auto & match = matches[i];
+    const HomogenousPoint & point_from = (inverse ? points_to[match.to_idx] : points_from[match.from_idx]);
+    const HomogenousPoint & point_to = (inverse ? points_from[match.from_idx] : points_to[match.to_idx]);
 
     HomogenousPoint p21 = h * point_from;
     p21 /= p21[2];
@@ -175,18 +153,18 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
   return score;
 }
 
-void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<HomogenousPoint> &points_to,
-                                                     const std::vector<HomogenousPoint> &points_from,
-                                                     const std::vector<features::Match> &matches,
-                                                     const std::vector<size_t> &good_match_random_idx,
-                                                     TMatrix33 &out_homography) {
+void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
+                                                     const std::vector<HomogenousPoint> & points_from,
+                                                     const std::vector<features::Match> & matches,
+                                                     const std::vector<size_t> & good_match_random_idx,
+                                                     TMatrix33 & out_homography) {
 
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size() * 2, Eigen::NoChange);
 
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const auto &U = points_to[matches[good_match_random_idx[i]].to_idx];
-    const auto &X = points_from[matches[good_match_random_idx[i]].from_idx];
+    const auto & U = points_to[matches[good_match_random_idx[i]].to_idx];
+    const auto & X = points_from[matches[good_match_random_idx[i]].from_idx];
 
     L(2 * i, 0) = X[0];
     L(2 * i, 1) = X[1];
@@ -213,7 +191,7 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
   if (!svd.computeV())
     return;
 
-  const Eigen::Matrix<precision_t, 9, 9> &v = svd.matrixV();
+  const Eigen::Matrix<precision_t, 9, 9> & v = svd.matrixV();
 
   out_homography << v(0, 8), v(1, 8), v(2, 8),
       v(3, 8), v(4, 8), v(5, 8),
