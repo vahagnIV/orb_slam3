@@ -18,26 +18,26 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
  public:
   explicit HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
 
-  void FindBestHomographyMatrix(const std::vector<HomogenousPoint> &points_to,
-                                const std::vector<HomogenousPoint> &points_from,
-                                const std::vector<features::Match> &matches,
-                                const std::vector<std::vector<size_t>> &good_match_random_idx,
-                                TMatrix33 &out_homography,
-                                std::vector<bool> &out_inliers,
-                                precision_t &out_score) const;
+  void FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
+                                const std::vector<HomogenousPoint> & points_from,
+                                const std::vector<features::Match> & matches,
+                                const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                TMatrix33 & out_homography,
+                                std::vector<bool> & out_inliers,
+                                precision_t & out_score) const;
 
-  precision_t ComputeHomographyReprojectionError(const TMatrix33 &h,
-                                                 const std::vector<HomogenousPoint> &points_to,
-                                                 const std::vector<HomogenousPoint> &points_from,
-                                                 const std::vector<features::Match> &matches,
-                                                 std::vector<bool> &out_inliers,
+  precision_t ComputeHomographyReprojectionError(const TMatrix33 & h,
+                                                 const std::vector<HomogenousPoint> & points_to,
+                                                 const std::vector<HomogenousPoint> & points_from,
+                                                 const std::vector<features::Match> & matches,
+                                                 std::vector<bool> & out_inliers,
                                                  bool inverse) const;
 
-  static void FindHomographyMatrix(const std::vector<HomogenousPoint> &points_to,
-                                   const std::vector<HomogenousPoint> &points_from,
-                                   const std::vector<features::Match> &matches,
-                                   const std::vector<size_t> &good_match_random_idx,
-                                   TMatrix33 &out_homography);
+  static void FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
+                                   const std::vector<HomogenousPoint> & points_from,
+                                   const std::vector<features::Match> & matches,
+                                   const std::vector<size_t> & good_match_random_idx,
+                                   TMatrix33 & out_homography);
 
   /*!
    * Finds the rotation and translation from homography and matched points
@@ -51,30 +51,32 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
    * @param out_translation The translation vector from points_from to points_to
    * @return
    */
-  bool FindPose(const TMatrix33 &homography,
-                const std::vector<HomogenousPoint> &points_to,
-                const std::vector<HomogenousPoint> &points_from,
-                const std::vector<features::Match> &matches,
-                std::vector<bool> &out_inliers,
-                std::vector<TPoint3D> &out_triangulated,
-                Pose &out_pose) const;
+  bool FindPose(const TMatrix33 & homography,
+                const std::vector<HomogenousPoint> & points_to,
+                const std::vector<HomogenousPoint> & points_from,
+                const std::vector<features::Match> & matches,
+                std::vector<bool> & out_inliers,
+                std::vector<TPoint3D> & out_triangulated,
+                Pose & out_pose) const;
 
  private:
 
   static void FillSolutionsForPositiveD(precision_t d1,
-                                        precision_t d2,
-                                        precision_t d3,
-                                        const TMatrix33 &U,
-                                        const TMatrix33 &VT,
-                                        Pose solution[4],
-                                        precision_t s) noexcept;
+                                 precision_t d2,
+                                 precision_t d3,
+                                 const TMatrix33 & U,
+                                 const TMatrix33 & VT,
+                                 std::vector<Pose>::iterator start,
+                                 std::vector<Pose>::iterator end,
+                                 precision_t s) noexcept;
 
   static void FillSolutionsForNegativeD(precision_t d1,
                                         precision_t d2,
                                         precision_t d3,
-                                        const TMatrix33 &U,
-                                        const TMatrix33 &VT,
-                                        Pose solution[4],
+                                        const TMatrix33 & U,
+                                        const TMatrix33 & VT,
+                                        std::vector<Pose>::iterator start,
+                                        std::vector<Pose>::iterator end,
                                         precision_t s) noexcept;
 
   static const precision_t HOMOGRAPHY_SCORE;

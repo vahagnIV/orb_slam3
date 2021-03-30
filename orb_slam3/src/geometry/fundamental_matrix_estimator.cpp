@@ -12,68 +12,55 @@ namespace geometry {
 const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD = 3.841;
 const precision_t FundamentalMatrixEstimator::FUNDAMENTAL_THRESHOLD_SCORE = 5.991;
 
-bool FundamentalMatrixEstimator::FindPose(const TMatrix33 &essential,
-                                          const std::vector<HomogenousPoint> &points_to,
-                                          const std::vector<HomogenousPoint> &points_from,
-                                          const std::vector<features::Match> &matches,
-                                          std::vector<bool> &out_inliers,
-                                          std::vector<TPoint3D> &out_triangulated,
-                                          Pose &out_pose) const {
+bool FundamentalMatrixEstimator::FindPose(const TMatrix33 & essential,
+                                          const std::vector<HomogenousPoint> & points_to,
+                                          const std::vector<HomogenousPoint> & points_from,
+                                          const std::vector<features::Match> & matches,
+                                          std::vector<bool> & out_inliers,
+                                          std::vector<TPoint3D> & out_triangulated,
+                                          Pose & out_pose) const {
   // Hartley - Zisserman (page 258, 259)
   Eigen::JacobiSVD<TMatrix33> svd(essential, Eigen::ComputeFullV | Eigen::ComputeFullU);
-  const TMatrix33 &U = svd.matrixU();
+  const TMatrix33 & U = svd.matrixU();
   const TMatrix33 VT = svd.matrixV().transpose();
-  //precision_t s = U.determinant() * VT.determinant();
   TMatrix33 W;
   W << 0, -1, 0,
       1, 0, 0,
       0, 0, 1;
-
-  Pose possibleSolutions[8];
-  possibleSolutions[0].R = U * W * VT;
-  possibleSolutions[0].T = U.col(2);
-  possibleSolutions[1].R = U * W * VT;
-  possibleSolutions[1].T = -U.col(2);
-  TMatrix33 WT = W.transpose();
-  possibleSolutions[2].R = U * WT * VT;
-  possibleSolutions[2].T = U.col(2);
-  possibleSolutions[3].R = U * WT * VT;
-  possibleSolutions[3].T = -U.col(2);
-
-  size_t best_count = 0, second_best_count = 0;
-  precision_t best_parallax = -1;
-
-//  std::vector<bool> original_inliers = out_inliers;
-  for (const auto &sol : possibleSolutions) {
-    std::vector<TPoint3D> tmp_triangulated;
-    std::vector<bool> tmp_inliers(matches.size(), true);
-//    std::vector<bool> tmp_inliers = original_inliers;
-    precision_t parallax;
-    size_t no_good = CheckPose(sol, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
-    if (best_count < no_good) {
-      second_best_count = best_count;
-      best_count = no_good;
-      out_triangulated = tmp_triangulated;
-      out_inliers = tmp_inliers;
-      out_pose = sol;
-      best_parallax = parallax;
-    } else
-      second_best_count = std::max(second_best_count, no_good);
+  std::vector<Pose> candidate_solutions(4);
+  TMatrix33 R1 = U * W * VT;
+  if (R1.determinant() < 0) {
+    R1 = -R1;
   }
-  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;
+  TMatrix33 R2 = U * W.transpose() * VT;
+  if (R2.determinant() < 0) {
+    R2 = -R2;
+  }
+  TVector3D T = U.col(2);
+
+  candidate_solutions[0].R = R1;
+  candidate_solutions[0].T = T;
+  candidate_solutions[1].R = R1;
+  candidate_solutions[1].T = -T;
+  candidate_solutions[2].R = R2;
+  candidate_solutions[2].T = T;
+  candidate_solutions[3].R = R2;
+  candidate_solutions[3].T = -T;
+  return this->FindCorrectPose(candidate_solutions,points_to, points_from, matches, out_inliers,
+                               out_triangulated, out_pose);
 
 }
 
-precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(const TMatrix33 &f,
-                                                                            const std::vector<HomogenousPoint> &kp1,
-                                                                            const std::vector<HomogenousPoint> &kp2,
-                                                                            const std::vector<features::Match> &matches,
-                                                                            std::vector<bool> &out_inliers) const {
+precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(const TMatrix33 & f,
+                                                                            const std::vector<HomogenousPoint> & kp1,
+                                                                            const std::vector<HomogenousPoint> & kp2,
+                                                                            const std::vector<features::Match> & matches,
+                                                                            std::vector<bool> & out_inliers) const {
   precision_t error = 0;
   out_inliers.resize(matches.size(), true);
   std::fill(out_inliers.begin(), out_inliers.end(), true);
   for (size_t i = 0; i < matches.size(); ++i) {
-    const auto &match = matches[i];
+    const auto & match = matches[i];
 
     const HomogenousPoint point_from = kp2[match.from_idx];
     const HomogenousPoint point_to = kp1[match.to_idx];
@@ -97,17 +84,17 @@ precision_t FundamentalMatrixEstimator::ComputeFundamentalReprojectionError(cons
   return error;
 }
 
-void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<HomogenousPoint> &kp1,
-                                                       const std::vector<HomogenousPoint> &kp2,
-                                                       const std::vector<features::Match> &matches,
-                                                       const std::vector<size_t> &good_match_random_idx,
-                                                       TMatrix33 &out_fundamental) {
+void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<HomogenousPoint> & kp1,
+                                                       const std::vector<HomogenousPoint> & kp2,
+                                                       const std::vector<features::Match> & matches,
+                                                       const std::vector<size_t> & good_match_random_idx,
+                                                       TMatrix33 & out_fundamental) {
   Eigen::Matrix<precision_t, Eigen::Dynamic, 9> L;
   L.resize(good_match_random_idx.size(), Eigen::NoChange);
 
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const auto &X = kp1[matches[good_match_random_idx[i]].to_idx];
-    const auto &U = kp2[matches[good_match_random_idx[i]].from_idx];
+    const auto & X = kp1[matches[good_match_random_idx[i]].to_idx];
+    const auto & U = kp2[matches[good_match_random_idx[i]].from_idx];
 
     L(i, 0) = X[0] * U[0];
     L(i, 1) = X[0] * U[1];
@@ -125,7 +112,7 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<Homogen
   if (!svd.computeV())
     return;
 
-  const Eigen::Matrix<precision_t, 9, 9> &v = svd.matrixV();
+  const Eigen::Matrix<precision_t, 9, 9> & v = svd.matrixV();
 
 //  Eigen::JacobiSVD<Eigen::Matrix<precision_t, Eigen::Dynamic, 9>> svd2(v, Eigen::ComputeFullU | Eigen::ComputeFullV);
   if (!svd.computeV())
@@ -140,18 +127,18 @@ void FundamentalMatrixEstimator::FindFundamentalMatrix(const std::vector<Homogen
 
 }
 
-void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<HomogenousPoint> &kp1,
-                                                           const std::vector<HomogenousPoint> &kp2,
-                                                           const std::vector<features::Match> &matches,
-                                                           const std::vector<std::vector<size_t>> &good_match_random_idx,
-                                                           TMatrix33 &out_fundamental,
-                                                           std::vector<bool> &out_inliers,
-                                                           precision_t &out_error) const {
+void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<HomogenousPoint> & kp1,
+                                                           const std::vector<HomogenousPoint> & kp2,
+                                                           const std::vector<features::Match> & matches,
+                                                           const std::vector<std::vector<size_t>> & good_match_random_idx,
+                                                           TMatrix33 & out_fundamental,
+                                                           std::vector<bool> & out_inliers,
+                                                           precision_t & out_error) const {
   out_error = std::numeric_limits<precision_t>::max();
   TMatrix33 tmp_fundamental;
   std::vector<bool> tmp_inliers;
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const std::vector<size_t> &good_matches_rnd = good_match_random_idx[i];
+    const std::vector<size_t> & good_matches_rnd = good_match_random_idx[i];
     FindFundamentalMatrix(kp1, kp2, matches, good_matches_rnd, tmp_fundamental);
     precision_t error = ComputeFundamentalReprojectionError(tmp_fundamental, kp1, kp2, matches, tmp_inliers);
     if (error > 0 && out_error > error) {
@@ -163,7 +150,7 @@ void FundamentalMatrixEstimator::FindBestFundamentalMatrix(const std::vector<Hom
 
 }
 
-TMatrix33 FundamentalMatrixEstimator::FromEuclideanTransformations(const TMatrix33 &R, const TVector3D &T) {
+TMatrix33 FundamentalMatrixEstimator::FromEuclideanTransformations(const TMatrix33 & R, const TVector3D & T) {
   return R * geometry::utils::SkewSymmetricMatrix(R.transpose() * T);
 }
 
