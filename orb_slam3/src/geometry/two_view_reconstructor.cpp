@@ -16,7 +16,7 @@ namespace geometry {
 TwoViewReconstructor::TwoViewReconstructor(const unsigned number_of_ransac_iterations,
                                            precision_t sigma_threshold)
     : number_of_ransac_iterations_(number_of_ransac_iterations),
-      fundamental_matrix_estimator_(sigma_threshold),
+      essential_matrix_estimator_(sigma_threshold),
       homography_matrix_sstimator_(sigma_threshold) {
 }
 
@@ -31,17 +31,17 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &point
   std::vector<std::vector<size_t>> random_match_subset_idx;
   GenerateRandomSubsets(0, matches.size(), 8, number_of_ransac_iterations_, random_match_subset_idx);
   precision_t h_score, f_score;
-  TMatrix33 homography, fundamental;
-  std::vector<bool> homography_inliers, fundamental_inliers;
+  TMatrix33 homography, essential;
+  std::vector<bool> homography_inliers, essential_inliers;
 
   // TODO: do this in parallel
-  fundamental_matrix_estimator_.FindBestFundamentalMatrix(points_to,
-                                                          points_from,
-                                                          matches,
-                                                          random_match_subset_idx,
-                                                          fundamental,
-                                                          fundamental_inliers,
-                                                          f_score);
+  essential_matrix_estimator_.FindBestEssentialMatrix(points_to,
+                                                      points_from,
+                                                      matches,
+                                                      random_match_subset_idx,
+                                                      essential,
+                                                      essential_inliers,
+                                                      f_score);
   homography_matrix_sstimator_.FindBestHomographyMatrix(points_to,
                                                         points_from,
                                                         matches,
@@ -58,13 +58,13 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &point
                                                  out_points,
                                                  out_pose);
   } else {
-    return fundamental_matrix_estimator_.FindPose(fundamental,
-                                                  points_to,
-                                                  points_from,
-                                                  matches,
-                                                  out_inliers,
-                                                  out_points,
-                                                  out_pose);
+    return essential_matrix_estimator_.FindPose(essential,
+                                                points_to,
+                                                points_from,
+                                                matches,
+                                                out_inliers,
+                                                out_points,
+                                                out_pose);
   }
 
 }

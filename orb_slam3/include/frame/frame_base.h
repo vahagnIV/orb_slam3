@@ -31,7 +31,8 @@ class FrameBase : public Identifiable {
   virtual FrameType Type() const = 0;
 
   FrameBase(const TimePoint & timestamp, const std::shared_ptr<features::IFeatureExtractor> & feature_extractor)
-      : Identifiable(), timestamp_(timestamp), covisibility_connections_(), feature_extractor_(feature_extractor) {
+      : Identifiable(), timestamp_(timestamp), covisibility_connections_(), feature_extractor_(feature_extractor),
+        initial_(false) {
   }
   /*!
    * Getter function
@@ -60,6 +61,9 @@ class FrameBase : public Identifiable {
    * @return true if valid
    */
   virtual bool IsValid() const = 0;
+
+  bool IsInitial() const { return initial_; }
+  void SetInitial(bool initial) { initial_ = initial; }
 
   /*!
    * If needed, this should inizialize the position from the previous frames
@@ -159,7 +163,9 @@ class FrameBase : public Identifiable {
  protected:
   g2o::VertexSE3Expmap *CreatePoseVertex() const;
   static void ListMapPoints(const std::unordered_set<FrameBase *> & frames, std::set<map::MapPoint *> & out_map_points);
-  static void FixedFrames(const std::set<map::MapPoint *> & map_points, const std::unordered_set<FrameBase *> & frames, std::unordered_set<FrameBase *> & out_fixed_frames);
+  static void FixedFrames(const std::set<map::MapPoint *> & map_points,
+                          const std::unordered_set<FrameBase *> & frames,
+                          std::unordered_set<FrameBase *> & out_fixed_frames);
 
  protected:
 
@@ -174,6 +180,8 @@ class FrameBase : public Identifiable {
   geometry::Pose pose_;
 
   std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
+
+  bool initial_;
 
 };
 

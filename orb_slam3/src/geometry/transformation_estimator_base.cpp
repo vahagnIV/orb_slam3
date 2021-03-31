@@ -82,7 +82,7 @@ bool TransfromationEstimatorBase::FindCorrectPose(const std::vector<Pose> & cand
       second_best_count = std::max(second_best_count, no_good);
   }
   // TODO: address this issue
-  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;
+  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;// && best_count > 0.9 * matches.size()
 }
 
 }

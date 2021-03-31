@@ -22,6 +22,7 @@ add_library(orbslam SHARED
         src/identifiable.cpp
         src/tracker.cpp
         src/local_mapper.cpp
+        src/logging.cpp
 
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
@@ -49,7 +50,7 @@ add_library(orbslam SHARED
 
         src/geometry/two_view_reconstructor.cpp
         src/geometry/homography_matrix_estimator.cpp
-        src/geometry/fundamental_matrix_estimator.cpp
+        src/geometry/essential_matrix_estimator.cpp
         src/geometry/transformation_estimator_base.cpp
         src/geometry/utils.cpp
 
@@ -69,7 +70,7 @@ add_library(orbslam SHARED
         include/geometry/pose.h
         include/geometry/homography_matrix_estimator.h
         include/geometry/transfromation_estimator_base.h
-        include/geometry/fundamental_matrix_estimator.h
+        include/geometry/essential_matrix_estimator.h
         include/geometry/utils.h
 
         include/camera/monocular_camera.h
@@ -117,7 +118,8 @@ add_library(orbslam SHARED
         include/optimization/edges/se3_project_xyz_pose_only.h
 
         include/orb_vocabulary.h
-        include/identifiable.h src/geometry/transformation_estimator_base.cpp)
+        include/identifiable.h
+        include/logging.h)
 
 target_include_directories(orbslam INTERFACE include)
 

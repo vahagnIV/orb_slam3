@@ -7,7 +7,7 @@
 #include <optimization/bundle_adjustment.h>
 namespace orb_slam3 {
 
-Tracker::Tracker(orb_slam3::map::Atlas * atlas)
+Tracker::Tracker(orb_slam3::map::Atlas *atlas)
     : atlas_(atlas),
       last_frame_(nullptr),
       initial_frame_(nullptr),
@@ -15,13 +15,14 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas)
 
 Tracker::~Tracker() { delete atlas_; }
 
-TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
+TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
   switch (state_) {
     case NOT_INITIALIZED: {
       if (frame->IsValid()) {
         initial_frame_ = frame;
         last_frame_ = frame;
         last_frame_->InitializeIdentity();
+        last_frame_->SetInitial(true);
         state_ = FIRST_IMAGE;
       }
     }
@@ -54,9 +55,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> &frame) {
   return TrackingResult::OK;
 }
 
-bool Tracker::TrackReferenceKeyFrame() { return false; }
-
-void Tracker::NotifyObservers(const std::shared_ptr<FrameBase> &frame, MessageType type) {
+void Tracker::NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type) {
   for (PositionObserver *observer: observers_) {
     observer->GetUpdateQueue().enqueue(UpdateMessage{type:type, frame:frame});
   }

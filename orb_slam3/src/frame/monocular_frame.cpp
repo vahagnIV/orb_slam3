@@ -22,6 +22,7 @@
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include <optimization/edges/se3_project_xyz_pose_only.h>
 #include <optimization/bundle_adjustment.h>
+#include <logging.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -93,20 +94,30 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     }
     from_frame->CovisibilityGraph().Update();
     this->CovisibilityGraph().Update();
-//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-//              << pose_.estimate().translation() << std::endl;
+
+#ifndef NDEBUG
+    {
+      std::stringstream ss;
+      ss << pose_.R << std::endl << pose_.T << std::endl;
+      logging::RetrieveLogger()->debug("Frame {} position before BA:", Id());
+      logging::RetrieveLogger()->debug(ss.str());
+    }
+#endif
+
     optimization::BundleAdjustment({this, from_frame}, 20);
     // TODO: normalize T
-//    std::cout << "Frame " << Id() << " " << pose_.estimate().rotation().toRotationMatrix() << std::endl
-//              << pose_.estimate().translation() << std::endl;
+#ifndef NDEBUG
+    {
+      std::stringstream ss;
+      ss << pose_.R << std::endl << pose_.T << std::endl;
+      logging::RetrieveLogger()->debug("Frame {} position after BA:", Id());
+      logging::RetrieveLogger()->debug(ss.str());
+    }
+#endif
     return true;
   }
 
   return false;
-}
-
-FrameType MonocularFrame::Type() const {
-  return MONOCULAR;
 }
 
 void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
@@ -137,9 +148,14 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_
     edge->setVertex(1, mp);
     edge->setId(next_id++);
     edge->setInformation(Eigen::Matrix2d::Identity());
+    g2o::RobustKernelHuber * rk = new g2o::RobustKernelHuber;
+    edge->setRobustKernel(rk);
+    rk->setDelta(std::sqrt(5.99));
     HomogenousPoint measurement;
     camera_->UnprojectPoint(features_.keypoints[feature_id].pt, measurement);
-    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
+    TPoint2D m;
+    m << measurement[0],  measurement[1];
+    edge->setMeasurement(m);
     optimizer.addEdge(edge);
   }
 }
@@ -251,9 +267,13 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     optimizer.addEdge(edge);
     edges[edge] = feature_id;
   }
-  std::cout << "Frame " << Id() << std::endl;
-  std::cout << pose_.R << std::endl;
-  std::cout << pose_.T << std::endl;
+#ifndef NDEBUG
+  { ;
+    std::stringstream ss;
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
@@ -281,9 +301,14 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
   }
 
   SetPosition(pose->estimate());
-  std::cout << "Tracking Frame " << Id() << std::endl;
-  std::cout << pose_.R << std::endl;
-  std::cout << pose_.T << std::endl;
+  logging::RetrieveLogger()->info("Tracking frame {}", Id());
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
 
 }
 
@@ -348,14 +373,17 @@ void MonocularFrame::FindNewMapPoints() {
     keyframe->ComputeBow();
 
     if (BaselineIsNotEnough(keyframe)) {
-      std::cout << "Baseline between frames  " << Id() << " and " << keyframe->Id() << " Is not enough" << std::endl;
+      logging::RetrieveLogger()->debug("Baseline between frames  {} and {} is not enough", Id(), keyframe->Id());
       continue;
     }
     std::vector<features::Match> matches;
     geometry::Pose relative_pose;
     ComputeMatches(keyframe, matches, relative_pose);
-    std::cout << " Local mapper:  Found " << matches.size() << " new map-points between " << Id() << " and "
-              << keyframe->Id() << ". Appending" << std::endl;
+    logging::RetrieveLogger()->debug("Local mapper found {} new map-points between {} and {}",
+                                     matches.size(),
+                                     Id(),
+                                     keyframe->Id());
+
     for (auto & match:matches) {
       TPoint3D pt;
       geometry::utils::Triangulate(relative_pose,
@@ -374,12 +402,12 @@ void MonocularFrame::FindNewMapPoints() {
     }
   }
 
+  // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
   std::set<map::MapPoint *> map_points;
   this->ListMapPoints(neighbour_keyframes, map_points);
   std::unordered_set<FrameBase *> fixed_frames;
   this->FixedFrames(map_points, neighbour_keyframes, fixed_frames);
 
-  std::cout << "asdf" << std::endl;
 
 }
 
