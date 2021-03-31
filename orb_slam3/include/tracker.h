@@ -62,7 +62,6 @@ class Tracker {
   virtual ~Tracker();
 
  private:
-  bool TrackReferenceKeyFrame();
   void NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type);
   
  private:  

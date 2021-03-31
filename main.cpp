@@ -18,7 +18,8 @@
 #include <optimization/bundle_adjustment.h>
 #include <local_mapper.h>
 #include <geometry/utils.h>
-#include <geometry/fundamental_matrix_estimator.h>
+#include <geometry/essential_matrix_estimator.h>
+#include <logging.h>
 
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
@@ -288,6 +289,7 @@ void TestDrawMonocular(std::string original) {
   std::shared_ptr<orb_slam3::frame::MonocularFrame> frame =
       std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, std::chrono::system_clock::now(),
                                                          extractor, camera, nullptr);
+  frame->InitializeIdentity();
 
   for (size_t k = 100; k < 200; ++k) {
 
@@ -411,14 +413,15 @@ void TestFundamental() {
   orb_slam3::TPoint3D p2 = R * p1 - T;
 
   std::cout << p2 << std::endl;
-  auto F = orb_slam3::geometry::FundamentalMatrixEstimator::FromEuclideanTransformations(R, T);
+  auto F = orb_slam3::geometry::EssentialMatrixEstimator::FromEuclideanTransformations(R, T);
 
   std::cout << (p2 / p2[2]).dot(F * (p1 / p1[2])) << std::endl;
   std::cout << p2.dot(F * p1) << std::endl;
 }
 
 int main(int argc, char *argv[]) {
-  TestFundamental();
+  orb_slam3::logging::Initialize();
+//  TestFundamental();
 //  CompareSharedPointerInitializationAndCopyTime();
 //  return 0;
 

@@ -10,7 +10,7 @@
 
 // == orb-slam3 ===
 #include <camera/monocular_camera.h>
-#include <geometry/fundamental_matrix_estimator.h>
+#include <geometry/essential_matrix_estimator.h>
 #include <geometry/homography_matrix_estimator.h>
 #include <features/match.h>
 
@@ -43,7 +43,7 @@ class TwoViewReconstructor {
 
  private:
   const unsigned number_of_ransac_iterations_;
-  FundamentalMatrixEstimator fundamental_matrix_estimator_;
+  EssentialMatrixEstimator essential_matrix_estimator_;
   HomographyMatrixEstimator homography_matrix_sstimator_;
 
 

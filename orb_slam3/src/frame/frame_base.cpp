@@ -50,7 +50,7 @@ void FrameBase::FixedFrames(const set<map::MapPoint *> & map_points,
                             unordered_set<FrameBase *> & out_fixed_frames) {
   for (auto mp: map_points) {
     for (auto obs: mp->Observations()) {
-      if (frames.find(obs.first) == frames.end())
+      if (frames.find(obs.first) == frames.end() || obs.first->IsInitial())
         out_fixed_frames.insert(obs.first);
     }
   }

@@ -18,7 +18,9 @@ namespace edges {
 class SE3ProjectXYZPose : public g2o::BaseBinaryEdge<2, Eigen::Vector2d,
                                                   g2o::VertexSE3Expmap,
                                                   g2o::VertexPointXYZ> {
+
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera);
   bool read(std::istream & is) { return false; }
 
