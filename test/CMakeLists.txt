@@ -25,6 +25,8 @@ set(ALL_TEST_SOURCE_FILES
         geometry/homography_estimator_tests.cpp
         geometry/essential_estimator_tests.cpp
         geometry/essential_estimator_tests.h
+        geometry/general_geometry_tests.cpp
+        geometry/general_geometry_tests.h
         )
 add_executable(orb_slam_unit_tests ${ALL_TEST_SOURCE_FILES})
 target_link_libraries(orb_slam_unit_tests orbslam gmock gmock_main)

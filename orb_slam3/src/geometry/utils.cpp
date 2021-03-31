@@ -78,12 +78,13 @@ precision_t ComputeParallax(const Pose & pose, const TPoint3D & point) {
   return vec1.dot(vec2) / vec1.norm() / vec2.norm();
 }
 
-precision_t ComputeReprojectionError(const TPoint3D & point, const HomogenousPoint & original_point) {
-  precision_t z2_inv = 1. / point[2];
-  TPoint2D projected{point[0] * z2_inv, point[1] * z2_inv};
+precision_t ComputeReprojectionError(const HomogenousPoint & point, const HomogenousPoint & original_point) {
+  precision_t zpoint_inv = 1. / point[2];
+  precision_t zoriginal_inv = 1. / original_point[2];
+  precision_t error_x = point[0] * zpoint_inv - original_point[0] * zoriginal_inv;
+  precision_t error_y = point[1] * zpoint_inv - original_point[1] * zoriginal_inv;
 
-  return (original_point[0] - projected[0]) * (original_point[0] - projected[0])
-      + (original_point[1] - projected[1]) * (original_point[1] - projected[1]);
+  return error_x * error_x + error_y * error_y;
 }
 
 bool TriangulateAndValidate(const HomogenousPoint & point_from,

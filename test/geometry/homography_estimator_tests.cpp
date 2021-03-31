@@ -14,7 +14,7 @@ double HomographyEstimatorTests::CompareRatio(const TPoint3D & pt1, TPoint3D & p
   return result;
 }
 
-TEST_F(HomographyEstimatorTests, HomographyEstimaterWorksCorrectly) {
+TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
   std::vector<TPoint3D> points_from(8), points_to(8);
   points_from[0] << 0.5, 2.6, 8.1;
   points_from[1] << 0.3, 3.6, 8.1;
@@ -43,7 +43,7 @@ TEST_F(HomographyEstimatorTests, HomographyEstimaterWorksCorrectly) {
     random_subset_idx[i] = i;
   }
   TMatrix33 H;
-  geometry::HomographyMatrixEstimator estimator(1e-7);
+  geometry::HomographyMatrixEstimator estimator(1e-4);
   estimator.FindHomographyMatrix(points_to, points_from, matches, random_subset_idx, H);
   for (size_t i = 0; i < matches.size(); ++i) {
     ASSERT_TRUE(CompareRatio(H * points_from[i], points_to[i]) < 1e-12);
@@ -53,6 +53,10 @@ TEST_F(HomographyEstimatorTests, HomographyEstimaterWorksCorrectly) {
   std::vector<bool> inliers;
   std::vector<TPoint3D> triangulated;
   geometry::Pose pose;
+  for (int i = 0; i < points_to.size(); ++i) {
+    points_to[i] /= points_to[i][2];
+    points_from[i] /= points_from[i][2];
+  }
   estimator.FindPose(H, points_to, points_from, matches, inliers, triangulated, pose);
   ASSERT_TRUE((pose.T.normalized() - T.normalized()).norm() < 1e-12);
   ASSERT_TRUE((pose.R - R).norm() < 1e-12);

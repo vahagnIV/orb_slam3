@@ -63,7 +63,7 @@ precision_t ComputeParallax(const Pose & pose,
  * @param original_point The known projection
  * @return The error
  */
-precision_t ComputeReprojectionError(const TPoint3D &point, const HomogenousPoint &original_point);
+precision_t ComputeReprojectionError(const HomogenousPoint &point, const HomogenousPoint &original_point);
 
 /*!
  * Triangulate point visible by two frames that were made in 2 coordinate systems
