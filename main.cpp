@@ -338,6 +338,8 @@ void TestDrawMonocular(std::string original) {
         ofstream1.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
       }
 
+      ofstream.close();
+      ofstream1.close();
       cv::imshow("matches", DrawMatches(frame_o, image_o, image));
       cv::waitKey();
 

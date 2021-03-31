@@ -34,7 +34,7 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
                                const std::vector<std::vector<size_t>> & good_match_random_idx,
                                TMatrix33 & out_essential,
                                std::vector<bool> & out_inliers,
-                               precision_t & out_error) const;
+                               precision_t & out_score) const;
 
   bool FindPose(const TMatrix33 & essential,
                 const std::vector<HomogenousPoint> & points_to,
@@ -45,6 +45,10 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
                 Pose & out_pose) const;
 
   static TMatrix33 FromEuclideanTransformations(const TMatrix33 & R, const TVector3D & T);
+ protected:
+  static void NormalizePoints(const std::vector<HomogenousPoint> & points,
+                       std::vector<HomogenousPoint> & out_normalized_points,
+                       TMatrix33 & out_statistical_matrix) ;
 
  private:
   static const precision_t ESSENTIAL_THRESHOLD;

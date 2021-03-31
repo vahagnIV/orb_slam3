@@ -125,7 +125,7 @@ void EssentialMatrixEstimator::FindEssentialMatrix(const std::vector<HomogenousP
   out_essential << v(0, 8), v(1, 8), v(2, 8),
       v(3, 8), v(4, 8), v(5, 8),
       v(6, 8), v(7, 8), v(8, 8);
-  out_essential /= out_essential(2, 2);
+  out_essential.normalize();
 
 }
 
@@ -135,19 +135,24 @@ void EssentialMatrixEstimator::FindBestEssentialMatrix(const std::vector<Homogen
                                                        const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                        TMatrix33 & out_essential,
                                                        std::vector<bool> & out_inliers,
-                                                       precision_t & out_error) const {
-  out_error = 0;//std::numeric_limits<precision_t>::max();
+                                                       precision_t & out_score) const {
+  out_score = 0;
   TMatrix33 tmp_essential;
   std::vector<bool> tmp_inliers;
+  std::vector<HomogenousPoint> normalized_to, normalized_from;
+  TMatrix33 S_to, S_from;
+  NormalizePoints(points_to, normalized_to, S_to);
+  NormalizePoints(points_from, normalized_from, S_from);
   for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
     const std::vector<size_t> & good_matches_rnd = good_match_random_idx[i];
-    FindEssentialMatrix(points_to, points_from, matches, good_matches_rnd, tmp_essential);
+    FindEssentialMatrix(normalized_to, normalized_from, matches, good_matches_rnd, tmp_essential);
+    tmp_essential = S_to.transpose() * tmp_essential * S_from;
     precision_t
-        error = ComputeEssentialReprojectionError(tmp_essential, points_to, points_from, matches, tmp_inliers);
-    if (error > 0 && out_error < error) {
+        score = ComputeEssentialReprojectionError(tmp_essential, points_to, points_from, matches, tmp_inliers);
+    if (score > 0 && out_score < score) {
       out_essential = tmp_essential;
       out_inliers = tmp_inliers;
-      out_error = error;
+      out_score = score;
     }
   }
 
@@ -155,6 +160,36 @@ void EssentialMatrixEstimator::FindBestEssentialMatrix(const std::vector<Homogen
 
 TMatrix33 EssentialMatrixEstimator::FromEuclideanTransformations(const TMatrix33 & R, const TVector3D & T) {
   return R * geometry::utils::SkewSymmetricMatrix(R.transpose() * T);
+}
+
+void EssentialMatrixEstimator::NormalizePoints(const std::vector<HomogenousPoint> & points,
+                                               std::vector<HomogenousPoint> & out_normalized_points,
+                                               TMatrix33 & out_statistical_matrix) {
+  precision_t meanx = 0, devx = 0, meany = 0, devy = 0;
+  for (const auto & point: points) {
+    meanx += point.x();
+    meany += point.y();
+  }
+  meanx /= points.size();
+  meany /= points.size();
+  out_normalized_points.resize(points.size());
+  for (size_t i = 0; i < points.size(); ++i) {
+    out_normalized_points[i].x() = points[i].x() - meanx;
+    out_normalized_points[i].y() = points[i].y() - meany;
+    devx += std::abs(out_normalized_points[i].x());
+    devy += std::abs(out_normalized_points[i].y());
+  }
+  precision_t sx = 1. / devx;
+  precision_t sy = 1. / devy;
+  for (auto & out_point: out_normalized_points) {
+    out_point.x() *= sx;
+    out_point.y() *= sy;
+    out_point.z() = 1;
+  }
+  out_statistical_matrix << sx, 0, -meanx * sx,
+      0, sy, -meany * sy,
+      0, 0, 1;
+
 }
 
 }

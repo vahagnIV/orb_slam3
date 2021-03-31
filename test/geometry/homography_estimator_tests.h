@@ -14,6 +14,7 @@ class HomographyEstimatorTests : public ::testing::Test {
  public:
   HomographyEstimatorTests() = default;
   double CompareRatio(const TPoint3D & pt1, TPoint3D & pt2);
+
 };
 
 }

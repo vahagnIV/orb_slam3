@@ -49,7 +49,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &point
                                                         homography,
                                                         homography_inliers,
                                                         h_score);
-  if (h_score > f_score) {
+  if (false) {
     return homography_matrix_sstimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,

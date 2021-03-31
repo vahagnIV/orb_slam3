@@ -49,7 +49,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     return false;
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
   features::matching::SNNMatcher matcher(0.9);
-  features::matching::iterators::AreaIterator area_iterator(from_frame->features_, features_, 100);
+  features::matching::iterators::AreaIterator area_iterator(from_frame->features_, features_, 300);
   features::matching::validators::OrientationValidator
       orientation_validator(features_.keypoints, from_frame->features_.keypoints);
 
@@ -60,7 +60,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
                             {},
                             &orientation_validator);
 
-  if (frame_link_.matches.size() < 100)
+  if (frame_link_.matches.size() < 40)
     return false;
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());

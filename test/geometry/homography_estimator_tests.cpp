@@ -3,7 +3,10 @@
 //
 
 #include "homography_estimator_tests.h"
+#include "test_utils.h"
 #include <geometry/homography_matrix_estimator.h>
+#include <geometry/utils.h>
+
 namespace orb_slam3 {
 namespace test {
 
@@ -13,6 +16,8 @@ double HomographyEstimatorTests::CompareRatio(const TPoint3D & pt1, TPoint3D & p
   double result = std::sqrt(x * x + y * y);
   return result;
 }
+
+
 
 TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
   std::vector<TPoint3D> points_from(8), points_to(8);
@@ -25,10 +30,7 @@ TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
   points_from[6] << 2.5, 1.6, 8.1;
   points_from[7] << -0.5, 0.6, 8.1;
 
-  TMatrix33 R;
-  R << 0.967303, 0.0209349, -0.252757,
-      -0.0431297, 0.99565, -0.0825917,
-      0.249928, 0.0907926, 0.963998;
+  TMatrix33 R = GetRotationMatrixRollPitchYaw(0, 0, M_PI / 8);
   TVector3D T;
   T << 1.2, -7.5, 4.1;
 
@@ -46,8 +48,8 @@ TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
   geometry::HomographyMatrixEstimator estimator(1e-4);
   estimator.FindHomographyMatrix(points_to, points_from, matches, random_subset_idx, H);
   for (size_t i = 0; i < matches.size(); ++i) {
-    ASSERT_TRUE(CompareRatio(H * points_from[i], points_to[i]) < 1e-12);
-    ASSERT_TRUE(CompareRatio(H.inverse() * points_to[i], points_from[i]) < 1e-12);
+    ASSERT_TRUE(geometry::utils::ComputeReprojectionError(H * points_from[i], points_to[i]) < 1e-12);
+    ASSERT_TRUE(geometry::utils::ComputeReprojectionError(H.inverse() * points_to[i], points_from[i]) < 1e-12);
   }
 
   std::vector<bool> inliers;
