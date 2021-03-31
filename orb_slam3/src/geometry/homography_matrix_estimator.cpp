@@ -171,25 +171,25 @@ void HomographyMatrixEstimator::FindHomographyMatrix(const std::vector<Homogenou
     const auto & U = points_to[matches[good_match_random_idx[i]].to_idx];
     const auto & X = points_from[matches[good_match_random_idx[i]].from_idx];
 
-    L(2 * i, 0) = X[0];
-    L(2 * i, 1) = X[1];
-    L(2 * i, 2) = 1;
+    L(2 * i, 0) = X[0] * U[2];
+    L(2 * i, 1) = X[1] * U[2];
+    L(2 * i, 2) = X[2] * U[2];
     L(2 * i, 3) = 0;
     L(2 * i, 4) = 0;
     L(2 * i, 5) = 0;
     L(2 * i, 6) = -U[0] * X[0];
     L(2 * i, 7) = -U[0] * X[1];
-    L(2 * i, 8) = -U[0];
+    L(2 * i, 8) = -U[0] * X[2];
 
     L(2 * i + 1, 0) = 0;
     L(2 * i + 1, 1) = 0;
     L(2 * i + 1, 2) = 0;
-    L(2 * i + 1, 3) = X[0];
-    L(2 * i + 1, 4) = X[1];
-    L(2 * i + 1, 5) = 1;
+    L(2 * i + 1, 3) = X[0] * U[2];
+    L(2 * i + 1, 4) = X[1] * U[2];
+    L(2 * i + 1, 5) = X[2] * U[2];
     L(2 * i + 1, 6) = -U[1] * X[0];
     L(2 * i + 1, 7) = -U[1] * X[1];
-    L(2 * i + 1, 8) = -U[1];
+    L(2 * i + 1, 8) = -U[1] * X[2];
   }
 
   Eigen::JacobiSVD<Eigen::Matrix<precision_t, Eigen::Dynamic, 9>> svd(L, Eigen::ComputeFullU | Eigen::ComputeFullV);

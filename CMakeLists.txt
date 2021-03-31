@@ -6,9 +6,11 @@ find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 
-#find_package(OpenCV REQUIRED)
+
+enable_testing()
 include_directories(external ${OpenCV_INCLUDE_DIRS})
 add_subdirectory(orb_slam3)
+add_subdirectory(test)
 
 add_executable(test_p main.cpp )
 
