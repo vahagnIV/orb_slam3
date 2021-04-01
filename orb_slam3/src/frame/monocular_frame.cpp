@@ -445,7 +445,7 @@ void MonocularFrame::FindNewMapPoints() {
     }
   }
 
- 
+
 
   optimizer.initializeOptimization();
   optimizer.optimize(5);
