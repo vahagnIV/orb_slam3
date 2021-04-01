@@ -179,8 +179,8 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
-//    cv::imshow("im", image);
-//    cv::waitKey(0);
+    cv::imshow("im", image);
+    cv::waitKey(1);
     std::cout << "processing frame " << filenames[k] << std::endl;
     auto eigen = FromCvMat(image);
     std::shared_ptr<orb_slam3::frame::FrameBase> frame =
@@ -441,8 +441,8 @@ int main(int argc, char *argv[]) {
 //  Triangulate(s, pt1,pt2, point_triangulated1);
 //  Triangulate(s, pt2, pt1, point_triangulated2);
 
-  TestDrawMonocular(std::string(argv[1]));
-//  TestMonocular(std::string(argv[1]), std::string(argv[2]));
+//  TestDrawMonocular(std::string(argv[1]));
+  TestMonocular(std::string(argv[1]), std::string(argv[2]));
 
   return 0;
 }

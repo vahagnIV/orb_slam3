@@ -4,9 +4,10 @@
 
 #include "logging.h"
 #include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace orb_slam3{
-namespace logging{
+namespace orb_slam3 {
+namespace logging {
 const std::string LOGGER_NAME = "logger";
 //std::shared_ptr<spdlog::logger> logger;
 
@@ -15,14 +16,18 @@ const std::string LOGGER_NAME = "logger";
 //  logger->set_level(spdlog::level::debug);
 //}
 void Initialize() {
-   spdlog::stdout_color_mt(LOGGER_NAME)
-  ->set_level(spdlog::level::debug);
+#if SPDLOG_VER_MINOR < 5
+  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
+#else
+  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
+#endif
+
 }
 
 //spdlog::logger * RetrieveLogger() {
 //  return logger.get();
 //}
-std::shared_ptr<spdlog::logger > RetrieveLogger() {
+std::shared_ptr<spdlog::logger> RetrieveLogger() {
   return spdlog::get(LOGGER_NAME);
 }
 
