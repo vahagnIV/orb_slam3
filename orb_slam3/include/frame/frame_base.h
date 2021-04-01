@@ -160,8 +160,8 @@ class FrameBase : public Identifiable {
    */
   virtual ~FrameBase();
 
- protected:
   g2o::VertexSE3Expmap *CreatePoseVertex() const;
+ protected:
   static void ListMapPoints(const std::unordered_set<FrameBase *> & frames, std::set<map::MapPoint *> & out_map_points);
   static void FixedFrames(const std::set<map::MapPoint *> & map_points,
                           const std::unordered_set<FrameBase *> & frames,

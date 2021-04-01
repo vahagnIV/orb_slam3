@@ -403,10 +403,53 @@ void MonocularFrame::FindNewMapPoints() {
   }
 
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
+  g2o::SparseOptimizer optimizer;
+  std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
+      linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
+
+  std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
+
+  g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  optimizer.setAlgorithm(solver);
   std::set<map::MapPoint *> map_points;
   this->ListMapPoints(neighbour_keyframes, map_points);
   std::unordered_set<FrameBase *> fixed_frames;
   this->FixedFrames(map_points, neighbour_keyframes, fixed_frames);
+  for (auto & frame: neighbour_keyframes) {
+    auto vertex = frame->CreatePoseVertex();
+    vertex->setFixed(frame->IsInitial());
+    optimizer.addVertex(vertex);
+  }
+  for (auto & frame: fixed_frames) {
+    if(frame->IsInitial())
+      continue;
+    auto vertex = frame->CreatePoseVertex();
+    vertex->setFixed(true);
+    optimizer.addVertex(vertex);
+  }
+  size_t last_id = Identifiable::GetNextId();
+  for(auto map_point: map_points){
+    auto vertex = map_point->CreateVertex();
+    vertex->setMarginalized(true);
+    optimizer.addVertex(vertex);
+    for(const auto & observation: map_point->Observations()){
+      auto obs_frame = dynamic_cast<MonocularFrame *>(observation.first);
+      if(nullptr == obs_frame)
+        continue;
+      auto edge = new optimization::edges::SE3ProjectXYZPose(obs_frame->camera_.get());
+      HomogenousPoint measurement;
+      obs_frame->camera_->UnprojectPoint(features_.keypoints[observation.second].pt, measurement);
+      edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
+      edge->setId(++last_id);
+      optimizer.addEdge(edge);
+    }
+  }
+
+ 
+
+  optimizer.initializeOptimization();
+  optimizer.optimize(5);
+
 
 
 }
