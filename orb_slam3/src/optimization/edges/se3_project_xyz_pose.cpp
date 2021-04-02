@@ -10,6 +10,11 @@ namespace edges {
 SE3ProjectXYZPose::SE3ProjectXYZPose(const orb_slam3::camera::ICamera *camera) : camera_(camera) {
   error()[0] = error()[1] = 0;
 }
+bool SE3ProjectXYZPose::IsDepthPositive() {
+  auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
+  auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
+  return pose->estimate().map(point->estimate())[2] > 0;
+}
 
 void SE3ProjectXYZPose::computeError() {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
@@ -23,16 +28,15 @@ void SE3ProjectXYZPose::computeError() {
   _error[1] = distorted[1] - _measurement[1];
 }
 
-
 void SE3ProjectXYZPose::linearizeOplus() {
 //  BaseFixedSizedEdge::linearizeOplus();
 //      return;
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
-  const double &x = pt_camera_system[0];
-  const double &y = pt_camera_system[1];
-  const double &z = pt_camera_system[2];
+  const double & x = pt_camera_system[0];
+  const double & y = pt_camera_system[1];
+  const double & z = pt_camera_system[2];
 
   camera::ProjectionJacobianType projection_jacobian;
   camera_->ComputeJacobian(pt_camera_system, projection_jacobian);

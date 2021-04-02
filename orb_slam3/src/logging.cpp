@@ -18,12 +18,7 @@ const std::string LOGGER_NAME = "logger";
 //  logger->set_level(spdlog::level::debug);
 //}
 void Initialize() {
-#if SPDLOG_VER_MINOR < 5
-  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
-#else
-  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
-#endif
-
+  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::info);
 }
 
 //spdlog::logger * RetrieveLogger() {
