@@ -14,7 +14,7 @@ namespace geometry {
 
 class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
  public:
-  EssentialMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
+  EssentialMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma, 0.7) {}
 
   precision_t ComputeEssentialReprojectionError(const TMatrix33 & E,
                                                 const std::vector<HomogenousPoint> & points_to,

@@ -12,6 +12,7 @@ namespace geometry {
 const precision_t EssentialMatrixEstimator::ESSENTIAL_THRESHOLD = 3.841;
 const precision_t EssentialMatrixEstimator::ESSENTIAL_THRESHOLD_SCORE = 5.991;
 
+
 bool EssentialMatrixEstimator::FindPose(const TMatrix33 & essential,
                                         const std::vector<HomogenousPoint> & points_to,
                                         const std::vector<HomogenousPoint> & points_from,
@@ -143,8 +144,7 @@ void EssentialMatrixEstimator::FindBestEssentialMatrix(const std::vector<Homogen
   TMatrix33 S_to, S_from;
   NormalizePoints(points_to, normalized_to, S_to);
   NormalizePoints(points_from, normalized_from, S_from);
-  for (size_t i = 0; i < good_match_random_idx.size(); ++i) {
-    const std::vector<size_t> & good_matches_rnd = good_match_random_idx[i];
+  for (const auto & good_matches_rnd : good_match_random_idx) {
     FindEssentialMatrix(normalized_to, normalized_from, matches, good_matches_rnd, tmp_essential);
     tmp_essential = S_to.transpose() * tmp_essential * S_from;
     precision_t

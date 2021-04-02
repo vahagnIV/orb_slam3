@@ -14,6 +14,7 @@ namespace geometry {
 
 const precision_t HomographyMatrixEstimator::HOMOGRAPHY_SCORE = 5.991;
 
+
 bool HomographyMatrixEstimator::FindPose(const TMatrix33 & homography,
                                          const std::vector<HomogenousPoint> & points_to,
                                          const std::vector<HomogenousPoint> & points_from,

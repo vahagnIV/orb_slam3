@@ -73,7 +73,7 @@ bool Triangulate(const Pose & pose,
 }
 
 precision_t ComputeParallax(const Pose & pose, const TPoint3D & point) {
-  const TVector3D vec1 = point;
+  const TVector3D & vec1 = point;
   const TVector3D vec2 = point - (pose.T.transpose() * pose.R).transpose();
   return vec1.dot(vec2) / vec1.norm() / vec2.norm();
 }
@@ -92,8 +92,8 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
                             const Pose & pose,
                             precision_t reprojection_threshold_to,
                             precision_t reprojection_threshold_from,
-                            precision_t parallax_threshold,
-                            precision_t & out_parallax,
+                            precision_t parallax_cos_threshold,
+                            precision_t & out_cos_parallax,
                             TPoint3D & out_triangulated) {
   if (!utils::Triangulate(pose, point_from, point_to, out_triangulated))
     return false;
@@ -101,8 +101,8 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
   if (out_triangulated[2] < 0)
     return false;
 
-  out_parallax = utils::ComputeParallax(pose, out_triangulated);
-  if (out_parallax > parallax_threshold || std::isnan(out_parallax))
+  out_cos_parallax = utils::ComputeParallax(pose, out_triangulated);
+  if (out_cos_parallax > parallax_cos_threshold || std::isnan(out_cos_parallax))
     return false;
 
   const TVector3D triangulated2 = pose.Transform(out_triangulated);

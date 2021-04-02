@@ -9,6 +9,9 @@ namespace orb_slam3 {
 namespace geometry {
 
 const precision_t TransfromationEstimatorBase::PARALLAX_THRESHOLD = 0.99998;
+const int TransfromationEstimatorBase::MIN_TRIANGULATED = 50;
+const precision_t TransfromationEstimatorBase::MIN_PARALLAX = 1.0;
+const precision_t TransfromationEstimatorBase::MIN_MATCH_RATIO = 0.9;
 
 size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
                                               const std::vector<HomogenousPoint> & points_to,
@@ -19,8 +22,8 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
                                               std::vector<TPoint3D> & out_triangulated) const {
   size_t count = 0;
   out_triangulated.resize(matches.size());
-  std::vector<precision_t> triangulated_parallax;
-  triangulated_parallax.reserve(matches.size());
+  std::vector<precision_t> triangulated_cos_parallax;
+  triangulated_cos_parallax.reserve(matches.size());
 
   for (size_t i = 0; i < matches.size(); ++i) {
 
@@ -44,15 +47,16 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
                                                      triangulated)))
       continue;
 
-    triangulated_parallax.push_back(point_parallax);
+    triangulated_cos_parallax.push_back(point_parallax);
     ++count;
   }
   if (!count)
     return count;
 
-  std::sort(triangulated_parallax.begin(), triangulated_parallax.end());
-  out_parallax =
-      std::acos(triangulated_parallax.size() < 50 ? triangulated_parallax.back() : triangulated_parallax[50]);
+  std::sort(triangulated_cos_parallax.begin(), triangulated_cos_parallax.end());
+  out_parallax = std::acos(
+      triangulated_cos_parallax.size() < 50 ? triangulated_cos_parallax.back() : triangulated_cos_parallax[50])
+      * 180 / M_PI;
 
   return count;
 }
@@ -81,8 +85,8 @@ bool TransfromationEstimatorBase::FindCorrectPose(const std::vector<Pose> & cand
     } else
       second_best_count = std::max(second_best_count, no_good);
   }
-  // TODO: address this issue
-  return second_best_count < 0.75 * best_count && best_parallax < 0.995 && best_count > 30;// && best_count > 0.9 * matches.size()
+  return second_best_count < min_dif_ratio_from_second_best_ * best_count && best_parallax > MIN_PARALLAX
+      && best_count > MIN_TRIANGULATED && best_count > MIN_MATCH_RATIO * matches.size();
 }
 
 }
