@@ -15,23 +15,29 @@ namespace geometry {
 
 class TransfromationEstimatorBase {
  public:
-  TransfromationEstimatorBase(precision_t sigma) :
+  TransfromationEstimatorBase(precision_t sigma, precision_t min_dif_ratio_from_second_best) :
       sigma_threshold_(sigma),
       sigma_threshold__square_(sigma * sigma),
-      sigma_squared_inv_(1 / sigma / sigma) {};
+      sigma_squared_inv_(1 / sigma / sigma),
+      min_dif_ratio_from_second_best_(min_dif_ratio_from_second_best) {};
 
-  size_t CheckPose(const Pose & solution,
-                   const std::vector<HomogenousPoint> & points_to,
-                   const std::vector<HomogenousPoint> & points_from,
-                   const std::vector<features::Match> & matches,
-                   std::vector<bool> & inliers,
-                   precision_t & out_parallax,
-                   std::vector<TPoint3D> & out_triangulated) const;
+  size_t
+  CheckPose(const Pose & solution,
+            const std::vector<HomogenousPoint> & points_to,
+            const std::vector<HomogenousPoint> & points_from,
+            const std::vector<features::Match> & matches,
+            std::vector<bool> & out_inliers,
+            precision_t & out_parallax,
+            std::vector<TPoint3D> & out_triangulated) const;
  protected:
   const precision_t sigma_threshold_;
   const precision_t sigma_threshold__square_;
   const precision_t sigma_squared_inv_;
+  const precision_t min_dif_ratio_from_second_best_;
   static const precision_t PARALLAX_THRESHOLD;
+  static const int MIN_TRIANGULATED;
+  static const precision_t MIN_PARALLAX_DEG;
+  static const precision_t MIN_MATCH_RATIO;
   bool FindCorrectPose(const std::vector<Pose> & candidate_solutions,
                        const std::vector<HomogenousPoint> & points_to,
                        const std::vector<HomogenousPoint> & points_from,

@@ -20,12 +20,12 @@ TwoViewReconstructor::TwoViewReconstructor(const unsigned number_of_ransac_itera
       homography_matrix_sstimator_(sigma_threshold) {
 }
 
-bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &points_to,
-                                       const std::vector<HomogenousPoint> &points_from,
-                                       const std::vector<features::Match> &matches,
-                                       Pose &out_pose,
-                                       std::vector<TPoint3D> &out_points,
-                                       std::vector<bool> &out_inliers) const {
+bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & points_to,
+                                       const std::vector<HomogenousPoint> & points_from,
+                                       const std::vector<features::Match> & matches,
+                                       Pose & out_pose,
+                                       std::vector<TPoint3D> & out_points,
+                                       std::vector<bool> & out_inliers) const {
 
   out_inliers.resize(matches.size(), false);
   std::vector<std::vector<size_t>> random_match_subset_idx;
@@ -49,7 +49,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> &point
                                                         homography,
                                                         homography_inliers,
                                                         h_score);
-  if (h_score>f_score) {
+  if (h_score >= f_score) {
     return homography_matrix_sstimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,
@@ -73,7 +73,7 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
                                                  const size_t max,
                                                  const size_t count,
                                                  size_t subset_count,
-                                                 std::vector<std::vector<size_t>> &out_result) const {
+                                                 std::vector<std::vector<size_t>> & out_result) const {
   out_result.resize(subset_count);
   do { GenerateRandomSubset(min, max, count, out_result[subset_count - 1]); }
   while (--subset_count);
@@ -82,7 +82,7 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
 void TwoViewReconstructor::GenerateRandomSubset(const size_t min,
                                                 const size_t max,
                                                 const size_t count,
-                                                std::vector<size_t> &out_result) const {
+                                                std::vector<size_t> & out_result) const {
   std::random_device rand_dev;
   std::mt19937 generator(rand_dev());
   std::uniform_int_distribution<size_t> distr(min, max - 1);

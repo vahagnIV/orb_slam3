@@ -54,8 +54,8 @@ bool Triangulate(const Pose & pose,
  * @param point The point
  * @return The parallax
  */
-precision_t ComputeParallax(const Pose & pose,
-                            const TPoint3D &point);
+precision_t ComputeCosParallax(const Pose & pose,
+                               const TPoint3D &point);
 
 /*!
  * Computes the error of projecting point
