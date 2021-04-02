@@ -4,7 +4,9 @@
 
 #include "logging.h"
 #include <spdlog/sinks/stdout_sinks.h>
+#if __has_include(<spdlog/sinks/stdout_color_sinks.h>)
 #include <spdlog/sinks/stdout_color_sinks.h>
+#endif
 
 namespace orb_slam3 {
 namespace logging {
