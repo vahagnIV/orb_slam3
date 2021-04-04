@@ -22,6 +22,7 @@ class MonocularFrame : public FrameBase {
   MonocularFrame(const TImageGray8U & image,
                  TimePoint timestamp,
                  const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
+                 const std::string & filename,
                  const std::shared_ptr<camera::MonocularCamera> & camera,
                  features::BowVocabulary *vocabulary);
 
