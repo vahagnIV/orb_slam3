@@ -16,7 +16,7 @@ namespace geometry {
 class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
 
  public:
-  explicit HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma) {}
+  explicit HomographyMatrixEstimator(precision_t sigma) : TransfromationEstimatorBase(sigma, 0.75) {}
 
   void FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                 const std::vector<HomogenousPoint> & points_from,
