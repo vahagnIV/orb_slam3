@@ -80,7 +80,8 @@ class MonocularCamera
   void ComputeJacobian(const TPoint3D & pt,
                        ProjectionJacobianType & out_jacobian) const override;
 
-  bool IsInFrustum(const TPoint3D & point) const override;
+
+  bool IsInFrustum(const HomogenousPoint & point) const override;
 
   bool IsInScaleInvarianceRegion(const TPoint3D & point) const override;
 
@@ -122,6 +123,7 @@ class MonocularCamera
   bool DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) const;
   void UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const;
   void ProjectPoint(const TPoint3D & point, TPoint2D & projected) const;
+  void ProjectAndDistort(const TPoint3D & point, TPoint3D & projected) const;
   bool UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const;
 
   inline const Scalar & Fx() const noexcept { return this->_estimate[0]; }

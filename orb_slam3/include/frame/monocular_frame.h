@@ -32,12 +32,13 @@ class MonocularFrame : public FrameBase {
   bool Link(const std::shared_ptr<FrameBase> & other) override;
   void AppendDescriptorsToList(size_t feature_id,
                                std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
-  TPoint3D GetNormal(const TVector3D & point) const override;
+  TVector3D GetNormal(const TVector3D & point) const override;
   bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) override;
+  bool TrackLocalMap() override;
   const features::Features & GetFeatures() const { return features_; }
 
+
   // ==== Monocular ====
-  const FrameLink & GetFrameLink() const { return frame_link_; }
   void AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) override;
   void CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) override;
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
@@ -49,10 +50,12 @@ class MonocularFrame : public FrameBase {
   void ComputeMatches(const MonocularFrame *other,
                       std::vector<features::Match> & out_matches,
                       geometry::Pose & out_pose) const;
+  void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const override;
  protected:
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;
-  FrameLink frame_link_;
+  // Feature id to MapPoint ptr
+  std::map<size_t, map::MapPoint *> map_points_;
 
 };
 

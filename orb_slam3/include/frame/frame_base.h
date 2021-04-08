@@ -20,6 +20,7 @@
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
 #include <map/map_point.h>
+#include <tracking_result.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -30,9 +31,9 @@ class FrameBase : public Identifiable {
 
   virtual FrameType Type() const = 0;
 
-  FrameBase(const TimePoint &timestamp,
-            const std::shared_ptr<features::IFeatureExtractor> &feature_extractor,
-            const std::string &filename)
+  FrameBase(const TimePoint & timestamp,
+            const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
+            const std::string & filename)
       : Identifiable(), timestamp_(timestamp), covisibility_connections_(), feature_extractor_(feature_extractor),
         initial_(false), filename_(filename) {
   }
@@ -41,7 +42,7 @@ class FrameBase : public Identifiable {
    * @return the value of timestamp associated with the frame instance
    */
   inline TimePoint TimeStamp() const noexcept { return timestamp_; }
-  inline const std::string &Filename() const { return filename_; }
+  inline const std::string & Filename() const { return filename_; }
 
   /*!
    * Initializes the position of the frame to identity, i.e. the frame is in the origin
@@ -52,18 +53,24 @@ class FrameBase : public Identifiable {
    * Set the position of the frame in the world coordinate system
    * @param pose 4x4 joint transformation matrix
    */
-  void SetPosition(const geometry::Pose &pose) noexcept;
+  void SetPosition(const geometry::Pose & pose) noexcept;
   /*!
  * Set the position of the frame in the world coordinate system
  * @param pose g2o Quaternion
  */
-  void SetPosition(const geometry::Quaternion &pose) noexcept;
+  void SetPosition(const geometry::Quaternion & pose) noexcept;
 
   /*!
    * If frame passed certain checks like the number of features etc
    * @return true if valid
    */
   virtual bool IsValid() const = 0;
+
+  /*!
+   * Checks if the map point is visible on this frame
+   * @param map_point The map point to check
+   * @return true if visible
+   */
 
   bool IsInitial() const { return initial_; }
   void SetInitial(bool initial) { initial_ = initial; }
@@ -73,30 +80,16 @@ class FrameBase : public Identifiable {
    * Used only for monocular case
    * @return
    */
-  virtual bool Link(const std::shared_ptr<FrameBase> &other) = 0;
+  virtual bool Link(const std::shared_ptr<FrameBase> & other) = 0;
 
   /*!
-   * Return the map point associated with the id. The id is unique within the frame
-   * @param id The id of the Map point in the frame
-   * @return pointer to the map point
+   * Appends all local ma points to the output set
+   * @param out_map_points
    */
-  const map::MapPoint *MapPoint(size_t id) const;
+  virtual void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const = 0;
 
-  /*!
-   * Non const method of the previous
-   * @param id
-   * @return
-   */
-//  map::MapPoint *&MapPoint(size_t id) const { return map_points_[id]; }
-
-  /*!
-   * Returns all map points associated with the frame
-   * @return
-   */
-  std::map<size_t, map::MapPoint *> &MapPoints() { return map_points_; }
-  const std::map<size_t, map::MapPoint *> &MapPoints() const { return map_points_; }
-
-//  const std::vector<map::MapPoint * const> & MapPoints() const { return map_points_; }
+  static void ListAllMapPoints(const std::unordered_set<FrameBase *> & frames,
+                               std::unordered_set<map::MapPoint *> & out_map_points);
 
   /*!
    * Appends the descriptors that correspond to the map_point with feature_id to the provided vector.
@@ -105,14 +98,14 @@ class FrameBase : public Identifiable {
    * @param out_descriptor_ptr The vector to which the descriptors will be appended
    */
   virtual void AppendDescriptorsToList(size_t feature_id,
-                                       std::vector<features::DescriptorType> &out_descriptor_ptr) const = 0;
+                                       std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
 
   /*!
    * Computes the normal of the point.
    * @param point the point
    * @return The normal
    */
-  virtual TVector3D GetNormal(const TPoint3D &point) const = 0;
+  virtual TVector3D GetNormal(const TPoint3D & point) const = 0;
 
   /*!
    * Getter for pose
@@ -125,13 +118,13 @@ class FrameBase : public Identifiable {
    * @param optimizer the g2o::Sparseoptimizer
    * @param next_id The nonce that is used to assign ids to the g2o objects
    */
-  virtual void AppendToOptimizerBA(g2o::SparseOptimizer &optimizer, size_t &next_id) = 0;
+  virtual void AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) = 0;
 
   /*!
    * Collect the optimized values from the optimizer
    * @param optimizer
    */
-  virtual void CollectFromOptimizerBA(g2o::SparseOptimizer &optimizer) = 0;
+  virtual void CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) = 0;
 
   /*!
    * Restores the position of the current frame with comparison to the reference keyframe.
@@ -139,13 +132,15 @@ class FrameBase : public Identifiable {
    * @param reference_keyframe The reference keyframe
    * @return true on success
    */
-  virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> &reference_keyframe) = 0;
+  virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
+
+  virtual bool TrackLocalMap() = 0;
 
   /*!
    * Non-const getter for the covisibility graph
    * @return
    */
-  CovisibilityGraphNode &CovisibilityGraph() { return covisibility_connections_; }
+  CovisibilityGraphNode & CovisibilityGraph() { return covisibility_connections_; }
 
   /*!
    * Creates new map points from the neighbouring frames
@@ -159,23 +154,27 @@ class FrameBase : public Identifiable {
   virtual precision_t ComputeMedianDepth() const = 0;
 
   /*!
+ * Lists all frames that have covisible map points with the current frame
+ * @param out_frames The list of frames
+ * @return The frame that has maximal number of covisible map points with this
+ */
+  FrameBase *ListLocalKeyFrames(std::unordered_set<frame::FrameBase *> & out_frames) const;
+
+  /*!
    * Destructor
    */
   virtual ~FrameBase();
 
   g2o::VertexSE3Expmap *CreatePoseVertex() const;
  protected:
-  static void ListMapPoints(const std::unordered_set<FrameBase *> &frames, std::set<map::MapPoint *> &out_map_points);
-  static void FixedFrames(const std::set<map::MapPoint *> &map_points,
-                          const std::unordered_set<FrameBase *> &frames,
-                          std::unordered_set<FrameBase *> &out_fixed_frames);
+
+  static void FixedFrames(const std::unordered_set<map::MapPoint *> & map_points,
+                          const std::unordered_set<FrameBase *> & frames,
+                          std::unordered_set<FrameBase *> & out_fixed_frames);
 
  protected:
 
   TimePoint timestamp_;
-
-  // Feature id to MapPoint ptr
-  std::map<size_t, map::MapPoint *> map_points_;
 
   CovisibilityGraphNode covisibility_connections_;
 

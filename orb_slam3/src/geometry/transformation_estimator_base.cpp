@@ -11,7 +11,7 @@ namespace geometry {
 const precision_t TransfromationEstimatorBase::PARALLAX_THRESHOLD = 0.99998;
 const int TransfromationEstimatorBase::MIN_TRIANGULATED = 50;
 const precision_t TransfromationEstimatorBase::MIN_PARALLAX_DEG = 1.0;
-const precision_t TransfromationEstimatorBase::MIN_MATCH_RATIO = 0.9;
+const precision_t TransfromationEstimatorBase::MIN_MATCH_RATIO = 0.7;
 
 size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
                                               const std::vector<HomogenousPoint> & points_to,

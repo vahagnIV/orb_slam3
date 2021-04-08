@@ -16,22 +16,18 @@
 
 namespace orb_slam3 {
 
-enum TrackingResult {
-  OK, OldFrame, Ignore
-};
-
-
-
 using frame::FrameBase;
 class Tracker {
  public:
- enum State {
+  enum State {
     NOT_INITIALIZED,
+    LOST,
+    RECENTLY_LOST,
     FIRST_IMAGE,
     OK
   };
- public: 
-  Tracker(orb_slam3::map::Atlas * atlas);
+ public:
+  Tracker(orb_slam3::map::Atlas *atlas);
 
   /*!
    * Processes the frame
@@ -44,7 +40,7 @@ class Tracker {
  * Add an observer
  * @param observer
  */
-  void AddObserver(PositionObserver * observer){
+  void AddObserver(PositionObserver *observer) {
     observers_.insert(observer);
   }
 
@@ -52,7 +48,7 @@ class Tracker {
    * Remove the observer
    * @param observer
    */
-  void RemoveObserver(PositionObserver * observer){
+  void RemoveObserver(PositionObserver *observer) {
     observers_.erase(observer);
   }
 
@@ -63,14 +59,17 @@ class Tracker {
 
  private:
   void NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type);
-  
- private:  
-  map::Atlas * atlas_;
+
+  bool TrackLocalMap(const std::shared_ptr<FrameBase> & current_frame,
+                     const std::unordered_set<FrameBase *> & local_key_frames,
+                     const std::unordered_set<map::MapPoint *> & local_map_points);
+
+ private:
+  map::Atlas *atlas_;
   std::shared_ptr<frame::FrameBase> last_frame_;
   std::shared_ptr<frame::FrameBase> initial_frame_;
   State state_;
   std::unordered_set<PositionObserver *> observers_;
-
 
 };
 
