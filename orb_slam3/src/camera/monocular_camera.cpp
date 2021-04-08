@@ -9,21 +9,21 @@
 namespace orb_slam3 {
 namespace camera {
 
-void MonocularCamera::UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const {
+void MonocularCamera::UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const {
   unprojected << (point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_, 1;
 }
 
-void MonocularCamera::ProjectPoint(const TPoint3D &point, TPoint2D &projected) const {
+void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
   double z_inv = 1 / point[2];
   projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy();
 }
 
-bool MonocularCamera::UnprojectAndUndistort(const TPoint2D &point, HomogenousPoint &unprojected) const {
+bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const {
   UnprojectPoint(point, unprojected);
   return distortion_model_->UnDistortPoint(unprojected, unprojected);
 }
 
-TPoint2D MonocularCamera::Map(const TPoint3D &point3d) const {
+TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {
 
   // TODO: rethink definition
   double z_inv = 1 / point3d[2];
@@ -35,7 +35,7 @@ TPoint2D MonocularCamera::Map(const TPoint3D &point3d) const {
   return result;
 }
 
-bool MonocularCamera::UndistortPoint(const TPoint2D &point, TPoint2D &undistorted_point) const {
+bool MonocularCamera::UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const {
   TPoint3D unprojected, undistorted;
   UnprojectPoint(point, unprojected);
   if (!distortion_model_->UnDistortPoint(unprojected, undistorted))
@@ -44,7 +44,7 @@ bool MonocularCamera::UndistortPoint(const TPoint2D &point, TPoint2D &undistorte
   return true;
 }
 
-bool MonocularCamera::DistortPoint(const TPoint2D &undistorted, TPoint2D &distorted) const {
+bool MonocularCamera::DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) const {
   TPoint3D unprojected, distorted_3d;
   UnprojectPoint(undistorted, unprojected);
 
@@ -67,10 +67,10 @@ void MonocularCamera::ComputeImageBounds() {
   min_Y_ = std::max(top_left[1], bottom_left[1]);
 }
 
-void MonocularCamera::ComputeJacobian(const TPoint3D &pt, ProjectionJacobianType &out_jacobian) const {
-  const double &x = pt[0];
-  const double &y = pt[1];
-  const double &z = pt[2];
+void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianType & out_jacobian) const {
+  const double & x = pt[0];
+  const double & y = pt[1];
+  const double & z = pt[2];
   const double z_inv = 1 / z;
   const double z_inv2 = z_inv * z_inv;
   ProjectionJacobianType projection_jacobian;
@@ -81,6 +81,20 @@ void MonocularCamera::ComputeJacobian(const TPoint3D &pt, ProjectionJacobianType
   projected << x * z_inv, y * z_inv;
   distortion_model_->ComputeJacobian(projected, distortion_jacobian);
   out_jacobian = distortion_jacobian * projection_jacobian;
+}
+
+bool MonocularCamera::IsInFrustum(const TPoint3D & point) const {
+  const precision_t & z = point.z();
+  if (z < 0)
+    return false;
+  TPoint2D uv;
+  ProjectPoint(point, uv);
+  return uv.x() > min_X_ && uv.x() < max_X_ && uv.y() > min_Y_ && uv.y() < max_Y_;
+}
+
+bool MonocularCamera::IsInScaleInvarianceRegion(const TPoint3D & point) const {
+  //TODO: Implement
+  return true;
 }
 
 }
