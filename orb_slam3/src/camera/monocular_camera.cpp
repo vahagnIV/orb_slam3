@@ -85,13 +85,11 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
 
 bool MonocularCamera::IsInFrustum(const TPoint3D & point) const {
   const precision_t & z = point.z();
-  if (z < 0.0f)
+  if (z < 0)
     return false;
   TPoint2D uv;
   ProjectPoint(point, uv);
-  if (uv.x() < min_X_ || uv.x() > max_X_ || uv.y() < min_Y_ || uv.y() > max_Y_)
-    return false;
-  return true;
+  return uv.x() > min_X_ && uv.x() < max_X_ && uv.y() > min_Y_ && uv.y() < max_Y_;
 }
 
 bool MonocularCamera::IsInScaleInvarianceRegion(const TPoint3D & point) const {
