@@ -16,8 +16,11 @@ class ICamera {
  public:
   virtual void ComputeJacobian(const TPoint3D &pt,
                        ProjectionJacobianType &out_jacobian) const = 0;
-  const virtual IDistortionModel * GetDistortionModel() const = 0;
+  virtual const IDistortionModel * GetDistortionModel() const = 0;
   virtual ~ICamera() = default;
+  virtual bool IsInFrustum(const TPoint3D & point) const = 0;
+  virtual bool IsInScaleInvarianceRegion(const TPoint3D & point) const = 0;
+
 };
 
 }
