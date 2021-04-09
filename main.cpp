@@ -213,7 +213,7 @@ std::vector<cv::DMatch> ToCvMatches(const std::vector<orb_slam3::features::Match
 cv::KeyPoint ToCvKeypoint(const orb_slam3::features::KeyPoint &keypoint) {
   return cv::KeyPoint(keypoint.X(), keypoint.Y(), keypoint.size, keypoint.angle, 0, keypoint.level, -1);
 }
-
+/*
 cv::Mat DrawMatches(std::shared_ptr<orb_slam3::frame::MonocularFrame> &frame, cv::Mat &im1, cv::Mat &im2) {
   std::vector<cv::DMatch> matches = ToCvMatches(frame->GetFrameLink().matches, frame->GetFrameLink().inliers);
   std::vector<cv::KeyPoint> kp1(frame->GetFeatures().keypoints.size()), kp2
@@ -239,7 +239,8 @@ cv::Mat DrawMatches(std::shared_ptr<orb_slam3::frame::MonocularFrame> &frame, cv
                   cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
   return out;
 }
-
+*/
+/*
 void TestDrawMonocular(std::string original) {
 
   const std::string vocabulary =
@@ -348,7 +349,7 @@ void TestDrawMonocular(std::string original) {
     }
   }
 
-}
+}*/
 
 typedef struct { orb_slam3::TMatrix33 R; orb_slam3::TVector3D T; } Solution;
 

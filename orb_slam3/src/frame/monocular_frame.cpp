@@ -252,12 +252,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   }
   //covisibility_connections_.Update();
   //reference_kf->covisibility_connections_.Update();
-  if (inliers.size() <= 3u)
-    return false;
-
-  // TODO Track local map
-
-  return true;
+  return inliers.size() > 3u;
 }
 
 void MonocularFrame::ComputeBow() {
