@@ -103,8 +103,12 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     if (from_frame->map_points_.find(match.from_idx) != from_frame->map_points_.end()) {
       // TODO: do the contistency check
     } else {
-
-      auto map_point = new map::MapPoint(points[i]);
+      precision_t max_invariance_distance, min_invariance_distance;
+      feature_extractor_->ComputeInvariantDistances(pose_.R * points[i] + pose_.T,
+                                                    features_.keypoints[match.to_idx],
+                                                    max_invariance_distance,
+                                                    min_invariance_distance);
+      auto map_point = new map::MapPoint(points[i], max_invariance_distance, min_invariance_distance);
       map_points_[match.to_idx] = map_point;
       from_frame->map_points_[match.from_idx] = map_points_[match.to_idx];
       map_point->AddObservation(this, matches[i].to_idx);
@@ -194,7 +198,7 @@ void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) {
 }
 
 TVector3D MonocularFrame::GetNormal(const TPoint3D & point) const {
-  TPoint3D normal = pose_.T - point;
+  TPoint3D normal = point - inverse_pose_.T;
   normal.normalize();
   return normal;
 }
@@ -443,8 +447,13 @@ void MonocularFrame::FindNewMapPoints() {
                                    keyframe->features_.undistorted_keypoints[match.from_idx],
                                    features_.undistorted_keypoints[match.to_idx],
                                    pt);
+      precision_t max_invariance_distance, min_invariance_distance;
+      feature_extractor_->ComputeInvariantDistances(relative_pose.R * pt + relative_pose.T,
+                                                    features_.keypoints[match.to_idx],
+                                                    max_invariance_distance,
+                                                    min_invariance_distance);
       auto mp = new map::MapPoint(keyframe->pose_.R.transpose()
-                                      * (pt - keyframe->pose_.T));
+                                      * (pt - keyframe->pose_.T), max_invariance_distance, min_invariance_distance);
       map_points_[match.to_idx] = mp;
       keyframe->map_points_[match.from_idx] = mp;
       mp->AddObservation(this, match.to_idx);
@@ -545,7 +554,47 @@ void MonocularFrame::FindNewMapPoints() {
   logging::RetrieveLogger()->info(ss.str());
 
 }
+
 bool MonocularFrame::TrackLocalMap() {
+
+  std::unordered_set<map::MapPoint *> current_frame_map_points;
+  std::unordered_set<FrameBase *> local_frames;
+  FrameBase *max_covisible_frame;
+  if (nullptr == (max_covisible_frame = this->ListLocalKeyFrames(current_frame_map_points, local_frames))) {
+    return false;
+  }
+
+  std::unordered_set<map::MapPoint *> local_map_points;
+  FrameBase::ListAllMapPoints(local_frames, local_map_points);
+  TPoint3D local_pose = -pose_.R.transpose() * pose_.T;
+  for (auto & mp: local_map_points) {
+    if (current_frame_map_points.find(mp) != current_frame_map_points.end())
+      continue;
+
+    HomogenousPoint map_point_in_local_cf = pose_.R * mp->GetPosition() + pose_.T;
+    precision_t distance = map_point_in_local_cf.norm();
+    precision_t z_inv = 1. / map_point_in_local_cf.z();
+    map_point_in_local_cf *= z_inv;
+    camera_->GetDistortionModel()->DistortPoint(map_point_in_local_cf, map_point_in_local_cf);
+
+    if (!camera_->IsInFrustum(map_point_in_local_cf)) {
+      continue;
+    }
+
+    if (distance < mp->GetMinInvarianceDistance() || distance > mp->GetMaxInvarianceDistance()) {
+      continue;
+    }
+
+    TVector3D relative_frame_map_point = mp->GetPosition() - local_pose;
+    precision_t scalar_cos = relative_frame_map_point.dot(mp->GetNormal()) / relative_frame_map_point.norm();
+    if (scalar_cos < 0.5)
+      continue;
+
+    unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
+
+//    precision_t
+    //TODO: mp->IncreaseVisible();
+  }
   return false;
 }
 

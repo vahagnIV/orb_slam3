@@ -10,11 +10,15 @@ namespace frame {
 
 void FrameBase::SetPosition(const geometry::Pose & pose) noexcept {
   pose_ = pose;
+  inverse_pose_.R = pose_.R.transpose();
+  inverse_pose_.T = -inverse_pose_.R * pose_.T;
 }
 
 void FrameBase::SetPosition(const geometry::Quaternion & pose) noexcept {
   pose_.R = pose.rotation().toRotationMatrix();
   pose_.T = pose.translation();
+  inverse_pose_.R = pose_.R.transpose();
+  inverse_pose_.T = -inverse_pose_.R * pose_.T;
 }
 
 void FrameBase::InitializeIdentity() noexcept {
@@ -63,13 +67,17 @@ FrameBase::~FrameBase() {
       delete mp_id.second;
   }*/
 }
-FrameBase *FrameBase::ListLocalKeyFrames(std::unordered_set<frame::FrameBase *> & out_frames) const {
+FrameBase *FrameBase::ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
+                                         std::unordered_set<frame::FrameBase *> & out_frames) const {
+  out_map_points.clear();
+  ListMapPoints(out_map_points);
+
   std::unordered_map<frame::FrameBase *, unsigned> key_frame_counter;
-//  for (auto & map_point: MapPoints()) {
-//    for (auto observation: map_point.second->Observations()) {
-//      ++key_frame_counter[observation.first];
-//    }
-//  }
+  for (auto & map_point: out_map_points) {
+    for (auto observation: map_point->Observations()) {
+      ++key_frame_counter[observation.first];
+    }
+  }
 
   FrameBase *max_covisible_key_frame = nullptr;
   unsigned max_count = 0;

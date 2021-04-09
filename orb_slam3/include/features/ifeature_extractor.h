@@ -28,8 +28,14 @@ class IFeatureExtractor {
   virtual int Extract(const TImageGray8U & image,
                       Features & features) = 0;
 
-
   virtual precision_t GetAcceptableSquareError(unsigned level) const = 0;
+
+  virtual void ComputeInvariantDistances(const TPoint3D & point,
+                                         const KeyPoint & key_point,
+                                         precision_t & out_max_distance,
+                                         precision_t & out_min_distance) const = 0;
+
+  virtual unsigned PredictScale(precision_t distance, precision_t max_distance) const = 0;
 
   /*!
    * Virtual destructor

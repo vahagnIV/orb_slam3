@@ -369,7 +369,7 @@ void CompareSharedPointerInitializationAndCopyTime() {
   std::cout << "Creating shared_ptrs" << std::endl;
   std::chrono::high_resolution_clock::time_point shared_ptr_sart = std::chrono::high_resolution_clock::now();
   for (size_t j = 0; j < N; ++j) {
-    map_point_shared_ptrs[j] = std::make_shared<orb_slam3::map::MapPoint>(random_points[j]);
+    map_point_shared_ptrs[j] = std::make_shared<orb_slam3::map::MapPoint>(random_points[j],0,0);
   }
   std::chrono::high_resolution_clock::time_point shared_ptr_end = std::chrono::high_resolution_clock::now();
   std::chrono::nanoseconds
@@ -379,7 +379,7 @@ void CompareSharedPointerInitializationAndCopyTime() {
 
   std::chrono::high_resolution_clock::time_point ptr_sart = std::chrono::high_resolution_clock::now();
   for (size_t j = 0; j < N; ++j) {
-    map_point_ptrs[j] = new orb_slam3::map::MapPoint(random_points[j]);
+    map_point_ptrs[j] = new orb_slam3::map::MapPoint(random_points[j],0,0);
   }
   std::chrono::high_resolution_clock::time_point ptr_end = std::chrono::high_resolution_clock::now();
 

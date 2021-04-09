@@ -155,10 +155,12 @@ class FrameBase : public Identifiable {
 
   /*!
  * Lists all frames that have covisible map points with the current frame
+ * @param out_map_points The map_points of the current frame
  * @param out_frames The list of frames
  * @return The frame that has maximal number of covisible map points with this
  */
-  FrameBase *ListLocalKeyFrames(std::unordered_set<frame::FrameBase *> & out_frames) const;
+  FrameBase *ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
+                                std::unordered_set<frame::FrameBase *> & out_frames) const;
 
   /*!
    * Destructor
@@ -180,6 +182,9 @@ class FrameBase : public Identifiable {
 
   // Transformation from the world coordinate system to the frame coordinate system
   geometry::Pose pose_;
+
+  // Transformation from the camera coordinate system to the world coordinate system
+  geometry::Pose inverse_pose_;
 
   std::shared_ptr<features::IFeatureExtractor> feature_extractor_;
 

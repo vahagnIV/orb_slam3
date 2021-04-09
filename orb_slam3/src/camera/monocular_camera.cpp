@@ -83,19 +83,15 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
   out_jacobian = distortion_jacobian * projection_jacobian;
 }
 
-void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint3D & projected) const {
+void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const {
   double z_inv = 1 / point[2];
-  projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy(), 1;
+  TPoint3D projected{point.x() * z_inv, point.y() * z_inv, 1};
   distortion_model_->DistortPoint(projected, projected);
+  out_projected << projected.x() * Fx() + Cx(), projected.y() * Fy() + Cy();
 }
 
-bool MonocularCamera::IsInFrustum(const HomogenousPoint & point) const {
-  /*
-  if (point.z() < 0)
-    return false;
-  HomogenousPoint distorted;
-  ProjectAndDistort(point, distorted);*/
-  return point.x() > min_X_ && point.x() < max_X_ && point.y() > min_Y_ && point.y() < max_Y_;
+bool MonocularCamera::IsInFrustum(const HomogenousPoint & distorted) const {
+  return distorted.x() > min_X_ && distorted.x() < max_X_ && distorted.y() > min_Y_ && distorted.y() < max_Y_;
 }
 
 bool MonocularCamera::IsInScaleInvarianceRegion(const TPoint3D & point) const {

@@ -19,6 +19,7 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
       image_height_(image_height),
       features_(features),
       scale_factor_(scale_factor),
+      log_scale_factor_(std::log(scale_factor_)),
       init_threshold_FAST_(init_threshold_FAST),
       min_threshold_FAST_(min_threshold_FAST),
       scale_factors_(levels),
@@ -793,6 +794,30 @@ const std::vector<cv::Point> ORBFeatureExtractor::pattern_ = {
     cv::Point(7, 3), cv::Point(12, 4), cv::Point(9, -7),
     cv::Point(10, -2), cv::Point(7, 0), cv::Point(12, -2),
     cv::Point(-1, -6), cv::Point(0, -11)};
+
+void ORBFeatureExtractor::ComputeInvariantDistances(const TPoint3D & point,
+                                                    const KeyPoint & key_point,
+                                                    precision_t & out_max_distance,
+                                                    precision_t & out_min_distance) const {
+  precision_t distance = point.norm();
+  precision_t level_scale_factor = distance * scale_factors_[key_point.level];
+  out_max_distance = distance * level_scale_factor;
+  out_min_distance = out_max_distance / scale_factors_.back();
+}
+
+unsigned int ORBFeatureExtractor::PredictScale(precision_t distance, precision_t max_distance) const {
+  precision_t ratio;
+
+  ratio = max_distance / distance;
+
+  int scale = std::ceil(std::log(ratio) / log_scale_factor_);
+  if (scale < 0)
+    scale = 0;
+  else if (scale >= scale_factors_.size())
+    scale = scale_factors_.size() - 1;
+
+  return scale;
+}
 
 // const Eigen::Matrix<int, 256 * 2, 2> ORBFeatureExtractor::pattern_(
 //     (Eigen::Matrix<int, 256 * 2, 2>() <<

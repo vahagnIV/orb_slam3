@@ -123,7 +123,7 @@ class MonocularCamera
   bool DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) const;
   void UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const;
   void ProjectPoint(const TPoint3D & point, TPoint2D & projected) const;
-  void ProjectAndDistort(const TPoint3D & point, TPoint3D & projected) const;
+  void ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const;
   bool UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const;
 
   inline const Scalar & Fx() const noexcept { return this->_estimate[0]; }

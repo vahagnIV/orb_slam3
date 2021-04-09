@@ -25,7 +25,7 @@ namespace map {
 class MapPoint : public Identifiable {
  public:
   typedef std::unordered_map<frame::FrameBase *, size_t> MapType;
-  MapPoint(const TPoint3D & point);
+  MapPoint(const TPoint3D & point, precision_t max_invariance_distance, precision_t min_invariance_distance);
 
   /*!
    * Adds frame to the map points observations and increases the corresponding weights
@@ -44,6 +44,8 @@ class MapPoint : public Identifiable {
   const TPoint3D & GetPosition() const { return position_; }
   const TVector3D & GetNormal() const { return normal_; }
   const MapType & Observations() const { return observations_; }
+  precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
+  precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
   MapType & Observations() { return observations_; }
   bool IsValid() const { return true; }
 
@@ -60,6 +62,8 @@ class MapPoint : public Identifiable {
   MapType observations_;
   features::DescriptorType descriptor_;
   TVector3D normal_;
+  precision_t max_invariance_distance_;
+  precision_t min_invariance_distance_;
 
 };
 

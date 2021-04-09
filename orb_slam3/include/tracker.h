@@ -60,10 +60,6 @@ class Tracker {
  private:
   void NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type);
 
-  bool TrackLocalMap(const std::shared_ptr<FrameBase> & current_frame,
-                     const std::unordered_set<FrameBase *> & local_key_frames,
-                     const std::unordered_set<map::MapPoint *> & local_map_points);
-
  private:
   map::Atlas *atlas_;
   std::shared_ptr<frame::FrameBase> last_frame_;

@@ -26,6 +26,11 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       unsigned min_threshold_FAST);
   int Extract(const TImageGray8U & image, Features & out_features) override;
   precision_t GetAcceptableSquareError(unsigned int level) const override;
+  void ComputeInvariantDistances(const TPoint3D & point,
+                                 const KeyPoint & key_point,
+                                 precision_t & out_max_distance,
+                                 precision_t & out_min_distance) const override;
+  unsigned int PredictScale(precision_t distance, precision_t max_distance) const override;
 
  private:
   class ExtractorNode {
@@ -70,6 +75,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
 
   unsigned features_;
   precision_t scale_factor_;
+  precision_t log_scale_factor_;
   unsigned init_threshold_FAST_;
   unsigned min_threshold_FAST_;
 
