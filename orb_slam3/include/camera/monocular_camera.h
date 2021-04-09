@@ -83,8 +83,6 @@ class MonocularCamera
 
   bool IsInFrustum(const HomogenousPoint & point) const override;
 
-  bool IsInScaleInvarianceRegion(const TPoint3D & point) const override;
-
   /*!
    *
    */

@@ -19,7 +19,6 @@ class ICamera {
   virtual const IDistortionModel * GetDistortionModel() const = 0;
   virtual ~ICamera() = default;
   virtual bool IsInFrustum(const HomogenousPoint & point) const = 0;
-  virtual bool IsInScaleInvarianceRegion(const TPoint3D & point) const = 0;
 
 };
 

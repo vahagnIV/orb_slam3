@@ -94,10 +94,5 @@ bool MonocularCamera::IsInFrustum(const HomogenousPoint & distorted) const {
   return distorted.x() > min_X_ && distorted.x() < max_X_ && distorted.y() > min_Y_ && distorted.y() < max_Y_;
 }
 
-bool MonocularCamera::IsInScaleInvarianceRegion(const TPoint3D & point) const {
-  //TODO: Implement
-  return true;
-}
-
 }
 }
