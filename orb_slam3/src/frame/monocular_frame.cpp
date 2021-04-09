@@ -24,14 +24,17 @@
 #include <optimization/bundle_adjustment.h>
 #include <logging.h>
 
+#include <opencv2/opencv.hpp>
+
 namespace orb_slam3 {
 namespace frame {
 
 MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
+                               const std::string & filename,
                                const std::shared_ptr<camera::MonocularCamera> & camera,
                                features::BowVocabulary *vocabulary) :
-    FrameBase(timestamp, feature_extractor),
+    FrameBase(timestamp, feature_extractor, filename),
     features_(camera->Width(), camera->Height()),
     camera_(camera) {
   feature_extractor->Extract(image, features_);
@@ -56,30 +59,33 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   features::matching::validators::OrientationValidator
       orientation_validator(features_.keypoints, from_frame->features_.keypoints);
 
+  std::vector<features::Match> matches;
+
   matcher.MatchWithIterator(features_.descriptors,
                             from_frame->features_.descriptors,
-                            frame_link_.matches,
+                            matches,
                             &area_iterator,
                             {},
                             &orientation_validator);
 
   logging::RetrieveLogger()->debug("SNN Matcher returned {} matches between frames {} and {}.",
-                                   frame_link_.matches.size(),
+                                   matches.size(),
                                    Id(),
                                    other->Id());
-  if (frame_link_.matches.size() < 100) {
+  if (matches.size() < 100) {
     logging::RetrieveLogger()->debug("Not enough matches. Skipping");
     return false;
   }
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
   std::vector<TPoint3D> points;
+  std::vector<bool> inliers;
   if (!reconstructor.Reconstruct(features_.undistorted_keypoints,
                                  from_frame->features_.undistorted_keypoints,
-                                 frame_link_.matches,
+                                 matches,
                                  pose_,
                                  points,
-                                 frame_link_.inliers)) {
+                                 inliers)) {
     logging::RetrieveLogger()->info("Could not reconstruct points between frames {} and {}. Skipping...",
                                     Id(),
                                     other->Id());
@@ -87,12 +93,12 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   }
 
   // TODO: pass to asolute R,T
-  frame_link_.other = other;
 
-  for (size_t i = 0; i < frame_link_.matches.size(); ++i) {
-    if (!frame_link_.inliers[i])
+
+  for (size_t i = 0; i < matches.size(); ++i) {
+    if (!inliers[i])
       continue;
-    const features::Match & match = frame_link_.matches[i];
+    const features::Match & match = matches[i];
 
     if (from_frame->map_points_.find(match.from_idx) != from_frame->map_points_.end()) {
       // TODO: do the contistency check
@@ -101,8 +107,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
       auto map_point = new map::MapPoint(points[i]);
       map_points_[match.to_idx] = map_point;
       from_frame->map_points_[match.from_idx] = map_points_[match.to_idx];
-      map_point->AddObservation(this, frame_link_.matches[i].to_idx);
-      map_point->AddObservation(from_frame, frame_link_.matches[i].from_idx);
+      map_point->AddObservation(this, matches[i].to_idx);
+      map_point->AddObservation(from_frame, matches[i].from_idx);
       map_point->Refresh();
     }
   }
@@ -187,7 +193,7 @@ void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) {
   }
 }
 
-TPoint3D MonocularFrame::GetNormal(const TPoint3D & point) const {
+TVector3D MonocularFrame::GetNormal(const TPoint3D & point) const {
   TPoint3D normal = pose_.T - point;
   normal.normalize();
   return normal;
@@ -239,13 +245,13 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   OptimizePose(inliers);
   for (const auto & match: matches) {
     if (inliers.find(match.to_idx) != inliers.end()) {
-      map_points_[match.to_idx]->AddObservation(this, match.to_idx);
-      map_points_[match.to_idx]->Refresh();
+      /*map_points_[match.to_idx]->AddObservation(this, match.to_idx);
+      map_points_[match.to_idx]->Refresh();*/
     } else
       map_points_.erase(match.to_idx);
   }
-  covisibility_connections_.Update();
-  reference_kf->covisibility_connections_.Update();
+  //covisibility_connections_.Update();
+  //reference_kf->covisibility_connections_.Update();
   return inliers.size() > 3u;
 }
 
@@ -384,6 +390,13 @@ void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
 
 }
 
+void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
+  for (auto mp: map_points_) {
+    if (mp.second->IsValid())
+      out_map_points.insert(mp.second);
+  }
+}
+
 void MonocularFrame::FindNewMapPoints() {
   std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
   for (frame::FrameBase *frame : neighbour_keyframes) {
@@ -405,7 +418,26 @@ void MonocularFrame::FindNewMapPoints() {
                                      Id(),
                                      keyframe->Id());
 
+    cv::Mat imto = cv::imread(Filename(), cv::IMREAD_COLOR);
+    cv::Mat imfrom = cv::imread(frame->Filename(), cv::IMREAD_COLOR);
+    cv::Mat joint(imto.rows, imto.cols * 2, CV_8UC3);
+    imto.copyTo(joint(cv::Rect(0, 0, imto.cols, imto.rows)));
+    imfrom.copyTo(joint(cv::Rect(imto.cols, 0, imto.cols, imto.rows)));
+
     for (auto & match:matches) {
+      cv::Point p1(features_.keypoints[match.to_idx].X(), features_.keypoints[match.to_idx].Y()),
+          p2(imto.cols + dynamic_cast<MonocularFrame *>(frame)->features_.keypoints[match.from_idx].X(),
+             dynamic_cast<MonocularFrame *>(frame)->features_.keypoints[match.from_idx].Y());
+      cv::circle(joint,
+                 p1,
+                 3,
+                 cv::Scalar(0, 255, 0));
+      cv::circle(joint,
+                 p2,
+                 3,
+                 cv::Scalar(0, 255, 0));
+      cv::line(joint, p1, p2, cv::Scalar(0, 255, 0));
+
       TPoint3D pt;
       geometry::utils::Triangulate(relative_pose,
                                    keyframe->features_.undistorted_keypoints[match.from_idx],
@@ -421,6 +453,10 @@ void MonocularFrame::FindNewMapPoints() {
       covisibility_connections_.Update();
       keyframe->covisibility_connections_.Update();
     }
+    std::string window_name = "local_mapper" + std::to_string(Id()) + "_" + std::to_string(frame->Id());
+//    cv::namedWindow(window_name,  cv::WINDOW_KEEPRATIO | cv::WINDOW_NORMAL);
+    cv::imshow(window_name, joint);
+    cv::waitKey(1);
   }
 
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
@@ -432,8 +468,8 @@ void MonocularFrame::FindNewMapPoints() {
 
   g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
-  std::set<map::MapPoint *> map_points;
-  this->ListMapPoints(neighbour_keyframes, map_points);
+  std::unordered_set<map::MapPoint *> map_points;
+  this->ListAllMapPoints(neighbour_keyframes, map_points);
   std::unordered_set<FrameBase *> fixed_frames;
   this->FixedFrames(map_points, neighbour_keyframes, fixed_frames);
 
@@ -488,7 +524,7 @@ void MonocularFrame::FindNewMapPoints() {
       continue;
     if (edge->chi2() > 5.991 || !edge->IsDepthPositive()) {
       mp->EraseObservation(frame_base);
-      frame_base->MapPoints().erase(mp->Observations()[frame_base]);
+      dynamic_cast<MonocularFrame *>(frame_base)->map_points_.erase(mp->Observations()[frame_base]);
       if (mp->Observations().empty()) {
         delete mp;
       }
@@ -509,5 +545,9 @@ void MonocularFrame::FindNewMapPoints() {
   logging::RetrieveLogger()->info(ss.str());
 
 }
+bool MonocularFrame::TrackLocalMap() {
+  return false;
+}
+
 }
 }  // namespace orb_slam3

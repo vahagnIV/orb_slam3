@@ -16,7 +16,7 @@ namespace orb_slam3 {
 namespace frame {
 
 class FrameBase;
-
+// TODO: Remove this class
 struct FrameLink {
   std::vector<features::Match> matches;
   std::vector<bool> inliers;
