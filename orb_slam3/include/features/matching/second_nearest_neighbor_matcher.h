@@ -23,21 +23,34 @@ class SNNMatcher {
  public:
   SNNMatcher(const precision_t nearest_neighbour_ratio);
 
+  template<typename IteratorTo>
+  void MatchWithIteratorV2(IteratorTo to_begin,
+                           IteratorTo to_end,
+                           std::unordered_map<typename IteratorTo::ToIdType,
+                                              typename IteratorTo::FromIdType> & out_matches) {
+    for (auto it_to = to_begin; it_to != to_end; ++it_to) {
+      DescriptorType d1 = it_to->GetDescriptor();
+      for (auto it_from: *it_to) {
+        DescriptorType d2 = it_from.GetDescriptor();
+      }
+    }
+  }
+
   template<typename IteratorType>
-  void MatchWithIterator(const DescriptorSet &descriptors_to,
-                         const DescriptorSet &descriptors_from,
-                         std::vector<features::Match> &out_matches,
+  void MatchWithIterator(const DescriptorSet & descriptors_to,
+                         const DescriptorSet & descriptors_from,
+                         std::vector<features::Match> & out_matches,
                          iterators::IJointDescriptorIterator<IteratorType> *iterator,
                          std::vector<validators::IIndexValidator *> validators = {},
                          validators::IMatchResultValidator *result_validator = nullptr);
 
  private:
   template<typename IteratorType>
-  size_t MatchWithIteratorInternal(const DescriptorSet &descriptors_to,
-                                   const DescriptorSet &descriptors_from,
-                                   std::vector<int> &out_matches,
+  size_t MatchWithIteratorInternal(const DescriptorSet & descriptors_to,
+                                   const DescriptorSet & descriptors_from,
+                                   std::vector<int> & out_matches,
                                    iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                                   std::vector<validators::IIndexValidator *> validators ,
+                                   std::vector<validators::IIndexValidator *> validators,
                                    validators::IMatchResultValidator *result_validator);
  public:
   static const unsigned TH_LOW;
