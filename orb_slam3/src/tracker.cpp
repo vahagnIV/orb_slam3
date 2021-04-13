@@ -23,6 +23,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
         frame->InitializeIdentity();
         frame->SetInitial(true);
         state_ = FIRST_IMAGE;
+        last_frame_ = frame;
       }
     }
       break;
@@ -62,7 +63,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
     default:break;
 
   }
-  last_frame_ = frame;
+
   return TrackingResult::OK;
 }
 

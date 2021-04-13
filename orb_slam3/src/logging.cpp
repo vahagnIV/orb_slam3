@@ -18,7 +18,7 @@ const std::string LOGGER_NAME = "logger";
 //  logger->set_level(spdlog::level::debug);
 //}
 void Initialize() {
-  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::info);
+  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
 }
 
 //spdlog::logger * RetrieveLogger() {

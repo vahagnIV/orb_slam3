@@ -35,12 +35,13 @@ class SNNMatcher {
     std::unordered_map<FromIdType, ToIdType> matches_from_to;
     std::unordered_map<FromIdType, unsigned> best_distances_from;
 
-    unsigned best_distance = std::numeric_limits<unsigned>::max(),
-        second_best_distance = std::numeric_limits<unsigned>::max();
+
 
     typename IteratorTo::value_type::iterator best_it;
 
     for (auto it_to = to_begin; it_to != to_end; ++it_to) {
+      unsigned best_distance = std::numeric_limits<unsigned>::max(),
+          second_best_distance = std::numeric_limits<unsigned>::max();
       DescriptorType d1 = it_to->GetDescriptor();
       for (auto it_from = it_to->begin(), it_from_end = it_to->end(); it_from != it_from_end; ++it_from) {
         DescriptorType d2 = it_from->GetDescriptor();
