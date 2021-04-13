@@ -18,8 +18,10 @@ namespace iterators {
 class AreaFromIterator {
  public:
   typedef AreaFromPointee value_type;
-  AreaFromIterator():pointee_(nullptr, 0) {}
-  AreaFromIterator(std::vector<std::size_t>::iterator it, DescriptorSet * descriptors) : pointee_(descriptors, *it) {
+  AreaFromIterator() : pointee_(nullptr, 0) {}
+  AreaFromIterator(std::vector<std::size_t>::iterator begin,
+                   std::vector<std::size_t>::iterator end,
+                   DescriptorSet *descriptors) : pointee_(descriptors, *begin), it_(begin), end_(end) {
   }
   const AreaFromPointee & operator*() const { return pointee_; }
   AreaFromPointee & operator*() { return pointee_; }
@@ -27,7 +29,8 @@ class AreaFromIterator {
   AreaFromPointee *operator->() { return &pointee_; }
   AreaFromIterator & operator++() {
     ++it_;
-    pointee_.id_ = *it_;
+    if (it_ != end_)
+      pointee_.id_ = *it_;
     return *this;
   }
   friend bool operator==(const AreaFromIterator & a, const AreaFromIterator & b) { return a.it_ == b.it_; }
@@ -35,6 +38,7 @@ class AreaFromIterator {
  private:
   AreaFromPointee pointee_;
   std::vector<std::size_t>::iterator it_;
+  std::vector<std::size_t>::iterator end_;
 };
 }
 }
