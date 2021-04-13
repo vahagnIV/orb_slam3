@@ -50,7 +50,7 @@ class SNNMatcher {
         } else if (distance < second_best_distance)
           second_best_distance = distance;
       }
-      if (best_distance < nearest_neighbour_ratio_ * second_best_distance) {
+      if (best_distance < TH_HIGH && best_distance < nearest_neighbour_ratio_ * second_best_distance) {
         typename decltype(best_distances_from)::iterator best_dist_it = best_distances_from.find(best_it->GetId());
         if (best_dist_it != best_distances_from.end() && best_dist_it->second > best_distance) {
           out_matches.erase(matches_from_to[best_it->GetId()]);
