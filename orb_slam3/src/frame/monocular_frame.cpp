@@ -24,7 +24,7 @@
 #include <optimization/bundle_adjustment.h>
 #include <logging.h>
 
-#include <opencv2/opencv.hpp>
+#include <features/matching/iterators/area_to_iterator.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -58,6 +58,10 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   features::matching::iterators::AreaIterator area_iterator(from_frame->features_, features_, 100);
   features::matching::validators::OrientationValidator
       orientation_validator(features_.keypoints, from_frame->features_.keypoints);
+  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
+  features::matching::iterators::AreaToIterator end(std::numeric_limits<std::size_t>::max(), nullptr, nullptr, 100);
+  std::unordered_map<std::size_t, std::size_t> matches2;
+  matcher.MatchWithIteratorV2(begin, end, matches2);
 
   std::vector<features::Match> matches;
 
@@ -422,25 +426,7 @@ void MonocularFrame::FindNewMapPoints() {
                                      Id(),
                                      keyframe->Id());
 
-    cv::Mat imto = cv::imread(Filename(), cv::IMREAD_COLOR);
-    cv::Mat imfrom = cv::imread(frame->Filename(), cv::IMREAD_COLOR);
-    cv::Mat joint(imto.rows, imto.cols * 2, CV_8UC3);
-    imto.copyTo(joint(cv::Rect(0, 0, imto.cols, imto.rows)));
-    imfrom.copyTo(joint(cv::Rect(imto.cols, 0, imto.cols, imto.rows)));
-
-    for (auto & match:matches) {
-      cv::Point p1(features_.keypoints[match.to_idx].X(), features_.keypoints[match.to_idx].Y()),
-          p2(imto.cols + dynamic_cast<MonocularFrame *>(frame)->features_.keypoints[match.from_idx].X(),
-             dynamic_cast<MonocularFrame *>(frame)->features_.keypoints[match.from_idx].Y());
-      cv::circle(joint,
-                 p1,
-                 3,
-                 cv::Scalar(0, 255, 0));
-      cv::circle(joint,
-                 p2,
-                 3,
-                 cv::Scalar(0, 255, 0));
-      cv::line(joint, p1, p2, cv::Scalar(0, 255, 0));
+    for (auto & match: matches) {
 
       TPoint3D pt;
       geometry::utils::Triangulate(relative_pose,
@@ -462,10 +448,6 @@ void MonocularFrame::FindNewMapPoints() {
       covisibility_connections_.Update();
       keyframe->covisibility_connections_.Update();
     }
-    std::string window_name = "local_mapper" + std::to_string(Id()) + "_" + std::to_string(frame->Id());
-//    cv::namedWindow(window_name,  cv::WINDOW_KEEPRATIO | cv::WINDOW_NORMAL);
-    cv::imshow(window_name, joint);
-    cv::waitKey(1);
   }
 
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
@@ -590,7 +572,7 @@ bool MonocularFrame::TrackLocalMap() {
     if (scalar_cos < 0.5)
       continue;
 
-    unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
+    //unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
 
 //    precision_t
     //TODO: mp->IncreaseVisible();

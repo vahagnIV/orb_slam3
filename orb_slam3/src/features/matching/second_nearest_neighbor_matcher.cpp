@@ -45,6 +45,7 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet & descriptors_t
   out_matches.resize(descriptors_to.rows(), -1);
   std::vector<unsigned> best_distances_from(descriptors_from.rows(), std::numeric_limits<unsigned>::max());
   std::vector<int> matches_from_to(descriptors_from.size(), -1);
+
   for (; iterator->IsValid(); ++(*iterator)) {
     size_t to_id = iterator->IdxTo(), best_from_idx;
     for (auto validator: validators)
@@ -79,7 +80,8 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet & descriptors_t
         continue;
       if (matches_from_to[best_from_idx] > 0)
         out_matches[matches_from_to[best_from_idx]] = -1;
-      ++number_of_matches;
+      else
+        ++number_of_matches;
       out_matches[to_id] = best_from_idx;
       matches_from_to[best_from_idx] = to_id;
     } else
