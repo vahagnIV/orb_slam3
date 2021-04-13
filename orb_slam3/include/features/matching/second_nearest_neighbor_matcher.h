@@ -35,14 +35,15 @@ class SNNMatcher {
 
     unsigned best_distance = std::numeric_limits<unsigned>::max(),
         second_best_distance = std::numeric_limits<unsigned>::max();
-    typename IteratorTo::value_type::iterator best_it, second_best_it;
+
+    typename IteratorTo::value_type::iterator best_it;
+
     for (auto it_to = to_begin; it_to != to_end; ++it_to) {
       DescriptorType d1 = it_to->GetDescriptor();
       for (auto it_from = it_to->begin(), it_from_end = it_to->end(); it_from != it_from_end; ++it_from) {
         DescriptorType d2 = it_from->GetDescriptor();
         unsigned distance = DescriptorDistance(d1, d2);
         if (distance < best_distance) {
-          second_best_it = best_it;
           best_it = it_from;
           second_best_distance = best_distance;
           best_distance = distance;
