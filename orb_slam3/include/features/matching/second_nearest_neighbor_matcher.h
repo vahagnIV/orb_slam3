@@ -27,11 +27,12 @@ class SNNMatcher {
   template<typename IteratorTo>
   void MatchWithIteratorV2(IteratorTo to_begin,
                            IteratorTo to_end,
-                           std::unordered_map<typename IteratorTo::ToIdType,
-                                              typename IteratorTo::FromIdType> & out_matches) {
-
-    std::unordered_map<typename IteratorTo::FromIdType, typename IteratorTo::ToIdType> matches_from_to;
-    std::unordered_map<typename IteratorTo::FromIdType, unsigned> best_distances_from;
+                           std::unordered_map<typename IteratorTo::id_type,
+                                              typename IteratorTo::value_type::iterator::value_type::id_type> & out_matches) {
+    typedef typename IteratorTo::value_type::iterator::value_type::id_type FromIdType;
+    typedef typename IteratorTo::value_type::id_type ToIdType;
+    std::unordered_map<FromIdType, ToIdType > matches_from_to;
+    std::unordered_map<FromIdType, unsigned> best_distances_from;
 
     unsigned best_distance = std::numeric_limits<unsigned>::max(),
         second_best_distance = std::numeric_limits<unsigned>::max();

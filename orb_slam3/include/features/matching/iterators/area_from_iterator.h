@@ -5,9 +5,10 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_AREA_FROM_ITERATOR_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_AREA_FROM_ITERATOR_H_
 
-#include "area_from_pointee.h"
+// === orb_slam3 ===
 #include <typedefs.h>
 #include <features/features.h>
+#include "area_from_pointee.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -16,7 +17,7 @@ namespace iterators {
 
 class AreaFromIterator {
  public:
-  typedef size_t IdType;
+  typedef AreaFromPointee value_type;
   AreaFromIterator():pointee_(nullptr, 0) {}
   AreaFromIterator(std::vector<std::size_t>::iterator it, DescriptorSet * descriptors) : pointee_(descriptors, *it) {
   }

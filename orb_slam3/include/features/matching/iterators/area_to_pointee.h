@@ -5,6 +5,7 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_AREA_TO_POINTEE_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_AREA_TO_POINTEE_H_
 
+// === orb_slam3 ===
 #include <typedefs.h>
 #include <features/features.h>
 #include "area_from_pointee.h"
@@ -21,8 +22,9 @@ class AreaToPointee : public AreaFromPointee {
   friend class AreaToIterator;
  public:
   typedef AreaFromIterator iterator;
+  typedef AreaFromPointee::id_type id_type;
   AreaToPointee() = default;
-  AreaToPointee(AreaFromPointee::IdType id, Features * features_to, Features * features_from, size_t window_size)
+  AreaToPointee(AreaFromPointee::id_type id, Features * features_to, Features * features_from, size_t window_size)
       : AreaFromPointee(&features_to->descriptors, id),
         features_to_(features_to),
         features_from_(features_from),

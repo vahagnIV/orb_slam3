@@ -4,6 +4,9 @@
 
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_AREA_TO_ITERATOR_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_AREA_TO_ITERATOR_H_
+
+// === orb_slam3 ===
+
 #include "area_to_pointee.h"
 namespace orb_slam3 {
 namespace features {
@@ -12,11 +15,11 @@ namespace iterators {
 
 class AreaToIterator {
  public:
-  typedef size_t ToIdType;
-  typedef size_t FromIdType;
+  typedef size_t id_type;
+
   typedef AreaToPointee value_type;
   AreaToIterator() = default;
-  AreaToIterator(ToIdType id, Features * features_to, Features * features_from, size_t window_size)
+  AreaToIterator(id_type id, Features * features_to, Features * features_from, size_t window_size)
       : pointee_(id, features_to, features_from, window_size), descriptor_count_(features_to->Size()) {
     pointee_.id_ = std::min(descriptor_count_, pointee_.id_);
   }
