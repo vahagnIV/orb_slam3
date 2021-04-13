@@ -14,7 +14,7 @@ class AreaToIterator {
  public:
   typedef size_t ToIdType;
   typedef size_t FromIdType;
-  typedef AreaFromIterator FromIteratorType;
+  typedef AreaToPointee value_type;
   AreaToIterator() = default;
   AreaToIterator(ToIdType id, Features * features_to, Features * features_from, size_t window_size)
       : pointee_(id, features_to, features_from, window_size), descriptor_count_(features_to->Size()) {

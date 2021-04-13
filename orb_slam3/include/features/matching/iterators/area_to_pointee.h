@@ -20,6 +20,7 @@ class AreaToIterator;
 class AreaToPointee : public AreaFromPointee {
   friend class AreaToIterator;
  public:
+  typedef AreaFromIterator iterator;
   AreaToPointee() = default;
   AreaToPointee(AreaFromPointee::IdType id, Features * features_to, Features * features_from, size_t window_size)
       : AreaFromPointee(&features_to->descriptors, id),

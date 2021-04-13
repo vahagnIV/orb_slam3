@@ -35,7 +35,7 @@ class SNNMatcher {
 
     unsigned best_distance = std::numeric_limits<unsigned>::max(),
         second_best_distance = std::numeric_limits<unsigned>::max();
-    typename IteratorTo::FromIteratorType best_it, second_best_it;
+    typename IteratorTo::value_type::iterator best_it, second_best_it;
     for (auto it_to = to_begin; it_to != to_end; ++it_to) {
       DescriptorType d1 = it_to->GetDescriptor();
       for (auto it_from = it_to->begin(), it_from_end = it_to->end(); it_from != it_from_end; ++it_from) {
@@ -52,9 +52,11 @@ class SNNMatcher {
       if (best_distance < nearest_neighbour_ratio_ * second_best_distance) {
         typename decltype(best_distances_from)::iterator best_dist_it = best_distances_from.find(best_it->GetId());
         if (best_dist_it != best_distances_from.end() && best_dist_it->second > best_distance) {
-          best_distances_from[best_it->GetId()] = best_distance;
-          out_matches.erase(it_to->GetId());
+          out_matches.erase(matches_from_to[best_it->GetId()]);
         }
+        best_distances_from[best_it->GetId()] = best_distance;
+        matches_from_to[best_it->GetId()] = it_to->GetId();
+        out_matches[it_to->GetId()] = best_it->GetId();
       }
     }
   }
