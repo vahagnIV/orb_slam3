@@ -18,7 +18,7 @@ class ICamera {
                        ProjectionJacobianType &out_jacobian) const = 0;
   virtual const IDistortionModel * GetDistortionModel() const = 0;
   virtual ~ICamera() = default;
-  virtual bool IsInFrustum(const HomogenousPoint & point) const = 0;
+
 
 };
 

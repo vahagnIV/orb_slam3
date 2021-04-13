@@ -58,6 +58,23 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
   AllocatePyramid();
 }
 
+unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) {
+  assert(d1.cols() == d2.cols());
+  const auto * pa = reinterpret_cast<const uint32_t * const>(d1.data());
+  const auto * pb = reinterpret_cast<const uint32_t * const>(d2.data());
+
+  unsigned dist = 0;
+
+  for (unsigned i = 0; i < static_cast<unsigned>(d1.cols()) >> 2; ++i, ++pa, ++pb) {
+    unsigned v = *pa ^*pb;
+    v -= ((v >> 1) & 0x55555555);
+    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+    dist += (((v + (v >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24;
+  }
+
+  return dist;
+}
+
 void ORBFeatureExtractor::AllocatePyramid() {
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     precision_t scale = inv_scale_factors_[level];
@@ -251,7 +268,7 @@ void ORBFeatureExtractor::DistributeOctTree(
     const int & nFeatures,
     const int & level,
     std::vector<features::KeyPoint> & out_map_points) {
-  // Compute how many initial nodes
+  // SetMapPointAndCompute how many initial nodes
   const int nIni = round(static_cast<float>(maxX - minX) / (maxY - minY));
 
   const float hX = static_cast<float>(maxX - minX) / nIni;
@@ -459,7 +476,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat & image) {
     image_pyramid_[level] =
         temp(cv::Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 
-    // Compute the resized image
+    // SetMapPointAndCompute the resized image
     if (level != 0) {
       cv::resize(image_pyramid_[level - 1], image_pyramid_[level], sz, 0, 0,
                  cv::INTER_LINEAR);
@@ -507,7 +524,7 @@ int ORBFeatureExtractor::Extract(const TImageGray8U & img,
     cv::GaussianBlur(workingMat, workingMat, cv::Size(7, 7), 2, 2,
                      cv::BORDER_REFLECT_101);
 
-    // Compute the descriptors    
+    // SetMapPointAndCompute the descriptors
     cv::Mat desc(nkeypointsLevel, 32, CV_8U);
     computeDescriptors(workingMat, keypoints, desc, pattern_);
 

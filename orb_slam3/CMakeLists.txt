@@ -36,11 +36,11 @@ add_library(orbslam SHARED
         src/features/orb_feature_extractor.cpp
         src/features/features.cpp
         src/features/matching/second_nearest_neighbor_matcher.cpp
-        src/features/feature_utils.cpp
         src/features/bow_container.cpp
         src/features/matching/iterators/area_iterator.cpp
-        src/features/matching/iterators/area_to_pointee.cpp
         src/features/matching/iterators/bow_iterator.cpp
+        src/features/matching/iterators/projection_search_iterator.cpp
+        src/features/matching/iterators/projection_search_pointee.cpp
         src/features/matching/validators/bow_match_tracking_validator.cpp
         src/features/matching/validators/orientation_validator.cpp
         src/features/matching/validators/bow_match_local_mapping_validator.cpp
@@ -96,7 +96,6 @@ add_library(orbslam SHARED
         include/features/matching/imatcher.h
         include/features/matching/second_nearest_neighbor_matcher.h
         include/features/match.h
-        include/features/feature_utils.h
         include/frame/iframe_database.h
         include/features/bow_vocabulary.h
         include/features/bow_container.h
@@ -112,6 +111,8 @@ add_library(orbslam SHARED
         include/features/matching/iterators/area_to_pointee.h
         include/features/matching/iterators/area_from_pointee.h
         include/features/matching/iterators/area_to_iterator.h
+        include/features/matching/iterators/projection_search_iterator.h
+        include/features/matching/iterators/projection_search_pointee.h
 
         include/map/map_point.h
         include/map/atlas.h

@@ -61,7 +61,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
   features::matching::iterators::AreaToIterator end(std::numeric_limits<std::size_t>::max(), nullptr, nullptr, 100);
   std::unordered_map<std::size_t, std::size_t> matches2;
-  matcher.MatchWithIteratorV2(begin, end, matches2);
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches2);
 
   std::vector<features::Match> matches;
 
@@ -117,7 +117,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
       from_frame->map_points_[match.from_idx] = map_points_[match.to_idx];
       map_point->AddObservation(this, matches[i].to_idx);
       map_point->AddObservation(from_frame, matches[i].from_idx);
-      map_point->Refresh();
+      map_point->Refresh(feature_extractor_);
     }
   }
   from_frame->CovisibilityGraph().Update();
@@ -196,7 +196,7 @@ void MonocularFrame::CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) {
     if (mp.second->Observations().begin()->first->Id() == Id()) {
       auto position = dynamic_cast<g2o::VertexPointXYZ *> (optimizer.vertex(mp.second->Id()));
       mp.second->SetPosition(position->estimate());
-      mp.second->Refresh();
+      mp.second->Refresh(feature_extractor_);
     }
   }
 }
@@ -444,7 +444,7 @@ void MonocularFrame::FindNewMapPoints() {
       keyframe->map_points_[match.from_idx] = mp;
       mp->AddObservation(this, match.to_idx);
       mp->AddObservation(keyframe, match.from_idx);
-      mp->Refresh();
+      mp->Refresh(feature_extractor_);
       covisibility_connections_.Update();
       keyframe->covisibility_connections_.Update();
     }
@@ -559,9 +559,9 @@ bool MonocularFrame::TrackLocalMap() {
     map_point_in_local_cf *= z_inv;
     camera_->GetDistortionModel()->DistortPoint(map_point_in_local_cf, map_point_in_local_cf);
 
-    if (!camera_->IsInFrustum(map_point_in_local_cf)) {
-      continue;
-    }
+//    if (!camera_->IsInFrustum(map_point_in_local_cf)) {
+//      continue;
+//    }
 
     if (distance < mp->GetMinInvarianceDistance() || distance > mp->GetMaxInvarianceDistance()) {
       continue;

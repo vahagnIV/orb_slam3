@@ -52,7 +52,7 @@ class MonocularCamera
     assert(!"Set to Origin is not Implemented yet");
   }
 
-  void oplusImpl(const double * update) override {
+  void oplusImpl(const double *update) override {
     Eigen::VectorXd::ConstMapType v(update, MonocularCamera::Dimension);
     this->_estimate += v;
     fx_inv_ = _estimate[0] ? 1 / _estimate[0] : 1;
@@ -62,26 +62,25 @@ class MonocularCamera
  public:
 
   template<typename TDistortionModel>
-  TDistortionModel * CreateDistortionModel() {
+  TDistortionModel *CreateDistortionModel() {
     if (DISTORTION_MODEL_PARAMS_MAX < TDistortionModel::DistrortionSize + CAMERA_PARAMS_COUNT) {
       throw std::runtime_error("Please increase DISTORTION_MODEL_PARAMS_MAX and rebuild the program...");
     }
 
     delete distortion_model_;
-    TDistortionModel * model = new TDistortionModel(&_estimate);
+    TDistortionModel *model = new TDistortionModel(&_estimate);
     distortion_model_ = model;
     return model;
   }
 
-  const IDistortionModel * GetDistortionModel() const override {
+  const IDistortionModel *GetDistortionModel() const override {
     return distortion_model_;
   }
 
   void ComputeJacobian(const TPoint3D & pt,
                        ProjectionJacobianType & out_jacobian) const override;
 
-
-  bool IsInFrustum(const HomogenousPoint & point) const override;
+  bool IsInFrustum(const TPoint2D & point) const;
 
   /*!
    *
@@ -159,7 +158,7 @@ class MonocularCamera
   unsigned height_;
   double min_X_, max_X_, min_Y_, max_Y_;
   double fx_inv_, fy_inv_;
-  IDistortionModel * distortion_model_;
+  IDistortionModel *distortion_model_;
 
 };
 

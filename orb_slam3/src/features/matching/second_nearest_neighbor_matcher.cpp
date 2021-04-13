@@ -5,7 +5,6 @@
 // == orb-slam3 ===
 #include <features/matching/second_nearest_neighbor_matcher.h>
 #include <features/matching/iterators/bow_iterator.h>
-#include <features/feature_utils.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -66,7 +65,7 @@ size_t SNNMatcher::MatchWithIteratorInternal(const DescriptorSet & descriptors_t
       if (!indices_are_valid)
         continue;
 
-      unsigned dist = DescriptorDistance(descriptors_to.row(to_id), descriptors_from.row(idx_from));
+      unsigned dist = 0;//DescriptorDistance(descriptors_to.row(to_id), descriptors_from.row(idx_from));
       if (dist < best_distance) {
         best_distance2 = best_distance;
         best_distance = dist;

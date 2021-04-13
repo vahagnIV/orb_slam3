@@ -5,7 +5,6 @@
 // == orb-slam3 ===
 #include "map/map_point.h"
 #include "frame/frame_base.h"
-#include "features/feature_utils.h"
 
 namespace orb_slam3 {
 namespace map {
@@ -33,12 +32,12 @@ void MapPoint::EraseObservation(frame::FrameBase *frame) {
   observations_.erase((frame::FrameBase *) frame);
 }
 
-void MapPoint::Refresh() {
-  ComputeDistinctiveDescriptor();
+void MapPoint::Refresh(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor) {
+  ComputeDistinctiveDescriptor(feature_extractor);
   UpdateNormalAndDepth();
 }
 
-void MapPoint::ComputeDistinctiveDescriptor() {
+void MapPoint::ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor) {
 
   std::vector<features::DescriptorType> descriptors;
   for (const auto & frame_id_pair: observations_) {
@@ -49,7 +48,7 @@ void MapPoint::ComputeDistinctiveDescriptor() {
   for (size_t i = 0; i < N; ++i) {
     distances[i][i] = 0;
     for (size_t j = i + 1; j < N; ++j) {
-      distances[i][j] = features::DescriptorDistance(descriptors[i], descriptors[j]);
+      distances[i][j] = feature_extractor->ComputeDistance(descriptors[i], descriptors[j]);
       distances[j][i] = distances[i][j];
     }
   }

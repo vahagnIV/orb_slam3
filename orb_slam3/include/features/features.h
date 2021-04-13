@@ -38,29 +38,28 @@ class Features {
   void SetVocabulary(BowVocabulary *vocabulary);
   void ComputeBow();
   size_t Size() const { return keypoints.size(); }
-  void ListFeaturesInArea(const precision_t &x,
-                          const precision_t &y,
-                          const size_t &window_size,
-                          const precision_t &minLevel,
-                          const precision_t &maxLevel,
-                          std::vector<size_t> &out_idx) const;
+  void ListFeaturesInArea(const precision_t & x,
+                          const precision_t & y,
+                          const size_t & window_size,
+                          const precision_t & minLevel,
+                          const precision_t & maxLevel,
+                          std::vector<size_t> & out_idx) const;
 
   void AssignFeaturesToGrid();
 
-  void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> &camera);
+  void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera);
  private:
-  bool PosInGrid(const TPoint2D &kp,
-                 const precision_t &min_X,
-                 const precision_t &min_Y,
-                 size_t &posX,
-                 size_t &posY) const;
+  bool PosInGrid(const TPoint2D & kp,
+                 const precision_t & min_X,
+                 const precision_t & min_Y,
+                 size_t & posX,
+                 size_t & posY) const;
 
  private:
   const size_t image_width_;
   const size_t image_height_;
   const precision_t grid_element_width_inv_;
   const precision_t grid_element_height_inv_;
-
 };
 
 }
