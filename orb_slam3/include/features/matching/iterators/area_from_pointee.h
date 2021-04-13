@@ -16,6 +16,7 @@ class AreaFromPointee {
   friend class AreaToIterator;
  public:
   typedef size_t IdType;
+  AreaFromPointee() = default;
   AreaFromPointee(DescriptorSet *descriptors, IdType id) : id_(id), descriptors_(descriptors) {}
   const DescriptorType GetDescriptor() { return descriptors_->row(id_); }
   const IdType GetId() const { return id_; }

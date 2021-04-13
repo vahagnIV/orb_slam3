@@ -14,10 +14,13 @@ namespace orb_slam3 {
 namespace features {
 namespace matching {
 namespace iterators {
+
 class AreaToIterator;
+
 class AreaToPointee : public AreaFromPointee {
   friend class AreaToIterator;
  public:
+  AreaToPointee() = default;
   AreaToPointee(AreaFromPointee::IdType id, Features * features_to, Features * features_from, size_t window_size)
       : AreaFromPointee(&features_to->descriptors, id),
         features_to_(features_to),
@@ -42,8 +45,8 @@ class AreaToPointee : public AreaFromPointee {
     end_iterator_ = AreaFromIterator(from_indices_.end(), nullptr);
     begin_iterator_ = AreaFromIterator(from_indices_.begin(), &features_from_->descriptors);
   }
-  Features *features_to_;
-  Features *features_from_;
+  Features * features_to_;
+  Features * features_from_;
   size_t window_size_;
   std::vector<std::size_t> from_indices_;
   AreaFromIterator end_iterator_;

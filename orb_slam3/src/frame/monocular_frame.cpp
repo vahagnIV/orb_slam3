@@ -572,7 +572,7 @@ bool MonocularFrame::TrackLocalMap() {
     if (scalar_cos < 0.5)
       continue;
 
-    unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
+    //unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
 
 //    precision_t
     //TODO: mp->IncreaseVisible();

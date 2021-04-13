@@ -14,15 +14,17 @@ class AreaToIterator {
  public:
   typedef size_t ToIdType;
   typedef size_t FromIdType;
-  AreaToIterator(ToIdType id, Features *features_to, Features *features_from, size_t window_size)
+  typedef AreaFromIterator FromIteratorType;
+  AreaToIterator() = default;
+  AreaToIterator(ToIdType id, Features * features_to, Features * features_from, size_t window_size)
       : pointee_(id, features_to, features_from, window_size), descriptor_count_(features_to->Size()) {
     pointee_.id_ = std::min(descriptor_count_, pointee_.id_);
   }
 
   const AreaToPointee & operator*() const { return pointee_; }
   AreaToPointee & operator*() { return pointee_; }
-  const AreaToPointee *operator->() const { return &pointee_; }
-  AreaToPointee *operator->() { return &pointee_; }
+  const AreaToPointee * operator->() const { return &pointee_; }
+  AreaToPointee * operator->() { return &pointee_; }
   AreaToIterator & operator++() {
     pointee_.id_ = std::min(descriptor_count_, pointee_.id_ + 1);
     return *this;
@@ -35,7 +37,7 @@ class AreaToIterator {
   }
  private:
   AreaToPointee pointee_;
-  const size_t descriptor_count_;
+  size_t descriptor_count_;
 
 };
 
