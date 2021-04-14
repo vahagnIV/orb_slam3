@@ -2,18 +2,18 @@
 // Created by vahagn on 25/03/2021.
 //
 
-#include "features/matching/validators/orientation_validator.h"
+#include "features/matching/orientation_validator.h"
 namespace orb_slam3 {
 namespace features {
 namespace matching {
-namespace validators {
+
 const int OrientationValidator::HISTO_LENGTH = 30;
-OrientationValidator::OrientationValidator(const vector<KeyPoint> &kp_to, const vector<KeyPoint> &kp_from) : kp_to_(
+OrientationValidator::OrientationValidator(const vector<KeyPoint> & kp_to, const vector<KeyPoint> & kp_from) : kp_to_(
     &kp_to), kp_from_(&kp_from) {
 
 }
 
-int OrientationValidator::Validate(std::vector<int> &inout_matches_12) {
+int OrientationValidator::Validate(std::unordered_map<std::size_t, std::size_t> & inout_matches_12) {
   std::vector<int> rotation_histogram[HISTO_LENGTH];
   ComputeRotationHistogram(rotation_histogram, inout_matches_12);
   int number_of_discarded_matches = 0;
@@ -30,8 +30,8 @@ int OrientationValidator::Validate(std::vector<int> &inout_matches_12) {
       continue;
     for (size_t j = 0, jend = rotation_histogram[i].size(); j < jend; j++) {
       int idx1 = rotation_histogram[i][j];
-      if (inout_matches_12[idx1] >= 0) {
-        inout_matches_12[idx1] = -1;
+      if (inout_matches_12.find(idx1) != inout_matches_12.end()) {
+        inout_matches_12.erase(idx1);
         number_of_discarded_matches++;
       }
     }
@@ -39,10 +39,10 @@ int OrientationValidator::Validate(std::vector<int> &inout_matches_12) {
   return number_of_discarded_matches;
 }
 
-void OrientationValidator::ComputeThreeMaxima(std::vector<int> *histo,
-                                    int &ind1,
-                                    int &ind2,
-                                    int &ind3) {
+void OrientationValidator::ComputeThreeMaxima(std::vector<int> * histo,
+                                              int & ind1,
+                                              int & ind2,
+                                              int & ind3) {
   int max1 = 0;
   int max2 = 0;
   int max3 = 0;
@@ -75,29 +75,27 @@ void OrientationValidator::ComputeThreeMaxima(std::vector<int> *histo,
   }
 }
 
-void OrientationValidator::ComputeRotationHistogram(std::vector<int> *rotation_histogram,
-                                          const std::vector<int> &inout_matches_12) {
+void OrientationValidator::ComputeRotationHistogram(std::vector<int> * rotation_histogram,
+                                                    const std::unordered_map<std::size_t,
+                                                                             std::size_t> & inout_matches_12) {
   const precision_t factor = 1.0f / HISTO_LENGTH;
   for (int i = 0; i < HISTO_LENGTH; i++)
     rotation_histogram[i].reserve(500);
 
-  for (size_t i = 0; i < inout_matches_12.size(); ++i) {
-    if (inout_matches_12[i] > 0) {
+  for (auto & match: inout_matches_12) {
 
-      float rot = kp_to_->at(i).angle - kp_from_->at(inout_matches_12[i]).angle;
-      if (rot < 0.0)
-        rot += 360.0f;
-      int bin = std::round(rot * factor);
-      if (bin == HISTO_LENGTH)
-        bin = 0;
-      assert(bin >= 0 && bin < HISTO_LENGTH);
-      rotation_histogram[bin].push_back(i);
-    }
+    float rot = kp_to_->at(match.first).angle - kp_from_->at(match.second).angle;
+    if (rot < 0.0)
+      rot += 360.0f;
+    int bin = std::round(rot * factor);
+    if (bin == HISTO_LENGTH)
+      bin = 0;
+    assert(bin >= 0 && bin < HISTO_LENGTH);
+    rotation_histogram[bin].push_back(match.first);
   }
 
 }
 
-}
 }
 }
 }

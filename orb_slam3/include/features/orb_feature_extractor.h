@@ -31,6 +31,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                                  precision_t & out_max_distance,
                                  precision_t & out_min_distance) const override;
   unsigned int PredictScale(precision_t distance, precision_t max_distance) const override;
+  unsigned int ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const override;
 
  private:
   class ExtractorNode {

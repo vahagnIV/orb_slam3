@@ -22,12 +22,12 @@ class AreaFromPointee {
  public:
   typedef size_t id_type;
   AreaFromPointee() = default;
-  AreaFromPointee(DescriptorSet *descriptors, id_type id) : id_(id), descriptors_(descriptors) {}
+  AreaFromPointee(const DescriptorSet *descriptors, id_type id) : id_(id), descriptors_(descriptors) {}
   const DescriptorType GetDescriptor() { return descriptors_->row(id_); }
   const id_type GetId() const { return id_; }
  protected:
   id_type id_;
-  DescriptorSet *descriptors_;
+  const DescriptorSet *descriptors_;
 };
 
 }

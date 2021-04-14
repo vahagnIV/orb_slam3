@@ -19,17 +19,20 @@ class AreaToIterator {
 
   typedef AreaToPointee value_type;
   AreaToIterator() = default;
-  AreaToIterator(id_type id, Features * features_to, Features * features_from, size_t window_size)
+  AreaToIterator(id_type id, Features *features_to, Features *features_from, size_t window_size)
       : pointee_(id, features_to, features_from, window_size), descriptor_count_(features_to->Size()) {
     pointee_.id_ = std::min(descriptor_count_, pointee_.id_);
   }
 
   const AreaToPointee & operator*() const { return pointee_; }
   AreaToPointee & operator*() { return pointee_; }
-  const AreaToPointee * operator->() const { return &pointee_; }
-  AreaToPointee * operator->() { return &pointee_; }
+  const AreaToPointee *operator->() const { return &pointee_; }
+  AreaToPointee *operator->() { return &pointee_; }
   AreaToIterator & operator++() {
-    pointee_.id_ = std::min(descriptor_count_, pointee_.id_ + 1);
+    if (pointee_.id_ >= descriptor_count_)
+      return *this;
+    ++pointee_.id_;
+    pointee_.InitializeIterators();
     return *this;
   }
   friend bool operator==(const AreaToIterator & a, const AreaToIterator & b) {

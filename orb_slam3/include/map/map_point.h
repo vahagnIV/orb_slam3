@@ -14,7 +14,7 @@
 #include <typedefs.h>
 #include <identifiable.h>
 #include <features/features.h>
-//#include <frame/frame_base.h>
+#include <features/ifeature_extractor.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -37,7 +37,7 @@ class MapPoint : public Identifiable {
 
   void EraseObservation(frame::FrameBase *frame);
 
-  void Refresh();
+  void Refresh(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
 
   void SetPosition(const TPoint3D & position);
 
@@ -52,7 +52,7 @@ class MapPoint : public Identifiable {
   g2o::VertexPointXYZ *CreateVertex() const;
 
  private:
-  void ComputeDistinctiveDescriptor();
+  void ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
 
   void UpdateNormalAndDepth();
 

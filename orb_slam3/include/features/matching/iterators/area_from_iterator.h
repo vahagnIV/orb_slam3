@@ -21,7 +21,7 @@ class AreaFromIterator {
   AreaFromIterator() : pointee_(nullptr, 0) {}
   AreaFromIterator(std::vector<std::size_t>::iterator begin,
                    std::vector<std::size_t>::iterator end,
-                   DescriptorSet *descriptors) : pointee_(descriptors, *begin), it_(begin), end_(end) {
+                   const DescriptorSet *descriptors) : pointee_(descriptors, *begin), it_(begin), end_(end) {
   }
   const AreaFromPointee & operator*() const { return pointee_; }
   AreaFromPointee & operator*() { return pointee_; }
