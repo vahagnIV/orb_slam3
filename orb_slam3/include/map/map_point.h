@@ -41,6 +41,8 @@ class MapPoint : public Identifiable {
 
   void SetPosition(const TPoint3D & position);
 
+  const features::DescriptorType GetDescriptor() const { return descriptor_; }
+
   const TPoint3D & GetPosition() const { return position_; }
   const TVector3D & GetNormal() const { return normal_; }
   const MapType & Observations() const { return observations_; }

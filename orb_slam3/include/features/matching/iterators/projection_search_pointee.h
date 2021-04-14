@@ -7,7 +7,7 @@
 
 // === orb_slam3 ===
 #include <map/map_point.h>
-#include "area_from_iterator.h"
+#include "vector_from_iterator.h"
 #include <geometry/pose.h>
 #include <camera/monocular_camera.h>
 
@@ -20,26 +20,33 @@ class ProjectionSearchIterator;
 
 class ProjectionSearchPointee {
 
-  typedef map::MapPoint *id_type;
  public:
+  typedef map::MapPoint *id_type;
+  typedef VectorFromIterator<std::size_t> iterator;
   friend class ProjectionSearchIterator;
   id_type GetId() const { return map_point_; }
-  AreaFromIterator begin() { return begin_iterator_; }
-  AreaFromIterator end() { return end_iterator_; }
-  ProjectionSearchPointee(const Features *from_features) ;
+  iterator begin() { return begin_iterator_; }
+  iterator end() { return end_iterator_; }
+  ProjectionSearchPointee(const Features *from_features,const IFeatureExtractor * feature_extractor);
+  const DescriptorType GetDescriptor() const;
  protected:
   void SetId(id_type id) { map_point_ = id; }
-  bool SetMapPointAndCompute(map::MapPoint * map_point, const camera::MonocularCamera * camera, const geometry::Pose * pose);
+  bool SetMapPointAndCompute(map::MapPoint *map_point,
+                             const camera::MonocularCamera *camera,
+                             const geometry::Pose *pose);
   void InitializeIterators();
-  static precision_t RadiusByViewingCos(const float & viewCos) ;
+  static precision_t RadiusByViewingCos(const float & viewCos);
  private:
   id_type map_point_;
-  AreaFromIterator end_iterator_;
-  AreaFromIterator begin_iterator_;
+  iterator end_iterator_;
+  iterator begin_iterator_;
   precision_t track_view_cos_;
   TPoint2D projected_;
   std::vector<std::size_t> from_indices_;
   const Features *from_features_;
+  const IFeatureExtractor * feature_extractor_;
+  precision_t window_size_;
+  unsigned predicted_level_;
 
 };
 

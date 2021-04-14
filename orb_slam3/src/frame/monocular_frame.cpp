@@ -24,6 +24,9 @@
 #include <logging.h>
 
 #include <features/matching/iterators/area_to_iterator.h>
+#include <features/matching/iterators/projection_search_iterator.h>
+
+#include <debug/debug_utils.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -32,7 +35,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
                                const std::string & filename,
                                const std::shared_ptr<camera::MonocularCamera> & camera,
-                               features::BowVocabulary * vocabulary) :
+                               features::BowVocabulary *vocabulary) :
     FrameBase(timestamp, feature_extractor, filename),
     features_(camera->Width(), camera->Height()),
     camera_(camera) {
@@ -52,7 +55,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     logging::RetrieveLogger()->warn("Frames {} and {} have different types. Could not link", Id(), other->Id());
     return false;
   }
-  MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other.get());
+  MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
   features::matching::SNNMatcher matcher(0.9);
   features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
   features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
@@ -70,6 +73,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     logging::RetrieveLogger()->debug("Not enough matches. Skipping");
     return false;
   }
+
 
   std::vector<features::Match> matches;
   std::transform(matches2.begin(),
@@ -92,7 +96,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     return false;
   }
 
-  // TODO: pass to asolute R,T
+  cv::imshow("linked matches:", debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
 
 
   for (size_t i = 0; i < matches.size(); ++i) {
@@ -151,15 +155,15 @@ void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
 }
 
 void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) {
-  g2o::VertexSE3Expmap * pose = CreatePoseVertex();
+  g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   for (auto & mp_id:map_points_) {
     if (nullptr == mp_id.second)
       continue;
-    map::MapPoint * map_point = mp_id.second;
+    map::MapPoint *map_point = mp_id.second;
     size_t feature_id = mp_id.first;
 
-    g2o::VertexPointXYZ * mp;
+    g2o::VertexPointXYZ *mp;
     if (nullptr == optimizer.vertex(map_point->Id())) {
       mp = map_point->CreateVertex();
       optimizer.addVertex(mp);
@@ -171,7 +175,7 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_
     edge->setVertex(1, mp);
     edge->setId(next_id++);
     edge->setInformation(Eigen::Matrix2d::Identity());
-    g2o::RobustKernelHuber * rk = new g2o::RobustKernelHuber;
+    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
     edge->setRobustKernel(rk);
     rk->setDelta(std::sqrt(5.99));
     HomogenousPoint measurement;
@@ -240,6 +244,9 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     return false;
   }
 
+  cv::imshow("TrackWithReferenceKeyframe", debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
+  cv::waitKey();
+
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_[match.from_idx];
     map_points_[match.to_idx] = map_point;
@@ -272,15 +279,15 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
 
   std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
 
-  auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  auto *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
-  g2o::VertexSE3Expmap * pose = CreatePoseVertex();
+  g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   size_t last_id = Identifiable::GetNextId();
   std::unordered_map<optimization::edges::SE3ProjectXYZPoseOnly *, std::size_t> edges;
 
   for (auto mp_id:map_points_) {
-    map::MapPoint * map_point = mp_id.second;
+    map::MapPoint *map_point = mp_id.second;
     size_t feature_id = mp_id.first;
     if (nullptr == map_point)
       continue;
@@ -355,14 +362,14 @@ precision_t MonocularFrame::ComputeMedianDepth() const {
   return depths[(depths.size() - 1) / 2];
 }
 
-bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame * other) const {
+bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame *other) const {
   TVector3D baseline = pose_.T - other->pose_.T;
   precision_t baseline_length = baseline.norm();
   precision_t frame_median_depth = other->ComputeMedianDepth();
   return baseline_length / frame_median_depth < 1e-2;
 }
 
-void MonocularFrame::ComputeMatches(const MonocularFrame * keyframe,
+void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
                                     vector<features::Match> & out_matches,
                                     geometry::Pose & out_pose) const {
   const precision_t th = 0.6f;
@@ -403,7 +410,7 @@ void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map
 
 void MonocularFrame::FindNewMapPoints() {
   std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
-  for (frame::FrameBase * frame : neighbour_keyframes) {
+  for (frame::FrameBase *frame : neighbour_keyframes) {
     if (frame->Type() != Type())
       continue;
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
@@ -453,7 +460,7 @@ void MonocularFrame::FindNewMapPoints() {
 
   std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
 
-  g2o::OptimizationAlgorithmLevenberg * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
   std::unordered_set<map::MapPoint *> map_points;
   this->ListAllMapPoints(neighbour_keyframes, map_points);
@@ -505,8 +512,8 @@ void MonocularFrame::FindNewMapPoints() {
     auto edge = dynamic_cast<optimization::edges::SE3ProjectXYZPose *>(edge_base);
     auto map_point_pose = dynamic_cast<g2o::VertexPointXYZ *>(edge->vertex(1));
     auto frame_pose = dynamic_cast<g2o::VertexSE3Expmap *>(edge->vertex(0));
-    map::MapPoint * mp = mp_map[map_point_pose->id()];
-    FrameBase * frame_base = frame_map[frame_pose->id()];
+    map::MapPoint *mp = mp_map[map_point_pose->id()];
+    FrameBase *frame_base = frame_map[frame_pose->id()];
     if (nullptr == frame_base || nullptr == mp)
       continue;
     if (edge->chi2() > 5.991 || !edge->IsDepthPositive()) {
@@ -537,15 +544,36 @@ bool MonocularFrame::TrackLocalMap() {
 
   std::unordered_set<map::MapPoint *> current_frame_map_points;
   std::unordered_set<FrameBase *> local_frames;
-  FrameBase * max_covisible_frame;
+  FrameBase *max_covisible_frame;
   if (nullptr == (max_covisible_frame = this->ListLocalKeyFrames(current_frame_map_points, local_frames))) {
     return false;
   }
 
   std::unordered_set<map::MapPoint *> local_map_points;
   FrameBase::ListAllMapPoints(local_frames, local_map_points);
-  TPoint3D local_pose = -pose_.R.transpose() * pose_.T;
-  for (auto & mp: local_map_points) {
+
+  features::matching::iterators::ProjectionSearchIterator begin
+      (local_map_points.begin(),
+       local_map_points.end(),
+       &current_frame_map_points,
+       &features_,
+       &pose_,
+       camera_.get(),
+       feature_extractor_.get());
+  features::matching::iterators::ProjectionSearchIterator end
+      (local_map_points.end(),
+       local_map_points.end(),
+       &current_frame_map_points,
+       &features_,
+       &pose_,
+       camera_.get(),
+       feature_extractor_.get());
+
+  features::matching::SNNMatcher matcher(0.7);
+  std::unordered_map<map::MapPoint *, std::size_t> matches;
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+
+  /*for (auto & mp: local_map_points) {
     if (current_frame_map_points.find(mp) != current_frame_map_points.end())
       continue;
 
@@ -572,7 +600,7 @@ bool MonocularFrame::TrackLocalMap() {
 
 //    precision_t
     //TODO: mp->IncreaseVisible();
-  }
+  }*/
   return false;
 }
 

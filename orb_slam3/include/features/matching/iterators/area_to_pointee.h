@@ -8,8 +8,8 @@
 // === orb_slam3 ===
 #include <typedefs.h>
 #include <features/features.h>
-#include "area_from_pointee.h"
-#include "area_from_iterator.h"
+#include "vect_from_pointee.h"
+#include "vector_from_iterator.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -18,22 +18,22 @@ namespace iterators {
 
 class AreaToIterator;
 
-class AreaToPointee : public AreaFromPointee {
+class AreaToPointee : public VectorFromPointee {
   friend class AreaToIterator;
  public:
-  typedef AreaFromIterator iterator;
+  typedef VectorFromIterator<std::size_t> iterator;
   AreaToPointee() = default;
-  AreaToPointee(AreaFromPointee::id_type id, Features *features_to, Features *features_from, size_t window_size)
-      : AreaFromPointee(&features_to->descriptors, id),
+  AreaToPointee(VectorFromPointee::id_type id, Features *features_to, Features *features_from, size_t window_size)
+      : VectorFromPointee(&features_to->descriptors, id),
         features_to_(features_to),
         features_from_(features_from),
         window_size_(window_size) {
     InitializeIterators();
   }
-  AreaFromIterator begin() {
+  iterator begin() {
     return begin_iterator_;
   }
-  AreaFromIterator end() {
+  iterator end() {
     return end_iterator_;
   }
  private:
@@ -44,15 +44,15 @@ class AreaToPointee : public AreaFromPointee {
                                        0,
                                        0,
                                        from_indices_);
-    end_iterator_ = AreaFromIterator(from_indices_.end(), from_indices_.end(), nullptr);
-    begin_iterator_ = AreaFromIterator(from_indices_.begin(), from_indices_.end(), &features_from_->descriptors);
+    end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), nullptr);
+    begin_iterator_ = iterator(from_indices_.begin(), from_indices_.end(), &features_from_->descriptors);
   }
   Features *features_to_;
   Features *features_from_;
   size_t window_size_;
   std::vector<std::size_t> from_indices_;
-  AreaFromIterator end_iterator_;
-  AreaFromIterator begin_iterator_;
+  iterator end_iterator_;
+  iterator begin_iterator_;
 
 };
 

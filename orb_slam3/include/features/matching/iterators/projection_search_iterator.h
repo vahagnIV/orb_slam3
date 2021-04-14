@@ -18,12 +18,15 @@ namespace iterators {
 
 class ProjectionSearchIterator {
  public:
+  typedef ProjectionSearchPointee::id_type id_type;
+  typedef ProjectionSearchPointee value_type ;
   ProjectionSearchIterator(std::unordered_set<map::MapPoint *>::iterator begin,
                            std::unordered_set<map::MapPoint *>::iterator end,
                            const std::unordered_set<map::MapPoint *> *to_map_points,
                            const Features *from_features,
                            const geometry::Pose *pose,
-                           const camera::MonocularCamera *camera);
+                           const camera::MonocularCamera *camera,
+                           const IFeatureExtractor * feature_extractor);
   const ProjectionSearchPointee & operator*() const { return pointee_; }
   ProjectionSearchPointee & operator*() { return pointee_; }
   const ProjectionSearchPointee *operator->() const { return &pointee_; }

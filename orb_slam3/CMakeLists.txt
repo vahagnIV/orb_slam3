@@ -41,6 +41,8 @@ add_library(orbslam SHARED
         src/features/matching/iterators/bow_iterator.cpp
         src/features/matching/iterators/projection_search_iterator.cpp
         src/features/matching/iterators/projection_search_pointee.cpp
+        src/features/matching/iterators/bow_iterator_pointee.cpp
+        src/features/matching/iterators/bow_to_iterator.cpp
         src/features/matching/validators/bow_match_tracking_validator.cpp
         src/features/matching/orientation_validator.cpp
         src/features/matching/validators/bow_match_local_mapping_validator.cpp
@@ -59,6 +61,8 @@ add_library(orbslam SHARED
         src/optimization/edges/se3_project_xyz_pose_only.cpp
         src/optimization/bundle_adjustment.cpp
         src/optimization/pose_optimization.cpp
+
+        src/debug/debug_utils.cpp
 
 
         include/typedefs.h
@@ -102,14 +106,16 @@ add_library(orbslam SHARED
         include/features/matching/iterators/idescriptor_iterator.h
         include/features/matching/iterators/area_iterator.h
         include/features/matching/iterators/bow_iterator.h
+        include/features/matching/iterators/bow_to_iterator.h
+        include/features/matching/iterators/bow_iterator_pointee.h
         include/features/matching/validators/iindex_validator.h
         include/features/matching/validators/bow_match_tracking_validator.h
         include/features/matching/validators/imatch_result_validator.h
         include/features/matching/orientation_validator.h
         include/features/matching/validators/bow_match_local_mapping_validator.h
-        include/features/matching/iterators/area_from_iterator.h
+        include/features/matching/iterators/vector_from_iterator.h
         include/features/matching/iterators/area_to_pointee.h
-        include/features/matching/iterators/area_from_pointee.h
+        include/features/matching/iterators/vect_from_pointee.h
         include/features/matching/iterators/area_to_iterator.h
         include/features/matching/iterators/projection_search_iterator.h
         include/features/matching/iterators/projection_search_pointee.h
@@ -122,6 +128,8 @@ add_library(orbslam SHARED
         include/optimization/bundle_adjustment.h
         include/optimization/pose_optimization.h
         include/optimization/edges/se3_project_xyz_pose_only.h
+
+        include/debug/debug_utils.h
 
         include/orb_vocabulary.h
         include/identifiable.h
