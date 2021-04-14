@@ -86,6 +86,7 @@ std::vector<std::string> ListDirectory(const std::string &path) {
 void ReadImages(
     const std::string &data_dir, std::vector<std::string> &filenames,
     std::vector<std::chrono::system_clock::time_point> &timestamps) {
+
   std::string row;
   std::ifstream is(data_dir + "/../data.csv");
   if (!std::getline(is, row)) return;
@@ -142,7 +143,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImages(data, filenames, timestamps);
-  auto *atlas = new orb_slam3::map::Atlas;
+  auto * atlas = new orb_slam3::map::Atlas;
   orb_slam3::Tracker tracker(atlas);
 
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
