@@ -37,7 +37,7 @@ class IFeatureExtractor {
 
   virtual unsigned PredictScale(precision_t distance, precision_t max_distance) const = 0;
 
-  virtual unsigned ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) = 0;
+  virtual unsigned ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const = 0;
 
   /*!
    * Virtual destructor

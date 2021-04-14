@@ -58,7 +58,7 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
   AllocatePyramid();
 }
 
-unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) {
+unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const {
   assert(d1.cols() == d2.cols());
   const auto * pa = reinterpret_cast<const uint32_t * const>(d1.data());
   const auto * pb = reinterpret_cast<const uint32_t * const>(d2.data());
