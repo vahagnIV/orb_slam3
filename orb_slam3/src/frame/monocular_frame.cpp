@@ -12,7 +12,7 @@
 #include <frame/monocular_frame.h>
 #include <constants.h>
 #include <features/matching/second_nearest_neighbor_matcher.h>
-#include <features/matching/iterators/bow_iterator.h>
+#include <features/matching/iterators/bow_to_iterator.h>
 #include <features/matching/validators/bow_match_tracking_validator.h>
 #include <features/matching/validators/bow_match_local_mapping_validator.h>
 #include <features/matching/orientation_validator.h>
@@ -74,7 +74,6 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     return false;
   }
 
-
   std::vector<features::Match> matches;
   std::transform(matches2.begin(),
                  matches2.end(),
@@ -96,8 +95,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     return false;
   }
 
-  cv::imshow("linked matches:", debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
-
+  cv::imshow("linked matches:",
+             debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
 
   for (size_t i = 0; i < matches.size(); ++i) {
     if (!inliers[i])
@@ -220,21 +219,28 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   ComputeBow();
 
   features::matching::SNNMatcher bow_matcher(0.7);
-  std::vector<features::Match> matches;
-  features::matching::iterators::BowIterator
-      bow_it(features_.bow_container.feature_vector, reference_kf->features_.bow_container.feature_vector);
+  std::unordered_map<std::size_t , std::size_t> matches;
+  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
+                                                            &features_.bow_container.feature_vector,
+                                                            &reference_kf->features_.bow_container.feature_vector,
+                                                            &features_,
+                                                            &reference_kf->features_,
+                                                            &map_points_,
+                                                            &reference_kf->map_points_,
+                                                            false,
+                                                            true);
 
-  features::matching::validators::BowMatchTrackingValidator
-      validator(map_points_, reference_kf->map_points_, false, true);
-  features::matching::OrientationValidator
-      orientation_validator(features_.keypoints, reference_kf->features_.keypoints);
+  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
+                                                          &features_.bow_container.feature_vector,
+                                                          &reference_kf->features_.bow_container.feature_vector,
+                                                          &features_,
+                                                          &reference_kf->features_,
+                                                          &map_points_,
+                                                          &reference_kf->map_points_,
+                                                          false,
+                                                          true);
 
-  bow_matcher.MatchWithIterator(features_.descriptors,
-                                reference_kf->features_.descriptors,
-                                matches,
-                                &bow_it,
-                                {&validator},
-                                nullptr); // Orientation validator
+  bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
 
   logging::RetrieveLogger()->info("SNNMatcher returned {} matches for frames {} and {}",
                                   matches.size(),
@@ -244,22 +250,23 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     return false;
   }
 
-  cv::imshow("TrackWithReferenceKeyframe", debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
-  cv::waitKey();
+//  cv::imshow("TrackWithReferenceKeyframe",
+//             debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
+//  cv::waitKey();
 
   for (const auto & match: matches) {
-    auto map_point = reference_kf->map_points_[match.from_idx];
-    map_points_[match.to_idx] = map_point;
+    auto map_point = reference_kf->map_points_[match.second];
+    map_points_[match.first] = map_point;
   }
   std::unordered_set<std::size_t> inliers;
   SetPosition(*(reference_kf->GetPose()));
   OptimizePose(inliers);
   for (const auto & match: matches) {
-    if (inliers.find(match.to_idx) != inliers.end()) {
+    if (inliers.find(match.first) != inliers.end()) {
       /*map_points_[match.to_idx]->AddObservation(this, match.to_idx);
       map_points_[match.to_idx]->Refresh();*/
     } else
-      map_points_.erase(match.to_idx);
+      map_points_.erase(match.second);
   }
   //covisibility_connections_.Update();
   //reference_kf->covisibility_connections_.Update();
@@ -387,17 +394,17 @@ void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
                                                                              camera_->FxInv(),
                                                                              keyframe->camera_->FxInv(),
                                                                              &pose_);
-  features::matching::iterators::BowIterator
-      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
-  features::matching::OrientationValidator
-      orientation_validator(features_.keypoints, keyframe->features_.keypoints);
-
-  matcher.MatchWithIterator(features_.descriptors,
-                            keyframe->features_.descriptors,
-                            out_matches,
-                            &bow_iterator,
-                            {&validator, &lm_validator},
-                            nullptr);//&orientation_validator
+//  features::matching::iterators::BowIterator
+//      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
+//  features::matching::OrientationValidator
+//      orientation_validator(features_.keypoints, keyframe->features_.keypoints);
+//
+//  matcher.MatchWithIterator(features_.descriptors,
+//                            keyframe->features_.descriptors,
+//                            out_matches,
+//                            &bow_iterator,
+//                            {&validator, &lm_validator},
+//                            nullptr);//&orientation_validator
 
 }
 

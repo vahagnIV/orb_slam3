@@ -28,7 +28,7 @@ class SNNMatcher {
   void MatchWithIteratorV2(IteratorTo to_begin,
                            IteratorTo to_end,
                            IFeatureExtractor *feature_extractor,
-                           std::unordered_map<typename IteratorTo::id_type,
+                           std::unordered_map<typename IteratorTo::value_type::id_type,
                                               typename IteratorTo::value_type::iterator::value_type::id_type> & out_matches) {
     typedef typename IteratorTo::value_type::iterator::value_type::id_type FromIdType;
     typedef typename IteratorTo::value_type::id_type ToIdType;

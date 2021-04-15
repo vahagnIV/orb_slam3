@@ -10,7 +10,14 @@ namespace matching {
 namespace iterators {
 
 BowToIterator & BowToIterator::operator++() {
-  if (it_ != end_it_ && ++it_ != end_it_) {
+  ++it_;
+  // If require_exists is true, we should skip all
+  // ids that do not correspond to a map point.
+  while (map_points_to_ && it_ != end_it_
+      && (to_map_points_exist_ ^ (map_points_to_->find(*it_) != map_points_to_->end())))
+    ++it_;
+
+  if (it_ != end_it_) {
     pointee_.SetId(*it_);
     return *this;
   }
