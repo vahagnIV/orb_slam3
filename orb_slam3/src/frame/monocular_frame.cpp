@@ -12,7 +12,7 @@
 #include <frame/monocular_frame.h>
 #include <constants.h>
 #include <features/matching/second_nearest_neighbor_matcher.h>
-#include <features/matching/iterators/bow_iterator.h>
+#include <features/matching/iterators/bow_to_iterator.h>
 #include <features/matching/validators/bow_match_tracking_validator.h>
 #include <features/matching/validators/bow_match_local_mapping_validator.h>
 #include <features/matching/orientation_validator.h>
@@ -24,6 +24,9 @@
 #include <logging.h>
 
 #include <features/matching/iterators/area_to_iterator.h>
+#include <features/matching/iterators/projection_search_iterator.h>
+
+#include <debug/debug_utils.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -32,7 +35,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image, TimePoint timestamp,
                                const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
                                const std::string & filename,
                                const std::shared_ptr<camera::MonocularCamera> & camera,
-                               features::BowVocabulary * vocabulary) :
+                               features::BowVocabulary *vocabulary) :
     FrameBase(timestamp, feature_extractor, filename),
     features_(camera->Width(), camera->Height()),
     camera_(camera) {
@@ -52,8 +55,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     logging::RetrieveLogger()->warn("Frames {} and {} have different types. Could not link", Id(), other->Id());
     return false;
   }
-  MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::matching::SNNMatcher matcher(0.9);
+  MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
+  features::matching::SNNMatcher matcher(0.9,50);
   features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
   features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
   std::unordered_map<std::size_t, std::size_t> matches2;
@@ -62,7 +65,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
                                    features::matching::OrientationValidator
                                        (features_.keypoints, from_frame->features_.keypoints).Validate(matches2));
 
-  logging::RetrieveLogger()->debug("SNN Matcher returned {} matches between frames {} and {}.",
+  logging::RetrieveLogger()->debug("Link: SNN Matcher returned {} matches between frames {} and {}.",
                                    matches2.size(),
                                    Id(),
                                    other->Id());
@@ -86,14 +89,14 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
                                  pose_,
                                  points,
                                  inliers)) {
-    logging::RetrieveLogger()->info("Could not reconstruct points between frames {} and {}. Skipping...",
+    logging::RetrieveLogger()->info("LINKING: Could not reconstruct points between frames {} and {}. Skipping...",
                                     Id(),
                                     other->Id());
     return false;
   }
 
-  // TODO: pass to asolute R,T
-
+  cv::imshow("linked matches:",
+             debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
 
   for (size_t i = 0; i < matches.size(); ++i) {
     if (!inliers[i])
@@ -129,8 +132,6 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
 #endif
 
   optimization::BundleAdjustment({this, from_frame}, 20);
-  pose_.T.normalize();
-  // TODO: normalize T
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -151,15 +152,15 @@ void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
 }
 
 void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) {
-  g2o::VertexSE3Expmap * pose = CreatePoseVertex();
+  g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   for (auto & mp_id:map_points_) {
     if (nullptr == mp_id.second)
       continue;
-    map::MapPoint * map_point = mp_id.second;
+    map::MapPoint *map_point = mp_id.second;
     size_t feature_id = mp_id.first;
 
-    g2o::VertexPointXYZ * mp;
+    g2o::VertexPointXYZ *mp;
     if (nullptr == optimizer.vertex(map_point->Id())) {
       mp = map_point->CreateVertex();
       optimizer.addVertex(mp);
@@ -171,7 +172,7 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_
     edge->setVertex(1, mp);
     edge->setId(next_id++);
     edge->setInformation(Eigen::Matrix2d::Identity());
-    g2o::RobustKernelHuber * rk = new g2o::RobustKernelHuber;
+    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
     edge->setRobustKernel(rk);
     rk->setDelta(std::sqrt(5.99));
     HomogenousPoint measurement;
@@ -215,24 +216,31 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::matching::SNNMatcher bow_matcher(0.7);
-  std::vector<features::Match> matches;
-  features::matching::iterators::BowIterator
-      bow_it(features_.bow_container.feature_vector, reference_kf->features_.bow_container.feature_vector);
+  features::matching::SNNMatcher bow_matcher(0.7,50);
+  std::unordered_map<std::size_t, std::size_t> matches;
+  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
+                                                            &features_.bow_container.feature_vector,
+                                                            &reference_kf->features_.bow_container.feature_vector,
+                                                            &features_,
+                                                            &reference_kf->features_,
+                                                            &map_points_,
+                                                            &reference_kf->map_points_,
+                                                            false,
+                                                            true);
 
-  features::matching::validators::BowMatchTrackingValidator
-      validator(map_points_, reference_kf->map_points_, false, true);
-  features::matching::OrientationValidator
-      orientation_validator(features_.keypoints, reference_kf->features_.keypoints);
+  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
+                                                          &features_.bow_container.feature_vector,
+                                                          &reference_kf->features_.bow_container.feature_vector,
+                                                          &features_,
+                                                          &reference_kf->features_,
+                                                          &map_points_,
+                                                          &reference_kf->map_points_,
+                                                          false,
+                                                          true);
 
-  bow_matcher.MatchWithIterator(features_.descriptors,
-                                reference_kf->features_.descriptors,
-                                matches,
-                                &bow_it,
-                                {&validator},
-                                nullptr); // Orientation validator
+  bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
 
-  logging::RetrieveLogger()->info("SNNMatcher returned {} matches for frames {} and {}",
+  logging::RetrieveLogger()->info("TRACKING: SNNMatcher returned {} matches for frames {} and {}",
                                   matches.size(),
                                   Id(),
                                   reference_keyframe->Id());
@@ -240,19 +248,39 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     return false;
   }
 
+  cv::imshow("TrackWithReferenceKeyframe",
+             debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
+  cv::waitKey(1);
+
   for (const auto & match: matches) {
-    auto map_point = reference_kf->map_points_[match.from_idx];
-    map_points_[match.to_idx] = map_point;
+    auto map_point = reference_kf->map_points_[match.second];
+    map_points_[match.first] = map_point;
   }
   std::unordered_set<std::size_t> inliers;
   SetPosition(*(reference_kf->GetPose()));
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TWRKF: Tracking optimization. Pose before optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
   OptimizePose(inliers);
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TWRKF: Tracking optimization. Pose after optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
   for (const auto & match: matches) {
-    if (inliers.find(match.to_idx) != inliers.end()) {
+    if (inliers.find(match.first) != inliers.end()) {
       /*map_points_[match.to_idx]->AddObservation(this, match.to_idx);
       map_points_[match.to_idx]->Refresh();*/
     } else
-      map_points_.erase(match.to_idx);
+      map_points_.erase(match.second);
   }
   //covisibility_connections_.Update();
   //reference_kf->covisibility_connections_.Update();
@@ -272,15 +300,15 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
 
   std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
 
-  auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  auto *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
-  g2o::VertexSE3Expmap * pose = CreatePoseVertex();
+  g2o::VertexSE3Expmap *pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   size_t last_id = Identifiable::GetNextId();
   std::unordered_map<optimization::edges::SE3ProjectXYZPoseOnly *, std::size_t> edges;
 
   for (auto mp_id:map_points_) {
-    map::MapPoint * map_point = mp_id.second;
+    map::MapPoint *map_point = mp_id.second;
     size_t feature_id = mp_id.first;
     if (nullptr == map_point)
       continue;
@@ -297,14 +325,7 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     optimizer.addEdge(edge);
     edges[edge] = feature_id;
   }
-#ifndef NDEBUG
-  {
-    std::stringstream ss("Tracking optimization. Pose before optimization");
-    ss.seekg(ss.end);
-    ss << pose_.R << std::endl << pose_.T << std::endl;
-    logging::RetrieveLogger()->debug(ss.str());
-  }
-#endif
+
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
@@ -332,15 +353,6 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
   }
 
   SetPosition(pose->estimate());
-#ifndef NDEBUG
-  {
-    std::stringstream ss("Pose after optimization");
-    ss.seekg(ss.end);
-    ss << pose_.R << std::endl << pose_.T << std::endl;
-    logging::RetrieveLogger()->debug(ss.str());
-  }
-#endif
-
 }
 
 precision_t MonocularFrame::ComputeMedianDepth() const {
@@ -355,17 +367,17 @@ precision_t MonocularFrame::ComputeMedianDepth() const {
   return depths[(depths.size() - 1) / 2];
 }
 
-bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame * other) const {
+bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame *other) const {
   TVector3D baseline = pose_.T - other->pose_.T;
   precision_t baseline_length = baseline.norm();
   precision_t frame_median_depth = other->ComputeMedianDepth();
   return baseline_length / frame_median_depth < 1e-2;
 }
 
-void MonocularFrame::ComputeMatches(const MonocularFrame * keyframe,
+void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
                                     vector<features::Match> & out_matches,
                                     geometry::Pose & out_pose) const {
-  const precision_t th = 0.6f;
+  /*const precision_t th = 0.6f;
   features::matching::SNNMatcher matcher(th);
   features::matching::validators::BowMatchTrackingValidator
       validator(map_points_, keyframe->map_points_, false, false);
@@ -379,18 +391,18 @@ void MonocularFrame::ComputeMatches(const MonocularFrame * keyframe,
                                                                              keyframe->feature_extractor_.get(),
                                                                              camera_->FxInv(),
                                                                              keyframe->camera_->FxInv(),
-                                                                             &pose_);
-  features::matching::iterators::BowIterator
-      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
-  features::matching::OrientationValidator
-      orientation_validator(features_.keypoints, keyframe->features_.keypoints);
-
-  matcher.MatchWithIterator(features_.descriptors,
-                            keyframe->features_.descriptors,
-                            out_matches,
-                            &bow_iterator,
-                            {&validator, &lm_validator},
-                            nullptr);//&orientation_validator
+                                                                             &pose_);*/
+//  features::matching::iterators::BowIterator
+//      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
+//  features::matching::OrientationValidator
+//      orientation_validator(features_.keypoints, keyframe->features_.keypoints);
+//
+//  matcher.MatchWithIterator(features_.descriptors,
+//                            keyframe->features_.descriptors,
+//                            out_matches,
+//                            &bow_iterator,
+//                            {&validator, &lm_validator},
+//                            nullptr);//&orientation_validator
 
 }
 
@@ -403,7 +415,7 @@ void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map
 
 void MonocularFrame::FindNewMapPoints() {
   std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
-  for (frame::FrameBase * frame : neighbour_keyframes) {
+  for (frame::FrameBase *frame : neighbour_keyframes) {
     if (frame->Type() != Type())
       continue;
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
@@ -453,7 +465,7 @@ void MonocularFrame::FindNewMapPoints() {
 
   std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
 
-  g2o::OptimizationAlgorithmLevenberg * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
   std::unordered_set<map::MapPoint *> map_points;
   this->ListAllMapPoints(neighbour_keyframes, map_points);
@@ -505,8 +517,8 @@ void MonocularFrame::FindNewMapPoints() {
     auto edge = dynamic_cast<optimization::edges::SE3ProjectXYZPose *>(edge_base);
     auto map_point_pose = dynamic_cast<g2o::VertexPointXYZ *>(edge->vertex(1));
     auto frame_pose = dynamic_cast<g2o::VertexSE3Expmap *>(edge->vertex(0));
-    map::MapPoint * mp = mp_map[map_point_pose->id()];
-    FrameBase * frame_base = frame_map[frame_pose->id()];
+    map::MapPoint *mp = mp_map[map_point_pose->id()];
+    FrameBase *frame_base = frame_map[frame_pose->id()];
     if (nullptr == frame_base || nullptr == mp)
       continue;
     if (edge->chi2() > 5.991 || !edge->IsDepthPositive()) {
@@ -537,43 +549,85 @@ bool MonocularFrame::TrackLocalMap() {
 
   std::unordered_set<map::MapPoint *> current_frame_map_points;
   std::unordered_set<FrameBase *> local_frames;
-  FrameBase * max_covisible_frame;
+  FrameBase *max_covisible_frame;
   if (nullptr == (max_covisible_frame = this->ListLocalKeyFrames(current_frame_map_points, local_frames))) {
     return false;
   }
 
   std::unordered_set<map::MapPoint *> local_map_points;
   FrameBase::ListAllMapPoints(local_frames, local_map_points);
-  TPoint3D local_pose = -pose_.R.transpose() * pose_.T;
-  for (auto & mp: local_map_points) {
-    if (current_frame_map_points.find(mp) != current_frame_map_points.end())
-      continue;
 
-    HomogenousPoint map_point_in_local_cf = pose_.R * mp->GetPosition() + pose_.T;
-    precision_t distance = map_point_in_local_cf.norm();
-    precision_t z_inv = 1. / map_point_in_local_cf.z();
-    map_point_in_local_cf *= z_inv;
-    camera_->GetDistortionModel()->DistortPoint(map_point_in_local_cf, map_point_in_local_cf);
+  logging::RetrieveLogger()->debug("TLM: local_frame: {}, local_map_point: {}, current_map_points: {}",
+                                   local_frames.size(),
+                                   local_map_points.size(),
+                                   current_frame_map_points.size());
 
-//    if (!camera_->IsInFrustum(map_point_in_local_cf)) {
-//      continue;
-//    }
+  features::matching::iterators::ProjectionSearchIterator begin
+      (local_map_points.begin(),
+       local_map_points.end(),
+       &current_frame_map_points,
+       &features_,
+       &pose_,
+       camera_.get(),
+       feature_extractor_.get());
+  features::matching::iterators::ProjectionSearchIterator end
+      (local_map_points.end(),
+       local_map_points.end(),
+       &current_frame_map_points,
+       &features_,
+       &pose_,
+       camera_.get(),
+       feature_extractor_.get());
 
-    if (distance < mp->GetMinInvarianceDistance() || distance > mp->GetMaxInvarianceDistance()) {
-      continue;
-    }
-
-    TVector3D relative_frame_map_point = mp->GetPosition() - local_pose;
-    precision_t scalar_cos = relative_frame_map_point.dot(mp->GetNormal()) / relative_frame_map_point.norm();
-    if (scalar_cos < 0.5)
-      continue;
-
-    //unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
-
-//    precision_t
-    //TODO: mp->IncreaseVisible();
+  features::matching::SNNMatcher matcher(0.7,100);
+  std::unordered_map<map::MapPoint *, std::size_t> matches;
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+  logging::RetrieveLogger()->info("TLM: Found {} map points", matches.size());
+  for (auto match: matches) {
+    map_points_[match.second] = match.first;
   }
-  return false;
+
+  std::unordered_set<std::size_t> inliers;
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TLM: Tracking optimization. Pose before optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
+  OptimizePose(inliers);
+
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TLM: Tracking optimization. Pose after optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
+
+  for (decltype(map_points_)::iterator mp_it = map_points_.begin(); mp_it != map_points_.end();) {
+    if (inliers.find(mp_it->first) == inliers.end())
+      map_points_.erase(mp_it++);
+    else {
+      mp_it->second->AddObservation(this, mp_it->first);
+      mp_it->second->Refresh(feature_extractor_);
+      ++mp_it;
+    }
+  }
+
+  cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
+  for (auto mp: map_points_) {
+    cv::circle(current_image,
+               cv::Point(features_.keypoints[mp.first].X(), features_.keypoints[mp.first].Y()),
+               3,
+               cv::Scalar(0, 255, 0));
+  }
+  cv::imshow("current", current_image);
+  cv::waitKey(1);
+
+  return true;
 }
 
 }

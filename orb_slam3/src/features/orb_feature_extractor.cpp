@@ -60,8 +60,8 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
 
 unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const {
   assert(d1.cols() == d2.cols());
-  const auto * pa = reinterpret_cast<const uint32_t * const>(d1.data());
-  const auto * pb = reinterpret_cast<const uint32_t * const>(d2.data());
+  const auto *pa = reinterpret_cast<const uint32_t *const>(d1.data());
+  const auto *pb = reinterpret_cast<const uint32_t *const>(d2.data());
 
   unsigned dist = 0;
 
@@ -817,20 +817,17 @@ void ORBFeatureExtractor::ComputeInvariantDistances(const TPoint3D & point,
                                                     precision_t & out_max_distance,
                                                     precision_t & out_min_distance) const {
   precision_t distance = point.norm();
-  precision_t level_scale_factor = distance * scale_factors_[key_point.level];
+  precision_t level_scale_factor = scale_factors_[key_point.level];
   out_max_distance = distance * level_scale_factor;
   out_min_distance = out_max_distance / scale_factors_.back();
 }
 
 unsigned int ORBFeatureExtractor::PredictScale(precision_t distance, precision_t max_distance) const {
-  precision_t ratio;
+  precision_t ratio = max_distance / distance;
 
-  ratio = max_distance / distance;
+  unsigned scale = std::max(0., std::ceil(std::log(ratio) / log_scale_factor_));
 
-  int scale = std::ceil(std::log(ratio) / log_scale_factor_);
-  if (scale < 0)
-    scale = 0;
-  else if (scale >= scale_factors_.size())
+  if (scale >= scale_factors_.size())
     scale = scale_factors_.size() - 1;
 
   return scale;

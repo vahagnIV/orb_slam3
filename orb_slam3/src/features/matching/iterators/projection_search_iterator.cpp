@@ -14,22 +14,20 @@ ProjectionSearchIterator::ProjectionSearchIterator(std::unordered_set<map::MapPo
                                                    const std::unordered_set<map::MapPoint *> *to_map_points,
                                                    const Features *from_features,
                                                    const geometry::Pose *pose,
-                                                   const camera::MonocularCamera *camera)
+                                                   const camera::MonocularCamera *camera,
+                                                   const IFeatureExtractor *feature_extractor)
     : it_(begin),
       end_(end),
       to_map_points_(to_map_points),
       pose_(pose),
-      camera_(camera), pointee_(from_features) {
+      camera_(camera), pointee_(from_features, feature_extractor) {
   AdvanceIteratorUntilGood();
 
 }
 
 ProjectionSearchIterator & ProjectionSearchIterator::operator++() {
-  if (it_ == end_)
-    return *this;
+  ++it_;
   AdvanceIteratorUntilGood();
-  if (it_ == end_)
-    return *this;
   return *this;
 }
 

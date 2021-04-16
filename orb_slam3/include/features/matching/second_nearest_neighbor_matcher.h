@@ -12,7 +12,6 @@
 #include <features/features.h>
 #include <features/ifeature_extractor.h>
 #include <features/match.h>
-#include <features/matching/iterators/idescriptor_iterator.h>
 #include <features/matching/validators/iindex_validator.h>
 #include <features/matching/validators/imatch_result_validator.h>
 
@@ -22,20 +21,18 @@ namespace matching {
 
 class SNNMatcher {
  public:
-  SNNMatcher(const precision_t nearest_neighbour_ratio);
+  SNNMatcher(const precision_t nearest_neighbour_ratio, const unsigned threshold): nearest_neighbour_ratio_(nearest_neighbour_ratio), THRESHOLD_(threshold){}
 
   template<typename IteratorTo>
   void MatchWithIteratorV2(IteratorTo to_begin,
                            IteratorTo to_end,
                            IFeatureExtractor *feature_extractor,
-                           std::unordered_map<typename IteratorTo::id_type,
+                           std::unordered_map<typename IteratorTo::value_type::id_type,
                                               typename IteratorTo::value_type::iterator::value_type::id_type> & out_matches) {
     typedef typename IteratorTo::value_type::iterator::value_type::id_type FromIdType;
     typedef typename IteratorTo::value_type::id_type ToIdType;
     std::unordered_map<FromIdType, ToIdType> matches_from_to;
     std::unordered_map<FromIdType, unsigned> best_distances_from;
-
-
 
     typename IteratorTo::value_type::iterator best_it;
 
@@ -53,7 +50,7 @@ class SNNMatcher {
         } else if (distance < second_best_distance)
           second_best_distance = distance;
       }
-      if (best_distance < TH_LOW && best_distance < nearest_neighbour_ratio_ * second_best_distance) {
+      if (best_distance < THRESHOLD_ && best_distance < nearest_neighbour_ratio_ * second_best_distance) {
         typename decltype(best_distances_from)::iterator best_dist_it = best_distances_from.find(best_it->GetId());
         if (best_dist_it != best_distances_from.end() && best_dist_it->second > best_distance) {
           out_matches.erase(matches_from_to[best_it->GetId()]);
@@ -65,28 +62,9 @@ class SNNMatcher {
     }
   }
 
-  template<typename IteratorType>
-  void MatchWithIterator(const DescriptorSet & descriptors_to,
-                         const DescriptorSet & descriptors_from,
-                         std::vector<features::Match> & out_matches,
-                         iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                         std::vector<validators::IIndexValidator *> validators = {},
-                         validators::IMatchResultValidator *result_validator = nullptr);
-
- private:
-  template<typename IteratorType>
-  size_t MatchWithIteratorInternal(const DescriptorSet & descriptors_to,
-                                   const DescriptorSet & descriptors_from,
-                                   std::vector<int> & out_matches,
-                                   iterators::IJointDescriptorIterator<IteratorType> *iterator,
-                                   std::vector<validators::IIndexValidator *> validators,
-                                   validators::IMatchResultValidator *result_validator);
- public:
-  static const unsigned TH_LOW;
-  static const int TH_HIGH;
-
  private:
   const precision_t nearest_neighbour_ratio_;
+  const unsigned THRESHOLD_;
 };
 
 }
