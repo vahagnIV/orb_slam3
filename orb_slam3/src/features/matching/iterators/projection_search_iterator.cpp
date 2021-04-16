@@ -27,8 +27,7 @@ ProjectionSearchIterator::ProjectionSearchIterator(std::unordered_set<map::MapPo
 
 ProjectionSearchIterator & ProjectionSearchIterator::operator++() {
   ++it_;
-  if (it_ != end_)
-    AdvanceIteratorUntilGood();
+  AdvanceIteratorUntilGood();
   return *this;
 }
 
