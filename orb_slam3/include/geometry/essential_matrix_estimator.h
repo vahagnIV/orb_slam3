@@ -19,18 +19,18 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
   precision_t ComputeEssentialReprojectionError(const TMatrix33 & E,
                                                 const std::vector<HomogenousPoint> & points_to,
                                                 const std::vector<HomogenousPoint> & points_from,
-                                                const std::vector<features::Match> & matches,
+                                                const std::unordered_map<std::size_t, std::size_t> & matches,
                                                 std::vector<bool> & out_inliers) const;
 
   static void FindEssentialMatrix(const std::vector<HomogenousPoint> & points_to,
                                   const std::vector<HomogenousPoint> & points_from,
-                                  const std::vector<features::Match> & matches,
+                                  const std::unordered_map<std::size_t, std::size_t> & matches,
                                   const std::vector<size_t> & good_match_random_idx,
                                   TMatrix33 & out_essential);
 
   void FindBestEssentialMatrix(const std::vector<HomogenousPoint> & points_to,
                                const std::vector<HomogenousPoint> & points_from,
-                               const std::vector<features::Match> & matches,
+                               const std::unordered_map<std::size_t, std::size_t> & matches,
                                const std::vector<std::vector<size_t>> & good_match_random_idx,
                                TMatrix33 & out_essential,
                                std::vector<bool> & out_inliers,
@@ -39,7 +39,7 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
   bool FindPose(const TMatrix33 & essential,
                 const std::vector<HomogenousPoint> & points_to,
                 const std::vector<HomogenousPoint> & points_from,
-                const std::vector<features::Match> & matches,
+                const std::unordered_map<std::size_t, std::size_t> & matches,
                 std::vector<bool> & out_inliers,
                 std::vector<TPoint3D> & out_triangulated,
                 Pose & out_pose) const;

@@ -26,7 +26,7 @@ void FrameBase::InitializeIdentity() noexcept {
   pose_.T.setZero();
 }
 
-g2o::VertexSE3Expmap *FrameBase::CreatePoseVertex() const {
+g2o::VertexSE3Expmap * FrameBase::CreatePoseVertex() const {
   auto pose_vertex = new g2o::VertexSE3Expmap();
   pose_vertex->setEstimate(geometry::Quaternion(pose_.R, pose_.T));
   pose_vertex->setId(Id());
@@ -39,7 +39,7 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
                             std::unordered_set<FrameBase *> & out_fixed_frames) {
   for (auto mp: map_points) {
     for (auto obs: mp->Observations()) {
-      if (frames.find(obs.first) == frames.end() || obs.first->IsInitial())
+      if (obs.first->IsInitial() || frames.find(obs.first) == frames.end())
         out_fixed_frames.insert(obs.first);
     }
   }
@@ -67,6 +67,7 @@ FrameBase::~FrameBase() {
       delete mp_id.second;
   }*/
 }
+
 FrameBase *FrameBase::ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
                                          std::unordered_set<frame::FrameBase *> & out_frames) const {
   out_map_points.clear();

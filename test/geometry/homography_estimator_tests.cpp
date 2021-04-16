@@ -38,10 +38,10 @@ TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
                  points_from.end(),
                  points_to.begin(),
                  [&](const TPoint3D & pt) { return R * pt + T; });
-  std::vector<features::Match> matches;
+  std::unordered_map<std::size_t, std::size_t> matches;
   std::vector<size_t> random_subset_idx(8);
   for (size_t i = 0; i < points_from.size(); ++i) {
-    matches.emplace_back(i, i);
+    matches.emplace(i, i);
     random_subset_idx[i] = i;
   }
   TMatrix33 H;

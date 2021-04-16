@@ -25,7 +25,7 @@ class TransfromationEstimatorBase {
   CheckPose(const Pose & solution,
             const std::vector<HomogenousPoint> & points_to,
             const std::vector<HomogenousPoint> & points_from,
-            const std::vector<features::Match> & matches,
+            const std::unordered_map<std::size_t, std::size_t> & matches,
             std::vector<bool> & out_inliers,
             precision_t & out_parallax,
             std::vector<TPoint3D> & out_triangulated) const;
@@ -41,7 +41,7 @@ class TransfromationEstimatorBase {
   bool FindCorrectPose(const std::vector<Pose> & candidate_solutions,
                        const std::vector<HomogenousPoint> & points_to,
                        const std::vector<HomogenousPoint> & points_from,
-                       const std::vector<features::Match> & matches,
+                       const std::unordered_map<std::size_t, std::size_t> & matches,
                        std::vector<bool> & out_inliers,
                        std::vector<TPoint3D> & out_triangulated,
                        Pose & out_pose) const;

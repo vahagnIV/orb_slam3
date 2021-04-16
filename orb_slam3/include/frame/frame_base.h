@@ -37,11 +37,13 @@ class FrameBase : public Identifiable {
       : Identifiable(), timestamp_(timestamp), covisibility_connections_(), feature_extractor_(feature_extractor),
         initial_(false), filename_(filename) {
   }
+
   /*!
    * Getter function
    * @return the value of timestamp associated with the frame instance
    */
   inline TimePoint TimeStamp() const noexcept { return timestamp_; }
+
   inline const std::string & Filename() const { return filename_; }
 
   /*!
@@ -54,10 +56,11 @@ class FrameBase : public Identifiable {
    * @param pose 4x4 joint transformation matrix
    */
   void SetPosition(const geometry::Pose & pose) noexcept;
+
   /*!
- * Set the position of the frame in the world coordinate system
- * @param pose g2o Quaternion
- */
+   * Set the position of the frame in the world coordinate system
+   * @param pose g2o Quaternion
+   */
   void SetPosition(const geometry::Quaternion & pose) noexcept;
 
   /*!

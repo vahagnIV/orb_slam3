@@ -24,7 +24,7 @@ class TwoViewReconstructor {
 
   bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
                    const std::vector<HomogenousPoint> & points_from,
-                   const std::vector<features::Match> & matches,
+                   const std::unordered_map<std::size_t, std::size_t> & matches,
                    Pose & out_pose,
                    std::vector<TPoint3D> & out_points,
                    std::vector<bool> & out_outliers) const;
@@ -39,6 +39,7 @@ class TwoViewReconstructor {
                              size_t max,
                              size_t count,
                              size_t subset_count,
+                             const std::unordered_map<std::size_t, std::size_t> & matches,
                              std::vector<std::vector<size_t>> & out_result) const;
 
  private:
