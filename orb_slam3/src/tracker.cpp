@@ -25,7 +25,7 @@ Tracker::~Tracker() {
 TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame) {
 
   assert(OK == state_);
-  if (!frame->TrackWithReferenceKeyFrame(last_frame_)) {
+  if (!frame->TrackWithReferenceKeyFrame(last_key_frame_)) {
     state_ = RECENTLY_LOST;
     return TrackingResult::TRACKING_FAILED;
   }
@@ -48,7 +48,7 @@ TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> 
     current_map->SetInitialKeyFrame(last_frame_);
 
     state_ = OK;
-    last_frame_ = frame;
+    last_frame_ = last_key_frame_ = frame;
     NotifyObservers(frame, MessageType::Initial);
   }
   return TrackingResult::OK;

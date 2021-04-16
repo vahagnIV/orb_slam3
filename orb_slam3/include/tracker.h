@@ -68,6 +68,7 @@ class Tracker {
  private:
   map::Atlas *atlas_;
   std::shared_ptr<frame::FrameBase> last_frame_;
+  std::shared_ptr<frame::FrameBase> last_key_frame_;
   std::shared_ptr<frame::FrameBase> initial_frame_;
   State state_;
   std::unordered_set<PositionObserver *> observers_;
