@@ -37,9 +37,9 @@ class Tracker {
   TrackingResult Track(const std::shared_ptr<FrameBase> & frame);
 
   /*!
- * Add an observer
- * @param observer
- */
+   * Add an observer
+   * @param observer
+   */
   void AddObserver(PositionObserver *observer) {
     observers_.insert(observer);
   }
@@ -57,13 +57,17 @@ class Tracker {
    */
   virtual ~Tracker();
 
+  /// Helper member functions
  private:
+  TrackingResult TrackInOkState(const std::shared_ptr<FrameBase> & frame);
+  TrackingResult TrackInFirstImageState(const std::shared_ptr<FrameBase> & frame);
+  TrackingResult TrackInNotInitializedState(const std::shared_ptr<FrameBase> & frame);
   void NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type);
 
+  /// Helper member variables
  private:
   map::Atlas *atlas_;
   std::shared_ptr<frame::FrameBase> last_frame_;
-  std::shared_ptr<frame::FrameBase> last_key_frame_;
   std::shared_ptr<frame::FrameBase> initial_frame_;
   State state_;
   std::unordered_set<PositionObserver *> observers_;
