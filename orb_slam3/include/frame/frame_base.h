@@ -114,6 +114,12 @@ class FrameBase : public Identifiable {
   geometry::Pose *GetPose() { return &pose_; }
 
   /*!
+   * Getter for pose
+   * @return pose
+   */
+  geometry::Pose *GetInversePose() { return &inverse_pose_; }
+
+  /*!
    * Append necessary vertices and edges for BA
    * @param optimizer the g2o::Sparseoptimizer
    * @param next_id The nonce that is used to assign ids to the g2o objects
@@ -134,7 +140,7 @@ class FrameBase : public Identifiable {
    */
   virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
 
-  virtual bool TrackLocalMap() = 0;
+  virtual bool TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) = 0;
 
   /*!
    * Non-const getter for the covisibility graph

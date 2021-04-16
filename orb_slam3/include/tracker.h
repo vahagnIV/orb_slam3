@@ -67,6 +67,8 @@ class Tracker {
   /// Helper member variables
  private:
   map::Atlas *atlas_;
+  TVector3D velocity_;
+  TMatrix33 angular_velocity_;
   std::shared_ptr<frame::FrameBase> last_frame_;
   std::shared_ptr<frame::FrameBase> last_key_frame_;
   std::shared_ptr<frame::FrameBase> initial_frame_;

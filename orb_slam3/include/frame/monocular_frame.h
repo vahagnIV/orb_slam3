@@ -34,7 +34,7 @@ class MonocularFrame : public FrameBase {
                                std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
   TVector3D GetNormal(const TVector3D & point) const override;
   bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) override;
-  bool TrackLocalMap() override;
+  bool TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) override;
   const features::Features & GetFeatures() const { return features_; }
 
 
