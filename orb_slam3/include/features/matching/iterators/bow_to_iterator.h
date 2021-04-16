@@ -9,7 +9,7 @@
 #include <DBoW2/FeatureVector.h>
 
 // === orb_slam3 ====
-#include "bow_iterator_pointee.h"
+#include "bow_to_pointee.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -18,7 +18,7 @@ namespace iterators {
 
 class BowToIterator {
  public:
-  typedef BowIteratorPointee value_type;
+  typedef BowToPointee value_type;
   BowToIterator(
       DBoW2::FeatureVector::iterator begin,
       DBoW2::FeatureVector *feature_vector_to,
@@ -46,10 +46,10 @@ class BowToIterator {
     AdvanceUntilSameNode();
   }
 
-  const BowIteratorPointee & operator*() const { return pointee_; }
-  BowIteratorPointee & operator*() { return pointee_; }
-  const BowIteratorPointee *operator->() const { return &pointee_; }
-  BowIteratorPointee *operator->() { return &pointee_; }
+  const BowToPointee & operator*() const { return pointee_; }
+  BowToPointee & operator*() { return pointee_; }
+  const BowToPointee *operator->() const { return &pointee_; }
+  BowToPointee *operator->() { return &pointee_; }
   BowToIterator & operator++();
 
   friend bool operator==(const BowToIterator & a, const BowToIterator & b) {
@@ -73,7 +73,7 @@ class BowToIterator {
 
   DBoW2::FeatureVector *feature_vector_to_;
   DBoW2::FeatureVector *feature_vector_from_;
-  BowIteratorPointee pointee_;
+  BowToPointee pointee_;
 
   std::map<std::size_t, map::MapPoint *> *map_points_to_;
   bool to_map_points_exist_;

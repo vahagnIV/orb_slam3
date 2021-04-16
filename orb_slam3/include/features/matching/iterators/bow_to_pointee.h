@@ -2,8 +2,8 @@
 // Created by vahagn on 14/04/2021.
 //
 
-#ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_BOW_ITERATOR_POINTEE_H_
-#define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_BOW_ITERATOR_POINTEE_H_
+#ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_BOW_TO_POINTEE_H_
+#define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_BOW_TO_POINTEE_H_
 #include <cstddef>
 
 // === orb_slam3 ===
@@ -16,16 +16,16 @@ namespace features {
 namespace matching {
 namespace iterators {
 
-class BowIteratorPointee {
+class BowToPointee {
  public:
   typedef size_t id_type;
   typedef VectorFromIterator<unsigned> iterator;
-  BowIteratorPointee(DBoW2::FeatureVector *feature_vector_to,
-                     DBoW2::FeatureVector *feature_vector_from,
-                     features::Features *features_to,
-                     features::Features *features_from,
-                     std::map<std::size_t, map::MapPoint *> *map_points = nullptr,
-                     bool map_points_exist = false) :
+  BowToPointee(DBoW2::FeatureVector *feature_vector_to,
+               DBoW2::FeatureVector *feature_vector_from,
+               features::Features *features_to,
+               features::Features *features_from,
+               std::map<std::size_t, map::MapPoint *> *map_points = nullptr,
+               bool map_points_exist = false) :
       features_to_(features_to),
       features_from_(features_from),
       feature_vector_to_(feature_vector_to),
@@ -72,4 +72,4 @@ class BowIteratorPointee {
 }
 }
 
-#endif //ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_BOW_ITERATOR_POINTEE_H_
+#endif //ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_ITERATORS_BOW_TO_POINTEE_H_

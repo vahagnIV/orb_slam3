@@ -41,7 +41,7 @@ add_library(orbslam SHARED
         src/features/matching/iterators/bow_iterator.cpp
         src/features/matching/iterators/projection_search_iterator.cpp
         src/features/matching/iterators/projection_search_pointee.cpp
-        src/features/matching/iterators/bow_iterator_pointee.cpp
+        src/features/matching/iterators/bow_to_pointee.cpp
         src/features/matching/iterators/bow_to_iterator.cpp
         src/features/matching/validators/bow_match_tracking_validator.cpp
         src/features/matching/orientation_validator.cpp
@@ -107,7 +107,7 @@ add_library(orbslam SHARED
         include/features/matching/iterators/area_iterator.h
         include/features/matching/iterators/bow_iterator.h
         include/features/matching/iterators/bow_to_iterator.h
-        include/features/matching/iterators/bow_iterator_pointee.h
+        include/features/matching/iterators/bow_to_pointee.h
         include/features/matching/validators/iindex_validator.h
         include/features/matching/validators/bow_match_tracking_validator.h
         include/features/matching/validators/imatch_result_validator.h
