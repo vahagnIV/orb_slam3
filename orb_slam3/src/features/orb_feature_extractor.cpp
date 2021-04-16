@@ -817,7 +817,7 @@ void ORBFeatureExtractor::ComputeInvariantDistances(const TPoint3D & point,
                                                     precision_t & out_max_distance,
                                                     precision_t & out_min_distance) const {
   precision_t distance = point.norm();
-  precision_t level_scale_factor = distance * scale_factors_[key_point.level];
+  precision_t level_scale_factor = scale_factors_[key_point.level];
   out_max_distance = distance * level_scale_factor;
   out_min_distance = out_max_distance / scale_factors_.back();
 }

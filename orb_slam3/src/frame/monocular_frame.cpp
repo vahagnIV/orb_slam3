@@ -65,7 +65,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
                                    features::matching::OrientationValidator
                                        (features_.keypoints, from_frame->features_.keypoints).Validate(matches2));
 
-  logging::RetrieveLogger()->debug("SNN Matcher returned {} matches between frames {} and {}.",
+  logging::RetrieveLogger()->debug("Link: SNN Matcher returned {} matches between frames {} and {}.",
                                    matches2.size(),
                                    Id(),
                                    other->Id());
@@ -89,7 +89,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
                                  pose_,
                                  points,
                                  inliers)) {
-    logging::RetrieveLogger()->info("Could not reconstruct points between frames {} and {}. Skipping...",
+    logging::RetrieveLogger()->info("LINKING: Could not reconstruct points between frames {} and {}. Skipping...",
                                     Id(),
                                     other->Id());
     return false;
@@ -132,8 +132,6 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
 #endif
 
   optimization::BundleAdjustment({this, from_frame}, 20);
-  pose_.T.normalize();
-  // TODO: normalize T
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -219,7 +217,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   ComputeBow();
 
   features::matching::SNNMatcher bow_matcher(0.7);
-  std::unordered_map<std::size_t , std::size_t> matches;
+  std::unordered_map<std::size_t, std::size_t> matches;
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
                                                             &features_.bow_container.feature_vector,
                                                             &reference_kf->features_.bow_container.feature_vector,
@@ -242,7 +240,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
 
   bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
 
-  logging::RetrieveLogger()->info("SNNMatcher returned {} matches for frames {} and {}",
+  logging::RetrieveLogger()->info("TRACKING: SNNMatcher returned {} matches for frames {} and {}",
                                   matches.size(),
                                   Id(),
                                   reference_keyframe->Id());
@@ -250,9 +248,9 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     return false;
   }
 
-//  cv::imshow("TrackWithReferenceKeyframe",
-//             debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
-//  cv::waitKey();
+  cv::imshow("TrackWithReferenceKeyframe",
+             debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
+  cv::waitKey(1);
 
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_[match.second];
@@ -260,7 +258,23 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   }
   std::unordered_set<std::size_t> inliers;
   SetPosition(*(reference_kf->GetPose()));
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TWRKF: Tracking optimization. Pose before optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
   OptimizePose(inliers);
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TWRKF: Tracking optimization. Pose after optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
   for (const auto & match: matches) {
     if (inliers.find(match.first) != inliers.end()) {
       /*map_points_[match.to_idx]->AddObservation(this, match.to_idx);
@@ -311,14 +325,7 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     optimizer.addEdge(edge);
     edges[edge] = feature_id;
   }
-#ifndef NDEBUG
-  {
-    std::stringstream ss("Tracking optimization. Pose before optimization");
-    ss.seekg(ss.end);
-    ss << pose_.R << std::endl << pose_.T << std::endl;
-    logging::RetrieveLogger()->debug(ss.str());
-  }
-#endif
+
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
@@ -346,15 +353,6 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
   }
 
   SetPosition(pose->estimate());
-#ifndef NDEBUG
-  {
-    std::stringstream ss("Pose after optimization");
-    ss.seekg(ss.end);
-    ss << pose_.R << std::endl << pose_.T << std::endl;
-    logging::RetrieveLogger()->debug(ss.str());
-  }
-#endif
-
 }
 
 precision_t MonocularFrame::ComputeMedianDepth() const {
@@ -579,36 +577,52 @@ bool MonocularFrame::TrackLocalMap() {
   features::matching::SNNMatcher matcher(0.7);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+  logging::RetrieveLogger()->info("TLM: Found {} map points", matches.size());
+  for (auto match: matches) {
+    map_points_[match.second] = match.first;
+  }
 
-  /*for (auto & mp: local_map_points) {
-    if (current_frame_map_points.find(mp) != current_frame_map_points.end())
-      continue;
+  std::unordered_set<std::size_t> inliers;
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TLM: Tracking optimization. Pose before optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
+  OptimizePose(inliers);
 
-    HomogenousPoint map_point_in_local_cf = pose_.R * mp->GetPosition() + pose_.T;
-    precision_t distance = map_point_in_local_cf.norm();
-    precision_t z_inv = 1. / map_point_in_local_cf.z();
-    map_point_in_local_cf *= z_inv;
-    camera_->GetDistortionModel()->DistortPoint(map_point_in_local_cf, map_point_in_local_cf);
+#ifndef NDEBUG
+  {
+    std::stringstream ss;
+    ss << "TLM: Tracking optimization. Pose after optimization\n";
+    ss << pose_.R << std::endl << pose_.T << std::endl;
+    logging::RetrieveLogger()->debug(ss.str());
+  }
+#endif
 
-//    if (!camera_->IsInFrustum(map_point_in_local_cf)) {
-//      continue;
-//    }
-
-    if (distance < mp->GetMinInvarianceDistance() || distance > mp->GetMaxInvarianceDistance()) {
-      continue;
+  for (decltype(map_points_)::iterator mp_it = map_points_.begin(); mp_it != map_points_.end();) {
+    if (inliers.find(mp_it->first) == inliers.end())
+      map_points_.erase(mp_it++);
+    else {
+      mp_it->second->AddObservation(this, mp_it->first);
+      mp_it->second->Refresh(feature_extractor_);
+      ++mp_it;
     }
+  }
 
-    TVector3D relative_frame_map_point = mp->GetPosition() - local_pose;
-    precision_t scalar_cos = relative_frame_map_point.dot(mp->GetNormal()) / relative_frame_map_point.norm();
-    if (scalar_cos < 0.5)
-      continue;
+  cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
+  for (auto mp: map_points_) {
+    cv::circle(current_image,
+               cv::Point(features_.keypoints[mp.first].X(), features_.keypoints[mp.first].Y()),
+               3,
+               cv::Scalar(0, 255, 0));
+  }
+  cv::imshow("current", current_image);
+  cv::waitKey();
 
-    //unsigned predicted_scale = feature_extractor_->PredictScale(distance, mp->GetMaxInvarianceDistance());
-
-//    precision_t
-    //TODO: mp->IncreaseVisible();
-  }*/
-  return false;
+  return true;
 }
 
 }

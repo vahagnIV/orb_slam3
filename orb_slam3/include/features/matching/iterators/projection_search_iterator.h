@@ -34,10 +34,10 @@ class ProjectionSearchIterator {
   ProjectionSearchIterator & operator++() ;
 
   friend bool operator==(const ProjectionSearchIterator & a, const ProjectionSearchIterator & b) {
-    return a.pointee_.GetId() == b.pointee_.GetId();
+    return a.it_ == b.it_;
   }
   friend bool operator!=(const ProjectionSearchIterator & a, const ProjectionSearchIterator & b) {
-    return a.pointee_.GetId() != b.pointee_.GetId();
+    return a.it_ != b.it_;
   }
  private:
   void AdvanceIteratorUntilGood();
