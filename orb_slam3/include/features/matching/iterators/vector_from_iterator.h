@@ -32,6 +32,7 @@ class VectorFromIterator {
                                                       end_(end),
                                                       map_points_(map_points),
                                                       map_point_exists_(map_point_exists) {
+    AdvanceUntilMapPointConditionSatisfied();
   }
   const VectorFromPointee & operator*() const { return pointee_; }
   VectorFromPointee & operator*() { return pointee_; }
@@ -42,17 +43,18 @@ class VectorFromIterator {
 
     // If require_exists is true, we should skip all
     // ids that do not correspond to a map point.
-    while (map_points_ && it_ != end_
-        && (map_point_exists_ ^ (map_points_->find(*it_) != map_points_->end())))
-      ++it_;
-
-    pointee_.SetId(*it_);
+    AdvanceUntilMapPointConditionSatisfied();
     return *this;
   }
   friend bool operator==(const VectorFromIterator & a, const VectorFromIterator & b) { return a.it_ == b.it_; }
   friend bool operator!=(const VectorFromIterator & a, const VectorFromIterator & b) { return a.it_ != b.it_; }
  private:
-
+  void AdvanceUntilMapPointConditionSatisfied() {
+    while (map_points_ && it_ != end_
+        && (map_point_exists_ ^ (map_points_->find(*it_) != map_points_->end())))
+      ++it_;
+    pointee_.SetId(*it_);
+  }
   VectorFromPointee pointee_;
   typename std::vector<IdType>::iterator it_;
   typename std::vector<IdType>::iterator end_;
