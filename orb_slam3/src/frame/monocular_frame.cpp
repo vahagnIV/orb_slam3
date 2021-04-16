@@ -31,7 +31,6 @@
 
 #include <debug/debug_utils.h>
 
-
 namespace orb_slam3 {
 namespace frame {
 
@@ -210,8 +209,9 @@ TVector3D MonocularFrame::GetNormal(const TPoint3D & point) const {
 }
 
 bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) {
-
-  logging::RetrieveLogger()->info("Tracking frame {} with reference keyframe {}", Id(), reference_keyframe->Id());
+  logging::RetrieveLogger()->info("TWRKF: Tracking frame {} with reference keyframe {}",
+                                  Id(),
+                                  reference_keyframe->Id());
   if (reference_keyframe->Type() != Type()) {
     logging::RetrieveLogger()->warn("Frames {} and {} have different types", Id(), reference_keyframe->Id());
     return false;
@@ -222,7 +222,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::matching::SNNMatcher bow_matcher(0.7,50);
+  features::matching::SNNMatcher bow_matcher(0.7, 50);
   std::unordered_map<std::size_t, std::size_t> matches;
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
                                                             &features_.bow_container.feature_vector,
@@ -246,7 +246,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
 
   bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
 
-  logging::RetrieveLogger()->info("TRACKING: SNNMatcher returned {} matches for frames {} and {}",
+  logging::RetrieveLogger()->info("TWRKF: SNNMatcher returned {} matches for frames {} and {}",
                                   matches.size(),
                                   Id(),
                                   reference_keyframe->Id());
@@ -263,7 +263,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     map_points_[match.first] = map_point;
   }
   std::unordered_set<std::size_t> inliers;
-  SetPosition(*(reference_kf->GetPose()));
+//  SetPosition(*(reference_kf->GetPose()));
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -290,7 +290,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   }
   //covisibility_connections_.Update();
   //reference_kf->covisibility_connections_.Update();
-  return inliers.size() > 3u;
+  return map_points_.size() > 10;
 }
 
 void MonocularFrame::ComputeBow() {
@@ -335,7 +335,7 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
   optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4 && !out_inliers.empty(); ++i) {
     pose->setEstimate(pose_.GetQuaternion());
     if (out_inliers.empty())
       return;
@@ -551,12 +551,12 @@ void MonocularFrame::FindNewMapPoints() {
 
 }
 
-bool MonocularFrame::TrackLocalMap() {
+bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) {
 
   std::unordered_set<map::MapPoint *> current_frame_map_points;
   std::unordered_set<FrameBase *> local_frames;
   FrameBase * max_covisible_frame;
-  if (nullptr == (max_covisible_frame = this->ListLocalKeyFrames(current_frame_map_points, local_frames))) {
+  if (nullptr == (max_covisible_frame = last_keyframe->ListLocalKeyFrames(current_frame_map_points, local_frames))) {
     return false;
   }
 
@@ -585,15 +585,19 @@ bool MonocularFrame::TrackLocalMap() {
        camera_.get(),
        feature_extractor_.get());
 
-  features::matching::SNNMatcher matcher(0.7,100);
+  features::matching::SNNMatcher matcher(0.8, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
-  logging::RetrieveLogger()->info("TLM: Found {} map points", matches.size());
+
+  logging::RetrieveLogger()->info("TLM: Found {} maatches", matches.size());
+
   for (auto match: matches) {
     map_points_[match.second] = match.first;
   }
 
   std::unordered_set<std::size_t> inliers;
+  if (map_points_.size() < 30)
+    return false;
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -602,6 +606,7 @@ bool MonocularFrame::TrackLocalMap() {
     logging::RetrieveLogger()->debug(ss.str());
   }
 #endif
+
   OptimizePose(inliers);
 
 #ifndef NDEBUG
@@ -617,10 +622,15 @@ bool MonocularFrame::TrackLocalMap() {
     if (inliers.find(mp_it->first) == inliers.end())
       map_points_.erase(mp_it++);
     else {
-      mp_it->second->AddObservation(this, mp_it->first);
-      mp_it->second->Refresh(feature_extractor_);
+//      mp_it->second->AddObservation(this, mp_it->first);
+//      mp_it->second->Refresh(feature_extractor_);
       ++mp_it;
     }
+  }
+  bool ok = map_points_.size() > 20;
+  if (!ok) {
+    map_points_.clear();
+    return ok;
   }
   cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
   for (auto mp: map_points_) {
@@ -632,7 +642,7 @@ bool MonocularFrame::TrackLocalMap() {
   cv::imshow("current", current_image);
   cv::waitKey(1);
 
-  return true;
+  return ok;
 }
 
 }

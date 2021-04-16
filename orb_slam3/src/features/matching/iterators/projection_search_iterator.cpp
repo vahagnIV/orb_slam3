@@ -32,7 +32,7 @@ ProjectionSearchIterator & ProjectionSearchIterator::operator++() {
 }
 
 void ProjectionSearchIterator::AdvanceIteratorUntilGood() {
-  while (it_ != end_ && (to_map_points_->find(*it_) != to_map_points_->end() || !pointee_.SetMapPointAndCompute(*it_,
+  while (it_ != end_ && (to_map_points_->find(*it_) != to_map_points_->end() && !pointee_.SetMapPointAndCompute(*it_,
                                                                                                                 camera_,
                                                                                                                 pose_)))
     ++it_;

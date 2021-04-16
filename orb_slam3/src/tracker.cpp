@@ -25,16 +25,24 @@ Tracker::~Tracker() {
 TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame) {
 
   assert(OK == state_);
-  assert(frame->IsValid());
-  if (! frame->TrackWithReferenceKeyFrame(last_frame_)) {
-    state_ = RECENTLY_LOST;
-    return TrackingResult::TRACKING_FAILED;
+  geometry::Pose pose;
+  pose.R = angular_velocity_ * last_frame_->GetPose()->R;
+  pose.T = -pose.R * (last_frame_->GetInversePose()->T + velocity_);
+  frame->SetPosition(pose);
+
+  if(!frame->TrackLocalMap(last_key_frame_)){
+    frame->SetPosition(*last_frame_->GetPose());
+    if (!(frame->TrackWithReferenceKeyFrame(last_key_frame_) && frame->TrackLocalMap(last_key_frame_))) {
+      initial_frame_ = last_frame_ = last_key_frame_ = frame;;
+      state_ = FIRST_IMAGE;
+      return TrackingResult::TRACK_LM_FAILED;
+    }
   }
-  if (! frame->TrackLocalMap()) {
-    return TrackingResult::TRACK_LM_FAILED;
-  }
-  map::Map * current_map = atlas_->GetCurrentMap();
-  current_map->AddKeyFrame(frame);
+
+  velocity_ = frame->GetInversePose()->T - last_frame_->GetInversePose()->T;
+  angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
+//  map::Map * current_map = atlas_->GetCurrentMap();
+//  current_map->AddKeyFrame(frame);
   last_frame_ = frame;
   NotifyObservers(last_frame_, MessageType::Update);
   return TrackingResult::OK;
@@ -47,9 +55,12 @@ TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> 
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
     current_map->AddKeyFrame(frame);
+    current_map->AddKeyFrame(last_frame_);
     current_map->SetInitialKeyFrame(last_frame_);
 
     state_ = OK;
+    velocity_ = frame->GetInversePose()->T - last_frame_->GetInversePose()->T;
+    angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
     last_frame_ = last_key_frame_ = frame;
     NotifyObservers(frame, MessageType::Initial);
   }
@@ -78,13 +89,16 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
     case NOT_INITIALIZED: {
       res = TrackInNotInitializedState(frame);
       break;
-    } case FIRST_IMAGE: {
+    }
+    case FIRST_IMAGE: {
       res = TrackInFirstImageState(frame);
       break;
-    } case OK: {
+    }
+    case OK: {
       res = TrackInOkState(frame);
       break;
-    } default: {
+    }
+    default: {
     }
   }
   return res;
