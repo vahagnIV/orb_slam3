@@ -32,8 +32,8 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
         map::Map *current_map = atlas_->GetCurrentMap();
         current_map->AddKeyFrame(frame);
         current_map->SetInitialKeyFrame(last_frame_);
-
         last_frame_ = frame;
+        last_key_frame_ = frame;
         state_ = OK;
         NotifyObservers(frame, MessageType::Initial);
       }

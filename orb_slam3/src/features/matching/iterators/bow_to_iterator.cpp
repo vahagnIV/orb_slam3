@@ -30,9 +30,7 @@ BowToIterator & BowToIterator::operator++() {
 }
 
 void BowToIterator::AdvanceUntilSameNode() {
-  while (true) {
-    if (bow_it_to_ == bow_end_to_ || bow_it_from_ == bow_end_from_)
-      break;
+  while (bow_it_to_ != bow_end_to_ && bow_it_from_ != bow_end_from_) {
 
     if (bow_it_to_->first == bow_it_from_->first) {
       it_ = bow_it_to_->second.begin();

@@ -11,7 +11,7 @@
 #include <typedefs.h>
 #include <features/features.h>
 #include <map/map_point.h>
-#include "vect_from_pointee.h"
+#include "vector_from_pointee.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -53,7 +53,8 @@ class VectorFromIterator {
     while (map_points_ && it_ != end_
         && (map_point_exists_ ^ (map_points_->find(*it_) != map_points_->end())))
       ++it_;
-    pointee_.SetId(*it_);
+    if (it_ != end_)
+      pointee_.SetId(*it_);
   }
   VectorFromPointee pointee_;
   typename std::vector<IdType>::iterator it_;

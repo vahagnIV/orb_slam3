@@ -40,7 +40,7 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint *map_point,
 
   precision_t r = RadiusByViewingCos(track_view_cos_);
   predicted_level_ = feature_extractor_->PredictScale(distance, map_point_->GetMaxInvarianceDistance());
-  window_size_ = r * feature_extractor_->GetScaleFactors()[predicted_level_];
+  window_size_ = r * feature_extractor_->GetScaleFactors()[predicted_level_]  ;
 
   return true;
 }

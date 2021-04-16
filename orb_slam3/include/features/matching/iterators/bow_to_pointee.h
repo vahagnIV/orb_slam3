@@ -20,18 +20,18 @@ class BowToPointee {
  public:
   typedef size_t id_type;
   typedef VectorFromIterator<unsigned> iterator;
-  BowToPointee(DBoW2::FeatureVector *feature_vector_to,
-               DBoW2::FeatureVector *feature_vector_from,
-               features::Features *features_to,
-               features::Features *features_from,
-               std::map<std::size_t, map::MapPoint *> *map_points = nullptr,
+  BowToPointee(DBoW2::FeatureVector * feature_vector_to,
+               DBoW2::FeatureVector * feature_vector_from,
+               features::Features * features_to,
+               features::Features * features_from,
+               std::map<std::size_t, map::MapPoint *> * map_points = nullptr,
                bool map_points_exist = false) :
       features_to_(features_to),
       features_from_(features_from),
       feature_vector_to_(feature_vector_to),
       feature_vector_from_(feature_vector_from),
       from_map_points_(map_points),
-      map_points_exist_(map_points_exist){}
+      map_points_exist_(map_points_exist) {}
 
   id_type GetId() const { return id_; }
   iterator begin() { return begin_iterator_; }
@@ -56,13 +56,13 @@ class BowToPointee {
  private:
   size_t id_;
   size_t bow_id_;
-  features::Features *features_to_;
-  features::Features *features_from_;
-  DBoW2::FeatureVector *feature_vector_to_;
-  DBoW2::FeatureVector *feature_vector_from_;
+  features::Features * features_to_;
+  features::Features * features_from_;
+  DBoW2::FeatureVector * feature_vector_to_;
+  DBoW2::FeatureVector * feature_vector_from_;
   iterator begin_iterator_;
   iterator end_iterator_;
-  std::map<std::size_t, map::MapPoint *> *from_map_points_;
+  std::map<std::size_t, map::MapPoint *> * from_map_points_;
   bool map_points_exist_;
 
 };

@@ -8,7 +8,7 @@
 // === orb_slam3 ===
 #include <typedefs.h>
 #include <features/features.h>
-#include "vect_from_pointee.h"
+#include "vector_from_pointee.h"
 #include "vector_from_iterator.h"
 
 namespace orb_slam3 {

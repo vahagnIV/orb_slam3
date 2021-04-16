@@ -52,6 +52,7 @@ class BowToIterator {
   BowToPointee *operator->() { return &pointee_; }
   BowToIterator & operator++();
 
+  // TODO: implement correctly
   friend bool operator==(const BowToIterator & a, const BowToIterator & b) {
     return a.bow_it_to_ == b.bow_it_to_;
   }

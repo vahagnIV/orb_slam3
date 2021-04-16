@@ -163,7 +163,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   camera->ComputeImageBounds();
 
-  size_t nfeatures = 1000;
+  size_t nfeatures = 1500;
   orb_slam3::precision_t scale_factor = 1.2;
   size_t levels = 8;
   unsigned init_threshold = 20;

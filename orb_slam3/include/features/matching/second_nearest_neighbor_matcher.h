@@ -12,7 +12,6 @@
 #include <features/features.h>
 #include <features/ifeature_extractor.h>
 #include <features/match.h>
-#include <features/matching/iterators/idescriptor_iterator.h>
 #include <features/matching/validators/iindex_validator.h>
 #include <features/matching/validators/imatch_result_validator.h>
 
