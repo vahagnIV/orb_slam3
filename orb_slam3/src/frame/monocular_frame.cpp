@@ -625,7 +625,7 @@ bool MonocularFrame::TrackLocalMap() {
                cv::Scalar(0, 255, 0));
   }
   cv::imshow("current", current_image);
-  cv::waitKey();
+  cv::waitKey(1);
 
   return true;
 }

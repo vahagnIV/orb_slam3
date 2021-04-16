@@ -27,7 +27,6 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint *map_point,
   }
 
   camera->ProjectAndDistort(map_point_in_local_cf, projected_);
-  camera->GetDistortionModel()->DistortPoint(map_point_in_local_cf, map_point_in_local_cf);
   if (!camera->IsInFrustum(projected_)) {
     return false;
   }
