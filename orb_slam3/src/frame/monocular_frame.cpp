@@ -56,7 +56,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     return false;
   }
   MonocularFrame *from_frame = dynamic_cast<MonocularFrame *>(other.get());
-  features::matching::SNNMatcher matcher(0.9);
+  features::matching::SNNMatcher matcher(0.9,50);
   features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
   features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
   std::unordered_map<std::size_t, std::size_t> matches2;
@@ -216,7 +216,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::matching::SNNMatcher bow_matcher(0.7);
+  features::matching::SNNMatcher bow_matcher(0.7,50);
   std::unordered_map<std::size_t, std::size_t> matches;
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
                                                             &features_.bow_container.feature_vector,
@@ -377,7 +377,7 @@ bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame *other) const {
 void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
                                     vector<features::Match> & out_matches,
                                     geometry::Pose & out_pose) const {
-  const precision_t th = 0.6f;
+  /*const precision_t th = 0.6f;
   features::matching::SNNMatcher matcher(th);
   features::matching::validators::BowMatchTrackingValidator
       validator(map_points_, keyframe->map_points_, false, false);
@@ -391,7 +391,7 @@ void MonocularFrame::ComputeMatches(const MonocularFrame *keyframe,
                                                                              keyframe->feature_extractor_.get(),
                                                                              camera_->FxInv(),
                                                                              keyframe->camera_->FxInv(),
-                                                                             &pose_);
+                                                                             &pose_);*/
 //  features::matching::iterators::BowIterator
 //      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
 //  features::matching::OrientationValidator
@@ -557,6 +557,11 @@ bool MonocularFrame::TrackLocalMap() {
   std::unordered_set<map::MapPoint *> local_map_points;
   FrameBase::ListAllMapPoints(local_frames, local_map_points);
 
+  logging::RetrieveLogger()->debug("TLM: local_frame: {}, local_map_point: {}, current_map_points: {}",
+                                   local_frames.size(),
+                                   local_map_points.size(),
+                                   current_frame_map_points.size());
+
   features::matching::iterators::ProjectionSearchIterator begin
       (local_map_points.begin(),
        local_map_points.end(),
@@ -574,7 +579,7 @@ bool MonocularFrame::TrackLocalMap() {
        camera_.get(),
        feature_extractor_.get());
 
-  features::matching::SNNMatcher matcher(0.7);
+  features::matching::SNNMatcher matcher(0.7,100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
   logging::RetrieveLogger()->info("TLM: Found {} map points", matches.size());

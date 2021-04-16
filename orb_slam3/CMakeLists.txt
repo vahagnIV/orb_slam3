@@ -35,7 +35,6 @@ add_library(orbslam SHARED
 
         src/features/orb_feature_extractor.cpp
         src/features/features.cpp
-        src/features/matching/second_nearest_neighbor_matcher.cpp
         src/features/bow_container.cpp
         src/features/matching/iterators/area_iterator.cpp
         src/features/matching/iterators/bow_iterator.cpp

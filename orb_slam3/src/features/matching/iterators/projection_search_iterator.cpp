@@ -30,8 +30,6 @@ ProjectionSearchIterator & ProjectionSearchIterator::operator++() {
   if (it_ == end_)
     return *this;
   AdvanceIteratorUntilGood();
-  if (it_ == end_)
-    return *this;
   return *this;
 }
 
