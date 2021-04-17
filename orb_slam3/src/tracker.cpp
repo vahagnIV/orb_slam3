@@ -30,7 +30,7 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
   pose.T = -pose.R * (last_frame_->GetInversePose()->T + velocity_);
   frame->SetPosition(pose);
 
-  if(!frame->TrackLocalMap(last_key_frame_)){
+  if (!frame->TrackLocalMap(last_key_frame_)) {
     frame->SetPosition(*last_frame_->GetPose());
     if (!(frame->TrackWithReferenceKeyFrame(last_key_frame_) && frame->TrackLocalMap(last_key_frame_))) {
       initial_frame_ = last_frame_ = last_key_frame_ = frame;;
@@ -41,6 +41,7 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
 
   velocity_ = frame->GetInversePose()->T - last_frame_->GetInversePose()->T;
   angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
+  //TODO: Add keyframe if necessary
 //  map::Map * current_map = atlas_->GetCurrentMap();
 //  current_map->AddKeyFrame(frame);
   last_frame_ = frame;
@@ -106,7 +107,7 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
 
 void Tracker::NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type) {
   for (PositionObserver * observer: observers_) {
-    observer->GetUpdateQueue().enqueue(UpdateMessage{type:type, frame:frame});
+    observer->GetUpdateQueue().enqueue(UpdateMessage{.type = type, .frame = frame});
   }
 }
 
