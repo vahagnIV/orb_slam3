@@ -64,6 +64,8 @@ class Tracker {
   TrackingResult TrackInNotInitializedState(const std::shared_ptr<FrameBase> & frame);
   void NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type);
 
+  int kf_counter = 0;
+  bool NeedNewKeyFrame() ;
   /// Helper member variables
  private:
   map::Atlas *atlas_;

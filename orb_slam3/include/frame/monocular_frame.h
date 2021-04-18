@@ -47,9 +47,8 @@ class MonocularFrame : public FrameBase {
  protected:
   void ComputeBow();
   bool BaselineIsNotEnough(const MonocularFrame *other) const;
-  void ComputeMatches(const MonocularFrame *other,
-                      std::vector<features::Match> & out_matches,
-                      geometry::Pose & out_pose) const;
+  void ComputeMatches(MonocularFrame * reference_kf,
+                      std::unordered_map<std::size_t, std::size_t> & out_matches);
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const override;
  protected:
   features::Features features_;

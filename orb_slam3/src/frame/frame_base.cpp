@@ -54,6 +54,8 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
       }
     }
 
+    if(nullptr == earliest)
+      return; // TODO: log
     out_fixed_frames.insert(earliest);
     if (out_fixed_frames.size() < 2)
       out_fixed_frames.insert(second_earilest);

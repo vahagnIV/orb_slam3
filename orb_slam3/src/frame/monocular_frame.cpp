@@ -378,35 +378,33 @@ bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame * other) const {
   return baseline_length / frame_median_depth < 1e-2;
 }
 
-void MonocularFrame::ComputeMatches(const MonocularFrame * keyframe,
-                                    vector<features::Match> & out_matches,
-                                    geometry::Pose & out_pose) const {
-  /*const precision_t th = 0.6f;
-  features::matching::SNNMatcher matcher(th);
-  features::matching::validators::BowMatchTrackingValidator
-      validator(map_points_, keyframe->map_points_, false, false);
+void MonocularFrame::ComputeMatches(MonocularFrame * reference_kf,
+                                    std::unordered_map<std::size_t, std::size_t> & out_matches) {
+  features::matching::SNNMatcher bow_matcher(0.7, 50);
+  std::unordered_map<std::size_t, std::size_t> matches;
+  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
+                                                            &features_.bow_container.feature_vector,
+                                                            &reference_kf->features_.bow_container.feature_vector,
+                                                            &features_,
+                                                            &reference_kf->features_,
+                                                            &map_points_,
+                                                            &reference_kf->map_points_,
+                                                            false,
+                                                            false);
 
-  geometry::utils::ComputeRelativeTransformation(pose_,
-                                                 keyframe->pose_,
-                                                 out_pose);
-  features::matching::validators::BowMatchLocalMappingValidator lm_validator(features_,
-                                                                             keyframe->features_,
-                                                                             feature_extractor_.get(),
-                                                                             keyframe->feature_extractor_.get(),
-                                                                             camera_->FxInv(),
-                                                                             keyframe->camera_->FxInv(),
-                                                                             &pose_);*/
-//  features::matching::iterators::BowIterator
-//      bow_iterator(features_.bow_container.feature_vector, keyframe->features_.bow_container.feature_vector);
-//  features::matching::OrientationValidator
-//      orientation_validator(features_.keypoints, keyframe->features_.keypoints);
-//
-//  matcher.MatchWithIterator(features_.descriptors,
-//                            keyframe->features_.descriptors,
-//                            out_matches,
-//                            &bow_iterator,
-//                            {&validator, &lm_validator},
-//                            nullptr);//&orientation_validator
+  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
+                                                          &features_.bow_container.feature_vector,
+                                                          &reference_kf->features_.bow_container.feature_vector,
+                                                          &features_,
+                                                          &reference_kf->features_,
+                                                          &map_points_,
+                                                          &reference_kf->map_points_,
+                                                          false,
+                                                          false);
+
+  bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
+  features::matching::OrientationValidator
+      (features_.keypoints, reference_kf->features_.keypoints).Validate(matches);
 
 }
 
@@ -418,8 +416,12 @@ void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map
 }
 
 void MonocularFrame::FindNewMapPoints() {
+  CovisibilityGraph().Update();
   std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
+
   for (frame::FrameBase * frame : neighbour_keyframes) {
+
+
     if (frame->Type() != Type())
       continue;
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
@@ -430,9 +432,9 @@ void MonocularFrame::FindNewMapPoints() {
       logging::RetrieveLogger()->debug("Baseline between frames  {} and {} is not enough", Id(), keyframe->Id());
       continue;
     }
-    std::vector<features::Match> matches;
+    std::unordered_map<std::size_t, std::size_t> matches;
     geometry::Pose relative_pose;
-    ComputeMatches(keyframe, matches, relative_pose);
+    ComputeMatches(keyframe, matches);
     logging::RetrieveLogger()->debug("Local mapper found {} new map-points between {} and {}",
                                      matches.size(),
                                      Id(),
@@ -442,20 +444,20 @@ void MonocularFrame::FindNewMapPoints() {
 
       TPoint3D pt;
       geometry::utils::Triangulate(relative_pose,
-                                   keyframe->features_.undistorted_keypoints[match.from_idx],
-                                   features_.undistorted_keypoints[match.to_idx],
+                                   keyframe->features_.undistorted_keypoints[match.second],
+                                   features_.undistorted_keypoints[match.first],
                                    pt);
       precision_t max_invariance_distance, min_invariance_distance;
       feature_extractor_->ComputeInvariantDistances(relative_pose.R * pt + relative_pose.T,
-                                                    features_.keypoints[match.to_idx],
+                                                    features_.keypoints[match.first],
                                                     max_invariance_distance,
                                                     min_invariance_distance);
       auto mp = new map::MapPoint(keyframe->pose_.R.transpose()
                                       * (pt - keyframe->pose_.T), max_invariance_distance, min_invariance_distance);
-      map_points_[match.to_idx] = mp;
-      keyframe->map_points_[match.from_idx] = mp;
-      mp->AddObservation(this, match.to_idx);
-      mp->AddObservation(keyframe, match.from_idx);
+      map_points_[match.first] = mp;
+      keyframe->map_points_[match.second] = mp;
+      mp->AddObservation(this, match.first);
+      mp->AddObservation(keyframe, match.second);
       mp->Refresh(feature_extractor_);
       covisibility_connections_.Update();
       keyframe->covisibility_connections_.Update();
