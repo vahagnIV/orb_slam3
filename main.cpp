@@ -174,9 +174,9 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
-//  auto local_mapper = new orb_slam3::LocalMapper(atlas);
-//  tracker.AddObserver(local_mapper);
-//  local_mapper->Start();
+  auto local_mapper = new orb_slam3::LocalMapper(atlas);
+  tracker.AddObserver(local_mapper);
+  local_mapper->Start();
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);

@@ -42,11 +42,17 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
   velocity_ = frame->GetInversePose()->T - last_frame_->GetInversePose()->T;
   angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
   //TODO: Add keyframe if necessary
-//  map::Map * current_map = atlas_->GetCurrentMap();
-//  current_map->AddKeyFrame(frame);
+  if (NeedNewKeyFrame()) {
+    map::Map * current_map = atlas_->GetCurrentMap();
+    current_map->AddKeyFrame(frame);
+  }
   last_frame_ = frame;
   NotifyObservers(last_frame_, MessageType::Update);
   return TrackingResult::OK;
+}
+
+bool Tracker::NeedNewKeyFrame() {
+  return ++kf_counter % 4 == 0;
 }
 
 TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> & frame) {
