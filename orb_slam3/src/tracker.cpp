@@ -32,8 +32,6 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
   if (!frame->TrackLocalMap(last_key_frame_)) {
     frame->SetPosition(*last_frame_->GetPose());
     if (!(frame->TrackWithReferenceKeyFrame(last_key_frame_) && frame->TrackLocalMap(last_key_frame_))) {
-      initial_frame_ = last_frame_ = last_key_frame_ = frame;;
-      state_ = FIRST_IMAGE;
       return TrackingResult::TRACK_LM_FAILED;
     }
   }
@@ -44,14 +42,17 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
   if (NeedNewKeyFrame()) {
     map::Map * current_map = atlas_->GetCurrentMap();
     current_map->AddKeyFrame(frame);
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = last_frame_});
   }
   last_frame_ = frame;
-  NotifyObservers(last_frame_, MessageType::Update);
   return TrackingResult::OK;
 }
 
 bool Tracker::NeedNewKeyFrame() {
-  return ++kf_counter % 4 == 0;
+  bool need = kf_counter >= 4;
+  if(need)
+    kf_counter = 0;
+  return need;
 }
 
 TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> & frame) {
@@ -67,7 +68,7 @@ TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> 
     velocity_ = frame->GetInversePose()->T - last_frame_->GetInversePose()->T;
     angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
     last_frame_ = last_key_frame_ = frame;
-    NotifyObservers(frame, MessageType::Initial);
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});
   }
   return TrackingResult::OK;
 }
@@ -86,6 +87,12 @@ TrackingResult Tracker::TrackInNotInitializedState(const std::shared_ptr<FrameBa
 }
 
 TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
+  ++kf_counter;
+  std::shared_ptr<frame::FrameBase> new_key_frame;
+  if (GetUpdateQueue().try_dequeue(new_key_frame)) {
+    last_key_frame_ = new_key_frame;
+    atlas_->GetCurrentMap()->AddKeyFrame(last_key_frame_);
+  }
 
   TrackingResult res = TrackingResult::OK;
   switch (state_) {
@@ -105,12 +112,6 @@ TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
     }
   }
   return res;
-}
-
-void Tracker::NotifyObservers(const std::shared_ptr<FrameBase> & frame, MessageType type) {
-  for (PositionObserver * observer: observers_) {
-    observer->GetUpdateQueue().enqueue(UpdateMessage{.type = type, .frame = frame});
-  }
 }
 
 }  // namespace orb_slam3

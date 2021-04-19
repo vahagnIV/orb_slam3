@@ -10,10 +10,12 @@
 
 // === orb-slam3 ===
 #include <position_observer.h>
+#include <observable.h>
 #include <map/atlas.h>
 namespace orb_slam3 {
 
-class LocalMapper : public PositionObserver {
+class LocalMapper : public PositionObserver,
+                    public Observable<std::shared_ptr<frame::FrameBase>> {
  public:
   LocalMapper(map::Atlas * atlas);
   void Start();
@@ -21,12 +23,11 @@ class LocalMapper : public PositionObserver {
   ~LocalMapper();
  private:
   void Run();
-  void CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) const;
+  void CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) ;
   map::Atlas * atlas_;
   std::atomic_bool cancelled_;
   std::thread * thread_;
 };
-
 
 }
 

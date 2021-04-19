@@ -17,9 +17,9 @@ void LocalMapper::Run() {
     UpdateMessage message;
     GetUpdateQueue().wait_dequeue(message);
     switch (message.type) {
-      case MessageType::Final:continue;
-      case MessageType::Initial:continue;
-      case MessageType::Update: {
+      case PositionMessageType::Final:continue;
+      case PositionMessageType::Initial:continue;
+      case PositionMessageType::Update: {
         std::cout << message.frame->Id() << std::endl;
         CreateNewMapPoints(message.frame);
       }
@@ -43,8 +43,9 @@ void LocalMapper::Stop() {
   thread_ = nullptr;
 }
 
-void LocalMapper::CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> &frame) const {
+void LocalMapper::CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> &frame) {
   frame->FindNewMapPoints();
+  NotifyObservers(frame);
 }
 
 }

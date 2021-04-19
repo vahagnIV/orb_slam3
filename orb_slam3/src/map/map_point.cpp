@@ -29,7 +29,7 @@ void MapPoint::EraseObservation(frame::FrameBase *frame) {
     obs.first->CovisibilityGraph().RemoveConnection(frame);
     frame->CovisibilityGraph().RemoveConnection(obs.first);
   }
-  observations_.erase((frame::FrameBase *) frame);
+  observations_.erase(frame);
 }
 
 void MapPoint::Refresh(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor) {
