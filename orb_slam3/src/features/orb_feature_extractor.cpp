@@ -60,8 +60,8 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
 
 unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const {
   assert(d1.cols() == d2.cols());
-  const auto *pa = reinterpret_cast<const uint32_t *const>(d1.data());
-  const auto *pb = reinterpret_cast<const uint32_t *const>(d2.data());
+  const auto * pa = reinterpret_cast<const uint32_t * const>(d1.data());
+  const auto * pb = reinterpret_cast<const uint32_t * const>(d2.data());
 
   unsigned dist = 0;
 
@@ -87,7 +87,7 @@ void ORBFeatureExtractor::AllocatePyramid() {
 
 void ORBFeatureExtractor::computeOrientation(
     const cv::Mat & image, std::vector<features::KeyPoint> & keypoints,
-    const int *umax) {
+    const int * umax) {
   for (std::vector<features::KeyPoint>::iterator keypoint = keypoints.begin(),
            keypointEnd = keypoints.end();
        keypoint != keypointEnd; ++keypoint) {
@@ -97,12 +97,12 @@ void ORBFeatureExtractor::computeOrientation(
 
 void ORBFeatureExtractor::computeOrbDescriptor(const features::KeyPoint & kpt,
                                                const cv::Mat & img,
-                                               const cv::Point *pattern,
-                                               uchar *desc) {
+                                               const cv::Point * pattern,
+                                               uchar * desc) {
   float angle = (float) kpt.angle * factorPI;
   float a = (float) cos(angle), b = (float) sin(angle);
 
-  const uchar *center = &img.at<uchar>(cvRound(kpt.Y()), cvRound(kpt.X()));
+  const uchar * center = &img.at<uchar>(cvRound(kpt.Y()), cvRound(kpt.X()));
   const int step = (int) img.step;
 
 #define GET_VALUE(idx)                                             \
@@ -153,10 +153,10 @@ void ORBFeatureExtractor::computeDescriptors(
 }
 
 void ORBFeatureExtractor::IC_Angle(const cv::Mat & image, features::KeyPoint & pt,
-                                   const int *u_max) {
+                                   const int * u_max) {
   int m_01 = 0, m_10 = 0;
 
-  const uchar *center = &image.at<uchar>(cvRound(pt.Y()), cvRound(pt.X()));
+  const uchar * center = &image.at<uchar>(cvRound(pt.Y()), cvRound(pt.X()));
 
   // Treat the center line differently, v=0
   for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
@@ -448,7 +448,7 @@ void ORBFeatureExtractor::DistributeOctTree(
   for (std::list<ExtractorNode>::iterator lit = lNodes.begin();
        lit != lNodes.end(); lit++) {
     std::vector<cv::KeyPoint> & vNodeKeys = lit->vKeys;
-    cv::KeyPoint *pKP = &vNodeKeys[0];
+    cv::KeyPoint * pKP = &vNodeKeys[0];
     float maxResponse = pKP->response;
 
     for (size_t k = 1; k < vNodeKeys.size(); k++) {
@@ -458,10 +458,8 @@ void ORBFeatureExtractor::DistributeOctTree(
       }
     }
 
-    out_map_points.push_back(features::KeyPoint());
-    out_map_points.back().X() = pKP->pt.x;
-    out_map_points.back().Y() = pKP->pt.y;
-    out_map_points.back().angle = pKP->angle;
+    out_map_points.emplace_back(TPoint2D{pKP->pt.x, pKP->pt.y}, 0, pKP->angle);
+
   }
 }
 
