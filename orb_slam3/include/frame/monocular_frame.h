@@ -17,7 +17,12 @@
 namespace orb_slam3 {
 namespace frame {
 
+namespace test{
+class MonocularFrameTests;
+}
+
 class MonocularFrame : public FrameBase {
+  friend class MonocularFrameTests;
  public:
   MonocularFrame(const TImageGray8U & image,
                  TimePoint timestamp,

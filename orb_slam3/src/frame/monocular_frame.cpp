@@ -246,7 +246,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
                                   matches.size(),
                                   Id(),
                                   reference_keyframe->Id());
-  if (matches.size() < 15) {
+  if (matches.size() < 30) {
     return false;
   }
 
@@ -281,12 +281,16 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     if (inliers.find(match.first) != inliers.end()) {
       /*map_points_[match.to_idx]->AddObservation(this, match.to_idx);
       map_points_[match.to_idx]->Refresh();*/
-    } else
+    } else {
+      auto it = map_points_.find(match.second);
+      if (it != map_points_.end())
+        it->second->EraseObservation(this);
       map_points_.erase(match.second);
+    }
   }
   //covisibility_connections_.Update();
   //reference_kf->covisibility_connections_.Update();
-  return map_points_.size() > 10;
+  return map_points_.size() > 20;
 }
 
 void MonocularFrame::ComputeBow() {
@@ -296,6 +300,7 @@ void MonocularFrame::ComputeBow() {
 void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
   static const precision_t delta_mono = std::sqrt(5.991);
   static const precision_t chi2[4] = {5.991, 5.991, 5.991, 5.991};
+
   g2o::SparseOptimizer optimizer;
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
       linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
@@ -456,10 +461,11 @@ void MonocularFrame::FindNewMapPoints() {
     std::unordered_map<std::size_t, std::size_t> matches;
     geometry::Pose relative_pose;
     ComputeMatches(keyframe, matches);
-    std::stringstream stringstream1;
-    stringstream1 << "/data/tmp/test-match/";
-    stringstream1 << Id() << "-"<< keyframe->Id() << ".jpg";
-    cv::imwrite(stringstream1.str(), debug::DrawMatches(Filename(), keyframe->Filename(), matches, features_, keyframe->features_));
+//    std::stringstream stringstream1;
+//    stringstream1 << "/data/tmp/test-match/";
+//    stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
+//    cv::imwrite(stringstream1.str(),
+//                debug::DrawMatches(Filename(), keyframe->Filename(), matches, features_, keyframe->features_));
 //    cv::imshow("mm", );
 //    cv::waitKey();
     geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
@@ -468,7 +474,10 @@ void MonocularFrame::FindNewMapPoints() {
                                      Id(),
                                      keyframe->Id());
 
+    int counter = 0;
     for (auto & match: matches) {
+      if (++counter >= 100)
+        break;
 
       TPoint3D pt;
       precision_t parallax;
@@ -510,12 +519,19 @@ void MonocularFrame::FindNewMapPoints() {
 
   std::unordered_map<size_t, FrameBase *> frame_map{{Id(), this}};
   std::unordered_map<size_t, map::MapPoint *> mp_map;
-  if(optimizer.vertex(Id())) { std::cerr << "Pizdec" << std::endl; exit(1); }
+  if (optimizer.vertex(Id())) {
+    std::cerr << "Pizdec" << std::endl;
+    exit(1);
+  }
   optimizer.addVertex(this->CreatePoseVertex());
 
   for (auto & frame: neighbour_keyframes) {
     auto vertex = frame->CreatePoseVertex();
     vertex->setFixed(frame->IsInitial());
+    if (optimizer.vertex(frame->Id())) {
+      std::cerr << "Pizdec1" << std::endl;
+      exit(1);
+    }
     optimizer.addVertex(vertex);
     frame_map[frame->Id()] = frame;
   }
@@ -525,7 +541,11 @@ void MonocularFrame::FindNewMapPoints() {
       continue;
     auto vertex = frame->CreatePoseVertex();
     vertex->setFixed(true);
-    optimizer.addVertex(vertex);
+    if (nullptr != optimizer.vertex(frame->Id())) {
+      std::cerr << "Pizdec2" << std::endl;
+//      exit(1);
+    } else
+      optimizer.addVertex(vertex);
   }
 
   size_t last_id = Identifiable::GetNextId();
@@ -611,8 +631,7 @@ void MonocularFrame::FindNewMapPoints() {
     if (!added) {
       delete new_map_point.second.mp;
       new_map_point.second.mp = nullptr;
-    }
-    else
+    } else
       mp->Refresh(feature_extractor_);
   }
 
@@ -642,6 +661,12 @@ void MonocularFrame::FindNewMapPoints() {
     }
   }
 
+  covisibility_connections_.Update();
+  ComputeMedianDepth();
+  for (auto frame: neighbour_keyframes) {
+    frame->CovisibilityGraph().Update();
+    frame->ComputeMedianDepth();
+  }
   std::stringstream ss;
   ss << "LM CreateNewMapPoints: Pose after oprimization: \n";
   ss << pose_.R << std::endl << pose_.T << std::endl;
