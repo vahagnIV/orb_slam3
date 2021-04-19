@@ -45,8 +45,8 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
 
   ASSERT_TRUE(E.determinant() < 1e-6);
 
-  std::vector<bool> inliers;
-  std::vector<TPoint3D> triangulated;
+  std::unordered_set<std::size_t> inliers;
+  std::unordered_map<size_t, TPoint3D> triangulated;
   geometry::Pose pose;
   for (int i = 0; i < points_to.size(); ++i) {
     points_to[i] /= points_to[i][2];

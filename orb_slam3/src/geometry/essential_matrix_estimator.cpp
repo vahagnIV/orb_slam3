@@ -17,8 +17,8 @@ bool EssentialMatrixEstimator::FindPose(const TMatrix33 & essential,
                                         const std::vector<HomogenousPoint> & points_to,
                                         const std::vector<HomogenousPoint> & points_from,
                                         const std::unordered_map<std::size_t, std::size_t> & matches,
-                                        std::vector<bool> & out_inliers,
-                                        std::vector<TPoint3D> & out_triangulated,
+                                        std::unordered_set<std::size_t> & out_inliers,
+                                        std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                         Pose & out_pose) const {
   // Hartley - Zisserman (page 258, 259)
   Eigen::JacobiSVD<TMatrix33> svd(essential, Eigen::ComputeFullV | Eigen::ComputeFullU);
@@ -56,13 +56,11 @@ precision_t EssentialMatrixEstimator::ComputeEssentialReprojectionError(const TM
                                                                         const std::vector<HomogenousPoint> & points_to,
                                                                         const std::vector<HomogenousPoint> & points_from,
                                                                         const std::unordered_map<std::size_t, std::size_t> & matches,
-                                                                        std::vector<bool> & out_inliers) const {
+                                                                        std::unordered_set<std::size_t> & out_inliers) const {
+
   precision_t score = 0;
-  out_inliers.resize(matches.size(), true);
-  std::fill(out_inliers.begin(), out_inliers.end(), true);
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
-  unsigned j = 0;
-  for (I i = matches.begin(); i != matches.end(); ++i, ++j) {
+  for (I i = matches.begin(); i != matches.end(); ++i) {
 
     const HomogenousPoint & point_from = points_from[i->first];
     const HomogenousPoint & point_to = points_to[i->second];
@@ -79,9 +77,9 @@ precision_t EssentialMatrixEstimator::ComputeEssentialReprojectionError(const TM
     const precision_t chi_square2 = err / (to_f[0] * to_f[0] + to_f[1] * to_f[1]) * sigma_squared_inv_;
 
     if (chi_square1 > ESSENTIAL_THRESHOLD || chi_square2 > ESSENTIAL_THRESHOLD) {
-      out_inliers[j] = false;
       continue;
     }
+    out_inliers.insert(i->first);
     score += ESSENTIAL_THRESHOLD_SCORE - chi_square1;
     score += ESSENTIAL_THRESHOLD_SCORE - chi_square2;
   }
@@ -137,12 +135,12 @@ void EssentialMatrixEstimator::FindBestEssentialMatrix(const std::vector<Homogen
                                                        const std::unordered_map<std::size_t, std::size_t> & matches,
                                                        const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                        TMatrix33 & out_essential,
-                                                       std::vector<bool> & out_inliers,
+                                                       std::unordered_set<std::size_t> & out_inliers,
                                                        precision_t & out_score) const {
 
   out_score = 0;
   TMatrix33 tmp_essential;
-  std::vector<bool> tmp_inliers;
+  std::unordered_set<std::size_t> tmp_inliers;
   std::vector<HomogenousPoint> normalized_to, normalized_from;
   TMatrix33 S_to, S_from;
   NormalizePoints(points_to, normalized_to, S_to);
@@ -150,8 +148,7 @@ void EssentialMatrixEstimator::FindBestEssentialMatrix(const std::vector<Homogen
   for (const auto & good_matches_rnd : good_match_random_idx) {
     FindEssentialMatrix(normalized_to, normalized_from, matches, good_matches_rnd, tmp_essential);
     tmp_essential = S_to.transpose() * tmp_essential * S_from;
-    precision_t
-        score = ComputeEssentialReprojectionError(tmp_essential, points_to, points_from, matches, tmp_inliers);
+    precision_t score = ComputeEssentialReprojectionError(tmp_essential, points_to, points_from, matches, tmp_inliers);
     if (score > 0 && out_score < score) {
       out_essential = tmp_essential;
       out_inliers = tmp_inliers;

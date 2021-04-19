@@ -20,7 +20,7 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
                                                 const std::vector<HomogenousPoint> & points_to,
                                                 const std::vector<HomogenousPoint> & points_from,
                                                 const std::unordered_map<std::size_t, std::size_t> & matches,
-                                                std::vector<bool> & out_inliers) const;
+                                                std::unordered_set<std::size_t> & out_inliers) const;
 
   static void FindEssentialMatrix(const std::vector<HomogenousPoint> & points_to,
                                   const std::vector<HomogenousPoint> & points_from,
@@ -33,15 +33,15 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
                                const std::unordered_map<std::size_t, std::size_t> & matches,
                                const std::vector<std::vector<size_t>> & good_match_random_idx,
                                TMatrix33 & out_essential,
-                               std::vector<bool> & out_inliers,
+                               std::unordered_set<std::size_t> & out_inliers,
                                precision_t & out_score) const;
 
   bool FindPose(const TMatrix33 & essential,
                 const std::vector<HomogenousPoint> & points_to,
                 const std::vector<HomogenousPoint> & points_from,
                 const std::unordered_map<std::size_t, std::size_t> & matches,
-                std::vector<bool> & out_inliers,
-                std::vector<TPoint3D> & out_triangulated,
+                std::unordered_set<std::size_t> & out_inliers,
+                std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                 Pose & out_pose) const;
 
   static TMatrix33 FromEuclideanTransformations(const TMatrix33 & R, const TVector3D & T);

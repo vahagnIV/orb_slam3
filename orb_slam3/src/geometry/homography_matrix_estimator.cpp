@@ -19,8 +19,8 @@ bool HomographyMatrixEstimator::FindPose(const TMatrix33 & homography,
                                          const std::vector<HomogenousPoint> & points_to,
                                          const std::vector<HomogenousPoint> & points_from,
                                          const std::unordered_map<std::size_t, std::size_t> & matches,
-                                         std::vector<bool> & out_inliers,
-                                         std::vector<TPoint3D> & out_triangulated,
+                                         std::unordered_set<size_t> & out_inliers,
+                                         std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                          Pose & out_pose) const {
 
   Eigen::JacobiSVD<TMatrix33> svd(homography, Eigen::ComputeFullV | Eigen::ComputeFullU);
@@ -105,14 +105,13 @@ void HomographyMatrixEstimator::FindBestHomographyMatrix(const std::vector<Homog
                                                          const std::unordered_map<std::size_t, std::size_t> & matches,
                                                          const std::vector<std::vector<size_t>> & good_match_random_idx,
                                                          TMatrix33 & out_homography,
-                                                         std::vector<bool> & out_inliers,
+                                                         std::unordered_set<std::size_t> & out_inliers,
                                                          precision_t & out_score) const {
   out_score = std::numeric_limits<precision_t>::min();
   TMatrix33 tmp_homography;
 
   for (const auto & good_matches_rnd : good_match_random_idx) {
-    std::vector<bool> tmp_inliers(matches.size());
-    std::fill(tmp_inliers.begin(), tmp_inliers.end(), true);
+    std::unordered_set<std::size_t> tmp_inliers;
     FindHomographyMatrix(points_to, points_from, matches, good_matches_rnd, tmp_homography);
     precision_t score =
         ComputeHomographyReprojectionError(tmp_homography, points_to, points_from, matches, tmp_inliers, false);
@@ -135,15 +134,16 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
                                                                           const std::vector<HomogenousPoint> & points_to,
                                                                           const std::vector<HomogenousPoint> & points_from,
                                                                           const std::unordered_map<std::size_t, std::size_t> & matches,
-                                                                          std::vector<bool> & out_inliers,
+                                                                          std::unordered_set<std::size_t> & out_inliers,
                                                                           bool inverse) const {
   precision_t score = 0;
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
-  unsigned j = 0;
-  for (I i = matches.begin(); i != matches.end(); ++i, ++j) {
-    if (! out_inliers[j]) {
+  for (I i = matches.begin(); i != matches.end(); ++i) {
+    /*
+    if (out_inliers.end() == out_inliers.find(i->first)) {
       continue;
     }
+    */
     const HomogenousPoint & point_from = (inverse ? points_to[i->first] : points_from[i->second]);
     const HomogenousPoint & point_to = (inverse ? points_from[i->second] : points_to[i->first]);
 
@@ -153,9 +153,8 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
         ((p21[0] - point_to[0]) * (p21[0] - point_to[0]) + (p21[1] - point_to[1]) * (p21[1] - point_to[1]))
             * sigma_squared_inv_;
 
-    if (chi_square2 > HOMOGRAPHY_SCORE) {
-      out_inliers[j] = false;
-    } else {
+    if (! (chi_square2 > HOMOGRAPHY_SCORE)) {
+      out_inliers.insert(i->first);
       score += HOMOGRAPHY_SCORE - chi_square2;
     }
   }

@@ -85,8 +85,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   }
 
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
-  std::vector<TPoint3D> points;
-  std::vector<bool> inliers;
+  std::unordered_map<size_t, TPoint3D> points;
+  std::unordered_set<size_t> inliers;
   if (! reconstructor.Reconstruct(features_.undistorted_keypoints,
                                  from_frame->features_.undistorted_keypoints,
                                  matches,
@@ -104,18 +104,17 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
              debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
 
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
-  unsigned j = 0;
-  for (I i = matches.begin(); i != matches.end(); ++i, ++j) {
-    if (!inliers[j])
+  for (I i = matches.begin(); i != matches.end(); ++i) {
+    if (inliers.find(i->first) == inliers.end())
       continue;
 
     if (from_frame->map_points_.find(i->second) == from_frame->map_points_.end()) {
       precision_t max_invariance_distance, min_invariance_distance;
-      feature_extractor_->ComputeInvariantDistances(pose_.R * points[j] + pose_.T,
+      feature_extractor_->ComputeInvariantDistances(pose_.R * points[i->first] + pose_.T,
                                                     features_.keypoints[i->first],
                                                     max_invariance_distance,
                                                     min_invariance_distance);
-      auto map_point = new map::MapPoint(points[j], max_invariance_distance, min_invariance_distance);
+      auto map_point = new map::MapPoint(points[i->first], max_invariance_distance, min_invariance_distance);
       map_points_[i->first] = map_point;
       from_frame->map_points_[i->second] = map_points_[i->first];
       map_point->AddObservation(this, i->first);
