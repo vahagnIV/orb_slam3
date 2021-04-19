@@ -4,7 +4,7 @@
 #include <identifiable.h>
 namespace orb_slam3 {
 
-size_t Identifiable::next_id_ = 0;
+std::atomic<size_t> Identifiable::next_id_(0);
 
 Identifiable::Identifiable() : id_(++next_id_) {
 

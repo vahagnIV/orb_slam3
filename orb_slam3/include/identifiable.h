@@ -6,6 +6,7 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_IDENTIFIABLE_H_
 // === orb-slam3 ===
 #include <cstddef>
+#include <atomic>
 
 namespace orb_slam3 {
 
@@ -17,7 +18,7 @@ class Identifiable {
  protected:
   const size_t id_;
  private:
-  static size_t next_id_;
+  static std::atomic<size_t> next_id_;
 };
 
 }

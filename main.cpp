@@ -164,7 +164,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   camera->ComputeImageBounds();
 
-  size_t nfeatures = 1500;
+  size_t nfeatures = 1000;
   orb_slam3::precision_t scale_factor = 1.2;
   size_t levels = 8;
   unsigned init_threshold = 20;
@@ -176,6 +176,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   auto local_mapper = new orb_slam3::LocalMapper(atlas);
   tracker.AddObserver(local_mapper);
+  local_mapper->AddObserver(&tracker);
   local_mapper->Start();
 
   for (size_t k = 0; k < filenames.size(); ++k) {
@@ -188,7 +189,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);
-//    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds (20));
 //    cv::imshow("im", image);
 //    cv::waitKey(0);
 //    cv::waitKey();

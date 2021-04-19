@@ -4,33 +4,23 @@
 
 #ifndef ORB_SLAM3_POISITION_OBSERVER_H
 #define ORB_SLAM3_POISITION_OBSERVER_H
-#include <concurrentqueue/blockingconcurrentqueue.h>
+#include <observer.h>
 #include <frame/frame_base.h>
 
 namespace orb_slam3 {
 
-enum MessageType{
+enum PositionMessageType {
   Initial,
   Update,
   Final
 };
 
-struct UpdateMessage{
-  MessageType type;
+struct UpdateMessage {
+  PositionMessageType type;
   std::shared_ptr<frame::FrameBase> frame;
 };
 
-typedef moodycamel::BlockingConcurrentQueue<UpdateMessage> UpdateQueue;
-
-class PositionObserver {
- public:
-  PositionObserver(): queue_(){}
-  UpdateQueue & GetUpdateQueue(){
-    return queue_;
-  }
-
- private:
-  UpdateQueue queue_;
+class PositionObserver : public Observer<UpdateMessage> {
 
 };
 
