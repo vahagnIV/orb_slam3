@@ -555,6 +555,7 @@ void MonocularFrame::FindNewMapPoints() {
       edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
       edge->setInformation(Eigen::Matrix2d::Identity());
       edge->setId(++last_id);
+      // TODO: add delta
       edge->setVertex(0, optimizer.vertex(observation.first->Id()));
       edge->setVertex(1, optimizer.vertex(map_point->Id()));
       optimizer.addEdge(edge);
@@ -604,7 +605,7 @@ void MonocularFrame::FindNewMapPoints() {
     map::MapPoint * mp = new_map_point.second.mp;
     auto edge = new_mp_edges[new_map_point.second.edge_id];
     bool added = false;
-    if (edge->chi2() < 5.991 && edge->IsDepthPositive()) {
+    if (edge->chi2() < 5.991 * camera_->FxInv()* camera_->FxInv() && edge->IsDepthPositive()) {
       added = true;
       map_points_[new_map_point.first] = mp;
       mp->AddObservation(this, new_map_point.first);
@@ -638,8 +639,8 @@ void MonocularFrame::FindNewMapPoints() {
         mp->EraseObservation(frame_base);
       dynamic_cast<MonocularFrame *>(frame_base)->map_points_.erase(mp->Observations()[frame_base]);
       if (mp->Observations().empty()) {
-        mp_map.erase(mp->Id());
-        delete mp;
+//        mp_map.erase(mp->Id());
+//        delete mp;
       }
       continue;
     }

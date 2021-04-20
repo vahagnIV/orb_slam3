@@ -143,8 +143,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImages(data, filenames, timestamps);
-  auto * atlas = new orb_slam3::map::Atlas;
-  orb_slam3::Tracker tracker(atlas);
+
 
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
@@ -174,10 +173,12 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
-  auto local_mapper = new orb_slam3::LocalMapper(atlas);
-  tracker.AddObserver(local_mapper);
-  local_mapper->AddObserver(&tracker);
-  local_mapper->Start();
+  auto * atlas = new orb_slam3::map::Atlas;
+  orb_slam3::Tracker tracker(atlas);
+//  auto local_mapper = new orb_slam3::LocalMapper(atlas);
+//  tracker.AddObserver(local_mapper);
+//  local_mapper->AddObserver(&tracker);
+//  local_mapper->Start();
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
