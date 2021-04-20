@@ -139,11 +139,6 @@ precision_t HomographyMatrixEstimator::ComputeHomographyReprojectionError(const 
   precision_t score = 0;
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
   for (I i = matches.begin(); i != matches.end(); ++i) {
-    /*
-    if (out_inliers.end() == out_inliers.find(i->first)) {
-      continue;
-    }
-    */
     const HomogenousPoint & point_from = (inverse ? points_to[i->first] : points_from[i->second]);
     const HomogenousPoint & point_to = (inverse ? points_from[i->second] : points_to[i->first]);
 

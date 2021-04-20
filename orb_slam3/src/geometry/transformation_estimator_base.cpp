@@ -27,12 +27,6 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
   for (I i = matches.begin(); i != matches.end(); ++i) {
 
-    /*
-    if (out_inliers.find(i->first) == out_inliers.end()) {
-      continue;
-    }
-    */
-
     const HomogenousPoint & point_to = points_to[i->first];
     const HomogenousPoint & point_from = points_from[i->second];
 
