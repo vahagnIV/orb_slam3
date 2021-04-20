@@ -73,27 +73,25 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
 void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
                                                  const size_t max,
                                                  const size_t count,
-                                                 const size_t subset_count,
+                                                 size_t subset_count,
                                                  const std::unordered_map<std::size_t, std::size_t> & matches,
                                                  std::vector<std::vector<size_t>> & out_result) const {
 
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
 
-  assert(subset_count > 0);
   out_result.resize(subset_count);
-  size_t s = subset_count - 1;
-  do {
-    GenerateRandomSubset(min, max, count, out_result[s]);
-    std::sort(out_result[s].begin(), out_result[s].end());
+  while(subset_count--) {
+    GenerateRandomSubset(min, max, count, out_result[subset_count]);
+    std::sort(out_result[subset_count].begin(), out_result[subset_count].end());
     I b = matches.begin();
     size_t prev = 0;
-    for (unsigned j = 0; j < out_result[s].size(); ++j) {
-      assert(matches.size() > out_result[s][j]);
-      b = std::next(b, out_result[s][j] - prev);
-      prev = out_result[s][j];
-      out_result[s][j] = b->first;
+    for (unsigned j = 0; j < out_result[subset_count].size(); ++j) {
+      assert(matches.size() > out_result[subset_count][j]);
+      b = std::next(b, out_result[subset_count][j] - prev);
+      prev = out_result[subset_count][j];
+      out_result[subset_count][j] = b->first;
     }
-  } while (s--);
+  }
 }
 
 void TwoViewReconstructor::GenerateRandomSubset(const size_t min,
