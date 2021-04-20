@@ -14,8 +14,7 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas)
     : atlas_(atlas),
       last_frame_(nullptr),
       initial_frame_(nullptr),
-      state_(NOT_INITIALIZED)
-{
+      state_(NOT_INITIALIZED) {
 }
 
 Tracker::~Tracker() {
