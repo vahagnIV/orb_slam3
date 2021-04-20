@@ -29,7 +29,7 @@ class MapPoint : public Identifiable {
 
   /*!
    * Adds frame to the map points observations and increases the corresponding weights
-   * in the frame covidibility weight counter
+   * in the frame covisibility weight counter
    * @param frame The frame
    * @param feature_id The id of the corresponding keypoint withing the frame
    */

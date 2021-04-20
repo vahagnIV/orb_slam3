@@ -86,7 +86,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   std::unordered_set<size_t> inliers;
-  if (! reconstructor.Reconstruct(features_.undistorted_keypoints,
+  if (!reconstructor.Reconstruct(features_.undistorted_keypoints,
                                  from_frame->features_.undistorted_keypoints,
                                  matches,
                                  pose_,
@@ -314,7 +314,7 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
   size_t last_id = Identifiable::GetNextId();
   std::unordered_map<optimization::edges::SE3ProjectXYZPoseOnly *, std::size_t> edges;
 
-  for (auto mp_id:map_points_) {
+  for (auto & mp_id: map_points_) {
     map::MapPoint * map_point = mp_id.second;
     size_t feature_id = mp_id.first;
     if (nullptr == map_point)
@@ -324,7 +324,9 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     edge->setVertex(0, pose);
     edge->setInformation(Eigen::Matrix<double, 2, 2>::Identity());
     edge->setId(last_id++);
-    edge->setRobustKernel(new g2o::RobustKernelHuber);
+    auto rk = new g2o::RobustKernelHuber;
+    rk->setDelta(delta_mono);
+    edge->setRobustKernel(rk);
     edge->robustKernel()->setDelta(delta_mono);
     HomogenousPoint measurement;
     camera_->UnprojectPoint(features_.keypoints[feature_id].pt, measurement);
@@ -514,7 +516,10 @@ void MonocularFrame::FindNewMapPoints() {
 
   std::unordered_map<size_t, FrameBase *> frame_map{{Id(), this}};
   std::unordered_map<size_t, map::MapPoint *> mp_map;
-  if(optimizer.vertex(Id())) { std::cerr << "Pizdec" << std::endl; exit(1); }
+  if (optimizer.vertex(Id())) {
+    std::cerr << "Pizdec" << std::endl;
+    exit(1);
+  }
   optimizer.addVertex(this->CreatePoseVertex());
 
   for (auto & frame: neighbour_keyframes) {
@@ -615,8 +620,7 @@ void MonocularFrame::FindNewMapPoints() {
     if (!added) {
       delete new_map_point.second.mp;
       new_map_point.second.mp = nullptr;
-    }
-    else
+    } else
       mp->Refresh(feature_extractor_);
   }
 
@@ -628,10 +632,13 @@ void MonocularFrame::FindNewMapPoints() {
     FrameBase * frame_base = frame_map[frame_pose->id()];
     if (nullptr == frame_base || nullptr == mp)
       continue;
-    if (edge->chi2() > 5.991 || !edge->IsDepthPositive()) {
-      mp->EraseObservation(frame_base);
+    auto chi = edge->chi2();
+    if (edge->chi2() > 5.991 * camera_->FxInv() * camera_->FxInv() || !edge->IsDepthPositive()) {
+      if (mp->Observations().find(frame_base) != mp->Observations().end())
+        mp->EraseObservation(frame_base);
       dynamic_cast<MonocularFrame *>(frame_base)->map_points_.erase(mp->Observations()[frame_base]);
       if (mp->Observations().empty()) {
+        mp_map.erase(mp->Id());
         delete mp;
       }
       continue;
@@ -693,7 +700,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
        camera_.get(),
        feature_extractor_.get());
 
-  features::matching::SNNMatcher matcher(0.8, 100);
+  features::matching::SNNMatcher matcher(0.9, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
 
