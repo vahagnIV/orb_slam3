@@ -189,7 +189,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);
-    std::this_thread::sleep_for(std::chrono::milliseconds (500));
+    std::this_thread::sleep_for(std::chrono::milliseconds (20));
 //    cv::imshow("im", image);
 //    cv::waitKey(0);
 //    cv::waitKey();

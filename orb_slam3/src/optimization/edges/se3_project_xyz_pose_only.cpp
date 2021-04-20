@@ -15,6 +15,7 @@ void SE3ProjectXYZPoseOnly::computeError() {
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   g2o::Vector3 pt_camera_system = pose->estimate().map(point_);
   g2o::Vector3::Scalar inv_z = 1. / pt_camera_system[2];
+
   HomogenousPoint projected = pt_camera_system * inv_z, distorted;
 
   camera_->GetDistortionModel()->DistortPoint(projected, distorted);

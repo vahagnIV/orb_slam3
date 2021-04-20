@@ -35,8 +35,8 @@ bool BowMatchLocalMappingValidator::ValidateIindices(size_t idx_to, size_t idx_f
 
   precision_t parallax;
   TPoint3D triangulated;
-  return geometry::utils::TriangulateAndValidate(features_from_->undistorted_keypoints[idx_from],
-                                                 features_to_->undistorted_keypoints[idx_to],
+  return geometry::utils::TriangulateAndValidate(features_from_->undistorted_and_unprojected_keypoints[idx_from],
+                                                 features_to_->undistorted_and_unprojected_keypoints[idx_to],
                                                  *pose_,
                                                  f_inv_to_ * f_inv_to_
                                                      * extractor_to_->GetAcceptableSquareError(features_to_->keypoints[idx_to].level),

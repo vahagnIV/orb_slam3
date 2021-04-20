@@ -31,7 +31,8 @@ class Features {
 
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
-  std::vector<HomogenousPoint> undistorted_keypoints;
+  std::vector<HomogenousPoint> undistorted_and_unprojected_keypoints;
+  std::vector<HomogenousPoint> unprojected_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
   BowContainer bow_container;
 

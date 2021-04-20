@@ -86,8 +86,8 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
   geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   std::unordered_set<size_t> inliers;
-  if (!reconstructor.Reconstruct(features_.undistorted_keypoints,
-                                 from_frame->features_.undistorted_keypoints,
+  if (!reconstructor.Reconstruct(features_.undistorted_and_unprojected_keypoints,
+                                 from_frame->features_.undistorted_and_unprojected_keypoints,
                                  matches,
                                  pose_,
                                  points,
@@ -290,7 +290,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   }
   //covisibility_connections_.Update();
   //reference_kf->covisibility_connections_.Update();
-  return map_points_.size() > 20;
+  return map_points_.size() > 3;
 }
 
 void MonocularFrame::ComputeBow() {
@@ -298,8 +298,10 @@ void MonocularFrame::ComputeBow() {
 }
 
 void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
-  static const precision_t delta_mono = std::sqrt(5.991);
-  static const precision_t chi2[4] = {5.991, 5.991, 5.991, 5.991};
+  static const precision_t delta_mono = std::sqrt(5.991) * camera_->FxInv();
+  static const precision_t chi2[4] =
+      {5.991 * camera_->FxInv() * camera_->FxInv(), 5.991 * camera_->FxInv() * camera_->FxInv(),
+       5.991 * camera_->FxInv() * camera_->FxInv(), 5.991 * camera_->FxInv() * camera_->FxInv()};
 
   g2o::SparseOptimizer optimizer;
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
@@ -326,28 +328,26 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     edge->setId(last_id++);
     auto rk = new g2o::RobustKernelHuber;
     rk->setDelta(delta_mono);
+    edge->setLevel(0);
     edge->setRobustKernel(rk);
-    edge->robustKernel()->setDelta(delta_mono);
     HomogenousPoint measurement;
-    camera_->UnprojectPoint(features_.keypoints[feature_id].pt, measurement);
-    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
+    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(features_.unprojected_keypoints[feature_id].data()));
     optimizer.addEdge(edge);
     edges[edge] = feature_id;
   }
 
-  optimizer.initializeOptimization(0);
 //  optimizer.setVerbose(true);
 
   for (int i = 0; i < 4 && !out_inliers.empty(); ++i) {
     pose->setEstimate(pose_.GetQuaternion());
-    if (out_inliers.empty())
-      return;
+    optimizer.initializeOptimization(0);
     optimizer.optimize(10);
-    for (auto edge: edges) {
 
+    for (auto edge: edges) {
       if (out_inliers.find(edge.second) == out_inliers.end()) { // If  the edge was not included in the optimization
         edge.first->computeError();
       }
+      precision_t chie2 = edge.first->chi2();
       if (edge.first->chi2() < chi2[i]) {
         out_inliers.insert(edge.second);
         edge.first->setLevel(0);
@@ -478,8 +478,8 @@ void MonocularFrame::FindNewMapPoints() {
 
       TPoint3D pt;
       precision_t parallax;
-      if (!geometry::utils::TriangulateAndValidate(features_.undistorted_keypoints[match.first],
-                                                   keyframe->features_.undistorted_keypoints[match.second],
+      if (!geometry::utils::TriangulateAndValidate(features_.undistorted_and_unprojected_keypoints[match.first],
+                                                   keyframe->features_.undistorted_and_unprojected_keypoints[match.second],
                                                    relative_pose,
                                                    camera_->FxInv(),
                                                    keyframe->camera_->FxInv(), 0.9998, parallax, pt))
