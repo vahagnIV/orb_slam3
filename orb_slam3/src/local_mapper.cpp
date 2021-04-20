@@ -6,7 +6,7 @@
 
 namespace orb_slam3 {
 
-LocalMapper::LocalMapper(map::Atlas *atlas) : PositionObserver(), atlas_(atlas), thread_(nullptr) {}
+LocalMapper::LocalMapper(map::Atlas * atlas) : PositionObserver(), atlas_(atlas), thread_(nullptr) {}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -43,9 +43,9 @@ void LocalMapper::Stop() {
   thread_ = nullptr;
 }
 
-void LocalMapper::CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> &frame) {
-  frame->FindNewMapPoints();
-  NotifyObservers(frame);
+void LocalMapper::CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) {
+  if (frame->FindNewMapPoints())
+    NotifyObservers(frame);
 }
 
 }

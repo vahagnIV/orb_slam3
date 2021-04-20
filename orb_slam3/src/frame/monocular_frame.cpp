@@ -178,7 +178,7 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_
     edge->setInformation(Eigen::Matrix2d::Identity());
     g2o::RobustKernelHuber * rk = new g2o::RobustKernelHuber;
     edge->setRobustKernel(rk);
-    rk->setDelta(std::sqrt(5.99));
+    rk->setDelta(std::sqrt(5.99) * camera_->FxInv());
     HomogenousPoint measurement;
     camera_->UnprojectPoint(features_.keypoints[feature_id].pt, measurement);
     TPoint2D m;
@@ -222,35 +222,14 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   reference_kf->ComputeBow();
   ComputeBow();
 
-  features::matching::SNNMatcher bow_matcher(0.7, 50);
   std::unordered_map<std::size_t, std::size_t> matches;
-  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
-                                                            &features_.bow_container.feature_vector,
-                                                            &reference_kf->features_.bow_container.feature_vector,
-                                                            &features_,
-                                                            &reference_kf->features_,
-                                                            &map_points_,
-                                                            &reference_kf->map_points_,
-                                                            false,
-                                                            true);
-
-  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
-                                                          &features_.bow_container.feature_vector,
-                                                          &reference_kf->features_.bow_container.feature_vector,
-                                                          &features_,
-                                                          &reference_kf->features_,
-                                                          &map_points_,
-                                                          &reference_kf->map_points_,
-                                                          false,
-                                                          true);
-
-  bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
+  ComputeMatches(reference_kf, matches, false, true);
 
   logging::RetrieveLogger()->info("TWRKF: SNNMatcher returned {} matches for frames {} and {}",
                                   matches.size(),
                                   Id(),
                                   reference_keyframe->Id());
-  if (matches.size() < 30) {
+  if (matches.size() < 20) {
     return false;
   }
 
@@ -258,12 +237,12 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
              debug::DrawMatches(Filename(), reference_kf->Filename(), matches, features_, reference_kf->GetFeatures()));
   cv::waitKey(1);
 
+  // Add the existing map_point to the frame
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_[match.second];
     map_points_[match.first] = map_point;
   }
   std::unordered_set<std::size_t> inliers;
-//  SetPosition(*(reference_kf->GetPose()));
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -272,7 +251,13 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     logging::RetrieveLogger()->debug(ss.str());
   }
 #endif
+
   OptimizePose(inliers);
+
+  if (inliers.size() <= 4) {
+    logging::RetrieveLogger()->debug("TWRKF: not enough inliers after optimization");
+    return false;
+  }
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -282,28 +267,18 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
   }
 #endif
   for (const auto & match: matches) {
-    if (inliers.find(match.first) != inliers.end()) {
-      /*map_points_[match.to_idx]->AddObservation(this, match.to_idx);
-      map_points_[match.to_idx]->Refresh();*/
-    } else
+    if (inliers.find(match.first) == inliers.end()) {
       map_points_.erase(match.first);
+    }
   }
-  //covisibility_connections_.Update();
-  //reference_kf->covisibility_connections_.Update();
-  return map_points_.size() > 3;
+  return true;
 }
 
 void MonocularFrame::ComputeBow() {
   features_.ComputeBow();
 }
 
-void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
-  static const precision_t delta_mono = std::sqrt(5.991) * camera_->FxInv();
-  static const precision_t chi2[4] =
-      {5.991 * camera_->FxInv() * camera_->FxInv(), 5.991 * camera_->FxInv() * camera_->FxInv(),
-       5.991 * camera_->FxInv() * camera_->FxInv(), 5.991 * camera_->FxInv() * camera_->FxInv()};
-
-  g2o::SparseOptimizer optimizer;
+void MonocularFrame::InitializeOptimizer(g2o::SparseOptimizer & optimizer) {
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
       linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
 
@@ -311,6 +286,16 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
 
   auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
+}
+
+void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
+
+  static const precision_t delta_mono = constants::HUBER_MONO_DELTA * camera_->FxInv();
+  static const precision_t chi2_threshold = constants::MONO_CHI2 * camera_->FxInv() * camera_->FxInv();
+
+  g2o::SparseOptimizer optimizer;
+  InitializeOptimizer(optimizer);
+
   g2o::VertexSE3Expmap * pose = CreatePoseVertex();
   optimizer.addVertex(pose);
   size_t last_id = Identifiable::GetNextId();
@@ -324,8 +309,10 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     out_inliers.insert(feature_id);
     auto edge = new optimization::edges::SE3ProjectXYZPoseOnly(camera_.get(), map_point->GetPosition());
     edge->setVertex(0, pose);
-    edge->setInformation(Eigen::Matrix<double, 2, 2>::Identity());
-    edge->setId(last_id++);
+    precision_t information_coefficient = feature_extractor_->GetAcceptableSquareError(features_.keypoints[feature_id].level);
+    edge->setInformation(
+        Eigen::Matrix<double, 2, 2>::Identity() / information_coefficient);
+    edge->setId(++last_id);
     auto rk = new g2o::RobustKernelHuber;
     rk->setDelta(delta_mono);
     edge->setLevel(0);
@@ -347,8 +334,8 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
       if (out_inliers.find(edge.second) == out_inliers.end()) { // If  the edge was not included in the optimization
         edge.first->computeError();
       }
-      precision_t chie2 = edge.first->chi2();
-      if (edge.first->chi2() < chi2[i]) {
+      precision_t chi2 = edge.first->chi2();
+      if (edge.first->chi2() < chi2_threshold) {
         out_inliers.insert(edge.second);
         edge.first->setLevel(0);
       } else {
@@ -384,7 +371,9 @@ bool MonocularFrame::BaselineIsNotEnough(const MonocularFrame * other) const {
 }
 
 void MonocularFrame::ComputeMatches(MonocularFrame * reference_kf,
-                                    std::unordered_map<std::size_t, std::size_t> & out_matches) {
+                                    std::unordered_map<std::size_t, std::size_t> & out_matches,
+                                    bool self_keypoint_exists,
+                                    bool reference_kf_keypoint_exists) {
   features::matching::SNNMatcher bow_matcher(0.7, 50);
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
                                                             &features_.bow_container.feature_vector,
@@ -393,8 +382,8 @@ void MonocularFrame::ComputeMatches(MonocularFrame * reference_kf,
                                                             &reference_kf->features_,
                                                             &map_points_,
                                                             &reference_kf->map_points_,
-                                                            false,
-                                                            false);
+                                                            self_keypoint_exists,
+                                                            reference_kf_keypoint_exists);
 
   features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
                                                           &features_.bow_container.feature_vector,
@@ -403,8 +392,8 @@ void MonocularFrame::ComputeMatches(MonocularFrame * reference_kf,
                                                           &reference_kf->features_,
                                                           &map_points_,
                                                           &reference_kf->map_points_,
-                                                          false,
-                                                          false);
+                                                          self_keypoint_exists,
+                                                          reference_kf_keypoint_exists);
 
   bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), out_matches);
   features::matching::OrientationValidator
@@ -419,7 +408,7 @@ void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map
   }
 }
 
-void MonocularFrame::FindNewMapPoints() {
+bool MonocularFrame::FindNewMapPoints() {
 //  CovisibilityGraph().Update();
 //  std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
 // TODO: change to covisibility graph
@@ -445,6 +434,8 @@ void MonocularFrame::FindNewMapPoints() {
 
   std::unordered_map<std::size_t, MpContainer> new_map_points;
 
+  static const precision_t delta_mono = std::sqrt(5.991) * camera_->FxInv();
+
   for (frame::FrameBase * frame : neighbour_keyframes) {
 
     if (frame->Type() != Type())
@@ -460,7 +451,7 @@ void MonocularFrame::FindNewMapPoints() {
     }
     std::unordered_map<std::size_t, std::size_t> matches;
     geometry::Pose relative_pose;
-    ComputeMatches(keyframe, matches);
+    ComputeMatches(keyframe, matches, false, false);
 //    std::stringstream stringstream1;
 //    stringstream1 << "/data/tmp/test-match/";
 //    stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
@@ -482,7 +473,10 @@ void MonocularFrame::FindNewMapPoints() {
                                                    keyframe->features_.undistorted_and_unprojected_keypoints[match.second],
                                                    relative_pose,
                                                    camera_->FxInv(),
-                                                   keyframe->camera_->FxInv(), 0.9998, parallax, pt))
+                                                   keyframe->camera_->FxInv(),
+                                                   constants::PARALLAX_THRESHOLD,
+                                                   parallax,
+                                                   pt))
         continue;
       precision_t max_invariance_distance, min_invariance_distance;
 
@@ -496,19 +490,13 @@ void MonocularFrame::FindNewMapPoints() {
         new_map_points[match.first].mp = mp;
       }
       new_map_points[match.first].matches.emplace_back(MapPointMatch{.to_idx = match.first, .from_idx = match.second,
-          0, .frame = keyframe});
+          .edge_id=0, .frame = keyframe});
     }
   }
 
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
   g2o::SparseOptimizer optimizer;
-  std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
-      linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
-
-  std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
-
-  g2o::OptimizationAlgorithmLevenberg * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
-  optimizer.setAlgorithm(solver);
+  InitializeOptimizer(optimizer);
 //  std::unordered_set<map::MapPoint *> all_existing_points;
 //  this->ListAllMapPoints(neighbour_keyframes, all_existing_points);
   std::unordered_set<FrameBase *> fixed_frames;
@@ -555,7 +543,9 @@ void MonocularFrame::FindNewMapPoints() {
       edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
       edge->setInformation(Eigen::Matrix2d::Identity());
       edge->setId(++last_id);
-      // TODO: add delta
+      auto rk = new g2o::RobustKernelHuber;
+      rk->setDelta(delta_mono);
+      edge->setRobustKernel(rk);
       edge->setVertex(0, optimizer.vertex(observation.first->Id()));
       edge->setVertex(1, optimizer.vertex(map_point->Id()));
       optimizer.addEdge(edge);
@@ -577,6 +567,9 @@ void MonocularFrame::FindNewMapPoints() {
     edge->setInformation(Eigen::Matrix2d::Identity());
     new_map_point.second.edge_id = edge->id();
     new_mp_edges[new_map_point.second.edge_id] = edge;
+    auto rk = new g2o::RobustKernelHuber;
+    rk->setDelta(delta_mono);
+    edge->setRobustKernel(rk);
     edge->setVertex(0, optimizer.vertex(Id()));
     edge->setVertex(1, optimizer.vertex(new_map_point.second.mp->Id()));
     optimizer.addEdge(edge);
@@ -591,6 +584,9 @@ void MonocularFrame::FindNewMapPoints() {
       edge->setId(++last_id);
       observation.edge_id = edge->id();
       edge->setInformation(Eigen::Matrix2d::Identity());
+      auto rk = new g2o::RobustKernelHuber;
+      rk->setDelta(delta_mono);
+      edge->setRobustKernel(rk);
       new_mp_edges[observation.edge_id] = edge;
       edge->setVertex(0, optimizer.vertex(observation.frame->Id()));
       edge->setVertex(1, optimizer.vertex(new_map_point.second.mp->Id()));
@@ -600,27 +596,28 @@ void MonocularFrame::FindNewMapPoints() {
 
   optimizer.initializeOptimization();
   optimizer.optimize(5);
-
+  unsigned new_map_point_count = 0;
   for (auto new_map_point: new_map_points) {
     map::MapPoint * mp = new_map_point.second.mp;
     auto edge = new_mp_edges[new_map_point.second.edge_id];
     bool added = false;
-    if (edge->chi2() < 5.991 * camera_->FxInv()* camera_->FxInv() && edge->IsDepthPositive()) {
+    if (edge->chi2() < 5.991 * camera_->FxInv() * camera_->FxInv() && edge->IsDepthPositive()) {
       added = true;
       map_points_[new_map_point.first] = mp;
+      ++new_map_point_count;
       mp->AddObservation(this, new_map_point.first);
     }
     for (auto mp_match: new_map_point.second.matches) {
       auto edge = new_mp_edges[mp_match.edge_id];
-      if (edge->chi2() < 5.991 && edge->IsDepthPositive()) {
+      if (edge->chi2() < 5.991 * camera_->FxInv() * camera_->FxInv() && edge->IsDepthPositive()) {
         added = true;
         mp_match.frame->map_points_[new_map_point.first] = mp;
         mp->AddObservation(mp_match.frame, mp_match.from_idx);
       }
     }
     if (!added) {
-      delete new_map_point.second.mp;
-      new_map_point.second.mp = nullptr;
+//      delete new_map_point.second.mp;
+//      new_map_point.second.mp = nullptr;
     } else
       mp->Refresh(feature_extractor_);
   }
@@ -633,7 +630,6 @@ void MonocularFrame::FindNewMapPoints() {
     FrameBase * frame_base = frame_map[frame_pose->id()];
     if (nullptr == frame_base || nullptr == mp)
       continue;
-    auto chi = edge->chi2();
     if (edge->chi2() > 5.991 * camera_->FxInv() * camera_->FxInv() || !edge->IsDepthPositive()) {
       if (mp->Observations().find(frame_base) != mp->Observations().end())
         mp->EraseObservation(frame_base);
@@ -664,6 +660,8 @@ void MonocularFrame::FindNewMapPoints() {
   ss << "LM CreateNewMapPoints: Pose after oprimization: \n";
   ss << pose_.R << std::endl << pose_.T << std::endl;
   logging::RetrieveLogger()->info(ss.str());
+
+  return new_map_point_count > 5;
 
 }
 
@@ -701,19 +699,42 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
        camera_.get(),
        feature_extractor_.get());
 
-  features::matching::SNNMatcher matcher(0.9, 100);
+  features::matching::SNNMatcher matcher(0.8, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
 
-  logging::RetrieveLogger()->info("TLM: Found {} maatches", matches.size());
+#ifndef NDEBUG
+  {
+//    std::map<MonocularFrame *, std::unordered_map<std::size_t, size_t>> match_map;
+//    for (auto match:matches) {
+//      map::MapPoint * mp = match.first;
+//      size_t current_feature_id = match.second;
+//      for (auto obs: mp->Observations()) {
+//        match_map[dynamic_cast<MonocularFrame *>(obs.first)][current_feature_id] = obs.second;
+//      }
+//    }
+//    for (auto & m: match_map) {
+//      std::stringstream ss;
+//      ss << "tml-" << Id() << "-" << m.first->Id();
+//      cv::imshow(ss.str(),
+//                 debug::DrawMatches(Filename(), m.first->Filename(), m.second, features_, m.first->features_));
+//
+//    }
+//    cv::waitKey();
+  }
+#endif
+
+  logging::RetrieveLogger()->info("TLM: Found {} matches", matches.size());
 
   for (auto match: matches) {
     map_points_[match.second] = match.first;
   }
 
   std::unordered_set<std::size_t> inliers;
-  if (map_points_.size() < 30)
+  if (map_points_.size() < 20) {
+    logging::RetrieveLogger()->debug("TLM: Not enough map point for optimization");
     return false;
+  }
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -724,6 +745,9 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
 #endif
 
   OptimizePose(inliers);
+  if (inliers.size() < 15) {
+    logging::RetrieveLogger()->debug("TLM: Not enough inliers after optimization");
+  }
 
 #ifndef NDEBUG
   {
@@ -743,7 +767,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
       ++mp_it;
     }
   }
-  bool ok = map_points_.size() > 20;
+  bool ok = map_points_.size() >= 15;
   if (!ok) {
     map_points_.clear();
     return ok;

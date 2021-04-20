@@ -47,15 +47,19 @@ class MonocularFrame : public FrameBase {
   void AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) override;
   void CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) override;
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
-  void FindNewMapPoints() override;
+  bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
  protected:
   void ComputeBow();
+  static void InitializeOptimizer(g2o::SparseOptimizer & optimizer) ;
   bool BaselineIsNotEnough(const MonocularFrame *other) const;
   void ComputeMatches(MonocularFrame * reference_kf,
-                      std::unordered_map<std::size_t, std::size_t> & out_matches);
+                      std::unordered_map<std::size_t, std::size_t> & out_matches,
+                      bool self_keypoint_exists,
+                      bool reference_kf_keypoint_exists);
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const override;
  protected:
+
   features::Features features_;
   const std::shared_ptr<camera::MonocularCamera> camera_;
   // Feature id to MapPoint ptr

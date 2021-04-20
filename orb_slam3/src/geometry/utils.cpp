@@ -50,7 +50,7 @@ void ComputeRelativeTransformation(const Pose & pose_to,
  * A[3,.] = pt2.x * P2.row(2) - P2.row(0)
  *
  * The solution of this equation is the column of right singular matrix in SVD that corresponds to the minimal
- * singular value. In Eigen the singular values are sorted sorted. Therefore it is the last column.
+ * singular value. In Eigen the singular values are stored sorted. Therefore it is the last column.
  * */
 bool Triangulate(const Pose & pose,
                  const HomogenousPoint & point_from,

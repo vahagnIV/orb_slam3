@@ -154,7 +154,7 @@ class FrameBase : public Identifiable {
   /*!
    * Creates new map points from the neighbouring frames
    */
-  virtual void FindNewMapPoints() = 0;
+  virtual bool FindNewMapPoints() = 0;
 
   /*!
    * Computes the median of z coordinates of all visible map points
