@@ -5,6 +5,10 @@
 #ifndef ORB_SLAM3_TRANSFROMATION_ESTIMATOR_BASE_H
 #define ORB_SLAM3_TRANSFROMATION_ESTIMATOR_BASE_H
 
+
+// == stl ===
+#include <unordered_set>
+
 // == orb-slam3 ===
 #include <typedefs.h>
 #include <features/match.h>
@@ -25,10 +29,10 @@ class TransfromationEstimatorBase {
   CheckPose(const Pose & solution,
             const std::vector<HomogenousPoint> & points_to,
             const std::vector<HomogenousPoint> & points_from,
-            const std::vector<features::Match> & matches,
-            std::vector<bool> & out_inliers,
+            const std::unordered_map<std::size_t, std::size_t> & matches,
+            std::unordered_set<size_t> & out_inliers,
             precision_t & out_parallax,
-            std::vector<TPoint3D> & out_triangulated) const;
+            std::unordered_map<std::size_t, TPoint3D> & out_triangulated) const;
  protected:
   const precision_t sigma_threshold_;
   const precision_t sigma_threshold__square_;
@@ -41,9 +45,9 @@ class TransfromationEstimatorBase {
   bool FindCorrectPose(const std::vector<Pose> & candidate_solutions,
                        const std::vector<HomogenousPoint> & points_to,
                        const std::vector<HomogenousPoint> & points_from,
-                       const std::vector<features::Match> & matches,
-                       std::vector<bool> & out_inliers,
-                       std::vector<TPoint3D> & out_triangulated,
+                       const std::unordered_map<std::size_t, std::size_t> & matches,
+                       std::unordered_set<size_t> & out_inliers,
+                       std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                        Pose & out_pose) const;
 };
 }

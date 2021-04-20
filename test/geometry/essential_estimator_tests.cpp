@@ -31,10 +31,10 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
                  points_to.begin(),
                  [&](const TPoint3D & pt) { return R * pt + T; });
   geometry::EssentialMatrixEstimator system_under_test(1e-7);
-  std::vector<features::Match> matches;
+  std::unordered_map<std::size_t, std::size_t> matches;
   std::vector<size_t> random_subset_idx(8);
   for (size_t i = 0; i < points_from.size(); ++i) {
-    matches.emplace_back(i, i);
+    matches.emplace(i, i);
     random_subset_idx[i] = i;
   }
   TMatrix33 E;
@@ -45,8 +45,8 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
 
   ASSERT_TRUE(E.determinant() < 1e-6);
 
-  std::vector<bool> inliers;
-  std::vector<TPoint3D> triangulated;
+  std::unordered_set<std::size_t> inliers;
+  std::unordered_map<size_t, TPoint3D> triangulated;
   geometry::Pose pose;
   for (int i = 0; i < points_to.size(); ++i) {
     points_to[i] /= points_to[i][2];

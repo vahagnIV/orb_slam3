@@ -25,14 +25,15 @@ Tracker::~Tracker() {
 TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame) {
 
   assert(OK == state_);
-  if (!frame->TrackWithReferenceKeyFrame(last_key_frame_)) {
+  assert(frame->IsValid());
+  if (! frame->TrackWithReferenceKeyFrame(last_frame_)) {
     state_ = RECENTLY_LOST;
     return TrackingResult::TRACKING_FAILED;
   }
-  if (!frame->TrackLocalMap()) {
+  if (! frame->TrackLocalMap()) {
     return TrackingResult::TRACK_LM_FAILED;
   }
-  map::Map *current_map = atlas_->GetCurrentMap();
+  map::Map * current_map = atlas_->GetCurrentMap();
   current_map->AddKeyFrame(frame);
   last_frame_ = frame;
   NotifyObservers(last_frame_, MessageType::Update);
@@ -42,8 +43,9 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
 TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> & frame) {
 
   assert(FIRST_IMAGE == state_);
+  assert(frame->IsValid());
   if (frame->Link(last_frame_)) {
-    map::Map *current_map = atlas_->GetCurrentMap();
+    map::Map * current_map = atlas_->GetCurrentMap();
     current_map->AddKeyFrame(frame);
     current_map->SetInitialKeyFrame(last_frame_);
 
@@ -57,18 +59,20 @@ TrackingResult Tracker::TrackInFirstImageState(const std::shared_ptr<FrameBase> 
 TrackingResult Tracker::TrackInNotInitializedState(const std::shared_ptr<FrameBase> & frame) {
 
   assert(NOT_INITIALIZED == state_);
-  if (frame->IsValid()) {
-    initial_frame_ = frame;
-    frame->InitializeIdentity();
-    frame->SetInitial(true);
-    state_ = FIRST_IMAGE;
-    last_frame_ = frame;
-  }
+  assert(frame->IsValid());
+  initial_frame_ = frame;
+  frame->InitializeIdentity();
+  frame->SetInitial(true);
+  state_ = FIRST_IMAGE;
+  last_frame_ = frame;
   return TrackingResult::OK;
 }
 
 TrackingResult Tracker::Track(const std::shared_ptr<FrameBase> & frame) {
 
+  if (! frame->IsValid()) {
+    return TrackingResult::INVALID_FRAME;
+  }
   TrackingResult res = TrackingResult::OK;
   switch (state_) {
     case NOT_INITIALIZED: {

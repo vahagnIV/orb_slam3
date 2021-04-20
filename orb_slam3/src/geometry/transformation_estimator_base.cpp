@@ -16,36 +16,33 @@ const precision_t TransfromationEstimatorBase::MIN_MATCH_RATIO = 0.7;
 size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
                                               const std::vector<HomogenousPoint> & points_to,
                                               const std::vector<HomogenousPoint> & points_from,
-                                              const std::vector<features::Match> & matches,
-                                              std::vector<bool> & out_inliers,
+                                              const std::unordered_map<std::size_t, std::size_t> & matches,
+                                              std::unordered_set<size_t> & out_inliers,
                                               precision_t & out_parallax,
-                                              std::vector<TPoint3D> & out_triangulated) const {
+                                              std::unordered_map<std::size_t, TPoint3D> & out_triangulated) const {
   size_t count = 0;
-  out_triangulated.resize(matches.size());
   std::vector<precision_t> triangulated_cos_parallax;
   triangulated_cos_parallax.reserve(matches.size());
 
-  for (size_t i = 0; i < matches.size(); ++i) {
+  typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
+  for (I i = matches.begin(); i != matches.end(); ++i) {
 
-    if (!out_inliers[i])
-      continue;
-
-    const auto & match = matches[i];
-    const HomogenousPoint & point_to = points_to[match.to_idx];
-    const HomogenousPoint & point_from = points_from[match.from_idx];
-
-    TPoint3D & triangulated = out_triangulated[i];
+    const HomogenousPoint & point_to = points_to[i->first];
+    const HomogenousPoint & point_from = points_from[i->second];
 
     precision_t point_cos_parallax;
-    if (!(out_inliers[i] = utils::TriangulateAndValidate(point_from,
-                                                         point_to,
-                                                         solution,
-                                                         4 * sigma_threshold__square_,
-                                                         4 * sigma_threshold__square_,
-                                                         PARALLAX_THRESHOLD,
-                                                         point_cos_parallax,
-                                                         triangulated)))
+    if (! utils::TriangulateAndValidate(point_from,
+          point_to,
+          solution,
+          4 * sigma_threshold__square_,
+          4 * sigma_threshold__square_,
+          PARALLAX_THRESHOLD,
+          point_cos_parallax,
+          out_triangulated[i->first])) {
+
       continue;
+    }
+    out_inliers.insert(i->first);
 
     triangulated_cos_parallax.push_back(point_cos_parallax);
     ++count;
@@ -65,15 +62,15 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
 bool TransfromationEstimatorBase::FindCorrectPose(const std::vector<Pose> & candidate_solutions,
                                                   const std::vector<HomogenousPoint> & points_to,
                                                   const std::vector<HomogenousPoint> & points_from,
-                                                  const std::vector<features::Match> & matches,
-                                                  std::vector<bool> & out_inliers,
-                                                  std::vector<TPoint3D> & out_triangulated,
+                                                  const std::unordered_map<std::size_t, std::size_t> & matches,
+                                                  std::unordered_set<std::size_t> & out_inliers,
+                                                  std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                                   Pose & out_pose) const {
   size_t best_count = 0, second_best_count = 0;
   precision_t best_parallax = -1;
   for (const auto & candidate : candidate_solutions) {
-    std::vector<TPoint3D> tmp_triangulated;
-    std::vector<bool> tmp_inliers(matches.size(), true);
+    std::unordered_map<std::size_t, TPoint3D> tmp_triangulated;
+    std::unordered_set<std::size_t> tmp_inliers;
     precision_t parallax;
     size_t no_good = CheckPose(candidate, points_to, points_from, matches, tmp_inliers, parallax, tmp_triangulated);
     if (best_count < no_good) {

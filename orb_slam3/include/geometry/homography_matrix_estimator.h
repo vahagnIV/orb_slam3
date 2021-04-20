@@ -20,22 +20,22 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
 
   void FindBestHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                 const std::vector<HomogenousPoint> & points_from,
-                                const std::vector<features::Match> & matches,
+                                const std::unordered_map<std::size_t, std::size_t> & matches,
                                 const std::vector<std::vector<size_t>> & good_match_random_idx,
                                 TMatrix33 & out_homography,
-                                std::vector<bool> & out_inliers,
+                                std::unordered_set<std::size_t> & out_inliers,
                                 precision_t & out_score) const;
 
   precision_t ComputeHomographyReprojectionError(const TMatrix33 & h,
                                                  const std::vector<HomogenousPoint> & points_to,
                                                  const std::vector<HomogenousPoint> & points_from,
-                                                 const std::vector<features::Match> & matches,
-                                                 std::vector<bool> & out_inliers,
+                                                 const std::unordered_map<std::size_t, std::size_t> & matches,
+                                                 std::unordered_set<std::size_t> & out_inliers,
                                                  bool inverse) const;
 
   static void FindHomographyMatrix(const std::vector<HomogenousPoint> & points_to,
                                    const std::vector<HomogenousPoint> & points_from,
-                                   const std::vector<features::Match> & matches,
+                                   const std::unordered_map<std::size_t, std::size_t> & matches,
                                    const std::vector<size_t> & good_match_random_idx,
                                    TMatrix33 & out_homography);
 
@@ -54,9 +54,9 @@ class HomographyMatrixEstimator : protected TransfromationEstimatorBase {
   bool FindPose(const TMatrix33 & homography,
                 const std::vector<HomogenousPoint> & points_to,
                 const std::vector<HomogenousPoint> & points_from,
-                const std::vector<features::Match> & matches,
-                std::vector<bool> & out_inliers,
-                std::vector<TPoint3D> & out_triangulated,
+                const std::unordered_map<std::size_t, std::size_t> & matches,
+                std::unordered_set<size_t> & out_inliers,
+                std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                 Pose & out_pose) const;
 
  private:

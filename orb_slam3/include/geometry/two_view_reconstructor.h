@@ -24,10 +24,10 @@ class TwoViewReconstructor {
 
   bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
                    const std::vector<HomogenousPoint> & points_from,
-                   const std::vector<features::Match> & matches,
+                   const std::unordered_map<std::size_t, std::size_t> & matches,
                    Pose & out_pose,
-                   std::vector<TPoint3D> & out_points,
-                   std::vector<bool> & out_outliers) const;
+                   std::unordered_map<std::size_t, TPoint3D> & out_points,
+                   std::unordered_set<std::size_t> & out_inliers) const;
  private:
 
   void GenerateRandomSubset(size_t min,
@@ -39,12 +39,13 @@ class TwoViewReconstructor {
                              size_t max,
                              size_t count,
                              size_t subset_count,
+                             const std::unordered_map<std::size_t, std::size_t> & matches,
                              std::vector<std::vector<size_t>> & out_result) const;
 
  private:
   const unsigned number_of_ransac_iterations_;
   EssentialMatrixEstimator essential_matrix_estimator_;
-  HomographyMatrixEstimator homography_matrix_sstimator_;
+  HomographyMatrixEstimator homography_matrix_estimator_;
 
 
 
