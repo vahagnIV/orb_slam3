@@ -23,11 +23,13 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint *map_point,
 
   if (distance < map_point_->GetMinInvarianceDistance()
       || distance > map_point_->GetMaxInvarianceDistance()) {
+    ++patchar1;
     return false;
   }
 
   camera->ProjectAndDistort(map_point_in_local_cf, projected_);
   if (!camera->IsInFrustum(projected_)) {
+    ++patchar2;
     return false;
   }
 
@@ -35,8 +37,10 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint *map_point,
   TVector3D relative_frame_map_point = map_point_->GetPosition() - local_pose;
 
   track_view_cos_ = relative_frame_map_point.dot(map_point_->GetNormal()) / relative_frame_map_point.norm();
-  if (track_view_cos_ < 0.5)
+  if (track_view_cos_ < 0.5) {
+    ++patchar3;
     return false;
+  }
 
   precision_t r = RadiusByViewingCos(track_view_cos_);
   predicted_level_ = feature_extractor_->PredictScale(distance, map_point_->GetMaxInvarianceDistance());

@@ -63,11 +63,6 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
 }
 
 FrameBase::~FrameBase() {
-  /*for (auto & mp_id: map_points_) {
-    mp_id.second->EraseObservation(this);
-    if (mp_id.second->Observations().empty())
-      delete mp_id.second;
-  }*/
 }
 
 FrameBase *FrameBase::ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,

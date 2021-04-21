@@ -48,6 +48,11 @@ class ProjectionSearchPointee {
   precision_t window_size_;
   unsigned predicted_level_;
 
+  unsigned patchar1 = 0, patchar2 = 0, patchar3 = 0;
+  ~ProjectionSearchPointee(){
+    std::cerr << patchar1 << " " << patchar2 << " " << patchar3;
+  }
+
 };
 
 }

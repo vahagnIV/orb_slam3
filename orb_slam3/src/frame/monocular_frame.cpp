@@ -335,7 +335,6 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
       if (out_inliers.find(edge.second) == out_inliers.end()) { // If  the edge was not included in the optimization
         edge.first->computeError();
       }
-      precision_t chi2 = edge.first->chi2();
       if (edge.first->chi2() < chi2_threshold) {
         out_inliers.insert(edge.second);
         edge.first->setLevel(0);
@@ -410,8 +409,7 @@ void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map
 }
 
 void MonocularFrame::FindNewMapPointMatches(MonocularFrame * keyframe,
-                                            std::unordered_map<std::size_t, std::size_t> & out_matches)  {
-
+                                            std::unordered_map<std::size_t, std::size_t> & out_matches) {
 
   ComputeBow();
   keyframe->ComputeBow();
@@ -439,6 +437,46 @@ void MonocularFrame::FindNewMapPointMatches(MonocularFrame * keyframe,
 
 }
 
+void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
+                                       const std::unordered_map<std::size_t, std::size_t> & matches,
+                                       std::unordered_map<std::size_t, MpContainer> & new_map_points) const {
+  unsigned new_map_point_count = 0;
+  geometry::Pose relative_pose;
+  geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
+  for (auto & match: matches) {
+    TPoint3D pt;
+    precision_t parallax;
+    if (!geometry::utils::TriangulateAndValidate(features_.undistorted_and_unprojected_keypoints[match.first],
+                                                 keyframe->features_.undistorted_and_unprojected_keypoints[match.second],
+                                                 relative_pose,
+                                                 camera_->FxInv(),
+                                                 keyframe->camera_->FxInv(),
+                                                 constants::PARALLAX_THRESHOLD,
+                                                 parallax,
+                                                 pt))
+      continue;
+    precision_t max_invariance_distance, min_invariance_distance;
+
+    if (new_map_points.find(match.first) == new_map_points.end()) {
+      ++new_map_point_count;
+      feature_extractor_->ComputeInvariantDistances(relative_pose.R * pt + relative_pose.T,
+                                                    features_.keypoints[match.first],
+                                                    max_invariance_distance,
+                                                    min_invariance_distance);
+      auto mp = new map::MapPoint(keyframe->pose_.R.transpose()
+                                      * (pt - keyframe->pose_.T), max_invariance_distance, min_invariance_distance);
+      new_map_points[match.first].mp = mp;
+    }
+    new_map_points[match.first].matches.emplace_back(MapPointMatch{.to_idx = match.first, .from_idx = match.second,
+        .edge=nullptr, .frame = keyframe});
+  }
+  logging::RetrieveLogger()->debug("LM: Created {} new map_points between frames {} and {}",
+                                   new_map_point_count,
+                                   keyframe->Id(),
+                                   Id());
+
+}
+
 bool MonocularFrame::FindNewMapPoints() {
 //  CovisibilityGraph().Update();
 //  std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
@@ -462,68 +500,30 @@ bool MonocularFrame::FindNewMapPoints() {
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
     std::unordered_map<std::size_t, std::size_t> matches;
     FindNewMapPointMatches(keyframe, matches);
+    logging::RetrieveLogger()->debug("LM: SNNMatcher found {} matches between {} and {}",
+                                     matches.size(),
+                                     frame->Id(),
+                                     Id());
+    CreateNewMpPoints(keyframe, matches, new_map_points);
 
-
-    geometry::Pose relative_pose;
-    geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
-
-    for (auto & match: matches) {
-      TPoint3D pt;
-      precision_t parallax;
-      if (!geometry::utils::TriangulateAndValidate(features_.undistorted_and_unprojected_keypoints[match.first],
-                                                   keyframe->features_.undistorted_and_unprojected_keypoints[match.second],
-                                                   relative_pose,
-                                                   camera_->FxInv(),
-                                                   keyframe->camera_->FxInv(),
-                                                   constants::PARALLAX_THRESHOLD,
-                                                   parallax,
-                                                   pt))
-        continue;
-      precision_t max_invariance_distance, min_invariance_distance;
-
-      if (new_map_points.find(match.first) == new_map_points.end()) {
-        feature_extractor_->ComputeInvariantDistances(relative_pose.R * pt + relative_pose.T,
-                                                      features_.keypoints[match.first],
-                                                      max_invariance_distance,
-                                                      min_invariance_distance);
-        auto mp = new map::MapPoint(keyframe->pose_.R.transpose()
-                                        * (pt - keyframe->pose_.T), max_invariance_distance, min_invariance_distance);
-        new_map_points[match.first].mp = mp;
-      }
-      new_map_points[match.first].matches.emplace_back(MapPointMatch{.to_idx = match.first, .from_idx = match.second,
-          .edge_id=0, .frame = keyframe});
-    }
   }
 
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer(optimizer);
-//  std::unordered_set<map::MapPoint *> all_existing_points;
-//  this->ListAllMapPoints(neighbour_keyframes, all_existing_points);
+
   std::unordered_set<FrameBase *> fixed_frames;
   this->FixedFrames(all_existing_points, neighbour_keyframes, fixed_frames);
 
   std::unordered_map<size_t, FrameBase *> frame_map{{Id(), this}};
   std::unordered_map<size_t, map::MapPoint *> mp_map;
-  if (optimizer.vertex(Id())) {
-    std::cerr << "Pizdec" << std::endl;
-    exit(1);
-  }
   optimizer.addVertex(this->CreatePoseVertex());
 
   for (auto & frame: neighbour_keyframes) {
     auto vertex = frame->CreatePoseVertex();
-    vertex->setFixed(frame->IsInitial());
     optimizer.addVertex(vertex);
+    vertex->setFixed(fixed_frames.find(frame) != fixed_frames.end());
     frame_map[frame->Id()] = frame;
-  }
-
-  for (auto & frame: fixed_frames) {
-    if (frame->IsInitial())
-      continue;
-    auto vertex = frame->CreatePoseVertex();
-    vertex->setFixed(true);
-    optimizer.addVertex(vertex);
   }
 
   size_t last_id = Identifiable::GetNextId();
@@ -539,21 +539,37 @@ bool MonocularFrame::FindNewMapPoints() {
       if (nullptr == obs_frame)
         continue;
       auto edge = new optimization::edges::SE3ProjectXYZPose(obs_frame->camera_.get());
-      HomogenousPoint measurement;
-      obs_frame->camera_->UnprojectPoint(features_.keypoints[observation.second].pt, measurement);
-      edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
+      edge->setMeasurement(Eigen::Map<Eigen::Matrix<double,
+                                                    2,
+                                                    1>>(obs_frame->features_.undistorted_and_unprojected_keypoints[observation.second].data()));
       edge->setInformation(Eigen::Matrix2d::Identity());
       edge->setId(++last_id);
       auto rk = new g2o::RobustKernelHuber;
       rk->setDelta(delta_mono);
       edge->setRobustKernel(rk);
       edge->setVertex(0, optimizer.vertex(observation.first->Id()));
-      edge->setVertex(1, optimizer.vertex(map_point->Id()));
+      edge->setVertex(1, vertex);
       optimizer.addEdge(edge);
     }
   }
 
-  std::unordered_map<std::size_t, optimization::edges::SE3ProjectXYZPose *> new_mp_edges;
+  for (auto & mp_id: map_points_) {
+    assert(nullptr != optimizer.vertex(mp_id.second->Id()));
+    auto edge = new optimization::edges::SE3ProjectXYZPose(camera_.get());
+    HomogenousPoint measurement;
+    camera_->UnprojectPoint(features_.keypoints[mp_id.first].pt, measurement);
+    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
+    edge->setInformation(Eigen::Matrix2d::Identity());
+    edge->setId(++last_id);
+    auto rk = new g2o::RobustKernelHuber;
+    rk->setDelta(delta_mono);
+    edge->setRobustKernel(rk);
+    edge->setVertex(0, optimizer.vertex(this->Id()));
+    edge->setVertex(1, optimizer.vertex(mp_id.second->Id()));
+    optimizer.addEdge(edge);
+  }
+
+
   for (auto & new_map_point: new_map_points) {
     auto vertex = new_map_point.second.mp->CreateVertex();
     vertex->setMarginalized(true);
@@ -566,8 +582,7 @@ bool MonocularFrame::FindNewMapPoints() {
     edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
     edge->setId(++last_id);
     edge->setInformation(Eigen::Matrix2d::Identity());
-    new_map_point.second.edge_id = edge->id();
-    new_mp_edges[new_map_point.second.edge_id] = edge;
+    new_map_point.second.edge = edge;
     auto rk = new g2o::RobustKernelHuber;
     rk->setDelta(delta_mono);
     edge->setRobustKernel(rk);
@@ -583,12 +598,11 @@ bool MonocularFrame::FindNewMapPoints() {
                                                  measurement);
       edge->setMeasurement(Eigen::Map<Eigen::Matrix<double, 2, 1>>(measurement.data()));
       edge->setId(++last_id);
-      observation.edge_id = edge->id();
+      observation.edge = edge;
       edge->setInformation(Eigen::Matrix2d::Identity());
       auto rk = new g2o::RobustKernelHuber;
       rk->setDelta(delta_mono);
       edge->setRobustKernel(rk);
-      new_mp_edges[observation.edge_id] = edge;
       edge->setVertex(0, optimizer.vertex(observation.frame->Id()));
       edge->setVertex(1, optimizer.vertex(new_map_point.second.mp->Id()));
       optimizer.addEdge(edge);
@@ -600,17 +614,17 @@ bool MonocularFrame::FindNewMapPoints() {
   unsigned new_map_point_count = 0;
   for (auto new_map_point: new_map_points) {
     map::MapPoint * mp = new_map_point.second.mp;
-    auto edge = new_mp_edges[new_map_point.second.edge_id];
     bool added = false;
-    if (edge->chi2() < 5.991 * camera_->FxInv() * camera_->FxInv() && edge->IsDepthPositive()) {
+    if (new_map_point.second.edge->chi2() < constants::MONO_CHI2 * camera_->FxInv() * camera_->FxInv() && new_map_point.second.edge->IsDepthPositive()) {
       added = true;
+      mp->SetPosition(dynamic_cast<g2o::VertexPointXYZ *>(new_map_point.second.edge->vertex(1))->estimate());
       map_points_[new_map_point.first] = mp;
       ++new_map_point_count;
       mp->AddObservation(this, new_map_point.first);
     }
     for (auto mp_match: new_map_point.second.matches) {
-      auto edge = new_mp_edges[mp_match.edge_id];
-      if (edge->chi2() < 5.991 * camera_->FxInv() * camera_->FxInv() && edge->IsDepthPositive()) {
+      auto edge = mp_match.edge;
+      if (edge->chi2() < constants::MONO_CHI2 * camera_->FxInv() * camera_->FxInv() && edge->IsDepthPositive()) {
         added = true;
         mp_match.frame->map_points_[new_map_point.first] = mp;
         mp->AddObservation(mp_match.frame, mp_match.from_idx);
@@ -628,10 +642,10 @@ bool MonocularFrame::FindNewMapPoints() {
     auto map_point_pose = dynamic_cast<g2o::VertexPointXYZ *>(edge->vertex(1));
     auto frame_pose = dynamic_cast<g2o::VertexSE3Expmap *>(edge->vertex(0));
     map::MapPoint * mp = mp_map[map_point_pose->id()];
+    mp->SetPosition(map_point_pose->estimate());
     FrameBase * frame_base = frame_map[frame_pose->id()];
-    if (nullptr == frame_base || nullptr == mp)
-      continue;
-    if (edge->chi2() > 5.991 * camera_->FxInv() * camera_->FxInv() || !edge->IsDepthPositive()) {
+    frame_base->SetPosition(frame_pose->estimate());
+    if (edge->chi2() > constants::MONO_CHI2 * camera_->FxInv() * camera_->FxInv() || !edge->IsDepthPositive()) {
       if (mp->Observations().find(frame_base) != mp->Observations().end())
         mp->EraseObservation(frame_base);
       dynamic_cast<MonocularFrame *>(frame_base)->map_points_.erase(mp->Observations()[frame_base]);
@@ -641,6 +655,8 @@ bool MonocularFrame::FindNewMapPoints() {
       }
       continue;
     }
+    else
+      mp->Refresh(feature_extractor_);
     if (all_existing_points.find(mp) != all_existing_points.end()) {
       mp->SetPosition(map_point_pose->estimate());
       all_existing_points.erase(mp);
@@ -649,6 +665,10 @@ bool MonocularFrame::FindNewMapPoints() {
       frame_base->SetPosition(frame_pose->estimate());
       neighbour_keyframes.erase(frame_base);
     }
+  }
+
+  for (auto mp_id: map_points_) {
+    mp_id.second->Refresh(feature_extractor_);
   }
 
   covisibility_connections_.Update();
@@ -700,6 +720,8 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
        camera_.get(),
        feature_extractor_.get());
 
+  logging::RetrieveLogger()->debug("TLM: Local mp point count: {}", local_map_points.size());
+
   features::matching::SNNMatcher matcher(0.8, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
@@ -733,7 +755,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
 
   std::unordered_set<std::size_t> inliers;
   if (map_points_.size() < 20) {
-    logging::RetrieveLogger()->debug("TLM: Not enough map point for optimization");
+    logging::RetrieveLogger()->debug("TLM: Not enough map points for optimization");
     return false;
   }
 #ifndef NDEBUG
@@ -784,6 +806,14 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
   cv::waitKey(1);
 
   return ok;
+}
+
+MonocularFrame::~MonocularFrame() {
+  for (auto & mp_id: map_points_) {
+    mp_id.second->EraseObservation(this);
+    if (mp_id.second->Observations().empty())
+      delete mp_id.second;
+  }
 }
 
 }
