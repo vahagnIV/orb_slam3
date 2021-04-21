@@ -20,7 +20,7 @@ void ComputeRelativeTransformation(const Pose & pose_to,
                                    const Pose & pose_from,
                                    Pose & out_pose) {
   out_pose.R = pose_to.R * pose_from.R.transpose();
-  out_pose.T = -out_pose.R * pose_from.T + pose_to.T;
+  out_pose.T = -out_pose.R * pose_from.R.transpose() * pose_from.T + pose_to.T;
 }
 
 /*

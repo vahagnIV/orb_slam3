@@ -175,10 +175,10 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   auto * atlas = new orb_slam3::map::Atlas;
   orb_slam3::Tracker tracker(atlas);
-//  auto local_mapper = new orb_slam3::LocalMapper(atlas);
-//  tracker.AddObserver(local_mapper);
-//  local_mapper->AddObserver(&tracker);
-//  local_mapper->Start();
+  auto local_mapper = new orb_slam3::LocalMapper(atlas);
+  tracker.AddObserver(local_mapper);
+  local_mapper->AddObserver(&tracker);
+  local_mapper->Start();
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);

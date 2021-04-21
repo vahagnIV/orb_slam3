@@ -49,10 +49,24 @@ class MonocularFrame : public FrameBase {
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
   bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
+ private:
+  typedef struct {
+    size_t to_idx;
+    size_t from_idx;
+    size_t edge_id;
+    MonocularFrame * frame;
+  } MapPointMatch;
+
+  typedef struct {
+    map::MapPoint * mp;
+    size_t edge_id;
+    std::vector<MapPointMatch> matches;
+  } MpContainer;
  protected:
   void ComputeBow();
   static void InitializeOptimizer(g2o::SparseOptimizer & optimizer) ;
   bool BaselineIsNotEnough(const MonocularFrame *other) const;
+  void FindNewMapPointMatches(MonocularFrame * keyframe, std::unordered_map<std::size_t, std::size_t> & out_matches ) ;
   void ComputeMatches(MonocularFrame * reference_kf,
                       std::unordered_map<std::size_t, std::size_t> & out_matches,
                       bool self_keypoint_exists,

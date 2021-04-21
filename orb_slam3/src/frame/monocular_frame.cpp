@@ -309,7 +309,8 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     out_inliers.insert(feature_id);
     auto edge = new optimization::edges::SE3ProjectXYZPoseOnly(camera_.get(), map_point->GetPosition());
     edge->setVertex(0, pose);
-    precision_t information_coefficient = feature_extractor_->GetAcceptableSquareError(features_.keypoints[feature_id].level);
+    precision_t
+        information_coefficient = feature_extractor_->GetAcceptableSquareError(features_.keypoints[feature_id].level);
     edge->setInformation(
         Eigen::Matrix<double, 2, 2>::Identity() / information_coefficient);
     edge->setId(++last_id);
@@ -408,50 +409,22 @@ void MonocularFrame::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map
   }
 }
 
-bool MonocularFrame::FindNewMapPoints() {
-//  CovisibilityGraph().Update();
-//  std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
-// TODO: change to covisibility graph
-  std::unordered_set<frame::FrameBase *> neighbour_keyframes;
+void MonocularFrame::FindNewMapPointMatches(MonocularFrame * keyframe,
+                                            std::unordered_map<std::size_t, std::size_t> & out_matches)  {
 
-  std::unordered_set<map::MapPoint *> existing_local_map_points, all_existing_points;
-  ListMapPoints(existing_local_map_points);
-  ListLocalKeyFrames(existing_local_map_points, neighbour_keyframes);
-  ListAllMapPoints(neighbour_keyframes, all_existing_points);
 
-  typedef struct {
-    size_t to_idx;
-    size_t from_idx;
-    size_t edge_id;
-    MonocularFrame * frame;
-  } MapPointMatch;
+  ComputeBow();
+  keyframe->ComputeBow();
 
-  typedef struct {
-    map::MapPoint * mp;
-    size_t edge_id;
-    std::vector<MapPointMatch> matches;
-  } MpContainer;
-
-  std::unordered_map<std::size_t, MpContainer> new_map_points;
-
-  static const precision_t delta_mono = std::sqrt(5.991) * camera_->FxInv();
-
-  for (frame::FrameBase * frame : neighbour_keyframes) {
-
-    if (frame->Type() != Type())
-      continue;
-
-    auto keyframe = dynamic_cast<MonocularFrame *>(frame);
-    ComputeBow();
-    keyframe->ComputeBow();
-
-    if (BaselineIsNotEnough(keyframe)) {
-      logging::RetrieveLogger()->debug("Baseline between frames  {} and {} is not enough", Id(), keyframe->Id());
-      continue;
-    }
-    std::unordered_map<std::size_t, std::size_t> matches;
-    geometry::Pose relative_pose;
-    ComputeMatches(keyframe, matches, false, false);
+  if (BaselineIsNotEnough(keyframe)) {
+    logging::RetrieveLogger()->debug("Baseline between frames  {} and {} is not enough", Id(), keyframe->Id());
+    return;
+  }
+  geometry::Pose relative_pose;
+  ComputeMatches(keyframe, out_matches, false, false);
+  for (auto & match: out_matches) {
+    assert(keyframe->map_points_.find(match.second) == keyframe->map_points_.end());
+  }
 //    std::stringstream stringstream1;
 //    stringstream1 << "/data/tmp/test-match/";
 //    stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
@@ -459,14 +432,42 @@ bool MonocularFrame::FindNewMapPoints() {
 //                debug::DrawMatches(Filename(), keyframe->Filename(), matches, features_, keyframe->features_));
 //    cv::imshow("mm", );
 //    cv::waitKey();
+  logging::RetrieveLogger()->debug("Local mapper: SNN Matcher found {} new matches between {} and {}",
+                                   out_matches.size(),
+                                   Id(),
+                                   keyframe->Id());
+
+}
+
+bool MonocularFrame::FindNewMapPoints() {
+//  CovisibilityGraph().Update();
+//  std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
+// TODO: change to covisibility graph
+
+  std::unordered_set<frame::FrameBase *> neighbour_keyframes;
+  std::unordered_set<map::MapPoint *> existing_local_map_points, all_existing_points;
+  ListMapPoints(existing_local_map_points);
+  ListLocalKeyFrames(existing_local_map_points, neighbour_keyframes);
+  ListAllMapPoints(neighbour_keyframes, all_existing_points);
+
+  std::unordered_map<std::size_t, MpContainer> new_map_points;
+
+  static const precision_t delta_mono = constants::HUBER_MONO_DELTA * camera_->FxInv();
+
+  for (frame::FrameBase * frame : neighbour_keyframes) {
+
+    if (frame->Type() != Type())
+      continue;
+
+    auto keyframe = dynamic_cast<MonocularFrame *>(frame);
+    std::unordered_map<std::size_t, std::size_t> matches;
+    FindNewMapPointMatches(keyframe, matches);
+
+
+    geometry::Pose relative_pose;
     geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
-    logging::RetrieveLogger()->debug("Local mapper found {} new map-points between {} and {}",
-                                     matches.size(),
-                                     Id(),
-                                     keyframe->Id());
 
     for (auto & match: matches) {
-
       TPoint3D pt;
       precision_t parallax;
       if (!geometry::utils::TriangulateAndValidate(features_.undistorted_and_unprojected_keypoints[match.first],
