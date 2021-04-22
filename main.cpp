@@ -427,7 +427,7 @@ void TestFundamental() {
 }
 
 int main(int argc, char *argv[]) {
-  cv::theRNG().state = 0;
+//  cv::theRNG().state = 0;
   orb_slam3::logging::Initialize();
 //  TestFundamental();
 //  CompareSharedPointerInitializationAndCopyTime();

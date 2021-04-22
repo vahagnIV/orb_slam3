@@ -424,9 +424,10 @@ void MonocularFrame::FindNewMapPointMatches(MonocularFrame * keyframe,
   ComputeMatches(keyframe, out_matches, false, false);
   for (auto & match: out_matches) {
     assert(keyframe->map_points_.find(match.second) == keyframe->map_points_.end());
+    assert(map_points_.find(match.first) == map_points_.end());
   }
   std::stringstream stringstream1;
-  stringstream1 << "/data/tmp/test-match/";
+  stringstream1 << "/home/vahagn/tmp/test-match/";
   stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
   cv::imwrite(stringstream1.str(),
               debug::DrawMatches(Filename(), keyframe->Filename(), out_matches, features_, keyframe->features_));
@@ -443,32 +444,42 @@ void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
   geometry::Pose relative_pose;
   geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
   for (auto & match: matches) {
+    std::cout << "Match.first " << match.first << std::endl;
+    assert(keyframe->map_points_.find(match.second) == keyframe->map_points_.end());
     TPoint3D pt;
     precision_t parallax;
-    if (!geometry::utils::TriangulateAndValidate(features_.undistorted_and_unprojected_keypoints[match.first],
-                                                 keyframe->features_.undistorted_and_unprojected_keypoints[match.second],
-                                                 relative_pose,
-                                                 camera_->FxInv(),
-                                                 keyframe->camera_->FxInv(),
-                                                 constants::PARALLAX_THRESHOLD,
-                                                 parallax,
-                                                 pt))
-      continue;
-    precision_t max_invariance_distance, min_invariance_distance;
 
     map::MapPoint * map_point;
     auto item = map_points_.find(match.first);
     if (item == map_points_.end()) {
-      ++new_map_point_count;
+      if (!geometry::utils::TriangulateAndValidate(features_.undistorted_and_unprojected_keypoints[match.first],
+                                                   keyframe->features_.undistorted_and_unprojected_keypoints[match.second],
+                                                   relative_pose,
+                                                   camera_->FxInv(),
+                                                   keyframe->camera_->FxInv(),
+                                                   constants::PARALLAX_THRESHOLD,
+                                                   parallax,
+                                                   pt))
+        continue;
+
+      precision_t max_invariance_distance, min_invariance_distance;
       feature_extractor_->ComputeInvariantDistances(relative_pose.R * pt + relative_pose.T,
                                                     features_.keypoints[match.first],
                                                     max_invariance_distance,
                                                     min_invariance_distance);
-      map_point = new map::MapPoint(keyframe->pose_.R.transpose()
-                                        * (pt - keyframe->pose_.T), max_invariance_distance, min_invariance_distance);
-      AddMapPoint(map_point, item->first);
+      map_point = new map::MapPoint(keyframe->GetInversePose()->Transform(pt),
+                                    max_invariance_distance,
+                                    min_invariance_distance);
+      ++new_map_point_count;
+      AddMapPoint(map_point, match.first);
       map_point->AddObservation(this, match.first);
-    }
+      std::cout << "Created map point wth id " << map_point->Id() << std::endl;
+    } else
+      map_point = item->second;
+    map_point->AddObservation(keyframe, match.second);
+    std::cout << "Adding map point with id " << map_point->Id() << " and feature_id " << match.second << " to keyframe "
+              << keyframe->Id() << std::endl;
+    keyframe->AddMapPoint(map_point, match.second);
   }
 
   logging::RetrieveLogger()->debug("LM: Created {} new map_points between frames {} and {}",
@@ -518,14 +529,21 @@ bool MonocularFrame::FindNewMapPoints() {
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
     std::unordered_map<std::size_t, std::size_t> matches;
     FindNewMapPointMatches(keyframe, matches);
+    for (auto & match: matches) {
+      assert(keyframe->map_points_.find(match.second) == keyframe->map_points_.end());
+      assert(map_points_.find(match.first) == map_points_.end());
+    }
+    std::unordered_set<std::size_t> validation_set;
+    for (auto match: matches) {
+      assert(validation_set.find(match.second) == validation_set.end());
+      validation_set.insert(match.second);
+    }
     logging::RetrieveLogger()->debug("LM: SNNMatcher found {} matches between {} and {}",
                                      matches.size(),
                                      frame->Id(),
                                      Id());
     CreateNewMpPoints(keyframe, matches);
   }
-
-
 
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
   g2o::SparseOptimizer optimizer;
@@ -583,7 +601,7 @@ bool MonocularFrame::FindNewMapPoints() {
   }
   optimizer.setVerbose(true);
   optimizer.initializeOptimization();
-  optimizer.optimize(25);
+  optimizer.optimize(5);
 
   // Collect frame positions
   SetPosition(dynamic_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(Id()))->estimate());
@@ -612,7 +630,7 @@ bool MonocularFrame::FindNewMapPoints() {
           frame->map_points_.erase(map_point->Observations()[frame]);
         } else {
           advance_iterator = false;
-          mp_id = map_points_.erase(mp_id);
+           map_points_.erase(mp_id++);
         }
         map_point->Observations().erase(frame);
       }
@@ -641,8 +659,10 @@ void MonocularFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
 
 bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
   for (auto mp_id: map_points_)
-    if (mp_id.second == map_point)
+    if (mp_id.second == map_point) {
+      std::cout << "MP Exists " << mp_id.first << std::endl;
       return true;
+    }
   return false;
 }
 

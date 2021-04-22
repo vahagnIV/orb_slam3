@@ -21,12 +21,13 @@ namespace matching {
 
 class SNNMatcher {
  public:
-  SNNMatcher(const precision_t nearest_neighbour_ratio, const unsigned threshold): nearest_neighbour_ratio_(nearest_neighbour_ratio), THRESHOLD_(threshold){}
+  SNNMatcher(const precision_t nearest_neighbour_ratio, const unsigned threshold) : nearest_neighbour_ratio_(
+      nearest_neighbour_ratio), THRESHOLD_(threshold) {}
 
   template<typename IteratorTo>
   void MatchWithIteratorV2(IteratorTo to_begin,
                            IteratorTo to_end,
-                           IFeatureExtractor *feature_extractor,
+                           IFeatureExtractor * feature_extractor,
                            std::unordered_map<typename IteratorTo::value_type::id_type,
                                               typename IteratorTo::value_type::iterator::value_type::id_type> & out_matches) {
     typedef typename IteratorTo::value_type::iterator::value_type::id_type FromIdType;
@@ -34,7 +35,7 @@ class SNNMatcher {
     std::unordered_map<FromIdType, ToIdType> matches_from_to;
     std::unordered_map<FromIdType, unsigned> best_distances_from;
 
-    typename IteratorTo::value_type::iterator best_it;
+    typename IteratorTo::value_type::iterator from_best_it;
 
     for (auto it_to = to_begin; it_to != to_end; ++it_to) {
       unsigned best_distance = std::numeric_limits<unsigned>::max(),
@@ -44,25 +45,32 @@ class SNNMatcher {
         DescriptorType d2 = it_from->GetDescriptor();
         unsigned distance = feature_extractor->ComputeDistance(d1, d2);
         if (distance < best_distance) {
-          best_it = it_from;
+          from_best_it = it_from;
           second_best_distance = best_distance;
           best_distance = distance;
         } else if (distance < second_best_distance)
           second_best_distance = distance;
       }
       if (best_distance < THRESHOLD_ && best_distance < nearest_neighbour_ratio_ * second_best_distance) {
-        typename decltype(best_distances_from)::iterator best_dist_it = best_distances_from.find(best_it->GetId());
+        typename decltype(best_distances_from)::iterator best_dist_it = best_distances_from.find(from_best_it->GetId());
         if (best_dist_it != best_distances_from.end()) {
           if (best_dist_it->second > best_distance) {
-            out_matches.erase(matches_from_to[best_it->GetId()]);
-          }
-          else continue;
+            assert(matches_from_to.find(from_best_it->GetId()) != matches_from_to.end());
+            assert(out_matches.find(matches_from_to[from_best_it->GetId()]) != out_matches.end());
+            out_matches.erase(matches_from_to[from_best_it->GetId()]);
+          } else continue;
         }
 
-        best_distances_from[best_it->GetId()] = best_distance;
-        matches_from_to[best_it->GetId()] = it_to->GetId();
-        out_matches[it_to->GetId()] = best_it->GetId();
+        best_distances_from[from_best_it->GetId()] = best_distance;
+        matches_from_to[from_best_it->GetId()] = it_to->GetId();
+        out_matches[it_to->GetId()] = from_best_it->GetId();
       }
+    }
+
+    std::unordered_set<FromIdType> validation_set;
+    for (auto match: out_matches) {
+      assert(validation_set.find(match.second) == validation_set.end());
+      validation_set.insert(match.second);
     }
   }
 

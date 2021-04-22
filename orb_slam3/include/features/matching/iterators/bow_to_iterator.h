@@ -21,12 +21,12 @@ class BowToIterator {
   typedef BowToPointee value_type;
   BowToIterator(
       DBoW2::FeatureVector::iterator begin,
-      DBoW2::FeatureVector *feature_vector_to,
-      DBoW2::FeatureVector *feature_vector_from,
-      features::Features *features_to,
-      features::Features *features_from,
-      std::map<std::size_t, map::MapPoint *> *map_points_to = nullptr,
-      std::map<std::size_t, map::MapPoint *> *map_points_from = nullptr,
+      DBoW2::FeatureVector * feature_vector_to,
+      DBoW2::FeatureVector * feature_vector_from,
+      features::Features * features_to,
+      features::Features * features_from,
+      std::map<std::size_t, map::MapPoint *> * map_points_to = nullptr,
+      std::map<std::size_t, map::MapPoint *> * map_points_from = nullptr,
       bool to_map_points_exist = false,
       bool from_map_points_exist = false) :
       bow_it_to_(begin),
@@ -48,8 +48,8 @@ class BowToIterator {
 
   const BowToPointee & operator*() const { return pointee_; }
   BowToPointee & operator*() { return pointee_; }
-  const BowToPointee *operator->() const { return &pointee_; }
-  BowToPointee *operator->() { return &pointee_; }
+  const BowToPointee * operator->() const { return &pointee_; }
+  BowToPointee * operator->() { return &pointee_; }
   BowToIterator & operator++();
 
   // TODO: implement correctly
@@ -57,7 +57,7 @@ class BowToIterator {
     return a.bow_it_to_ == b.bow_it_to_;
   }
   friend bool operator!=(const BowToIterator & a, const BowToIterator & b) {
-    return  a.bow_it_to_ != b.bow_it_to_;
+    return a.bow_it_to_ != b.bow_it_to_;
   }
  private:
   void AdvanceUntilSameNode();
@@ -72,11 +72,11 @@ class BowToIterator {
   std::vector<unsigned>::iterator it_;
   std::vector<unsigned>::iterator end_it_;
 
-  DBoW2::FeatureVector *feature_vector_to_;
-  DBoW2::FeatureVector *feature_vector_from_;
+  DBoW2::FeatureVector * feature_vector_to_;
+  DBoW2::FeatureVector * feature_vector_from_;
   BowToPointee pointee_;
 
-  std::map<std::size_t, map::MapPoint *> *map_points_to_;
+  std::map<std::size_t, map::MapPoint *> * map_points_to_;
   bool to_map_points_exist_;
 
 };
