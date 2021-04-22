@@ -287,6 +287,7 @@ void MonocularFrame::InitializeOptimizer(g2o::SparseOptimizer & optimizer) {
 
   auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
+  optimizer.setVerbose(true);
 }
 
 void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
@@ -481,7 +482,7 @@ optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoin
   static const precision_t delta_mono = constants::HUBER_MONO_DELTA * camera_->FxInv();
   auto edge = new optimization::edges::SE3ProjectXYZPose(frame->camera_.get());
   auto measurement = frame->features_.undistorted_and_unprojected_keypoints[map_point->Observations()[frame]];
-  std::cout << measurement;
+//  std::cout << measurement;
   edge->setMeasurement(Eigen::Map<Eigen::Matrix<double,
                                                 2,
                                                 1>>(measurement.data()));
@@ -655,7 +656,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
   }
 
   std::unordered_set<map::MapPoint *> local_map_points;
-  FrameBase::ListAllMapPoints(local_frames, local_map_points);
+  ListMapPoints(local_map_points);
 
   logging::RetrieveLogger()->debug("TLM: local_frame: {}, local_map_point: {}, current_map_points: {}",
                                    local_frames.size(),
@@ -663,18 +664,18 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
                                    current_frame_map_points.size());
 
   features::matching::iterators::ProjectionSearchIterator begin
-      (local_map_points.begin(),
-       local_map_points.end(),
-       &current_frame_map_points,
+      (current_frame_map_points.begin(),
+       current_frame_map_points.end(),
+       &local_map_points,
        &features_,
        &pose_,
        camera_.get(),
        feature_extractor_.get());
 
   features::matching::iterators::ProjectionSearchIterator end
-      (local_map_points.end(),
-       local_map_points.end(),
-       &current_frame_map_points,
+      (current_frame_map_points.end(),
+       current_frame_map_points.end(),
+       &local_map_points,
        &features_,
        &pose_,
        camera_.get(),
