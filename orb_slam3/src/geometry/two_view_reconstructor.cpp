@@ -99,14 +99,19 @@ void TwoViewReconstructor::GenerateRandomSubset(const size_t min,
                                                 const size_t count,
                                                 std::vector<size_t> & out_result) const {
   assert(max - min >= count);
-  std::random_device rand_dev;
-  std::mt19937 generator(rand_dev());
-  std::uniform_int_distribution<size_t> distr(min, max - 1);
+//  std::random_device rand_dev;
+//  std::mt19937 generator(rand_dev());
+//  std::uniform_int_distribution<size_t> distr(min, max - 1);
+//  std::unordered_set<size_t> chosen;
+//  out_result.reserve(count);
+//  while (chosen.size() < count)
+//    chosen.insert(distr(generator));
+
   std::unordered_set<size_t> chosen;
   out_result.reserve(count);
-  while (chosen.size() < count)
-    chosen.insert(distr(generator));
-
+  while (chosen.size() < count) {
+    chosen.insert(rand() % (max ));
+  }
   std::copy(chosen.begin(), chosen.end(), std::back_inserter(out_result));
 }
 

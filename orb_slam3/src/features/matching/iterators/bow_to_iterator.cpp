@@ -11,7 +11,7 @@ namespace iterators {
 
 BowToIterator & BowToIterator::operator++() {
   ++it_;
-  // If require_exists is true, we should skip all
+  // If to_map_points_exist_ is true, we should skip all
   // ids that do not correspond to a map point.
   while (map_points_to_ && it_ != end_it_
       && (to_map_points_exist_ ^ (map_points_to_->find(*it_) != map_points_to_->end())))

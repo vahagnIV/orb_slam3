@@ -175,10 +175,10 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   auto * atlas = new orb_slam3::map::Atlas;
   orb_slam3::Tracker tracker(atlas);
-  auto local_mapper = new orb_slam3::LocalMapper(atlas);
-  tracker.AddObserver(local_mapper);
-  local_mapper->AddObserver(&tracker);
-  local_mapper->Start();
+//  auto local_mapper = new orb_slam3::LocalMapper(atlas);
+//  tracker.AddObserver(local_mapper);
+//  local_mapper->AddObserver(&tracker);
+//  local_mapper->Start();
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
@@ -427,6 +427,7 @@ void TestFundamental() {
 }
 
 int main(int argc, char *argv[]) {
+  cv::theRNG().state = 0;
   orb_slam3::logging::Initialize();
 //  TestFundamental();
 //  CompareSharedPointerInitializationAndCopyTime();
@@ -447,6 +448,7 @@ int main(int argc, char *argv[]) {
 //  Triangulate(s, pt2, pt1, point_triangulated2);
 
 //  TestDrawMonocular(std::string(argv[1]));
+
   TestMonocular(std::string(argv[1]), std::string(argv[2]));
 
   return 0;

@@ -18,7 +18,7 @@
 namespace orb_slam3 {
 namespace frame {
 
-namespace test{
+namespace test {
 class MonocularFrameTests;
 }
 
@@ -30,7 +30,7 @@ class MonocularFrame : public FrameBase {
                  const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
                  const std::string & filename,
                  const std::shared_ptr<camera::MonocularCamera> & camera,
-                 features::BowVocabulary *vocabulary);
+                 features::BowVocabulary * vocabulary);
 
   // ==== FrameBase =========
   bool IsValid() const override;
@@ -43,7 +43,6 @@ class MonocularFrame : public FrameBase {
   bool TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) override;
   const features::Features & GetFeatures() const { return features_; }
 
-
   // ==== Monocular ====
   void AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) override;
   void CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) override;
@@ -51,27 +50,16 @@ class MonocularFrame : public FrameBase {
   bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
   ~MonocularFrame();
- private:
-  typedef struct {
-    size_t to_idx;
-    size_t from_idx;
-    optimization::edges::SE3ProjectXYZPose * edge;
-    MonocularFrame * frame;
-  } MapPointMatch;
-
-  typedef struct {
-    map::MapPoint * mp;
-    optimization::edges::SE3ProjectXYZPose * edge;
-    std::vector<MapPointMatch> matches;
-  } MpContainer;
  protected:
+  inline void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
+  bool MapPointExists(const map::MapPoint * map_point) const ;
   void ComputeBow();
-  static void InitializeOptimizer(g2o::SparseOptimizer & optimizer) ;
-  bool BaselineIsNotEnough(const MonocularFrame *other) const;
-  void FindNewMapPointMatches(MonocularFrame * keyframe, std::unordered_map<std::size_t, std::size_t> & out_matches ) ;
+  static void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
+  bool BaselineIsNotEnough(const MonocularFrame * other) const;
+  void FindNewMapPointMatches(MonocularFrame * keyframe, std::unordered_map<std::size_t, std::size_t> & out_matches);
   void CreateNewMpPoints(MonocularFrame * frame,
-                                              const std::unordered_map<std::size_t, std::size_t> & matches,
-                                              std::unordered_map<std::size_t, MpContainer> & new_map_points) const;
+                         const std::unordered_map<std::size_t, std::size_t> & matches);
+  optimization::edges::SE3ProjectXYZPose * CreateEdge(map::MapPoint * map_point, MonocularFrame * frame);
   void ComputeMatches(MonocularFrame * reference_kf,
                       std::unordered_map<std::size_t, std::size_t> & out_matches,
                       bool self_keypoint_exists,

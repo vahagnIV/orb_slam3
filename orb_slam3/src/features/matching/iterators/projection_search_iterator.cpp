@@ -32,13 +32,34 @@ ProjectionSearchIterator & ProjectionSearchIterator::operator++() {
 }
 
 void ProjectionSearchIterator::AdvanceIteratorUntilGood() {
-  if (it_ != end_)
-    pointee_.map_point_ = *it_;
-  while (it_ != end_ && (to_map_points_->find(*it_) != to_map_points_->end() &&
+  while (it_ != end_ && (to_map_points_->find(*it_) != to_map_points_->end() ||
       !pointee_.SetMapPointAndCompute(*it_,
                                       camera_,
                                       pose_)))
     ++it_;
+//  bool a = it_ != end_;
+//  bool b = to_map_points_->find(*it_) != to_map_points_->end();
+//  bool c = !pointee_.SetMapPointAndCompute(*it_,
+//                                           camera_,
+//                                           pose_);
+//  while (a && b || (!b&&c))
+//
+//  while (!(it_ == end_ || to_map_points_->find(*it_) != to_map_points_->end() ||
+//      !pointee_.SetMapPointAndCompute(*it_,
+//                                      camera_,
+//                                      pose_)))
+//    ++it_;
+//
+//  while (it_ != end_ ) {
+//    if (to_map_points_->find(*it_) != to_map_points_->end() )
+//      ++it_;
+//    else if(!pointee_.SetMapPointAndCompute(*it_,
+//                                    camera_,
+//                                    pose_))
+//      ++it_;
+//    else
+//      break;
+//  }
   if (it_ != end_)
     pointee_.InitializeIterators();
 }

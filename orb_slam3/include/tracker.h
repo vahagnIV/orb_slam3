@@ -14,6 +14,7 @@
 #include <map/atlas.h>
 #include <observable.h>
 #include <position_observer.h>
+#include <local_mapper.h>
 
 namespace orb_slam3 {
 
@@ -52,6 +53,7 @@ class Tracker : public Observer<std::shared_ptr<frame::FrameBase>>,
   TrackingResult TrackInNotInitializedState(const std::shared_ptr<FrameBase> & frame);
 
 
+  LocalMapper local_mapper_;
   int kf_counter = 0;
   bool NeedNewKeyFrame();
   /// Helper member variables

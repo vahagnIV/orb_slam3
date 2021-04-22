@@ -11,7 +11,8 @@
 namespace orb_slam3 {
 
 Tracker::Tracker(orb_slam3::map::Atlas * atlas)
-    : atlas_(atlas),
+    : local_mapper_(atlas),
+      atlas_(atlas),
       last_frame_(nullptr),
       initial_frame_(nullptr),
       state_(NOT_INITIALIZED) {
@@ -41,8 +42,9 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame()) {
 //    last_key_frame_ = frame;
+    local_mapper_.CreateNewMapPoints(frame);
     atlas_->GetCurrentMap()->AddKeyFrame(last_key_frame_);
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
+//    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
   last_frame_ = frame;
   return TrackingResult::OK;

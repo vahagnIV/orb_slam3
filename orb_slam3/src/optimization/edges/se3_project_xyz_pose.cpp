@@ -29,8 +29,8 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-//  BaseFixedSizedEdge::linearizeOplus();
-//      return;
+  BaseFixedSizedEdge::linearizeOplus();
+      return;
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
