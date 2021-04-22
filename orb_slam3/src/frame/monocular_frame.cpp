@@ -287,7 +287,7 @@ void MonocularFrame::InitializeOptimizer(g2o::SparseOptimizer & optimizer) {
 
   auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
-  optimizer.setVerbose(true);
+//  optimizer.setVerbose(true);
 }
 
 void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers) {
@@ -599,7 +599,6 @@ bool MonocularFrame::FindNewMapPoints() {
       optimizer.addEdge(edge);
     }
   }
-  optimizer.setVerbose(true);
   optimizer.initializeOptimization();
   optimizer.optimize(5);
 
@@ -706,6 +705,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
   features::matching::SNNMatcher matcher(0.8, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+  // TODO: set asserts
 
 #ifndef NDEBUG
   {
