@@ -38,8 +38,9 @@ void ProjectionSearchIterator::AdvanceIteratorUntilGood() {
                                       camera_,
                                       pose_)))
     ++it_;
-  if (it_ != end_)
+  if (it_ != end_) {
     pointee_.InitializeIterators();
+  }
 }
 
 }

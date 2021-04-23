@@ -544,6 +544,7 @@ bool MonocularFrame::FindNewMapPoints() {
   // We will reuse neighbour_keyframes bearing in mind that the initial frame can still be there
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer(optimizer);
+  optimizer.setVerbose(true);
 
   std::unordered_set<FrameBase *> fixed_frames;
   this->FixedFrames(all_existing_points, neighbour_keyframes, fixed_frames);
@@ -605,7 +606,7 @@ bool MonocularFrame::FindNewMapPoints() {
   const precision_t allowed_max_error = constants::MONO_CHI2 * camera_->FxInv() * camera_->FxInv();
 
   auto mp_id = map_points_.begin();
-  int counter = 0;
+  auto begin = map_points_.begin();
   while (mp_id != map_points_.end()) {
 //    std::ofstream of("/home/vahagn/Desktop/orb_slam_dump/map_begin" + std::to_string(counter++) + ".txt");
 //    for (auto mp_id: map_points_) {
@@ -613,6 +614,8 @@ bool MonocularFrame::FindNewMapPoints() {
 //    }
 //    of.close();
     map::MapPoint * map_point = mp_id->second;
+
+
     auto mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(map_point->Id()));
     map_point->SetPosition(mp_vertex->estimate());
 
@@ -627,6 +630,7 @@ bool MonocularFrame::FindNewMapPoints() {
           frame->map_points_.erase(map_point->Observations()[frame]);
         } else {
           assert(advance_iterator);
+          assert(map_points_.find(mp_id->first)!= map_points_.end());
           advance_iterator = false;
           mp_id = map_points_.erase(mp_id);
         }
@@ -639,8 +643,11 @@ bool MonocularFrame::FindNewMapPoints() {
         dynamic_cast<MonocularFrame *>(obs.first)->map_points_.erase(obs.second);
       }
       delete map_point;
-    } else
+    } else {
       map_point->Refresh(feature_extractor_);
+
+      assert(map_point->GetDescriptor().cols());
+    }
 
     if (advance_iterator)
       ++mp_id;
