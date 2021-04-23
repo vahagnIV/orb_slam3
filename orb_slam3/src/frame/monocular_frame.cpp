@@ -444,7 +444,6 @@ void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
   geometry::Pose relative_pose;
   geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
   for (auto & match: matches) {
-    std::cout << "Match.first " << match.first << std::endl;
     assert(keyframe->map_points_.find(match.second) == keyframe->map_points_.end());
     TPoint3D pt;
     precision_t parallax;
@@ -473,12 +472,9 @@ void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
       ++new_map_point_count;
       AddMapPoint(map_point, match.first);
       map_point->AddObservation(this, match.first);
-      std::cout << "Created map point wth id " << map_point->Id() << std::endl;
     } else
       map_point = item->second;
     map_point->AddObservation(keyframe, match.second);
-    std::cout << "Adding map point with id " << map_point->Id() << " and feature_id " << match.second << " to keyframe "
-              << keyframe->Id() << std::endl;
     keyframe->AddMapPoint(map_point, match.second);
   }
 
@@ -789,11 +785,11 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
 }
 
 MonocularFrame::~MonocularFrame() {
-  for (auto & mp_id: map_points_) {
-    mp_id.second->EraseObservation(this);
-    if (mp_id.second->Observations().empty())
-      delete mp_id.second;
-  }
+//  for (auto & mp_id: map_points_) {
+//    mp_id.second->EraseObservation(this);
+//    if (mp_id.second->Observations().empty())
+//      delete mp_id.second;
+//  }
 }
 
 }
