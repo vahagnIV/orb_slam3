@@ -46,6 +46,8 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
     last_key_frame_ = frame;
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
+  velocity_ = frame->GetInversePose()->T - last_frame_->GetInversePose()->T;
+  angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
   last_frame_ = frame;
   return TrackingResult::OK;
 }

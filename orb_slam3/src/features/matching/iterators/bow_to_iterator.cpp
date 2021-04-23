@@ -40,8 +40,11 @@ void BowToIterator::AdvanceUntilSameNode() {
       while (map_points_to_ && it_ != end_it_
           && (to_map_points_exist_ ^ (map_points_to_->find(*it_) != map_points_to_->end())))
         ++it_;
-      if(it_ == end_it_)
+      if(it_ == end_it_) {
+        ++bow_it_to_;
+        ++bow_it_from_;
         continue;
+      }
       pointee_.SetBowId(bow_it_to_->first);
       pointee_.SetId(*it_);
       break;

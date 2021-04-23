@@ -52,6 +52,14 @@ class MonocularFrame : public FrameBase {
   ~MonocularFrame();
  protected:
   inline void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
+  inline std::map<size_t, map::MapPoint *>::iterator EraseMapPoint(std::map<size_t, map::MapPoint *>::iterator it){
+//    std::cout <<"Erase by iterator: Frame: " << this->Id() << " FeatureId: " << it->first << std::endl;
+    return map_points_.erase(it);
+  }
+  inline void EraseMapPoint(size_t feature_id) {
+//    std::cout <<"Erase by feature id: Frame: " << this->Id() << " FeatureId: " << feature_id << std::endl;
+    map_points_.erase(feature_id);
+  }
   bool MapPointExists(const map::MapPoint * map_point) const ;
   void ComputeBow();
   static void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
