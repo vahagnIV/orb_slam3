@@ -21,7 +21,7 @@ class LocalMapper : public PositionObserver,
   void Start();
   void Stop();
   ~LocalMapper();
-  void CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) ;
+  bool CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) ;
  private:
   void Run();
   map::Atlas * atlas_;

@@ -756,7 +756,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
   cv::imshow("current", current_image);
   cv::waitKey(1);
 
-  return true;
+  return map_points_.size() > 50;
 }
 
 MonocularFrame::~MonocularFrame() {
