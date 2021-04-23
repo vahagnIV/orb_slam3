@@ -427,7 +427,7 @@ void MonocularFrame::FindNewMapPointMatches(MonocularFrame * keyframe,
     assert(map_points_.find(match.first) == map_points_.end());
   }
   std::stringstream stringstream1;
-  stringstream1 << "/home/vahagn/tmp/test-match/";
+  stringstream1 << "/data/tmp/test-match/";
   stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
   cv::imwrite(stringstream1.str(),
               debug::DrawMatches(Filename(), keyframe->Filename(), out_matches, features_, keyframe->features_));
@@ -625,7 +625,7 @@ bool MonocularFrame::FindNewMapPoints() {
           frame->map_points_.erase(map_point->Observations()[frame]);
         } else {
           advance_iterator = false;
-           map_points_.erase(mp_id++);
+          mp_id = map_points_.erase(mp_id);
         }
         map_point->Observations().erase(frame);
       }
@@ -637,6 +637,8 @@ bool MonocularFrame::FindNewMapPoints() {
       }
       delete map_point;
     }
+    else
+      map_point->Refresh(feature_extractor_);
 
     if (advance_iterator)
       ++mp_id;

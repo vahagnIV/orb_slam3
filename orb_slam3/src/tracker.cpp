@@ -41,9 +41,9 @@ TrackingResult Tracker::TrackInOkState(const std::shared_ptr<FrameBase> & frame)
   angular_velocity_ = frame->GetPose()->R * last_frame_->GetInversePose()->R;
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame()) {
-//    last_key_frame_ = frame;
     local_mapper_.CreateNewMapPoints(frame);
-    atlas_->GetCurrentMap()->AddKeyFrame(last_key_frame_);
+    atlas_->GetCurrentMap()->AddKeyFrame(frame);
+    last_key_frame_ = frame;
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
   last_frame_ = frame;
