@@ -27,7 +27,7 @@ class ProjectionSearchPointee {
   id_type GetId() const { return map_point_; }
   iterator begin() { return begin_iterator_; }
   iterator end() { return end_iterator_; }
-  ProjectionSearchPointee(const Features *from_features,const IFeatureExtractor * feature_extractor);
+  ProjectionSearchPointee(const Features *from_features,const IFeatureExtractor * feature_extractor,const std::map<std::size_t ,map::MapPoint *> * from_map_points);
   const DescriptorType GetDescriptor() const;
  protected:
   void SetId(id_type id) { map_point_ = id; }
@@ -47,7 +47,7 @@ class ProjectionSearchPointee {
   const IFeatureExtractor * feature_extractor_;
   precision_t window_size_;
   unsigned predicted_level_;
-
+  const std::map<std::size_t ,map::MapPoint *> * from_map_points_;
   unsigned patchar1 = 0, patchar2 = 0, patchar3 = 0;
   ~ProjectionSearchPointee(){
     std::cerr << patchar1 << " " << patchar2 << " " << patchar3;

@@ -577,12 +577,6 @@ bool MonocularFrame::FindNewMapPoints() {
       std::cout << "Pizdec naxuy blyad' 2" << std::endl;
     }
     optimizer.addVertex(vertex);
-    auto edge = CreateEdge(map_point, this);
-    edge->setVertex(0, optimizer.vertex(Id()));
-    edge->setVertex(1, vertex);
-    edge->setId(++last_id);
-    mp_edges[map_point].push_back(edge);
-    optimizer.addEdge(edge);
 
     for (const auto & observation: map_point->Observations()) {
       auto obs_frame = dynamic_cast<MonocularFrame *>(observation.first);
@@ -591,6 +585,7 @@ bool MonocularFrame::FindNewMapPoints() {
       auto edge = CreateEdge(map_point, obs_frame);
       edge->setVertex(0, optimizer.vertex(observation.first->Id()));
       edge->setVertex(1, vertex);
+      edge->setId(++last_id);
       mp_edges[map_point].push_back(edge);
       optimizer.addEdge(edge);
     }
@@ -609,7 +604,14 @@ bool MonocularFrame::FindNewMapPoints() {
 
   const precision_t allowed_max_error = constants::MONO_CHI2 * camera_->FxInv() * camera_->FxInv();
 
-  for (auto mp_id = map_points_.begin(); mp_id != map_points_.end();) {
+  auto mp_id = map_points_.begin();
+  int counter = 0;
+  while (mp_id != map_points_.end()) {
+//    std::ofstream of("/home/vahagn/Desktop/orb_slam_dump/map_begin" + std::to_string(counter++) + ".txt");
+//    for (auto mp_id: map_points_) {
+//      of << mp_id.first << " " << mp_id.second << std::endl;
+//    }
+//    of.close();
     map::MapPoint * map_point = mp_id->second;
     auto mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(map_point->Id()));
     map_point->SetPosition(mp_vertex->estimate());
@@ -624,6 +626,7 @@ bool MonocularFrame::FindNewMapPoints() {
         if (frame != this) {
           frame->map_points_.erase(map_point->Observations()[frame]);
         } else {
+          assert(advance_iterator);
           advance_iterator = false;
           mp_id = map_points_.erase(mp_id);
         }
@@ -636,8 +639,7 @@ bool MonocularFrame::FindNewMapPoints() {
         dynamic_cast<MonocularFrame *>(obs.first)->map_points_.erase(obs.second);
       }
       delete map_point;
-    }
-    else
+    } else
       map_point->Refresh(feature_extractor_);
 
     if (advance_iterator)
@@ -665,40 +667,42 @@ bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
 
 bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) {
 
-  std::unordered_set<map::MapPoint *> current_frame_map_points;
+  std::unordered_set<map::MapPoint *> all_candidate_map_points;
   std::unordered_set<FrameBase *> local_frames;
   FrameBase * max_covisible_frame;
-  if (nullptr == (max_covisible_frame = last_keyframe->ListLocalKeyFrames(current_frame_map_points, local_frames))) {
+  if (nullptr == (max_covisible_frame = last_keyframe->ListLocalKeyFrames(all_candidate_map_points, local_frames))) {
     return false;
   }
 
-  std::unordered_set<map::MapPoint *> local_map_points;
-  ListMapPoints(local_map_points);
+  std::unordered_set<map::MapPoint *> existing_local_map_points;
+  ListMapPoints(existing_local_map_points);
 
   logging::RetrieveLogger()->debug("TLM: local_frame: {}, local_map_point: {}, current_map_points: {}",
                                    local_frames.size(),
-                                   local_map_points.size(),
-                                   current_frame_map_points.size());
+                                   existing_local_map_points.size(),
+                                   all_candidate_map_points.size());
 
   features::matching::iterators::ProjectionSearchIterator begin
-      (current_frame_map_points.begin(),
-       current_frame_map_points.end(),
-       &local_map_points,
+      (all_candidate_map_points.begin(),
+       all_candidate_map_points.end(),
+       &existing_local_map_points,
+       &map_points_,
        &features_,
        &pose_,
        camera_.get(),
        feature_extractor_.get());
 
   features::matching::iterators::ProjectionSearchIterator end
-      (current_frame_map_points.end(),
-       current_frame_map_points.end(),
-       &local_map_points,
+      (all_candidate_map_points.end(),
+       all_candidate_map_points.end(),
+       &existing_local_map_points,
+       &map_points_,
        &features_,
        &pose_,
        camera_.get(),
        feature_extractor_.get());
 
-  logging::RetrieveLogger()->debug("TLM: Local mp point count: {}", local_map_points.size());
+  logging::RetrieveLogger()->debug("TLM: Local mp point count: {}", existing_local_map_points.size());
 
   features::matching::SNNMatcher matcher(0.8, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;

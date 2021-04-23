@@ -23,6 +23,7 @@ class ProjectionSearchIterator {
   ProjectionSearchIterator(std::unordered_set<map::MapPoint *>::iterator begin,
                            std::unordered_set<map::MapPoint *>::iterator end,
                            const std::unordered_set<map::MapPoint *> * to_map_points,
+                           const std::map<std::size_t ,map::MapPoint *> * from_map_points,
                            const Features * from_features,
                            const geometry::Pose * pose,
                            const camera::MonocularCamera * camera,

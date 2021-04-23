@@ -12,6 +12,7 @@ namespace iterators {
 ProjectionSearchIterator::ProjectionSearchIterator(std::unordered_set<map::MapPoint *>::iterator begin,
                                                    std::unordered_set<map::MapPoint *>::iterator end,
                                                    const std::unordered_set<map::MapPoint *> * to_map_points,
+                                                   const std::map<std::size_t ,map::MapPoint *> * from_map_points,
                                                    const Features * from_features,
                                                    const geometry::Pose * pose,
                                                    const camera::MonocularCamera * camera,
@@ -20,7 +21,7 @@ ProjectionSearchIterator::ProjectionSearchIterator(std::unordered_set<map::MapPo
       end_(end),
       to_map_points_(to_map_points),
       pose_(pose),
-      camera_(camera), pointee_(from_features, feature_extractor) {
+      camera_(camera), pointee_(from_features, feature_extractor, from_map_points) {
   AdvanceIteratorUntilGood();
 
 }
@@ -37,29 +38,6 @@ void ProjectionSearchIterator::AdvanceIteratorUntilGood() {
                                       camera_,
                                       pose_)))
     ++it_;
-//  bool a = it_ != end_;
-//  bool b = to_map_points_->find(*it_) != to_map_points_->end();
-//  bool c = !pointee_.SetMapPointAndCompute(*it_,
-//                                           camera_,
-//                                           pose_);
-//  while (a && b || (!b&&c))
-//
-//  while (!(it_ == end_ || to_map_points_->find(*it_) != to_map_points_->end() ||
-//      !pointee_.SetMapPointAndCompute(*it_,
-//                                      camera_,
-//                                      pose_)))
-//    ++it_;
-//
-//  while (it_ != end_ ) {
-//    if (to_map_points_->find(*it_) != to_map_points_->end() )
-//      ++it_;
-//    else if(!pointee_.SetMapPointAndCompute(*it_,
-//                                    camera_,
-//                                    pose_))
-//      ++it_;
-//    else
-//      break;
-//  }
   if (it_ != end_)
     pointee_.InitializeIterators();
 }
