@@ -209,6 +209,7 @@ TVector3D MonocularFrame::GetNormal(const TPoint3D & point) const {
 }
 
 bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) {
+  map_points_.clear();
   logging::RetrieveLogger()->info("TWRKF: Tracking frame {} with reference keyframe {}",
                                   Id(),
                                   reference_keyframe->Id());
@@ -325,7 +326,6 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     edges[edge] = feature_id;
   }
 
-
   for (int i = 0; i < 4 && !out_inliers.empty(); ++i) {
     pose->setEstimate(pose_.GetQuaternion());
     optimizer.initializeOptimization(0);
@@ -421,11 +421,11 @@ void MonocularFrame::FindNewMapPointMatches(MonocularFrame * keyframe,
   geometry::Pose relative_pose;
   ComputeMatches(keyframe, out_matches, false, false);
 
-  std::stringstream stringstream1;
-  stringstream1 << "/data/tmp/test-match/";
-  stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
-  cv::imwrite(stringstream1.str(),
-              debug::DrawMatches(Filename(), keyframe->Filename(), out_matches, features_, keyframe->features_));
+//  std::stringstream stringstream1;
+//  stringstream1 << "/data/tmp/test-match/";
+//  stringstream1 << Id() << "-" << keyframe->Id() << ".jpg";
+//  cv::imwrite(stringstream1.str(),
+//              debug::DrawMatches(Filename(), keyframe->Filename(), out_matches, features_, keyframe->features_));
   logging::RetrieveLogger()->debug("Local mapper: SNN Matcher found {} new matches between {} and {}",
                                    out_matches.size(),
                                    Id(),
@@ -521,7 +521,7 @@ bool MonocularFrame::FindNewMapPoints() {
     std::unordered_map<std::size_t, std::size_t> matches;
     FindNewMapPointMatches(keyframe, matches);
 
-     logging::RetrieveLogger()->debug("LM: SNNMatcher found {} matches between {} and {}",
+    logging::RetrieveLogger()->debug("LM: SNNMatcher found {} matches between {} and {}",
                                      matches.size(),
                                      frame->Id(),
                                      Id());
@@ -571,7 +571,7 @@ bool MonocularFrame::FindNewMapPoints() {
     }
   }
   optimizer.initializeOptimization();
-  optimizer.optimize(15);
+  optimizer.optimize(5);
 
   // Collect frame positions
   SetPosition(dynamic_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(Id()))->estimate());
@@ -615,13 +615,13 @@ bool MonocularFrame::FindNewMapPoints() {
 
   }
 
-  return true;
+  return map_points_.size() > 15;
 }
 
 void MonocularFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
 //  std::cout << "Added map_point: Frame: " << this->Id() << " FeatureId: " << feature_id << std::endl;
 //  assert(map_points_.find(feature_id) == map_points_.end());
-//  assert(!MapPointExists(map_point));
+  assert(!MapPointExists(map_point));
   map_points_[feature_id] = map_point;
 }
 
@@ -756,7 +756,7 @@ bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & las
   cv::imshow("current", current_image);
   cv::waitKey(1);
 
-  return map_points_.size() > 50;
+  return map_points_.size() > 30;
 }
 
 MonocularFrame::~MonocularFrame() {
