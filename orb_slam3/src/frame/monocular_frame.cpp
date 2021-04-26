@@ -634,7 +634,7 @@ bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
   return false;
 }
 
-bool MonocularFrame::TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) {
+bool MonocularFrame::TrackWithMotionModel(const std::shared_ptr<frame::FrameBase> & last_keyframe) {
 
   std::unordered_set<map::MapPoint *> all_candidate_map_points;
   std::unordered_set<FrameBase *> local_frames;

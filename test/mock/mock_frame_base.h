@@ -25,7 +25,7 @@ namespace test {
   MOCK_METHOD(void, AppendToOptimizerBA, (g2o::SparseOptimizer & optimizer, size_t & next_id), (override));
   MOCK_METHOD(void, CollectFromOptimizerBA, (g2o::SparseOptimizer & optimizer), (override));
   MOCK_METHOD(bool, TrackWithReferenceKeyFrame, (const std::shared_ptr<FrameBase> & reference_keyframe), (override));
-  MOCK_METHOD(bool, TrackLocalMap, (const std::shared_ptr<frame::FrameBase> & last_keyframe), (override));
+  MOCK_METHOD(bool, TrackWithMotionModel, (const std::shared_ptr<frame::FrameBase> & last_keyframe), (override));
   MOCK_METHOD(bool, FindNewMapPoints, (), (override));
   MOCK_METHOD(precision_t, ComputeMedianDepth, (), (const, override));
 };

@@ -143,7 +143,7 @@ class FrameBase : public Identifiable {
    */
   virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
 
-  virtual bool TrackLocalMap(const std::shared_ptr<frame::FrameBase> & last_keyframe) = 0;
+  virtual bool TrackWithMotionModel(const std::shared_ptr<frame::FrameBase> & last_keyframe) = 0;
 
   /*!
    * Non-const getter for the covisibility graph
