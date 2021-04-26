@@ -517,11 +517,10 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
 
   std::unordered_set<size_t> inliers;
   OptimizePose(inliers);
-  for (auto mp_it = map_points_.begin(); mp_it!=map_points_.end();) {
-    if(inliers.find(mp_it->first) == inliers.end()) {
+  for (auto mp_it = map_points_.begin(); mp_it != map_points_.end();) {
+    if (inliers.find(mp_it->first) == inliers.end()) {
       mp_it = EraseMapPoint(mp_it);
-    }
-    else {
+    } else {
       mp_it->second->AddObservation(this, mp_it->first);
       ++mp_it;
     }
@@ -555,7 +554,7 @@ bool MonocularFrame::FindNewMapPoints() {
   ListLocalKeyFrames(existing_local_map_points, neighbour_keyframes);
   ListAllMapPoints(neighbour_keyframes, all_existing_points);
 
-  unsigned min_new_map_point_id = Identifiable::GetNextId();
+//  unsigned min_new_map_point_id = Identifiable::GetNextId();
   for (auto mp: map_points_)
     mp.second->AddObservation(this, mp.first);
 
@@ -588,6 +587,8 @@ bool MonocularFrame::FindNewMapPoints() {
 
   std::unordered_map<std::size_t, MonocularFrame *> frame_map{{Id(), this}};
   for (auto & frame: neighbour_keyframes) {
+    if (frame->Id() == Id())
+      continue;
     frame_map[frame->Id()] = dynamic_cast<MonocularFrame *>(frame);
     auto vertex = frame->CreatePoseVertex();
     optimizer.addVertex(vertex);
@@ -635,6 +636,8 @@ bool MonocularFrame::FindNewMapPoints() {
   std::list<std::pair<std::size_t, map::MapPoint *>> iteration_list;
   std::copy(map_points_.begin(), map_points_.end(), std::back_inserter(iteration_list));
 
+  unsigned deleted_count(0);
+  unsigned total_initial = map_points_.size();
   for (auto mp_id = iteration_list.begin(); mp_id != iteration_list.end(); ++mp_id) {
 
     map::MapPoint * map_point = mp_id->second;
@@ -655,6 +658,7 @@ bool MonocularFrame::FindNewMapPoints() {
         dynamic_cast<MonocularFrame *>(obs.first)->EraseMapPoint(obs.second);
       }
       delete map_point;
+      ++deleted_count;
     } else {
       map_point->SetPosition(mp_vertex->estimate());
       map_point->Refresh(feature_extractor_);
@@ -662,8 +666,8 @@ bool MonocularFrame::FindNewMapPoints() {
     }
 
   }
-
-  return map_points_.size() > 15;
+  logging::RetrieveLogger()->info("Deleted {} out of {} map_points", deleted_count, total_initial);
+  return map_points_.size() > 10;
 }
 
 void MonocularFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
@@ -760,8 +764,10 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
     }
   }
 
-  if (matches.size() < 20)
+  if (matches.size() < 20) {
+    logging::RetrieveLogger()->debug("TWMM: Not enough map points for optimization");
     return false;
+  }
 
 #ifndef NDEBUG
   {
@@ -784,18 +790,10 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
   }
 #endif
 
-  logging::RetrieveLogger()->info("TWMM: Found {} matches with threshold 30", matches.size());
-
   for (auto match: matches) {
     AddMapPoint(match.first, match.second);
   }
 
-  std::unordered_set<std::size_t> inliers;
-  if (map_points_.size() < 20) {
-    map_points_.clear();
-    logging::RetrieveLogger()->debug("TWMM: Not enough map points for optimization");
-    return false;
-  }
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -804,10 +802,12 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
     logging::RetrieveLogger()->debug(ss.str());
   }
 #endif
-
+  std::unordered_set<std::size_t> inliers;
   OptimizePose(inliers);
-  if (inliers.size() < 15) {
+  if (inliers.size() < 10) {
+    map_points_.clear();
     logging::RetrieveLogger()->debug("TWMM: Not enough inliers after optimization");
+    return false;
   }
 
 #ifndef NDEBUG
@@ -826,11 +826,6 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
       ++mp_it;
     }
   }
-
-  if (map_points_.size() < 15) {
-    map_points_.clear();
-    return false;
-  }
   cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
   for (auto mp: map_points_) {
     cv::circle(current_image,
@@ -841,7 +836,7 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
   cv::imshow("current", current_image);
   cv::waitKey(1);
 
-  return map_points_.size() > 10;
+  return true;
 }
 
 MonocularFrame::~MonocularFrame() {

@@ -63,7 +63,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame() {
-  bool need = kf_counter >= 2;
+  bool need = kf_counter >= 1;
   if (need)
     kf_counter = 0;
   return need;
