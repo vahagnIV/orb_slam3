@@ -55,7 +55,7 @@ class ProjectionSearchPointee {
 
   unsigned patchar1 = 0, patchar2 = 0, patchar3 = 0;
   ~ProjectionSearchPointee() {
-    std::cerr << patchar1 << " " << patchar2 << " " << patchar3;
+    std::cerr << patchar1 << " " << patchar2 << " " << patchar3 << std::endl;
   }
 
 };

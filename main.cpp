@@ -182,7 +182,7 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
 
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
-    std::cout << "processing frame " << filenames[k] << std::endl;
+    orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[k]);
     auto eigen = FromCvMat(image);
     auto frame =
          new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
