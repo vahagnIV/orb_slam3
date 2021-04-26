@@ -512,9 +512,20 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
   logging::RetrieveLogger()->debug("SLMP: Found {} matches for threshold 1.", matches.size());
   for (auto & match:matches) {
     AddMapPoint(match.first, match.second);
-    match.first->AddObservation(this, match.second);
+
   }
 
+  std::unordered_set<size_t> inliers;
+  OptimizePose(inliers);
+  for (auto mp_it = map_points_.begin(); mp_it!=map_points_.end();) {
+    if(inliers.find(mp_it->first) == inliers.end()) {
+      mp_it = EraseMapPoint(mp_it);
+    }
+    else {
+      mp_it->second->AddObservation(this, mp_it->first);
+      ++mp_it;
+    }
+  }
 }
 
 optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoint * map_point, MonocularFrame * frame) {

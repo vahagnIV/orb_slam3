@@ -40,7 +40,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
     if (!frame->TrackWithReferenceKeyFrame(reference_keyframe_)) {
       logging::RetrieveLogger()->info("tracking failed");
       delete frame;
-      exit(1);
+//      exit(1);
       return TrackingResult::TRACK_LM_FAILED;
     }
   }
