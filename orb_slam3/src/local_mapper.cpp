@@ -43,7 +43,10 @@ void LocalMapper::Stop() {
   thread_ = nullptr;
 }
 
-bool LocalMapper::CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) {
+
+
+
+bool LocalMapper::CreateNewMapPoints(frame::FrameBase * frame) {
   return frame->FindNewMapPoints();
 //  if (frame->FindNewMapPoints())
 

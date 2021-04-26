@@ -18,14 +18,18 @@ namespace test {
                  const std::string & filename): frame::FrameBase(timestamp, feature_extractor, filename) {  }
   MOCK_METHOD(frame::FrameType, Type, (), (const, override));
   MOCK_METHOD(bool, IsValid, (), (const, override));
-  MOCK_METHOD(bool, Link, (const std::shared_ptr<FrameBase> & other), (override));
+  MOCK_METHOD(bool, Link, (const std::shared_ptr<FrameBase> & other), (override))FrameBase *
+   ;
   MOCK_METHOD(void, ListMapPoints, (std::unordered_set<map::MapPoint *> & out_map_points), (const, override));
   MOCK_METHOD(void, AppendDescriptorsToList, (size_t feature_id, std::vector<features::DescriptorType> & out_descriptor_ptr), (const, override));
   MOCK_METHOD(TVector3D, GetNormal, (const TPoint3D & point), (const, override));
   MOCK_METHOD(void, AppendToOptimizerBA, (g2o::SparseOptimizer & optimizer, size_t & next_id), (override));
   MOCK_METHOD(void, CollectFromOptimizerBA, (g2o::SparseOptimizer & optimizer), (override));
-  MOCK_METHOD(bool, TrackWithReferenceKeyFrame, (const std::shared_ptr<FrameBase> & reference_keyframe), (override));
-  MOCK_METHOD(bool, TrackWithMotionModel, (const std::shared_ptr<frame::FrameBase> & last_keyframe), (override));
+  MOCK_METHOD(bool, TrackWithReferenceKeyFrame, (const std::shared_ptr<FrameBase> & reference_keyframe), (override))
+   FrameBase *
+   ;
+  MOCK_METHOD(bool, TrackWithMotionModel, (const std::shared_ptr<frame::FrameBase> & last_keyframe), (override))const FrameBase *
+   ;
   MOCK_METHOD(bool, FindNewMapPoints, (), (override));
   MOCK_METHOD(precision_t, ComputeMedianDepth, (), (const, override));
 };

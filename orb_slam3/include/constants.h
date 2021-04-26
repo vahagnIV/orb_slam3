@@ -21,7 +21,6 @@ const size_t FRAME_GRID_COLS  = 64;
  */
 const precision_t HUBER_MONO_DELTA = std::sqrt(5.991);
 
-
 /*!
  * The max threshold for the allowed squared error for optimization in monocular frame
  */
@@ -32,6 +31,17 @@ const precision_t MONO_CHI2 = 5.991;
  */
 const precision_t PARALLAX_THRESHOLD = 0.9998;
 
+
+/*!
+ * Nearest neighbour ration for monocular frame motion model matching
+ */
+const precision_t NNRATIO_MONOCULAR_TWMM = 0.8;
+
+
+/*!
+ * Nearest neighbour orb high threshold for monocular frame motion model matching
+ */
+const unsigned MONO_TWMM_THRESHOLD_HIGH = 100;
 }
 }
 #endif //ORB_SLAM3_INCLUDE_CONSTANTS_H_

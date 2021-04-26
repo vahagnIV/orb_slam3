@@ -18,13 +18,14 @@ class FrameBase;
 
 struct CovisibilityGraphNode {
 
-  void Update();
-  void AddConnection(FrameBase * frame);
-  void RemoveConnection(FrameBase * frame);
-  std::unordered_set<FrameBase *> GetCovisibleKeyFrames(unsigned count);
+ public:
+  CovisibilityGraphNode(const frame::FrameBase * frame);
 
+  void Update();
+  std::unordered_set<FrameBase *> GetCovisibleKeyFrames(unsigned count);
  private:
-  std::unordered_map<FrameBase *, unsigned> connected_frame_weights_;
+  const frame::FrameBase * frame_;
+
   std::vector<FrameBase *> sorted_connected_frames_;
   std::vector<size_t> sorted_weights_;
   std::mutex mutex_;

@@ -54,7 +54,7 @@ bool MonocularFrame::IsValid() const {
   return features_.descriptors.size() > constants::MINIMAL_FEATURE_COUNT_PER_FRAME_MONOCULAR;
 }
 
-bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
+bool MonocularFrame::Link(FrameBase * other) {
 
   logging::RetrieveLogger()->info("Linking frame {} with {}", Id(), other->Id());
   if (other->Type() != Type()) {
@@ -62,7 +62,7 @@ bool MonocularFrame::Link(const std::shared_ptr<FrameBase> & other) {
     return false;
   }
 
-  MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other.get());
+  MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other);
   features::matching::SNNMatcher matcher(0.9, 50);
   features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
   features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
@@ -208,7 +208,7 @@ TVector3D MonocularFrame::GetNormal(const TPoint3D & point) const {
   return normal;
 }
 
-bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) {
+bool MonocularFrame::TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) {
   map_points_.clear();
   logging::RetrieveLogger()->info("TWRKF: Tracking frame {} with reference keyframe {}",
                                   Id(),
@@ -217,7 +217,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase>
     logging::RetrieveLogger()->warn("Frames {} and {} have different types", Id(), reference_keyframe->Id());
     return false;
   }
-  auto reference_kf = dynamic_cast<MonocularFrame *>(reference_keyframe.get());
+  auto reference_kf = dynamic_cast<MonocularFrame *>(reference_keyframe);
 
   // Ensure bows are computed
   reference_kf->ComputeBow();
@@ -480,6 +480,43 @@ void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
                                    Id());
 }
 
+void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_candidate_map_points) {
+  std::unordered_set<map::MapPoint *> current_frame_map_points;
+  this->ListMapPoints(current_frame_map_points);
+  std::unordered_map<map::MapPoint *, std::size_t> matches;
+  features::matching::iterators::ProjectionSearchIterator begin
+      (all_candidate_map_points.begin(),
+       all_candidate_map_points.end(),
+       &current_frame_map_points,
+       &map_points_,
+       &features_,
+       &pose_,
+       camera_.get(),
+       feature_extractor_.get(),
+       1);
+
+  features::matching::iterators::ProjectionSearchIterator end
+      (all_candidate_map_points.end(),
+       all_candidate_map_points.end(),
+       &current_frame_map_points,
+       &map_points_,
+       &features_,
+       &pose_,
+       camera_.get(),
+       feature_extractor_.get(),
+       1);
+
+  features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+
+  logging::RetrieveLogger()->debug("SLMP: Found {} matches for threshold 1.", matches.size());
+  for (auto & match:matches) {
+    AddMapPoint(match.first, match.second);
+    match.first->AddObservation(this, match.second);
+  }
+
+}
+
 optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoint * map_point, MonocularFrame * frame) {
   // TODO: this assumes that the camera is the same for all frames
   const precision_t delta_mono = constants::HUBER_MONO_DELTA * camera_->FxInv();
@@ -634,49 +671,86 @@ bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
   return false;
 }
 
-bool MonocularFrame::TrackWithMotionModel(const std::shared_ptr<frame::FrameBase> & last_keyframe) {
-
+bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
+  map_points_.clear();
   std::unordered_set<map::MapPoint *> all_candidate_map_points;
-  std::unordered_set<FrameBase *> local_frames;
+  last_keyframe->ListMapPoints(all_candidate_map_points);
+  /*std::unordered_set<FrameBase *> local_frames;
   FrameBase * max_covisible_frame;
   if (nullptr == (max_covisible_frame = last_keyframe->ListLocalKeyFrames(all_candidate_map_points, local_frames))) {
     return false;
-  }
+  }*/
 
-  std::unordered_set<map::MapPoint *> existing_local_map_points;
-  ListMapPoints(existing_local_map_points);
+//  std::unordered_set<map::MapPoint *> existing_local_map_points;
+//  ListMapPoints(existing_local_map_points);
 
-  logging::RetrieveLogger()->debug("TLM: local_frame: {}, local_map_point: {}, current_map_points: {}",
-                                   local_frames.size(),
-                                   existing_local_map_points.size(),
+  logging::RetrieveLogger()->debug("TWMM:  current_map_points: {}",
                                    all_candidate_map_points.size());
 
-  features::matching::iterators::ProjectionSearchIterator begin
-      (all_candidate_map_points.begin(),
-       all_candidate_map_points.end(),
-       &existing_local_map_points,
-       &map_points_,
-       &features_,
-       &pose_,
-       camera_.get(),
-       feature_extractor_.get());
-
-  features::matching::iterators::ProjectionSearchIterator end
-      (all_candidate_map_points.end(),
-       all_candidate_map_points.end(),
-       &existing_local_map_points,
-       &map_points_,
-       &features_,
-       &pose_,
-       camera_.get(),
-       feature_extractor_.get());
-
-  logging::RetrieveLogger()->debug("TLM: Local mp point count: {}", existing_local_map_points.size());
-
-  features::matching::SNNMatcher matcher(0.8, 100);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
-  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
-  // TODO: set asserts
+  std::unordered_set<map::MapPoint *> current_frame_map_points;
+  {
+    features::matching::iterators::ProjectionSearchIterator begin
+        (all_candidate_map_points.begin(),
+         all_candidate_map_points.end(),
+         &current_frame_map_points,
+         &map_points_,
+         &features_,
+         &pose_,
+         camera_.get(),
+         feature_extractor_.get(),
+         15);
+
+    features::matching::iterators::ProjectionSearchIterator end
+        (all_candidate_map_points.end(),
+         all_candidate_map_points.end(),
+         &current_frame_map_points,
+         &map_points_,
+         &features_,
+         &pose_,
+         camera_.get(),
+         feature_extractor_.get(),
+         15);
+
+    features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
+    matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+
+    logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 15.", matches.size());
+  }
+  if (matches.size() < 20) {
+    matches.clear();
+    {
+      features::matching::iterators::ProjectionSearchIterator begin
+          (all_candidate_map_points.begin(),
+           all_candidate_map_points.end(),
+           &current_frame_map_points,
+           &map_points_,
+           &features_,
+           &pose_,
+           camera_.get(),
+           feature_extractor_.get(),
+           30);
+
+      features::matching::iterators::ProjectionSearchIterator end
+          (all_candidate_map_points.end(),
+           all_candidate_map_points.end(),
+           &current_frame_map_points,
+           &map_points_,
+           &features_,
+           &pose_,
+           camera_.get(),
+           feature_extractor_.get(),
+           30);
+
+      features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
+      matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
+
+      logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 30.", matches.size());
+    }
+  }
+
+  if (matches.size() < 20)
+    return false;
 
 #ifndef NDEBUG
   {
@@ -699,7 +773,7 @@ bool MonocularFrame::TrackWithMotionModel(const std::shared_ptr<frame::FrameBase
   }
 #endif
 
-  logging::RetrieveLogger()->info("TLM: Found {} matches", matches.size());
+  logging::RetrieveLogger()->info("TWMM: Found {} matches with threshold 30", matches.size());
 
   for (auto match: matches) {
     AddMapPoint(match.first, match.second);
@@ -708,13 +782,13 @@ bool MonocularFrame::TrackWithMotionModel(const std::shared_ptr<frame::FrameBase
   std::unordered_set<std::size_t> inliers;
   if (map_points_.size() < 20) {
     map_points_.clear();
-    logging::RetrieveLogger()->debug("TLM: Not enough map points for optimization");
+    logging::RetrieveLogger()->debug("TWMM: Not enough map points for optimization");
     return false;
   }
 #ifndef NDEBUG
   {
     std::stringstream ss;
-    ss << "TLM: Tracking optimization. Pose before optimization\n";
+    ss << "TWMM: Tracking optimization. Pose before optimization\n";
     ss << pose_.R << std::endl << pose_.T << std::endl;
     logging::RetrieveLogger()->debug(ss.str());
   }
@@ -722,13 +796,13 @@ bool MonocularFrame::TrackWithMotionModel(const std::shared_ptr<frame::FrameBase
 
   OptimizePose(inliers);
   if (inliers.size() < 15) {
-    logging::RetrieveLogger()->debug("TLM: Not enough inliers after optimization");
+    logging::RetrieveLogger()->debug("TWMM: Not enough inliers after optimization");
   }
 
 #ifndef NDEBUG
   {
     std::stringstream ss;
-    ss << "TLM: Tracking optimization. Pose after optimization\n";
+    ss << "TWMM: Tracking optimization. Pose after optimization\n";
     ss << pose_.R << std::endl << pose_.T << std::endl;
     logging::RetrieveLogger()->debug(ss.str());
   }
@@ -756,7 +830,7 @@ bool MonocularFrame::TrackWithMotionModel(const std::shared_ptr<frame::FrameBase
   cv::imshow("current", current_image);
   cv::waitKey(1);
 
-  return map_points_.size() > 30;
+  return map_points_.size() > 10;
 }
 
 MonocularFrame::~MonocularFrame() {

@@ -11,24 +11,24 @@
 namespace orb_slam3 {
 namespace frame {
 
-void CovisibilityGraphNode::AddConnection(FrameBase *frame) {
-  ++connected_frame_weights_[frame];
-}
+CovisibilityGraphNode::CovisibilityGraphNode(const frame::FrameBase * frame) : frame_(frame) {
 
-void CovisibilityGraphNode::RemoveConnection(FrameBase *frame) {
-  decltype(connected_frame_weights_)::iterator it = connected_frame_weights_.find(frame);
-  if (it == connected_frame_weights_.end())
-    return;
-  --it->second;
-  if (it->second == 0)
-    connected_frame_weights_.erase(it);
 }
 
 void CovisibilityGraphNode::Update() {
 
+  std::unordered_set<map::MapPoint *> local_map_points_;
+  std::unordered_map<FrameBase *, unsigned> connected_frame_weights;
+  frame_->ListMapPoints(local_map_points_);
+  for (auto map_point:local_map_points_) {
+    for (auto obs: map_point->Observations()) {
+      ++connected_frame_weights[obs.first];
+    }
+  }
   std::vector<std::pair<unsigned, FrameBase *>> weight_frame_pairs;
-  weight_frame_pairs.reserve(connected_frame_weights_.size());
-  for (auto & fp: connected_frame_weights_)
+
+  weight_frame_pairs.reserve(connected_frame_weights.size());
+  for (auto & fp: connected_frame_weights)
     weight_frame_pairs.emplace_back(fp.second, fp.first);
 
   std::sort(weight_frame_pairs.begin(), weight_frame_pairs.end());
@@ -51,7 +51,7 @@ std::unordered_set<FrameBase *> CovisibilityGraphNode::GetCovisibleKeyFrames(uns
   std::copy_if(sorted_connected_frames_.begin(),
                sorted_connected_frames_.end(),
                std::inserter(result, result.begin()),
-               [](const FrameBase *frame) { return frame->IsValid(); });
+               [](const FrameBase * frame) { return frame->IsValid(); });
   return result;
 
 }

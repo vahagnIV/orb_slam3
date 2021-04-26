@@ -184,8 +184,8 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
     std::cout << "processing frame " << filenames[k] << std::endl;
     auto eigen = FromCvMat(image);
-    std::shared_ptr<orb_slam3::frame::FrameBase> frame =
-        std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, timestamps[k],
+    auto frame =
+         new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
                                                            extractor, filenames[k], camera, &voc);
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 

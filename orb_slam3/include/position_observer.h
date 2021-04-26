@@ -17,7 +17,7 @@ enum PositionMessageType {
 
 struct UpdateMessage {
   PositionMessageType type;
-  std::shared_ptr<frame::FrameBase> frame;
+  frame::FrameBase * frame;
 };
 
 class PositionObserver : public Observer<UpdateMessage> {

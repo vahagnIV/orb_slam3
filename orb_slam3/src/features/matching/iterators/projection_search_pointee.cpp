@@ -9,8 +9,13 @@ namespace features {
 namespace matching {
 namespace iterators {
 ProjectionSearchPointee::ProjectionSearchPointee(const Features * from_features,
-                                                 const IFeatureExtractor * feature_extractor, const std::map<std::size_t ,map::MapPoint *> * from_map_points) : from_features_(
-    from_features), feature_extractor_(feature_extractor), from_map_points_(from_map_points) {
+                                                 const IFeatureExtractor * feature_extractor,
+                                                 const std::map<std::size_t, map::MapPoint *> * from_map_points,
+                                                 unsigned radius_multiplier)
+    : from_features_(from_features),
+      feature_extractor_(feature_extractor),
+      from_map_points_(from_map_points),
+      radius_multiplier_(radius_multiplier) {
 
 }
 
@@ -42,7 +47,7 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint * map_point,
     return false;
   }
 
-  precision_t r = RadiusByViewingCos(track_view_cos_);
+  precision_t r = radius_multiplier_ ? radius_multiplier_ : RadiusByViewingCos(track_view_cos_);
   predicted_level_ = feature_extractor_->PredictScale(distance, map_point_->GetMaxInvarianceDistance());
   window_size_ = r * feature_extractor_->GetScaleFactors()[predicted_level_];
 
@@ -58,7 +63,8 @@ void ProjectionSearchPointee::InitializeIterators() {
                                      predicted_level_,
                                      from_indices_);
 
-  begin_iterator_ = iterator(from_indices_.begin(), from_indices_.end(), &(from_features_->descriptors), from_map_points_);
+  begin_iterator_ =
+      iterator(from_indices_.begin(), from_indices_.end(), &(from_features_->descriptors), from_map_points_);
   end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), &(from_features_->descriptors), from_map_points_);
 }
 

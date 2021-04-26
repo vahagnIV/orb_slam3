@@ -23,11 +23,13 @@ class ProjectionSearchIterator {
   ProjectionSearchIterator(std::unordered_set<map::MapPoint *>::iterator begin,
                            std::unordered_set<map::MapPoint *>::iterator end,
                            const std::unordered_set<map::MapPoint *> * to_map_points,
-                           const std::map<std::size_t ,map::MapPoint *> * from_map_points,
+                           const std::map<std::size_t, map::MapPoint *> * from_map_points,
                            const Features * from_features,
                            const geometry::Pose * pose,
                            const camera::MonocularCamera * camera,
-                           const IFeatureExtractor * feature_extractor);
+                           const IFeatureExtractor * feature_extractor,
+                           unsigned radius_multiplier = 0);
+
   const ProjectionSearchPointee & operator*() const { return pointee_; }
   ProjectionSearchPointee & operator*() { return pointee_; }
   const ProjectionSearchPointee * operator->() const { return &pointee_; }

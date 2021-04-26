@@ -8,11 +8,11 @@
 namespace orb_slam3 {
 namespace map {
 
-void Map::AddKeyFrame(const std::shared_ptr<frame::FrameBase> & frame) {
+void Map::AddKeyFrame(frame::FrameBase * frame) {
   key_frames_.insert(frame);
 }
 
-void Map::SetInitialKeyFrame(const std::shared_ptr<frame::FrameBase> & frame) {
+void Map::SetInitialKeyFrame(frame::FrameBase * frame) {
   initial_keyframe_ = frame;
 }
 

@@ -34,7 +34,9 @@ class FrameBase : public Identifiable {
   FrameBase(const TimePoint & timestamp,
             const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
             const std::string & filename)
-      : Identifiable(), timestamp_(timestamp), covisibility_connections_(), feature_extractor_(feature_extractor),
+      : Identifiable(), timestamp_(timestamp),
+        covisibility_connections_(this),
+        feature_extractor_(feature_extractor),
         initial_(false), filename_(filename) {
   }
 
@@ -83,7 +85,7 @@ class FrameBase : public Identifiable {
    * Used only for monocular case
    * @return
    */
-  virtual bool Link(const std::shared_ptr<FrameBase> & other) = 0;
+  virtual bool Link(FrameBase * other) = 0;
 
   /*!
    * Appends all local ma points to the output set
@@ -114,13 +116,13 @@ class FrameBase : public Identifiable {
    * Getter for pose
    * @return pose
    */
-  geometry::Pose *GetPose() { return &pose_; }
+  const geometry::Pose * GetPose() const { return &pose_; }
 
   /*!
    * Getter for pose
    * @return pose
    */
-  geometry::Pose *GetInversePose() { return &inverse_pose_; }
+  const geometry::Pose * GetInversePose() const { return &inverse_pose_; }
 
   /*!
    * Append necessary vertices and edges for BA
@@ -141,9 +143,9 @@ class FrameBase : public Identifiable {
    * @param reference_keyframe The reference keyframe
    * @return true on success
    */
-  virtual bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) = 0;
+  virtual bool TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) = 0;
 
-  virtual bool TrackWithMotionModel(const std::shared_ptr<frame::FrameBase> & last_keyframe) = 0;
+  virtual bool TrackWithMotionModel(FrameBase * last_keyframe) = 0;
 
   /*!
    * Non-const getter for the covisibility graph
@@ -168,15 +170,18 @@ class FrameBase : public Identifiable {
  * @param out_frames The list of frames
  * @return The frame that has maximal number of covisible map points with this
  */
-  FrameBase *ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
-                                std::unordered_set<frame::FrameBase *> & out_frames) const;
+  FrameBase * ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
+                                 std::unordered_set<frame::FrameBase *> & out_frames) const;
+
+
+  virtual void SearchLocalPoints(std::unordered_set<map::MapPoint *> & map_points) = 0;
 
   /*!
    * Destructor
    */
   virtual ~FrameBase();
 
-  g2o::VertexSE3Expmap *CreatePoseVertex() const;
+  g2o::VertexSE3Expmap * CreatePoseVertex() const;
  protected:
 
   static void FixedFrames(const std::unordered_set<map::MapPoint *> & map_points,

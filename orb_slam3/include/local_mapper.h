@@ -15,13 +15,13 @@
 namespace orb_slam3 {
 
 class LocalMapper : public PositionObserver,
-                    public Observable<std::shared_ptr<frame::FrameBase>> {
+                    public Observable<frame::FrameBase *> {
  public:
   LocalMapper(map::Atlas * atlas);
   void Start();
   void Stop();
   ~LocalMapper();
-  bool CreateNewMapPoints(const std::shared_ptr<frame::FrameBase> & frame) ;
+  bool CreateNewMapPoints(frame::FrameBase * frame) ;
  private:
   void Run();
   map::Atlas * atlas_;

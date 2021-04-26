@@ -15,12 +15,12 @@ namespace orb_slam3 {
 namespace map {
 class Map {
  public:
-  void AddKeyFrame(const std::shared_ptr<frame::FrameBase> & frame);
-  void SetInitialKeyFrame(const std::shared_ptr<frame::FrameBase> & frame);
+  void AddKeyFrame(frame::FrameBase * frame);
+  void SetInitialKeyFrame(frame::FrameBase * frame);
 
  private:
-  std::unordered_set<std::shared_ptr<frame::FrameBase>> key_frames_;
-  std::shared_ptr<frame::FrameBase> initial_keyframe_;
+  std::unordered_set<frame::FrameBase *> key_frames_;
+  frame::FrameBase * initial_keyframe_;
 
 
 

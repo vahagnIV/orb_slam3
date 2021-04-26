@@ -35,12 +35,12 @@ class MonocularFrame : public FrameBase {
   // ==== FrameBase =========
   bool IsValid() const override;
   FrameType Type() const override { return MONOCULAR; }
-  bool Link(const std::shared_ptr<FrameBase> & other) override;
+  bool Link(FrameBase * other) override;
   void AppendDescriptorsToList(size_t feature_id,
                                std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
   TVector3D GetNormal(const TVector3D & point) const override;
-  bool TrackWithReferenceKeyFrame(const std::shared_ptr<FrameBase> & reference_keyframe) override;
-  bool TrackWithMotionModel(const std::shared_ptr<frame::FrameBase> & last_keyframe) override;
+  bool TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) override;
+  bool TrackWithMotionModel(FrameBase * last_keyframe) override;
   const features::Features & GetFeatures() const { return features_; }
 
   // ==== Monocular ====
@@ -50,6 +50,7 @@ class MonocularFrame : public FrameBase {
   bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
   ~MonocularFrame();
+  void SearchLocalPoints(unordered_set<map::MapPoint *> & map_points) override;
  protected:
   inline void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
   inline std::map<size_t, map::MapPoint *>::iterator EraseMapPoint(std::map<size_t, map::MapPoint *>::iterator it){
