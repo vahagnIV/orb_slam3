@@ -175,7 +175,7 @@ void MonocularFrame::AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_
     edge->setVertex(0, pose);
     edge->setVertex(1, mp);
     edge->setId(next_id++);
-    edge->setInformation(Eigen::Matrix2d::Identity());
+    edge->setInformation(Eigen::Matrix2d::Identity() * feature_extractor_->GetAcceptableSquareError(mp_id.first));
     g2o::RobustKernelHuber * rk = new g2o::RobustKernelHuber;
     edge->setRobustKernel(rk);
     rk->setDelta(std::sqrt(5.99) * camera_->FxInv());
@@ -314,7 +314,7 @@ void MonocularFrame::OptimizePose(std::unordered_set<std::size_t> & out_inliers)
     precision_t
         information_coefficient = feature_extractor_->GetAcceptableSquareError(features_.keypoints[feature_id].level);
     edge->setInformation(
-        Eigen::Matrix<double, 2, 2>::Identity() / information_coefficient);
+        Eigen::Matrix<double, 2, 2>::Identity() * information_coefficient);
     edge->setId(++last_id);
     auto rk = new g2o::RobustKernelHuber;
     rk->setDelta(delta_mono);
@@ -535,7 +535,10 @@ optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoin
   edge->setMeasurement(Eigen::Map<Eigen::Matrix<double,
                                                 2,
                                                 1>>(measurement.data()));
-  edge->setInformation(Eigen::Matrix2d::Identity());
+  precision_t
+      information_coefficient =
+       feature_extractor_->GetAcceptableSquareError(frame->features_.keypoints[map_point->Observations()[frame]].level);
+  edge->setInformation(Eigen::Matrix2d::Identity() * information_coefficient );
   auto rk = new g2o::RobustKernelHuber;
   rk->setDelta(delta_mono);
   edge->setRobustKernel(rk);
