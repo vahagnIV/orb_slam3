@@ -56,7 +56,7 @@ class Tracker : public Observer<frame::FrameBase*>,
   void UpdateLocalPoints();
   void UpdateCovisibilityConnections();
 
-  bool NeedNewKeyFrame();
+  bool NeedNewKeyFrame(frame::FrameBase * frame);
  private:
   /// Helper member variables
   LocalMapper local_mapper_;

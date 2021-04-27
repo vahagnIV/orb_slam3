@@ -7,7 +7,9 @@
 #if __has_include(<spdlog/sinks/stdout_color_sinks.h>)
 #include <spdlog/sinks/stdout_color_sinks.h>
 #endif
+#if __has_include(<spdlog/sinks/rotating_file_sink.h>)
 #include <spdlog/sinks/rotating_file_sink.h>
+#endif
 
 namespace orb_slam3 {
 namespace logging {
@@ -20,6 +22,7 @@ const std::string LOGGER_NAME = "logger";
 //}
 void Initialize() {
   spdlog::rotating_logger_st(LOGGER_NAME, "log.txt", 10 * 1024 * 1024, 10)->set_level(spdlog::level::debug);
+  spdlog::get(LOGGER_NAME)->flush_on(spdlog::level::debug);
 //  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
 //  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
 }

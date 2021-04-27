@@ -53,9 +53,9 @@ class ProjectionSearchPointee {
   const std::map<std::size_t, map::MapPoint *> * from_map_points_;
   unsigned radius_multiplier_;
 
-  unsigned patchar1 = 0, patchar2 = 0, patchar3 = 0;
+  unsigned patchar1 = 0, patchar2 = 0, patchar3 = 0, yndunvats = 0;
   ~ProjectionSearchPointee() {
-    std::cerr << patchar1 << " " << patchar2 << " " << patchar3 << std::endl;
+    std::cerr << patchar1 << " " << patchar2 << " " << patchar3 << " " << yndunvats << std::endl;
   }
 
 };

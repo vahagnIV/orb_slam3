@@ -52,8 +52,12 @@ class MonocularFrame : public FrameBase {
   ~MonocularFrame();
   void SearchLocalPoints(unordered_set<map::MapPoint *> & map_points) override;
  protected:
+  static void BundleAdjustment(std::unordered_set<FrameBase *> & local_frames,
+                               std::unordered_set<FrameBase *> & fixed_frames,
+                               std::unordered_set<map::MapPoint *> & map_points,
+                               std::unordered_map<map::MapPoint *, std::unordered_set<MonocularFrame *>> & out_inliers);
   inline void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
-  inline std::map<size_t, map::MapPoint *>::iterator EraseMapPoint(std::map<size_t, map::MapPoint *>::iterator it){
+  inline std::map<size_t, map::MapPoint *>::iterator EraseMapPoint(std::map<size_t, map::MapPoint *>::iterator it) {
 //    std::cout <<"Erase by iterator: Frame: " << this->Id() << " FeatureId: " << it->first << std::endl;
     return map_points_.erase(it);
   }
@@ -61,14 +65,15 @@ class MonocularFrame : public FrameBase {
 //    std::cout <<"Erase by feature id: Frame: " << this->Id() << " FeatureId: " << feature_id << std::endl;
     map_points_.erase(feature_id);
   }
-  bool MapPointExists(const map::MapPoint * map_point) const ;
+  bool MapPointExists(const map::MapPoint * map_point) const;
   void ComputeBow();
   static void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
   bool BaselineIsNotEnough(const MonocularFrame * other) const;
   void FindNewMapPointMatches(MonocularFrame * keyframe, std::unordered_map<std::size_t, std::size_t> & out_matches);
   void CreateNewMpPoints(MonocularFrame * frame,
-                         const std::unordered_map<std::size_t, std::size_t> & matches);
-  optimization::edges::SE3ProjectXYZPose * CreateEdge(map::MapPoint * map_point, MonocularFrame * frame);
+                         const std::unordered_map<std::size_t, std::size_t> & matches,
+                         std::unordered_set<map::MapPoint *> & out_map_points);
+  static optimization::edges::SE3ProjectXYZPose * CreateEdge(map::MapPoint * map_point, MonocularFrame * frame);
   void ComputeMatches(MonocularFrame * reference_kf,
                       std::unordered_map<std::size_t, std::size_t> & out_matches,
                       bool self_keypoint_exists,

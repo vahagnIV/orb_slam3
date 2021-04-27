@@ -44,10 +44,10 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
       return TrackingResult::TRACK_LM_FAILED;
     }
   }
-  ComputeVelocity(frame, last_frame_);
+//  ComputeVelocity(frame, last_frame_);
 
   //TODO: Add keyframe if necessary
-  if (NeedNewKeyFrame()) {
+  if (NeedNewKeyFrame(frame)) {
     UpdateLocalMap(frame);
     frame->SearchLocalPoints(local_map_points_);
     if (local_mapper_.CreateNewMapPoints(frame)) {
@@ -58,14 +58,18 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
     atlas_->GetCurrentMap()->AddKeyFrame(frame);
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
+  ComputeVelocity(frame, last_frame_);
   last_frame_ = frame;
   return TrackingResult::OK;
 }
 
-bool Tracker::NeedNewKeyFrame() {
-  bool need = kf_counter >= 1;
+bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
+  std::unordered_set<map::MapPoint *> m;
+  frame->ListMapPoints(m);
+  bool need = kf_counter >= 1 && m.size() > 40;
   if (need)
     kf_counter = 0;
+
   return need;
 }
 

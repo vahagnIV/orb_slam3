@@ -147,6 +147,8 @@ class FrameBase : public Identifiable {
 
   virtual bool TrackWithMotionModel(FrameBase * last_keyframe) = 0;
 
+  const std::shared_ptr<features::IFeatureExtractor> & GetFeatureExtractor() const { return feature_extractor_; }
+
   /*!
    * Non-const getter for the covisibility graph
    * @return
@@ -172,7 +174,6 @@ class FrameBase : public Identifiable {
  */
   FrameBase * ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
                                  std::unordered_set<frame::FrameBase *> & out_frames) const;
-
 
   virtual void SearchLocalPoints(std::unordered_set<map::MapPoint *> & map_points) = 0;
 

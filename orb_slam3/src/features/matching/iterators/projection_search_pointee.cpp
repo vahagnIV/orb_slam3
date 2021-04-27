@@ -39,13 +39,14 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint * map_point,
   }
 
   TPoint3D local_pose = -pose->R.transpose() * pose->T;
-  TVector3D relative_frame_map_point = map_point_->GetPosition() - local_pose;
+  TVector3D relative_frame_map_point = local_pose - map_point_->GetPosition();
 
   track_view_cos_ = relative_frame_map_point.dot(map_point_->GetNormal()) / relative_frame_map_point.norm();
   if (track_view_cos_ < 0.5) {
     ++patchar3;
     return false;
   }
+  ++yndunvats;
 
   precision_t r = radius_multiplier_ ? radius_multiplier_ : RadiusByViewingCos(track_view_cos_);
   predicted_level_ = feature_extractor_->PredictScale(distance, map_point_->GetMaxInvarianceDistance());
