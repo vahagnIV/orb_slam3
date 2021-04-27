@@ -464,6 +464,7 @@ void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
     out_map_points.insert(map_point);
 
   }
+
 }
 
 void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_candidate_map_points) {
@@ -496,7 +497,6 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
   logging::RetrieveLogger()->debug("SLMP: Found {} matches for threshold 1.", matches.size());
   for (auto & match:matches) {
     AddMapPoint(match.first, match.second);
-
   }
 
   std::unordered_set<size_t> inliers;
@@ -509,6 +509,20 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
       ++mp_it;
     }
   }
+  logging::RetrieveLogger()->debug("SLMP: {} MPs after pose optimization ", map_points_.size());
+  std::stringstream ss;
+  ss << "SLMP: Local bundle adjustment. Pose after optimization\n";
+  ss << pose_.R << std::endl << pose_.T << std::endl;
+  logging::RetrieveLogger()->debug(ss.str());
+  cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
+  for (auto mp: map_points_) {
+    cv::circle(current_image,
+               cv::Point(features_.keypoints[mp.first].X(), features_.keypoints[mp.first].Y()),
+               3,
+               cv::Scalar(0, 255, 0));
+  }
+  cv::imshow("SLMP", current_image);
+  cv::waitKey(1);
 }
 
 optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoint * map_point, MonocularFrame * frame) {
@@ -633,8 +647,7 @@ bool MonocularFrame::FindNewMapPoints() {
   }
 
   std::stringstream ss;
-  ss << "TLM: Local bundle adjustment. Pose before optimization\n";
-  ss << pose_.R << std::endl << pose_.T << std::endl;
+  ss << "LM: Local bundle adjustment. Pose after optimization\n";
   ss << pose_.R << std::endl << pose_.T << std::endl;
   logging::RetrieveLogger()->debug(ss.str());
 

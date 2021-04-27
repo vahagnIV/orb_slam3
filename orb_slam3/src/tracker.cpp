@@ -45,17 +45,17 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
     }
   }
 //  ComputeVelocity(frame, last_frame_);
-
+  UpdateLocalMap(frame);
+  frame->SearchLocalPoints(local_map_points_);
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
-    UpdateLocalMap(frame);
-    frame->SearchLocalPoints(local_map_points_);
+
     if (local_mapper_.CreateNewMapPoints(frame)) {
 
       UpdateCovisibilityConnections();
       last_key_frame_ = frame;
+      atlas_->GetCurrentMap()->AddKeyFrame(frame);
     }
-    atlas_->GetCurrentMap()->AddKeyFrame(frame);
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
   ComputeVelocity(frame, last_frame_);
@@ -66,7 +66,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = kf_counter >= 1 && m.size() > 40;
+  bool need = kf_counter >= 2 && m.size() > 40;
   if (need)
     kf_counter = 0;
 
