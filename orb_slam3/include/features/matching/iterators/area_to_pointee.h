@@ -41,8 +41,8 @@ class AreaToPointee : public VectorFromPointee {
     features_from_->ListFeaturesInArea(features_to_->keypoints[id_].X(),
                                        features_to_->keypoints[id_].Y(),
                                        window_size_,
-                                       0,
-                                       0,
+                                       features_to_->keypoints[id_].level,
+                                       features_to_->keypoints[id_].level,
                                        from_indices_);
     end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), nullptr);
     begin_iterator_ = iterator(from_indices_.begin(), from_indices_.end(), &features_from_->descriptors);

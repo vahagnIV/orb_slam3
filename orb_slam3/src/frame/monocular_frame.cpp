@@ -64,7 +64,7 @@ bool MonocularFrame::Link(FrameBase * other) {
 
   MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other);
   features::matching::SNNMatcher matcher(0.9, 50);
-  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
+  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 150);
   features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
 
   std::unordered_map<std::size_t, std::size_t> matches;
@@ -82,7 +82,7 @@ bool MonocularFrame::Link(FrameBase * other) {
     return false;
   }
 
-  geometry::TwoViewReconstructor reconstructor(5, camera_->FxInv());
+  geometry::TwoViewReconstructor reconstructor(10, camera_->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   std::unordered_set<size_t> inliers;
   if (!reconstructor.Reconstruct(features_.undistorted_and_unprojected_keypoints,
@@ -131,8 +131,75 @@ bool MonocularFrame::Link(FrameBase * other) {
     logging::RetrieveLogger()->debug(ss.str());
   }
 #endif
+  std::unordered_set<map::MapPoint *> map_points;
 
-  optimization::BundleAdjustment({this, from_frame}, 20);
+  std::unordered_map<map::MapPoint *,
+                     std::unordered_set<MonocularFrame *>> inliers1;
+  std::unordered_set<FrameBase *> frames{this, from_frame};
+  std::unordered_set<FrameBase *> fixed;
+  ListMapPoints(map_points);
+  BundleAdjustment(frames,
+                   fixed,
+                   map_points,
+                   inliers1);
+//  optimization::BundleAdjustment({this, from_frame}, 20);
+
+
+  unsigned new_deleted = 0, old_deleted = 0, erased_new_connection = 0, erased_old_connection = 0;
+  for (auto map_point: map_points) {
+    auto observations = map_point->Observations();
+    for (auto obs: observations) {
+      auto frame = dynamic_cast<MonocularFrame *>(obs.first);
+      if (frames.find(frame) == frames.end())
+        continue;
+      size_t feature_id = obs.second;
+      if (inliers1.find(map_point) != inliers1.end() && inliers1[map_point].find(frame) != inliers1[map_point].end()) {
+        auto existing_map_point = frame->map_points_.find(feature_id);
+        if (existing_map_point == frame->map_points_.end()) {
+          frame->AddMapPoint(map_point, feature_id);
+        } else {
+          if (existing_map_point->second == map_point)
+            continue;
+          TPoint2D exiting_projection, new_projection;
+          frame->camera_->ProjectAndDistort(existing_map_point->second->GetPosition(), exiting_projection);
+          frame->camera_->ProjectAndDistort(map_point->GetPosition(), new_projection);
+          precision_t existing_distance = (frame->features_.keypoints[feature_id].pt - exiting_projection).norm();
+          precision_t new_distance = (frame->features_.keypoints[feature_id].pt - new_projection).norm();
+          if (map_point->Id() >= 0)
+            ++erased_new_connection;
+          else
+            ++erased_old_connection;
+          if (existing_distance > new_distance) {
+            frame->EraseMapPoint(feature_id);
+            existing_map_point->second->EraseObservation(frame);
+          } else
+            map_point->EraseObservation(frame);
+        }
+      } else {
+        frame->EraseMapPoint(feature_id);
+        map_point->EraseObservation(frame);
+      }
+    }
+  }
+
+  for (auto map_point: map_points) {
+    if (map_point->Observations().size() <= 1) {
+      for (auto frame: map_point->Observations()) {
+        dynamic_cast<MonocularFrame *>(frame.first)->EraseMapPoint(frame.second);
+      }
+      if (map_point->Id() >= 0)
+        ++new_deleted;
+      else
+        ++old_deleted;
+      delete map_point;
+    } else
+      map_point->Refresh(feature_extractor_);
+  }
+  logging::RetrieveLogger()->debug("Deleted {} new and {} old map points", new_deleted, old_deleted);
+  logging::RetrieveLogger()->debug("Erased {} new and {} old connections",
+                                   erased_new_connection,
+                                   erased_old_connection);
+
 #ifndef NDEBUG
   {
     std::stringstream ss;
@@ -587,13 +654,12 @@ bool MonocularFrame::FindNewMapPoints() {
   std::unordered_map<map::MapPoint *, std::unordered_set<MonocularFrame *>> inliers;
   BundleAdjustment(neighbour_keyframes, fixed_frames, existing_local_map_points, inliers);
 
-
   unsigned new_deleted = 0, old_deleted = 0, erased_new_connection = 0, erased_old_connection = 0;
   for (auto map_point: existing_local_map_points) {
     auto observations = map_point->Observations();
     for (auto obs: observations) {
       auto frame = dynamic_cast<MonocularFrame *>(obs.first);
-      if(neighbour_keyframes.find(frame) == neighbour_keyframes.end())
+      if (neighbour_keyframes.find(frame) == neighbour_keyframes.end())
         continue;
       size_t feature_id = obs.second;
       if (inliers.find(map_point) != inliers.end() && inliers[map_point].find(frame) != inliers[map_point].end()) {
@@ -601,14 +667,14 @@ bool MonocularFrame::FindNewMapPoints() {
         if (existing_map_point == frame->map_points_.end()) {
           frame->AddMapPoint(map_point, feature_id);
         } else {
-          if(existing_map_point->second == map_point)
+          if (existing_map_point->second == map_point)
             continue;
-           TPoint2D exiting_projection, new_projection;
+          TPoint2D exiting_projection, new_projection;
           frame->camera_->ProjectAndDistort(existing_map_point->second->GetPosition(), exiting_projection);
           frame->camera_->ProjectAndDistort(map_point->GetPosition(), new_projection);
           precision_t existing_distance = (frame->features_.keypoints[feature_id].pt - exiting_projection).norm();
           precision_t new_distance = (frame->features_.keypoints[feature_id].pt - new_projection).norm();
-          if(map_point->Id() >= min_new_map_point_id)
+          if (map_point->Id() >= min_new_map_point_id)
             ++erased_new_connection;
           else
             ++erased_old_connection;
@@ -625,24 +691,24 @@ bool MonocularFrame::FindNewMapPoints() {
     }
   }
 
-
   for (auto map_point: existing_local_map_points) {
     if (map_point->Observations().size() <= 1) {
-      for(auto frame: map_point->Observations()) {
+      for (auto frame: map_point->Observations()) {
         dynamic_cast<MonocularFrame *>(frame.first)->EraseMapPoint(frame.second);
       }
-      if(map_point->Id() >= min_new_map_point_id)
+      if (map_point->Id() >= min_new_map_point_id)
         ++new_deleted;
       else
         ++old_deleted;
       delete map_point;
-    }
-    else
+    } else
       map_point->Refresh(feature_extractor_);
   }
   logging::RetrieveLogger()->debug("Deleted {} new and {} old map points", new_deleted, old_deleted);
-  logging::RetrieveLogger()->debug("Erased {} new and {} old connections", erased_new_connection, erased_old_connection);
-  for(auto frame: neighbour_keyframes){
+  logging::RetrieveLogger()->debug("Erased {} new and {} old connections",
+                                   erased_new_connection,
+                                   erased_old_connection);
+  for (auto frame: neighbour_keyframes) {
     frame->CovisibilityGraph().Update();
   }
 
@@ -650,7 +716,6 @@ bool MonocularFrame::FindNewMapPoints() {
   ss << "LM: Local bundle adjustment. Pose after optimization\n";
   ss << pose_.R << std::endl << pose_.T << std::endl;
   logging::RetrieveLogger()->debug(ss.str());
-
 
   cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
   for (auto mp: map_points_) {
@@ -698,7 +763,7 @@ void MonocularFrame::BundleAdjustment(unordered_set<FrameBase *> & local_frames,
 
     for (const auto & observation: map_point->Observations()) {
       auto obs_frame = dynamic_cast<MonocularFrame *>(observation.first);
-      if(frame_map.find(obs_frame->Id()) == frame_map.end()){
+      if (frame_map.find(obs_frame->Id()) == frame_map.end()) {
         auto frame_vertex = obs_frame->CreatePoseVertex();
         frame_vertex->setFixed(true);
         frame_map[obs_frame->Id()] = obs_frame;
