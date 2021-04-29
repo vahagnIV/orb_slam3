@@ -49,7 +49,7 @@ bool ProjectionSearchPointee::SetMapPointAndCompute(map::MapPoint * map_point,
   ++yndunvats;
 
   precision_t r = radius_multiplier_ ? radius_multiplier_ : RadiusByViewingCos(track_view_cos_);
-  predicted_level_ = feature_extractor_->PredictScale(distance, map_point_->GetMaxInvarianceDistance());
+  predicted_level_ = feature_extractor_->PredictScale(distance, map_point_->GetMaxInvarianceDistance() / 1.2);
   window_size_ = r * feature_extractor_->GetScaleFactors()[predicted_level_];
 
   return true;
@@ -60,7 +60,7 @@ void ProjectionSearchPointee::InitializeIterators() {
   from_features_->ListFeaturesInArea(projected_.x(),
                                      projected_.y(),
                                      window_size_,
-                                     predicted_level_ - 1,
+                                     predicted_level_ -1,
                                      predicted_level_,
                                      from_indices_);
 
