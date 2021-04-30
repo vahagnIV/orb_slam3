@@ -37,6 +37,8 @@ set(ALL_TEST_SOURCE_FILES
         geometry/essential_estimator_tests.h
         geometry/general_geometry_tests.cpp
         geometry/general_geometry_tests.h
+        geometry/utils_tests.h
+        geometry/utils_tests.cpp
         geometry/test_utils.cpp
         geometry/test_utils.h)
 add_executable(orb_slam_unit_tests ${ALL_TEST_SOURCE_FILES})

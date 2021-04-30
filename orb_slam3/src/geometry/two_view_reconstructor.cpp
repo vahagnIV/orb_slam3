@@ -53,9 +53,8 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                         homography_inliers,
                                                         h_score);
 
-  std::cout << "Essential: \n" << essential << std::endl;
-  std::cout << "Homography: \n" << homography << std::endl;
-  if (h_score >= f_score) {
+  if (h_score > f_score) {
+    std::cout << "Homography: \n" << homography << std::endl;
     return homography_matrix_estimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,
@@ -64,6 +63,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                   out_points,
                                                  out_pose);
   }
+  std::cout << "Essential: \n" << essential << std::endl;
   return essential_matrix_estimator_.FindPose(essential,
                                               points_to,
                                               points_from,

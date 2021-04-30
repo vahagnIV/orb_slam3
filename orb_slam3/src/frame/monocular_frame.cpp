@@ -64,8 +64,8 @@ bool MonocularFrame::Link(FrameBase * other) {
 
   MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other);
   features::matching::SNNMatcher matcher(0.9, 50);
-  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 150);
-  features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
+  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 300);
+  features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 300);
 
   std::unordered_map<std::size_t, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
@@ -129,6 +129,24 @@ bool MonocularFrame::Link(FrameBase * other) {
     ss << pose_.R << std::endl << pose_.T << std::endl;
     logging::RetrieveLogger()->debug("LINKING: Frame {} position before BA:", Id());
     logging::RetrieveLogger()->debug(ss.str());
+  }
+
+  {
+
+      std::ofstream ofstream("map_points_befor_ba.bin", std::ios::binary | std::ios::out);
+
+      for (const auto & mp: GetMapPoints()) {
+        if (mp.second == nullptr)
+          continue;
+        orb_slam3::TPoint3D pose = mp.second->GetPosition();
+        ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
+        ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
+        ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
+        orb_slam3::TVector3D normal = mp.second->GetNormal();
+        ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
+        ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
+        ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
+      }
   }
 #endif
   std::unordered_set<map::MapPoint *> map_points;

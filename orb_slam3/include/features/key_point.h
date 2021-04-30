@@ -18,7 +18,7 @@ struct KeyPoint {
   TPoint2D pt;
   precision_t angle;
   precision_t size;
-  unsigned level;
+  int level;
 };
 
 }  // namespace map

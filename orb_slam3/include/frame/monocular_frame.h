@@ -49,6 +49,7 @@ class MonocularFrame : public FrameBase {
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
   bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
+  const std::map<size_t, map::MapPoint *> & GetMapPoints() const { return map_points_; };
   ~MonocularFrame();
   void SearchLocalPoints(unordered_set<map::MapPoint *> & map_points) override;
  protected:

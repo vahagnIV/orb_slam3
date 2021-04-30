@@ -23,10 +23,10 @@
 
 const float DEPTH_MAP_FACTOR = 1.0 / 5208.0;
 
-void LoadImages(const std::string &strAssociationFilename,
-                std::vector<std::string> &vstrImageFilenamesRGB,
-                std::vector<std::string> &vstrImageFilenamesD,
-                std::vector<double> &vTimestamps) {
+void LoadImages(const std::string & strAssociationFilename,
+                std::vector<std::string> & vstrImageFilenamesRGB,
+                std::vector<std::string> & vstrImageFilenamesD,
+                std::vector<double> & vTimestamps) {
   std::ifstream fAssociation;
   fAssociation.open(strAssociationFilename.c_str());
   while (!fAssociation.eof()) {
@@ -72,7 +72,7 @@ fileStorage["Camera.cy"].real(); intrinsic(2, 0) = 0; intrinsic(2, 1) = 0;
                                                  fileStorage["Camera.height"]);
 }
 */
-std::vector<std::string> ListDirectory(const std::string &path) {
+std::vector<std::string> ListDirectory(const std::string & path) {
   std::vector<std::string> out_files;
   boost::filesystem::path dir(path);
   boost::filesystem::directory_iterator it(path);
@@ -84,8 +84,8 @@ std::vector<std::string> ListDirectory(const std::string &path) {
 }
 
 void ReadImages(
-    const std::string &data_dir, std::vector<std::string> &filenames,
-    std::vector<std::chrono::system_clock::time_point> &timestamps) {
+    const std::string & data_dir, std::vector<std::string> & filenames,
+    std::vector<std::chrono::system_clock::time_point> & timestamps) {
 
   std::string row;
   std::ifstream is(data_dir + "/../data.csv");
@@ -105,7 +105,7 @@ void ReadImages(
   }
 }
 
-cv::Mat FromEigen(const orb_slam3::TImageGray &eigen_mat) {
+cv::Mat FromEigen(const orb_slam3::TImageGray & eigen_mat) {
   cv::Mat cv_mat(eigen_mat.rows(), eigen_mat.cols(), CV_8U);
 
   for (size_t i = 0; i < cv_mat.rows; i++) {
@@ -117,7 +117,7 @@ cv::Mat FromEigen(const orb_slam3::TImageGray &eigen_mat) {
   return cv_mat;
 }
 
-orb_slam3::TImageGray8U FromCvMat(const cv::Mat &cv_mat) {
+orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
   orb_slam3::TImageGray8U eigen_mat;
   eigen_mat.resize(cv_mat.rows, cv_mat.cols);
   memcpy(eigen_mat.data(), cv_mat.data, cv_mat.total());
@@ -130,7 +130,7 @@ orb_slam3::TImageGray8U FromCvMat(const cv::Mat &cv_mat) {
   return eigen_mat;
 }
 
-void TestMonocular(const std::string &data_dit, const std::string &vocabulary_file) {
+void TestMonocular(const std::string & data_dit, const std::string & vocabulary_file) {
 
   const std::string data =
       data_dit + "/mav0/cam0/data";
@@ -143,7 +143,6 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImages(data, filenames, timestamps);
-
 
   std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
       std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
@@ -185,25 +184,25 @@ void TestMonocular(const std::string &data_dit, const std::string &vocabulary_fi
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[k]);
     auto eigen = FromCvMat(image);
     auto frame =
-         new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
-                                                           extractor, filenames[k], camera, &voc);
+        new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
+                                             extractor, filenames[k], camera, &voc);
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);
-    std::this_thread::sleep_for(std::chrono::milliseconds (20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
     cv::imshow("im", image);
     cv::waitKey(0);
 //    cv::waitKey();
   }
 }
 
-cv::DMatch ToCvMatch(const orb_slam3::features::Match &match) {
+cv::DMatch ToCvMatch(const orb_slam3::features::Match & match) {
   return cv::DMatch(match.to_idx, match.from_idx, 0);
   return cv::DMatch(match.from_idx, match.to_idx, 0);
 }
 
-std::vector<cv::DMatch> ToCvMatches(const std::vector<orb_slam3::features::Match> &match,
-                                    const std::vector<bool> &inliers) {
+std::vector<cv::DMatch> ToCvMatches(const std::vector<orb_slam3::features::Match> & match,
+                                    const std::vector<bool> & inliers) {
   std::vector<cv::DMatch> result;
   for (size_t i = 0; i < match.size(); ++i) {
     if (inliers[i])
@@ -213,7 +212,7 @@ std::vector<cv::DMatch> ToCvMatches(const std::vector<orb_slam3::features::Match
 
 }
 
-cv::KeyPoint ToCvKeypoint(const orb_slam3::features::KeyPoint &keypoint) {
+cv::KeyPoint ToCvKeypoint(const orb_slam3::features::KeyPoint & keypoint) {
   return cv::KeyPoint(keypoint.X(), keypoint.Y(), keypoint.size, keypoint.angle, 0, keypoint.level, -1);
 }
 /*
@@ -243,7 +242,7 @@ cv::Mat DrawMatches(std::shared_ptr<orb_slam3::frame::MonocularFrame> &frame, cv
   return out;
 }
 */
-/*
+
 void TestDrawMonocular(std::string original) {
 
   const std::string vocabulary =
@@ -291,9 +290,9 @@ void TestDrawMonocular(std::string original) {
   cv::waitKey(1);
 
   auto eigen = FromCvMat(image);
-  std::shared_ptr<orb_slam3::frame::MonocularFrame> frame =
-      std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, std::chrono::system_clock::now(),
-                                                         extractor, im1_name, camera, nullptr);
+  orb_slam3::frame::MonocularFrame * frame =
+      new orb_slam3::frame::MonocularFrame(eigen, std::chrono::system_clock::now(),
+                                           extractor, im1_name, camera, nullptr);
   frame->InitializeIdentity();
 
   for (size_t k = 100; k < 200; ++k) {
@@ -312,7 +311,7 @@ void TestDrawMonocular(std::string original) {
     if (frame_o->Link(frame)) {
       std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);
 
-      for (const auto &mp: frame_o->MapPoints()) {
+      for (const auto & mp: frame_o->GetMapPoints()) {
         if (mp.second == nullptr)
           continue;
         orb_slam3::TPoint3D pose = mp.second->GetPosition();
@@ -325,34 +324,31 @@ void TestDrawMonocular(std::string original) {
         ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
       }
 
-      orb_slam3::optimization::BundleAdjustment(std::vector<orb_slam3::frame::FrameBase *>{frame.get(), frame_o.get()},
-                                                20);
-
-      std::ofstream ofstream1("map_points.bin_ba", std::ios::binary | std::ios::out);
-
-      for (const auto &mp: frame_o->MapPoints()) {
-        if (!mp.second)
-          continue;
-        orb_slam3::TPoint3D pose = mp.second->GetPosition();
-        ofstream1.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
-        ofstream1.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
-        ofstream1.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
-        orb_slam3::TVector3D normal = mp.second->GetNormal();
-        ofstream1.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
-        ofstream1.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
-        ofstream1.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
-      }
+//      std::ofstream ofstream1("map_points.bin_ba", std::ios::binary | std::ios::out);
+//
+//      for (const auto & mp: frame_o->GetMapPoints()) {
+//        if (!mp.second)
+//          continue;
+//        orb_slam3::TPoint3D pose = mp.second->GetPosition();
+//        ofstream1.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
+//        ofstream1.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
+//        ofstream1.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
+//        orb_slam3::TVector3D normal = mp.second->GetNormal();
+//        ofstream1.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
+//        ofstream1.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
+//        ofstream1.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
+//      }
 
       ofstream.close();
-      ofstream1.close();
-      cv::imshow("matches", DrawMatches(frame_o, image_o, image));
-      cv::waitKey();
+//      ofstream1.close();
+//      cv::imshow("matches", DrawMatches(frame_o, image_o, image));
+//      cv::waitKey();
 
       return;
     }
   }
 
-}*/
+}
 
 typedef struct { orb_slam3::TMatrix33 R; orb_slam3::TVector3D T; } Solution;
 
@@ -372,7 +368,7 @@ void CompareSharedPointerInitializationAndCopyTime() {
   std::cout << "Creating shared_ptrs" << std::endl;
   std::chrono::high_resolution_clock::time_point shared_ptr_sart = std::chrono::high_resolution_clock::now();
   for (size_t j = 0; j < N; ++j) {
-    map_point_shared_ptrs[j] = std::make_shared<orb_slam3::map::MapPoint>(random_points[j],0,0);
+    map_point_shared_ptrs[j] = std::make_shared<orb_slam3::map::MapPoint>(random_points[j], 0, 0);
   }
   std::chrono::high_resolution_clock::time_point shared_ptr_end = std::chrono::high_resolution_clock::now();
   std::chrono::nanoseconds
@@ -382,7 +378,7 @@ void CompareSharedPointerInitializationAndCopyTime() {
 
   std::chrono::high_resolution_clock::time_point ptr_sart = std::chrono::high_resolution_clock::now();
   for (size_t j = 0; j < N; ++j) {
-    map_point_ptrs[j] = new orb_slam3::map::MapPoint(random_points[j],0,0);
+    map_point_ptrs[j] = new orb_slam3::map::MapPoint(random_points[j], 0, 0);
   }
   std::chrono::high_resolution_clock::time_point ptr_end = std::chrono::high_resolution_clock::now();
 
@@ -426,7 +422,7 @@ void TestFundamental() {
   std::cout << p2.dot(F * p1) << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char * argv[]) {
 //  cv::theRNG().state = 0;
   orb_slam3::logging::Initialize();
 //  TestFundamental();
@@ -447,7 +443,7 @@ int main(int argc, char *argv[]) {
 //  Triangulate(s, pt1,pt2, point_triangulated1);
 //  Triangulate(s, pt2, pt1, point_triangulated2);
 
-//  TestDrawMonocular(std::string(argv[1]));
+  TestDrawMonocular(std::string(argv[1]));
 
   TestMonocular(std::string(argv[1]), std::string(argv[2]));
 

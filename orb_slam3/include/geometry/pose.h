@@ -26,6 +26,12 @@ struct Pose {
     return R * point + T;
   }
 
+
+  friend std::ostream & operator<<(std::ostream & stream, const Pose & p) {
+    stream << p.R << std::endl << p.T << std::endl;
+    return stream;
+  }
+
   TMatrix33 R;
   TVector3D T;
 };
