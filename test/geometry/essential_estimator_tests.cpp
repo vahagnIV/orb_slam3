@@ -90,7 +90,7 @@ TEST_F(EssentialEstimatorTests, AAA) {
   }
 
   geometry::Pose pose;
-  pose.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 3, M_PI / 180 * 4, M_PI / 180 * 5);
+  pose.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 10, M_PI / 180 * 4, M_PI / 180 * 5);
   pose.T = TVector3D{0.7, 1.2, 0.7};
 
   std::unordered_map<std::size_t, std::size_t> matches;
@@ -128,9 +128,6 @@ TEST_F(EssentialEstimatorTests, AAA) {
 
   precision_t s = E(0, 0) * gt_E(0, 0) < 0 ? -1 : 1;
 
-  std::cout << E << std::endl;
-  std::cout << gt_E << std::endl;
-
   ASSERT_TRUE((s * E - gt_E).norm() < 1e-10);
 
   std::unordered_set<std::size_t> inliers3d;
@@ -144,16 +141,16 @@ TEST_F(EssentialEstimatorTests, AAA) {
                              triangulated,
                              estimated_pose);
 
-  ASSERT_TRUE((pose.R - estimated_pose.R).norm() < 1e-12);
+  ASSERT_TRUE((pose.R - estimated_pose.R).norm() < 1e-11);
 
   estimated_pose.T *= pose.T.norm() / estimated_pose.T.norm();
-  ASSERT_TRUE((estimated_pose.T - pose.T).norm() < 1e-8);
+  ASSERT_TRUE((estimated_pose.T - pose.T).norm() < 1e-11);
 
   for (auto match: matches) {
     if (inliers3d.find(match.first) == inliers3d.end())
       continue;
     triangulated[match.first] *= gt_points[match.second].norm() / triangulated[match.first].norm();
-    ASSERT_TRUE((triangulated[match.first] - gt_points[match.second]).norm() < 1e-9);
+    ASSERT_TRUE((triangulated[match.first] - gt_points[match.second]).norm() < 1e-11);
   }
 
 }

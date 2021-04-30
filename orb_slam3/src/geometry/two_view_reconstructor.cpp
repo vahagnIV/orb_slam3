@@ -53,7 +53,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                         homography_inliers,
                                                         h_score);
 
-  if (h_score > f_score) {
+  if (false) {
     std::cout << "Homography: \n" << homography << std::endl;
     return homography_matrix_estimator_.FindPose(homography,
                                                  points_to,
@@ -63,7 +63,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                   out_points,
                                                  out_pose);
   }
-  std::cout << "Essential: \n" << essential << std::endl;
+//  std::cout << "Essential: \n" << essential << std::endl;
   return essential_matrix_estimator_.FindPose(essential,
                                               points_to,
                                               points_from,
@@ -90,7 +90,7 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
     size_t prev = 0;
     for (unsigned j = 0; j < out_result[subset_count].size(); ++j) {
       assert(matches.size() > out_result[subset_count][j]);
-      b = std::next(b, out_result[subset_count][j] - prev);
+      std::advance(b, out_result[subset_count][j] - prev);
       prev = out_result[subset_count][j];
       out_result[subset_count][j] = b->first;
     }

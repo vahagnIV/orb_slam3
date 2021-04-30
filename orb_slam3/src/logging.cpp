@@ -21,9 +21,9 @@ const std::string LOGGER_NAME = "logger";
 //  logger->set_level(spdlog::level::debug);
 //}
 void Initialize() {
-  spdlog::rotating_logger_st(LOGGER_NAME, "log.txt", 10 * 1024 * 1024, 10)->set_level(spdlog::level::debug);
-  spdlog::get(LOGGER_NAME)->flush_on(spdlog::level::debug);
-//  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
+//  spdlog::rotating_logger_st(LOGGER_NAME, "log.txt", 10 * 1024 * 1024, 10)->set_level(spdlog::level::debug);
+//  spdlog::get(LOGGER_NAME)->flush_on(spdlog::level::debug);
+  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
 //  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
 }
 

@@ -66,10 +66,6 @@ bool TransfromationEstimatorBase::FindCorrectPose(const std::vector<Pose> & cand
                                                   std::unordered_set<std::size_t> & out_inliers,
                                                   std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                                   Pose & out_pose) const {
-  for(auto candidate_solution: candidate_solutions){
-    std::cout << candidate_solution << std::endl;
-  }
-
   size_t best_count = 0, second_best_count = 0;
   precision_t best_parallax = -1;
   for (const auto & candidate : candidate_solutions) {
