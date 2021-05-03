@@ -15,7 +15,6 @@
 #include <camera/kannala_brandt_5.h>
 #include <camera/fish_eye.h>
 #include <random>
-#include <optimization/bundle_adjustment.h>
 #include <local_mapper.h>
 #include <geometry/utils.h>
 #include <geometry/essential_matrix_estimator.h>

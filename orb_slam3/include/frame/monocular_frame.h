@@ -44,8 +44,6 @@ class MonocularFrame : public FrameBase {
   const features::Features & GetFeatures() const { return features_; }
 
   // ==== Monocular ====
-  void AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) override;
-  void CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) override;
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
   bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;

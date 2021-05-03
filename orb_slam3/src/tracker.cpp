@@ -6,7 +6,6 @@
 
 #include "tracker.h"
 #include <constants.h>
-#include <optimization/bundle_adjustment.h>
 #include <logging.h>
 
 namespace orb_slam3 {

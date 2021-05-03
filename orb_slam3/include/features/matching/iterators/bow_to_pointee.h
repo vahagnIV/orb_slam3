@@ -45,6 +45,7 @@ class BowToPointee {
     begin_iterator_ = iterator(feature_vector_from_->at(bow_id).begin(),
                                feature_vector_from_->at(bow_id).end(),
                                &features_from_->descriptors, from_map_points_, map_points_exist_);
+
     end_iterator_ = iterator(feature_vector_from_->at(bow_id).end(),
                              feature_vector_from_->at(bow_id).end(),
                              &features_from_->descriptors, from_map_points_, map_points_exist_);

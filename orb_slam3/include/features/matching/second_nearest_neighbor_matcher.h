@@ -12,30 +12,34 @@
 #include <features/features.h>
 #include <features/ifeature_extractor.h>
 #include <features/match.h>
-#include <features/matching/validators/iindex_validator.h>
-#include <features/matching/validators/imatch_result_validator.h>
+#include <features/matching/validators/imatch_validator.h>
 
 namespace orb_slam3 {
 namespace features {
 namespace matching {
 
+template<typename IteratorType>
 class SNNMatcher {
  public:
-  SNNMatcher(const precision_t nearest_neighbour_ratio, const unsigned threshold) : nearest_neighbour_ratio_(
-      nearest_neighbour_ratio), THRESHOLD_(threshold) {}
+  typedef std::unordered_map<typename IteratorType::value_type::id_type,
+                             typename IteratorType::value_type::iterator::value_type::id_type> MatchMapType;
+  typedef typename IteratorType::value_type::iterator::value_type::id_type FromIdType;
+  typedef typename IteratorType::value_type::id_type ToIdType;
+  typedef typename validators::IMatchValidator<ToIdType, FromIdType> ValidatorType;
 
-  template<typename IteratorTo>
-  void MatchWithIteratorV2(IteratorTo to_begin,
-                           IteratorTo to_end,
+  SNNMatcher(const precision_t nearest_neighbour_ratio, const unsigned threshold) :
+      nearest_neighbour_ratio_(nearest_neighbour_ratio),
+      THRESHOLD_(threshold) {}
+
+  void MatchWithIteratorV2(IteratorType to_begin,
+                           IteratorType to_end,
                            IFeatureExtractor * feature_extractor,
-                           std::unordered_map<typename IteratorTo::value_type::id_type,
-                                              typename IteratorTo::value_type::iterator::value_type::id_type> & out_matches) {
-    typedef typename IteratorTo::value_type::iterator::value_type::id_type FromIdType;
-    typedef typename IteratorTo::value_type::id_type ToIdType;
+                           MatchMapType & out_matches) {
+
     std::unordered_map<FromIdType, ToIdType> matches_from_to;
     std::unordered_map<FromIdType, unsigned> best_distances_from;
 
-    typename IteratorTo::value_type::iterator from_best_it;
+    typename IteratorType::value_type::iterator from_best_it;
 
     for (auto it_to = to_begin; it_to != to_end; ++it_to) {
       unsigned best_distance = std::numeric_limits<unsigned>::max(),
@@ -44,6 +48,16 @@ class SNNMatcher {
       for (auto it_from = it_to->begin(), it_from_end = it_to->end(); it_from != it_from_end; ++it_from) {
         DescriptorType d2 = it_from->GetDescriptor();
         unsigned distance = feature_extractor->ComputeDistance(d1, d2);
+        if (distance > THRESHOLD_)
+          continue;
+        bool validator_pass = true;
+        for (auto val: validators_)
+          if (!val->Validate(it_to->GetId(), it_from->GetId())) {
+            validator_pass = false;
+            break;
+          }
+        if (!validator_pass)
+          continue;
         if (distance < best_distance) {
           from_best_it = it_from;
           second_best_distance = best_distance;
@@ -51,7 +65,7 @@ class SNNMatcher {
         } else if (distance < second_best_distance)
           second_best_distance = distance;
       }
-      if (best_distance < THRESHOLD_ && best_distance < nearest_neighbour_ratio_ * second_best_distance) {
+      if (best_distance < nearest_neighbour_ratio_ * second_best_distance) {
         typename decltype(best_distances_from)::iterator best_dist_it = best_distances_from.find(from_best_it->GetId());
         if (best_dist_it != best_distances_from.end()) {
           if (best_dist_it->second > best_distance) {
@@ -74,9 +88,14 @@ class SNNMatcher {
     }
   }
 
+  void AddValidator(ValidatorType * validator) {
+    validators_.push_back(validator);
+  }
+
  private:
   const precision_t nearest_neighbour_ratio_;
   const unsigned THRESHOLD_;
+  std::vector<ValidatorType *> validators_;
 };
 
 }

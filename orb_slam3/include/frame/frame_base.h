@@ -125,19 +125,6 @@ class FrameBase : public Identifiable {
   const geometry::Pose * GetInversePose() const { return &inverse_pose_; }
 
   /*!
-   * Append necessary vertices and edges for BA
-   * @param optimizer the g2o::Sparseoptimizer
-   * @param next_id The nonce that is used to assign ids to the g2o objects
-   */
-  virtual void AppendToOptimizerBA(g2o::SparseOptimizer & optimizer, size_t & next_id) = 0;
-
-  /*!
-   * Collect the optimized values from the optimizer
-   * @param optimizer
-   */
-  virtual void CollectFromOptimizerBA(g2o::SparseOptimizer & optimizer) = 0;
-
-  /*!
    * Restores the position of the current frame with comparison to the reference keyframe.
    * Leves reference_keyframe untouches on fail.
    * @param reference_keyframe The reference keyframe
