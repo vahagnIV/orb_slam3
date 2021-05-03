@@ -33,9 +33,9 @@ class MapPoint : public Identifiable {
    * @param frame The frame
    * @param feature_id The id of the corresponding keypoint withing the frame
    */
-  void AddObservation(frame::FrameBase *frame, size_t feature_id);
+  void AddObservation(frame::FrameBase * frame, size_t feature_id);
 
-  void EraseObservation(frame::FrameBase *frame);
+  void EraseObservation(frame::FrameBase * frame);
 
   void Refresh(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
 
@@ -51,7 +51,11 @@ class MapPoint : public Identifiable {
   MapType & Observations() { return observations_; }
   bool IsValid() const { return true; }
 
-  g2o::VertexPointXYZ *CreateVertex() const;
+  g2o::VertexPointXYZ * CreateVertex() const;
+  void IncreaseVisible() { ++visible_; }
+  void IncreaseFound() { ++found_; }
+  unsigned GetVisible() const { return visible_; }
+  unsigned GetFound() const { return found_; }
 
  private:
   void ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
@@ -66,6 +70,8 @@ class MapPoint : public Identifiable {
   TVector3D normal_;
   precision_t max_invariance_distance_;
   precision_t min_invariance_distance_;
+  unsigned visible_;
+  unsigned found_;
 
 };
 

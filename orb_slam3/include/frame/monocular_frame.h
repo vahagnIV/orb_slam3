@@ -10,7 +10,7 @@
 
 // == orb-slam3 ===
 #include <frame/frame_base.h>
-#include <frame/frame_link.h>
+#include <frame/visible_map_point.h>
 #include <camera/monocular_camera.h>
 #include <features/bow_vocabulary.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
@@ -40,7 +40,7 @@ class MonocularFrame : public FrameBase {
                                std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
   TVector3D GetNormal(const TVector3D & point) const override;
   bool TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) override;
-  bool TrackWithMotionModel(FrameBase * last_keyframe) override;
+  bool FindNewMapPointsAndAdjustPosition(const std::unordered_set<map::MapPoint *> & map_points) override;
   const features::Features & GetFeatures() const { return features_; }
 
   // ==== Monocular ====
@@ -57,15 +57,26 @@ class MonocularFrame : public FrameBase {
                                std::unordered_set<FrameBase *> & fixed_frames,
                                std::unordered_set<map::MapPoint *> & map_points,
                                std::unordered_map<map::MapPoint *, std::unordered_set<MonocularFrame *>> & out_inliers);
+
   inline void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
+
   inline std::map<size_t, map::MapPoint *>::iterator EraseMapPoint(std::map<size_t, map::MapPoint *>::iterator it) {
-//    std::cout <<"Erase by iterator: Frame: " << this->Id() << " FeatureId: " << it->first << std::endl;
     return map_points_.erase(it);
   }
-  inline void EraseMapPoint(size_t feature_id) {
-//    std::cout <<"Erase by feature id: Frame: " << this->Id() << " FeatureId: " << feature_id << std::endl;
-    map_points_.erase(feature_id);
-  }
+
+  inline bool IsVisible(map::MapPoint * map_point,
+                        VisibleMapPoint & out_map_point,
+                        precision_t radius_multiplier = 1,
+                        unsigned window_size = 0) const;
+
+  void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> map_points,
+                              std::list<VisibleMapPoint> & out_filetered_map_points,
+                              precision_t radius_multiplier = 1,
+                              unsigned window_size = 0) const;
+
+  void FindCandidateMapPointMatchesByProjection(const std::list<VisibleMapPoint> & filtered_map_points,
+                                                std::unordered_map<map::MapPoint *, std::size_t> & out_matches);
+  inline void EraseMapPoint(size_t feature_id) { map_points_.erase(feature_id); }
   bool MapPointExists(const map::MapPoint * map_point) const;
   void ComputeBow();
   static void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
@@ -80,6 +91,13 @@ class MonocularFrame : public FrameBase {
                       bool self_keypoint_exists,
                       bool reference_kf_keypoint_exists);
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const override;
+  template<typename T>
+  void SetDiff(const std::unordered_set<T> & set1, const std::unordered_set<T> & set2, std::unordered_set<T> & result){
+    for (auto & elem: set1) {
+      if(set2.find(elem) == set2.end())
+        result.insert(elem);
+    }
+  }
  protected:
 
   features::Features features_;

@@ -86,6 +86,7 @@ add_library(orbslam SHARED
         include/frame/frame_type.h
         include/frame/frame_link.h
         include/frame/covisibility_graph_node.h
+        include/frame/visible_map_point.h
 
         include/features/key_point.h
         include/features/orb_feature_extractor.h

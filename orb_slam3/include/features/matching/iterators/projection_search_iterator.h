@@ -10,6 +10,7 @@
 
 // === orb_slam3 ===
 #include "projection_search_pointee.h"
+#include <frame/visible_map_point.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -20,15 +21,10 @@ class ProjectionSearchIterator {
  public:
   typedef ProjectionSearchPointee::id_type id_type;
   typedef ProjectionSearchPointee value_type;
-  ProjectionSearchIterator(std::unordered_set<map::MapPoint *>::iterator begin,
-                           std::unordered_set<map::MapPoint *>::iterator end,
-                           const std::unordered_set<map::MapPoint *> * to_map_points,
-                           const std::map<std::size_t, map::MapPoint *> * from_map_points,
+  ProjectionSearchIterator(std::list<frame::VisibleMapPoint>::const_iterator begin,
+                           std::list<frame::VisibleMapPoint>::const_iterator end,
                            const Features * from_features,
-                           const geometry::Pose * pose,
-                           const camera::MonocularCamera * camera,
-                           const IFeatureExtractor * feature_extractor,
-                           unsigned radius_multiplier = 0);
+                           const std::map<std::size_t, map::MapPoint *> * from_map_points);
 
   const ProjectionSearchPointee & operator*() const { return pointee_; }
   ProjectionSearchPointee & operator*() { return pointee_; }
@@ -43,12 +39,8 @@ class ProjectionSearchIterator {
     return a.it_ != b.it_;
   }
  private:
-  void AdvanceIteratorUntilGood();
-  std::unordered_set<map::MapPoint *>::iterator it_;
-  std::unordered_set<map::MapPoint *>::iterator end_;
-  const std::unordered_set<map::MapPoint *> * to_map_points_;
-  const geometry::Pose * pose_;
-  const camera::MonocularCamera * camera_;
+  std::list<frame::VisibleMapPoint>::const_iterator it_;
+  std::list<frame::VisibleMapPoint>::const_iterator end_;
   ProjectionSearchPointee pointee_;
 
 };

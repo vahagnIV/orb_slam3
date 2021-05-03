@@ -30,22 +30,28 @@ void Tracker::UpdateLocalPoints() {
   }
 }
 
+bool Tracker::TrackWithMotionModel(FrameBase * frame) {
+  std::unordered_set<map::MapPoint *> all_candidate_map_points;
+  PredictAndSetNewFramePosition(frame);
+  last_frame_->ListMapPoints(all_candidate_map_points);
+  return frame->FindNewMapPointsAndAdjustPosition(all_candidate_map_points);
+}
+
 TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 
   assert(OK == state_);
-  PredictAndSetNewFramePosition(frame);
 
-  if (!frame->TrackWithMotionModel(last_frame_)) {
+
+  if (!TrackWithMotionModel(frame)) {
     frame->SetPosition(*last_frame_->GetPose());
     if (!frame->TrackWithReferenceKeyFrame(reference_keyframe_)) {
       logging::RetrieveLogger()->info("tracking failed");
       delete frame;
 //      exit(1);
-      return TrackingResult::TRACK_LM_FAILED;
+      return TrackingResult::TRACKING_FAILED;
     }
   }
-//  ComputeVelocity(frame, last_frame_);
-  UpdateLocalMap(last_key_frame_);
+  UpdateLocalMap(frame);
   frame->SearchLocalPoints(local_map_points_);
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
@@ -66,7 +72,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = kf_counter >= 1000;// && m.size() > 40;
+  bool need = kf_counter >= 4;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 

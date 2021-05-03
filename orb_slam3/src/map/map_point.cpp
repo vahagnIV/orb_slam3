@@ -13,10 +13,12 @@ MapPoint::MapPoint(const TPoint3D & point, precision_t max_invariance_distance, 
     : Identifiable(),
       position_(point),
       max_invariance_distance_(max_invariance_distance),
-      min_invariance_distance_(min_invariance_distance) {
+      min_invariance_distance_(min_invariance_distance),
+      visible_(0),
+      found_(0) {
 }
 
-void MapPoint::AddObservation(frame::FrameBase *frame, size_t feature_id) {
+void MapPoint::AddObservation(frame::FrameBase * frame, size_t feature_id) {
 //  for (auto & obs : observations_) {
 //    obs.first->CovisibilityGraph().AddConnection(frame);
 //    frame->CovisibilityGraph().AddConnection(obs.first);
@@ -24,7 +26,7 @@ void MapPoint::AddObservation(frame::FrameBase *frame, size_t feature_id) {
   observations_[frame] = feature_id;
 }
 
-void MapPoint::EraseObservation(frame::FrameBase *frame) {
+void MapPoint::EraseObservation(frame::FrameBase * frame) {
 //  for (auto & obs : observations_) {
 //    obs.first->CovisibilityGraph().RemoveConnection(frame);
 //    frame->CovisibilityGraph().RemoveConnection(obs.first);
@@ -82,7 +84,7 @@ void MapPoint::SetPosition(const TPoint3D & position) {
   position_ = position;
 }
 
-g2o::VertexPointXYZ *MapPoint::CreateVertex() const {
+g2o::VertexPointXYZ * MapPoint::CreateVertex() const {
   auto mp = new g2o::VertexPointXYZ();
   mp->setId(Id());
   mp->setMarginalized(true);

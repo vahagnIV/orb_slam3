@@ -145,7 +145,7 @@ class FrameBase : public Identifiable {
    */
   virtual bool TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) = 0;
 
-  virtual bool TrackWithMotionModel(FrameBase * last_keyframe) = 0;
+  virtual bool FindNewMapPointsAndAdjustPosition(const std::unordered_set<map::MapPoint *> & map_points) = 0;
 
   const std::shared_ptr<features::IFeatureExtractor> & GetFeatureExtractor() const { return feature_extractor_; }
 

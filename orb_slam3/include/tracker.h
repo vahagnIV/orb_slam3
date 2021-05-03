@@ -55,6 +55,7 @@ class Tracker : public Observer<frame::FrameBase*>,
   void UpdateLocalKeyFrames( frame::FrameBase * current_frame);
   void UpdateLocalPoints();
   void UpdateCovisibilityConnections();
+  bool TrackWithMotionModel(FrameBase * frame);
 
   bool NeedNewKeyFrame(frame::FrameBase * frame);
  private:

@@ -149,7 +149,6 @@ bool MonocularFrame::Link(FrameBase * other) {
     }
   }
 
-
 #endif
   std::unordered_set<map::MapPoint *> map_points;
 
@@ -254,7 +253,7 @@ bool MonocularFrame::Link(FrameBase * other) {
 }
 
 void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
-                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const{
+                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const {
   out_descriptor_ptr.emplace_back(features_.descriptors.row(feature_id));
 
 }
@@ -575,31 +574,14 @@ void MonocularFrame::CreateNewMpPoints(MonocularFrame * keyframe,
 }
 
 void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_candidate_map_points) {
-  std::unordered_set<map::MapPoint *> current_frame_map_points;
+  std::unordered_set<map::MapPoint *> current_frame_map_points, all_map_points_except_locals;
   this->ListMapPoints(current_frame_map_points);
+  SetDiff(all_candidate_map_points, current_frame_map_points, all_map_points_except_locals);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
-  features::matching::iterators::ProjectionSearchIterator begin
-      (all_candidate_map_points.begin(),
-       all_candidate_map_points.end(),
-       &current_frame_map_points,
-       &map_points_,
-       &features_,
-       &pose_,
-       camera_.get(),
-       feature_extractor_.get(), 3);
-
-  features::matching::iterators::ProjectionSearchIterator end
-      (all_candidate_map_points.end(),
-       all_candidate_map_points.end(),
-       &current_frame_map_points,
-       &map_points_,
-       &features_,
-       &pose_,
-       camera_.get(),
-       feature_extractor_.get(), 3);
-
+  std::list<VisibleMapPoint> candidate_map_points;
+  FilterVisibleMapPoints(all_map_points_except_locals, candidate_map_points);
+  FindCandidateMapPointMatchesByProjection(candidate_map_points, matches);
   features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
-  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
 
   logging::RetrieveLogger()->debug("SLMP: Found {} matches for threshold 1.", matches.size());
   for (auto & match:matches) {
@@ -612,10 +594,15 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
     if (inliers.find(mp_it->first) == inliers.end()) {
       mp_it = EraseMapPoint(mp_it);
     } else {
+      if(all_map_points_except_locals.find(mp_it->second) != all_map_points_except_locals.end())
+        mp_it->second->IncreaseFound();
       mp_it->second->AddObservation(this, mp_it->first);
+      mp_it->second->Refresh(feature_extractor_);
       ++mp_it;
     }
   }
+
+#ifndef NDEBUG
   logging::RetrieveLogger()->debug("SLMP: {} MPs after pose optimization ", map_points_.size());
   std::stringstream ss;
   ss << "SLMP: Local bundle adjustment. Pose after optimization\n";
@@ -630,6 +617,7 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
   }
   cv::imshow("SLMP", current_image);
   cv::waitKey(1);
+#endif
 }
 
 optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoint * map_point, MonocularFrame * frame) {
@@ -770,6 +758,54 @@ bool MonocularFrame::FindNewMapPoints() {
   return map_points_.size() > 10;
 }
 
+bool MonocularFrame::IsVisible(map::MapPoint * map_point,
+                               VisibleMapPoint & out_map_point,
+                               precision_t radius_multiplier,
+                               unsigned window_size) const {
+  out_map_point.map_point = map_point;
+  HomogenousPoint map_point_in_local_cf = pose_.Transform(map_point->GetPosition());
+  precision_t distance = map_point_in_local_cf.norm();
+
+  if (distance < map_point->GetMinInvarianceDistance()
+      || distance > map_point->GetMaxInvarianceDistance()) {
+    return false;
+  }
+
+  camera_->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
+  if (!camera_->IsInFrustum(out_map_point.position)) {
+    return false;
+  }
+
+  TPoint3D local_pose = inverse_pose_.T;
+  TVector3D relative_frame_map_point = local_pose - map_point->GetPosition();
+
+  precision_t track_view_cos = relative_frame_map_point.dot(map_point->GetNormal()) / relative_frame_map_point.norm();
+  if (track_view_cos < 0.5) {
+    return false;
+  }
+
+  out_map_point.level = feature_extractor_->PredictScale(distance, map_point->GetMaxInvarianceDistance() / 1.2);
+  if (window_size) {
+    out_map_point.window_size = window_size;
+  } else {
+    precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
+    out_map_point.window_size = r * feature_extractor_->GetScaleFactors()[out_map_point.level];
+  }
+
+  return true;
+}
+
+void MonocularFrame::FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> map_points,
+                                            list<VisibleMapPoint> & out_filetered_map_points,
+                                            precision_t radius_multiplier,
+                                            unsigned int window_size) const {
+  VisibleMapPoint vmp;
+  for (map::MapPoint * map_point: map_points) {
+    if (IsVisible(map_point, vmp, radius_multiplier, window_size))
+      out_filetered_map_points.push_back(vmp);
+  }
+}
+
 void MonocularFrame::BundleAdjustment(unordered_set<FrameBase *> & local_frames,
                                       unordered_set<FrameBase *> & fixed_frames,
                                       unordered_set<map::MapPoint *> & map_points,
@@ -863,80 +899,52 @@ bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
   return false;
 }
 
-bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
-  map_points_.clear();
-  std::unordered_set<map::MapPoint *> all_candidate_map_points;
-  last_keyframe->ListMapPoints(all_candidate_map_points);
+void MonocularFrame::FindCandidateMapPointMatchesByProjection(const list<VisibleMapPoint> & filtered_map_points,
+                                                              unordered_map<map::MapPoint *,
+                                                                            std::size_t> & out_matches) {
+  features::matching::iterators::ProjectionSearchIterator begin
+      (filtered_map_points.begin(),
+       filtered_map_points.end(),
+       &features_,
+       &map_points_);
 
-  logging::RetrieveLogger()->debug("TWMM:  Last Frame Map Points: {}",
-                                   all_candidate_map_points.size());
+  features::matching::iterators::ProjectionSearchIterator end
+      (filtered_map_points.end(),
+       filtered_map_points.end(),
+       &features_,
+       &map_points_);
 
+  features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), out_matches);
+
+}
+
+bool MonocularFrame::FindNewMapPointsAndAdjustPosition(const std::unordered_set<map::MapPoint *> & all_candidate_map_points) {
+  std::list<VisibleMapPoint> filtered_map_points;
+  std::unordered_set<map::MapPoint *> current_map_points;
+  ListMapPoints(current_map_points);
+  std::unordered_set<map::MapPoint *> all_map_points_except_local;
+  SetDiff(all_candidate_map_points, current_map_points, all_map_points_except_local);
+  FilterVisibleMapPoints(all_map_points_except_local, filtered_map_points, 1, 15);
   std::unordered_map<map::MapPoint *, std::size_t> matches;
-  std::unordered_set<map::MapPoint *> current_frame_map_points;
-  {
-    features::matching::iterators::ProjectionSearchIterator begin
-        (all_candidate_map_points.begin(),
-         all_candidate_map_points.end(),
-         &current_frame_map_points,
-         &map_points_,
-         &features_,
-         &pose_,
-         camera_.get(),
-         feature_extractor_.get(),
-         15);
-
-    features::matching::iterators::ProjectionSearchIterator end
-        (all_candidate_map_points.end(),
-         all_candidate_map_points.end(),
-         &current_frame_map_points,
-         &map_points_,
-         &features_,
-         &pose_,
-         camera_.get(),
-         feature_extractor_.get(),
-         15);
-
-    features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
-    matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
-
-    logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 15.", matches.size());
-  }
+  FindCandidateMapPointMatchesByProjection(filtered_map_points, matches);
+  logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 15.", matches.size());
 
   if (matches.size() < 20) {
     matches.clear();
-    {
-      features::matching::iterators::ProjectionSearchIterator begin
-          (all_candidate_map_points.begin(),
-           all_candidate_map_points.end(),
-           &current_frame_map_points,
-           &map_points_,
-           &features_,
-           &pose_,
-           camera_.get(),
-           feature_extractor_.get(),
-           30);
-
-      features::matching::iterators::ProjectionSearchIterator end
-          (all_candidate_map_points.end(),
-           all_candidate_map_points.end(),
-           &current_frame_map_points,
-           &map_points_,
-           &features_,
-           &pose_,
-           camera_.get(),
-           feature_extractor_.get(),
-           30);
-
-      features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
-      matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
-
-      logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 30.", matches.size());
-    }
+    for (auto & filtered: filtered_map_points)
+      filtered.window_size = 30;
+    FindCandidateMapPointMatchesByProjection(filtered_map_points, matches);
+    logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 30.", matches.size());
   }
 
   if (matches.size() < 20) {
     logging::RetrieveLogger()->debug("TWMM: Not enough map points for optimization");
     return false;
+  }
+
+  for (auto & filtered: filtered_map_points) {
+    filtered.map_point->IncreaseVisible();
   }
 
 #ifndef NDEBUG
@@ -972,6 +980,7 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
     logging::RetrieveLogger()->debug(ss.str());
   }
 #endif
+
   std::unordered_set<std::size_t> inliers;
   OptimizePose(inliers);
   if (inliers.size() < 10) {
@@ -993,6 +1002,8 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
     if (inliers.find(mp_it->first) == inliers.end())
       mp_it = EraseMapPoint(mp_it);
     else {
+      if (all_map_points_except_local.find(mp_it->second) != all_map_points_except_local.end())
+        mp_it->second->IncreaseFound();
       ++mp_it;
     }
   }

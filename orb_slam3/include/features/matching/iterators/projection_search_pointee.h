@@ -10,6 +10,8 @@
 #include "vector_from_iterator.h"
 #include <geometry/pose.h>
 #include <camera/monocular_camera.h>
+#include <frame/visible_map_point.h>
+#include <frame/covisibility_graph_node.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -23,40 +25,23 @@ class ProjectionSearchPointee {
  public:
   typedef map::MapPoint * id_type;
   typedef VectorFromIterator<std::size_t> iterator;
-  friend class ProjectionSearchIterator;
-  id_type GetId() const { return map_point_; }
+
+  ProjectionSearchPointee(const Features * from_features, const std::map<std::size_t, map::MapPoint *> * from_map_points);
+  id_type GetId() const { return map_point_.map_point; }
   iterator begin() { return begin_iterator_; }
   iterator end() { return end_iterator_; }
-  ProjectionSearchPointee(const Features * from_features,
-                          const IFeatureExtractor * feature_extractor,
-                          const std::map<std::size_t, map::MapPoint *> * from_map_points,
-                          unsigned radius_multiplier);
   const DescriptorType GetDescriptor() const;
+  void SetVisibileMapPoint(const frame::VisibleMapPoint & visible_map_point);
  protected:
-  void SetId(id_type id) { map_point_ = id; }
-  bool SetMapPointAndCompute(map::MapPoint * map_point,
-                             const camera::MonocularCamera * camera,
-                             const geometry::Pose * pose);
   void InitializeIterators();
-  static precision_t RadiusByViewingCos(const float & viewCos);
  private:
-  id_type map_point_;
+  frame::VisibleMapPoint map_point_;
+  const Features * from_features_;
+
   iterator end_iterator_;
   iterator begin_iterator_;
-  precision_t track_view_cos_;
-  TPoint2D projected_;
   std::vector<std::size_t> from_indices_;
-  const Features * from_features_;
-  const IFeatureExtractor * feature_extractor_;
-  precision_t window_size_;
-  unsigned predicted_level_;
   const std::map<std::size_t, map::MapPoint *> * from_map_points_;
-  unsigned radius_multiplier_;
-
-  unsigned patchar1 = 0, patchar2 = 0, patchar3 = 0, yndunvats = 0;
-  ~ProjectionSearchPointee() {
-    std::cerr << patchar1 << " " << patchar2 << " " << patchar3 << " " << yndunvats << std::endl;
-  }
 
 };
 
