@@ -172,6 +172,11 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
+  std::shared_ptr<orb_slam3::features::IFeatureExtractor>
+      extractor2 = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
+      camera->Width(), camera->Height(), 1000, scale_factor, levels,
+      init_threshold, min_threshold);
+
   auto * atlas = new orb_slam3::map::Atlas;
   orb_slam3::Tracker tracker(atlas);
 //  auto local_mapper = new orb_slam3::LocalMapper(atlas);
@@ -185,7 +190,7 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
     auto eigen = FromCvMat(image);
     auto frame =
         new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
-                                             extractor, filenames[k], camera, &voc);
+                                             k  == 0 ? extractor : extractor2, filenames[k], camera, &voc);
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
     tracker.Track(frame);

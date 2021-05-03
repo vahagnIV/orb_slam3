@@ -57,7 +57,8 @@ bool Triangulate(const Pose & pose,
                  const HomogenousPoint & point_to,
                  TPoint3D & out_trinagulated) {
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
-
+  assert(point_from.z() == 1);
+  assert(point_to.z() == 1);
   A << 0, -1, point_from[1], 0,
       -1, 0, point_from[0], 0,
       point_to[1] * pose.R(2, 0) - pose.R(1, 0), point_to[1] * pose.R(2, 1) - pose.R(1, 1), point_to[1] * pose.R(2, 2)

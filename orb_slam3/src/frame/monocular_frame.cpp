@@ -64,8 +64,8 @@ bool MonocularFrame::Link(FrameBase * other) {
 
   MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other);
   features::matching::SNNMatcher matcher(0.9, 50);
-  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 300);
-  features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 300);
+  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
+  features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
 
   std::unordered_map<std::size_t, std::size_t> matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
@@ -127,27 +127,29 @@ bool MonocularFrame::Link(FrameBase * other) {
   {
     std::stringstream ss;
     ss << pose_.R << std::endl << pose_.T << std::endl;
-    logging::RetrieveLogger()->debug("LINKING: Frame {} position before BA:", Id());
+
     logging::RetrieveLogger()->debug(ss.str());
   }
 
   {
 
-      std::ofstream ofstream("map_points_befor_ba.bin", std::ios::binary | std::ios::out);
+    std::ofstream ofstream("map_points_before_ba.bin", std::ios::binary | std::ios::out);
 
-      for (const auto & mp: GetMapPoints()) {
-        if (mp.second == nullptr)
-          continue;
-        orb_slam3::TPoint3D pose = mp.second->GetPosition();
-        ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
-        ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
-        ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
-        orb_slam3::TVector3D normal = mp.second->GetNormal();
-        ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
-        ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
-        ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
-      }
+    for (const auto & mp: GetMapPoints()) {
+      if (mp.second == nullptr)
+        continue;
+      orb_slam3::TPoint3D pose = mp.second->GetPosition();
+      ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
+      ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
+      ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
+      orb_slam3::TVector3D normal = mp.second->GetNormal();
+      ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
+      ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
+      ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
+    }
   }
+
+
 #endif
   std::unordered_set<map::MapPoint *> map_points;
 
@@ -217,6 +219,7 @@ bool MonocularFrame::Link(FrameBase * other) {
   logging::RetrieveLogger()->debug("Erased {} new and {} old connections",
                                    erased_new_connection,
                                    erased_old_connection);
+  logging::RetrieveLogger()->debug("Total map point count: {}", map_points_.size());
 
 #ifndef NDEBUG
   {
@@ -225,14 +228,33 @@ bool MonocularFrame::Link(FrameBase * other) {
     logging::RetrieveLogger()->debug("LINKING: Frame {} position after BA:", Id());
     logging::RetrieveLogger()->debug(ss.str());
   }
+
+  {
+
+    std::ofstream ofstream("map_points_after_ba.bin", std::ios::binary | std::ios::out);
+
+    for (const auto & mp: GetMapPoints()) {
+      if (mp.second == nullptr)
+        continue;
+      orb_slam3::TPoint3D pose = mp.second->GetPosition();
+      ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
+      ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
+      ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
+      orb_slam3::TVector3D normal = mp.second->GetNormal();
+      ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
+      ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
+      ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
+    }
+  }
+  cv::waitKey();
+//  exit(0);
 #endif
 
   return true;
 }
 
 void MonocularFrame::AppendDescriptorsToList(size_t feature_id,
-                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const {
-
+                                             std::vector<features::DescriptorType> & out_descriptor_ptr) const{
   out_descriptor_ptr.emplace_back(features_.descriptors.row(feature_id));
 
 }
@@ -564,7 +586,7 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
        &features_,
        &pose_,
        camera_.get(),
-       feature_extractor_.get());
+       feature_extractor_.get(), 3);
 
   features::matching::iterators::ProjectionSearchIterator end
       (all_candidate_map_points.end(),
@@ -574,7 +596,7 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
        &features_,
        &pose_,
        camera_.get(),
-       feature_extractor_.get());
+       feature_extractor_.get(), 3);
 
   features::matching::SNNMatcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
@@ -797,7 +819,7 @@ void MonocularFrame::BundleAdjustment(unordered_set<FrameBase *> & local_frames,
   }
 
   optimizer.initializeOptimization();
-  optimizer.optimize(10);
+  optimizer.optimize(20);
 
   // Collect frame positions
 
@@ -827,7 +849,7 @@ void MonocularFrame::BundleAdjustment(unordered_set<FrameBase *> & local_frames,
 
 void MonocularFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
 //  std::cout << "Added map_point: Frame: " << this->Id() << " FeatureId: " << feature_id << std::endl;
-//  assert(map_points_.find(feature_id) == map_points_.end());
+  assert(map_points_.find(feature_id) == map_points_.end());
   assert(!MapPointExists(map_point));
   map_points_[feature_id] = map_point;
 }
@@ -845,16 +867,8 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
   map_points_.clear();
   std::unordered_set<map::MapPoint *> all_candidate_map_points;
   last_keyframe->ListMapPoints(all_candidate_map_points);
-  /*std::unordered_set<FrameBase *> local_frames;
-  FrameBase * max_covisible_frame;
-  if (nullptr == (max_covisible_frame = last_keyframe->ListLocalKeyFrames(all_candidate_map_points, local_frames))) {
-    return false;
-  }*/
 
-//  std::unordered_set<map::MapPoint *> existing_local_map_points;
-//  ListMapPoints(existing_local_map_points);
-
-  logging::RetrieveLogger()->debug("TWMM:  current_map_points: {}",
+  logging::RetrieveLogger()->debug("TWMM:  Last Frame Map Points: {}",
                                    all_candidate_map_points.size());
 
   std::unordered_map<map::MapPoint *, std::size_t> matches;
@@ -887,6 +901,7 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
 
     logging::RetrieveLogger()->debug("TWMM: Found {} matches for threshold 15.", matches.size());
   }
+
   if (matches.size() < 20) {
     matches.clear();
     {
@@ -981,6 +996,10 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
       ++mp_it;
     }
   }
+
+  logging::RetrieveLogger()->debug("TWMM: Map point count after optimization: {}", inliers.size());
+
+#ifndef NDEBUG
   cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);
   for (auto mp: map_points_) {
     cv::circle(current_image,
@@ -990,7 +1009,7 @@ bool MonocularFrame::TrackWithMotionModel(FrameBase * last_keyframe) {
   }
   cv::imshow("current", current_image);
   cv::waitKey(1);
-
+#endif
   return true;
 }
 

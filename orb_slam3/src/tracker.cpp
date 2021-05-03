@@ -45,7 +45,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
     }
   }
 //  ComputeVelocity(frame, last_frame_);
-  UpdateLocalMap(frame);
+  UpdateLocalMap(last_key_frame_);
   frame->SearchLocalPoints(local_map_points_);
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
@@ -66,7 +66,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = kf_counter >= 4;// && m.size() > 40;
+  bool need = kf_counter >= 1000;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
