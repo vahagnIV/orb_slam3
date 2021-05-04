@@ -84,9 +84,9 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
 }
 
 void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const {
-  double z_inv = 1 / point[2];
-  TPoint3D projected{point.x() * z_inv, point.y() * z_inv, 1};
-  distortion_model_->DistortPoint(projected, projected);
+  double z_inv = 1 / point.z();
+  TPoint3D p{point.x() * z_inv, point.y() * z_inv, 1}, projected;
+  distortion_model_->DistortPoint(p, projected);
   out_projected << projected.x() * Fx() + Cx(), projected.y() * Fy() + Cy();
 }
 

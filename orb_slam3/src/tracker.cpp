@@ -16,7 +16,7 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas)
       last_frame_(nullptr),
       initial_frame_(nullptr),
       state_(NOT_INITIALIZED) {
-  kf_counter = 0;
+  kf_counter = 1000;
 }
 
 Tracker::~Tracker() {
@@ -74,7 +74,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = kf_counter >= 4;// && m.size() > 40;
+  bool need = kf_counter >= 2;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
@@ -107,6 +107,7 @@ TrackingResult Tracker::TrackInFirstImageState(FrameBase * frame) {
 
 
     last_frame_ = last_key_frame_ = frame;
+    local_mapper_.CreateNewMapPoints(frame);
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});
   } else {
     delete frame;

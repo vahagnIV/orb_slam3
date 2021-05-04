@@ -61,9 +61,9 @@ bool MonocularFrame::Link(FrameBase * other) {
   }
 
   MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other);
-  features::matching::SNNMatcher<features::matching::iterators::AreaToIterator> matcher(0.9, 50);
-  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 100);
-  features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 100);
+  features::matching::SNNMatcher<features::matching::iterators::AreaToIterator> matcher(0.9, 100);
+  features::matching::iterators::AreaToIterator begin(0, &features_, &from_frame->features_, 300);
+  features::matching::iterators::AreaToIterator end(features_.Size(), &features_, &from_frame->features_, 300);
 
   decltype(matcher)::MatchMapType matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_.get(), matches);
@@ -96,7 +96,7 @@ bool MonocularFrame::Link(FrameBase * other) {
     return false;
   }
 
-  cv::imshow("linked matches:",
+   cv::imshow("linked matches:",
              debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
 
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
@@ -609,7 +609,7 @@ bool MonocularFrame::FindNewMapPoints() {
   for (auto mp: map_points_)
     mp.second->AddObservation(this, mp.first);
 
-    std::unordered_set<map::MapPoint *> new_map_points;
+  std::unordered_set<map::MapPoint *> new_map_points;
 
   logging::RetrieveLogger()->debug("Initial local ma_points count: {}", existing_local_map_points.size());
   size_t min_new_map_point_id = Identifiable::GetNextId();
@@ -618,7 +618,7 @@ bool MonocularFrame::FindNewMapPoints() {
     if (frame->Type() != Type()) {
       continue;
     }
-    if(frame == this)
+    if (frame == this)
       continue;
 
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
@@ -736,7 +736,7 @@ bool MonocularFrame::FindNewMapPoints() {
                3,
                cv::Scalar(0, 255, 0));
   }
-  cv::imshow("TLM", current_image);
+  cv::imshow("LocalMapper", current_image);
   cv::waitKey(1);
 
   return map_points_.size() > 10;

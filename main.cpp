@@ -182,20 +182,21 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
 //  tracker.AddObserver(local_mapper);
 //  local_mapper->AddObserver(&tracker);
 //  local_mapper->Start();
-
+  std::shared_ptr<orb_slam3::features::IFeatureExtractor> current_extractor = extractor;
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[k]);
     auto eigen = FromCvMat(image);
     auto frame =
         new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
-                                             k  == 0 ? extractor : extractor2, filenames[k], camera, &voc);
+                                             current_extractor, filenames[k], camera, &voc);
     std::string imname = std::to_string(frame->Id()) + ".jpg";
 
-    tracker.Track(frame);
+    if (orb_slam3::TrackingResult::OK == tracker.Track(frame) && k!=0)
+      current_extractor = extractor2;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     cv::imshow("im", image);
-    cv::waitKey(1);
+    cv::waitKey(0);
 //    cv::waitKey();
   }
 }
