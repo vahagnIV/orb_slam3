@@ -16,6 +16,7 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas)
       last_frame_(nullptr),
       initial_frame_(nullptr),
       state_(NOT_INITIALIZED) {
+  kf_counter = 0;
 }
 
 Tracker::~Tracker() {
@@ -39,7 +40,7 @@ bool Tracker::TrackWithMotionModel(FrameBase * frame) {
 TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 
   assert(OK == state_);
-
+  ++kf_counter;
 
   if (!TrackWithMotionModel(frame)) {
     frame->SetPosition(*last_frame_->GetPose());
@@ -50,8 +51,10 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
       return TrackingResult::TRACKING_FAILED;
     }
   }
+
   UpdateLocalMap(frame);
   frame->SearchLocalPoints(local_map_points_);
+  ComputeVelocity(frame, last_frame_);
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
 
@@ -63,7 +66,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
     }
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
-  ComputeVelocity(frame, last_frame_);
+//  ComputeVelocity(frame, last_frame_);
   last_frame_ = frame;
   return TrackingResult::OK;
 }
@@ -126,7 +129,6 @@ TrackingResult Tracker::TrackInNotInitializedState(FrameBase * frame) {
 }
 
 TrackingResult Tracker::Track(FrameBase * frame) {
-  ++kf_counter;
   frame::FrameBase * new_key_frame;
   if (GetUpdateQueue().try_dequeue(new_key_frame)) {
     last_key_frame_ = new_key_frame;

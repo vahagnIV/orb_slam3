@@ -10,6 +10,9 @@
 
 // === orb_slam3 ===
 #include "imatch_validator.h"
+#include <features/features.h>
+#include <features/ifeature_extractor.h>
+#include <geometry/pose.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -18,8 +21,22 @@ namespace validators {
 
 class TriangulationValidator : public IMatchValidator<size_t, size_t> {
  public:
-  TriangulationValidator();
+  TriangulationValidator(const Features * features_to,
+                         const Features * features_from,
+                         const geometry::Pose * relative_pose,
+                         const std::shared_ptr<IFeatureExtractor> & feature_extractor,
+                         const precision_t sigma);
   bool Validate(size_t to_id, size_t from_id) const override;
+ private:
+  HomogenousPoint ComputeEpipole() const;
+  bool EpipolarDistanceIsEnough(size_t to_id) const;
+ private:
+  const Features * features_to_;
+  const Features * features_from_;
+  const geometry::Pose * relative_pose_;
+  const HomogenousPoint epipole_;
+  const std::shared_ptr<IFeatureExtractor> feature_extractor_;
+  const precision_t sigma_;
 
 };
 

@@ -17,6 +17,7 @@
 #include <features/matching/second_nearest_neighbor_matcher.h>
 #include <features/matching/iterators/bow_to_iterator.h>
 #include <features/matching/orientation_validator.h>
+#include <features/matching/validators/triangulation_validator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <geometry/utils.h>
 #include <optimization/edges/se3_project_xyz_pose.h>
@@ -545,7 +546,7 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
     } else {
       if (all_map_points_except_locals.find(mp_it->second) != all_map_points_except_locals.end())
         mp_it->second->IncreaseFound();
-      mp_it->second->AddObservation(this, mp_it->first);
+//      mp_it->second->AddObservation(this, mp_it->first);
       mp_it->second->Refresh(feature_extractor_);
       ++mp_it;
     }
@@ -588,6 +589,7 @@ optimization::edges::SE3ProjectXYZPose * MonocularFrame::CreateEdge(map::MapPoin
 }
 
 bool MonocularFrame::FindNewMapPoints() {
+  ComputeBow();
   CovisibilityGraph().Update();
 //  CovisibilityGraph().Update();
 //  std::unordered_set<frame::FrameBase *> neighbour_keyframes = CovisibilityGraph().GetCovisibleKeyFrames(20);
@@ -607,7 +609,7 @@ bool MonocularFrame::FindNewMapPoints() {
   for (auto mp: map_points_)
     mp.second->AddObservation(this, mp.first);
 
-  std::unordered_set<map::MapPoint *> new_map_points;
+    std::unordered_set<map::MapPoint *> new_map_points;
 
   logging::RetrieveLogger()->debug("Initial local ma_points count: {}", existing_local_map_points.size());
   size_t min_new_map_point_id = Identifiable::GetNextId();
@@ -616,8 +618,11 @@ bool MonocularFrame::FindNewMapPoints() {
     if (frame->Type() != Type()) {
       continue;
     }
+    if(frame == this)
+      continue;
 
     auto keyframe = dynamic_cast<MonocularFrame *>(frame);
+    keyframe->ComputeBow();
     std::unordered_map<std::size_t, std::size_t> matches;
 
     features::matching::SNNMatcher<features::matching::iterators::BowToIterator> bow_matcher(0.7, 50);
@@ -640,12 +645,16 @@ bool MonocularFrame::FindNewMapPoints() {
                                                             &keyframe->map_points_,
                                                             false,
                                                             false);
+    geometry::Pose relative_pose;
+    geometry::utils::ComputeRelativeTransformation(pose_, keyframe->pose_, relative_pose);
+
+    features::matching::validators::TriangulationValidator
+        validator(&features_, &keyframe->features_, &relative_pose, feature_extractor_, camera_->FxInv());
+    bow_matcher.AddValidator(&validator);
 
     bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_.get(), matches);
     features::matching::OrientationValidator
         (features_.keypoints, keyframe->features_.keypoints).Validate(matches);
-
-
 
     logging::RetrieveLogger()->debug("LM: SNNMatcher found {} matches between {} and {}",
                                      matches.size(),
