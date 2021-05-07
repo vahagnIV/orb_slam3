@@ -36,7 +36,7 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, Homogenous
   precision_t x0 = x = distorted[0], y0 = y = distorted[1];
 
   // compensate distortion iteratively
-  for (int j = 0; j < 150; j++) {
+  for (int j = 0; j < 10; j++) {
     double r2 = x * x + y * y;
     double icdist = 1. / (1 + ((K3() * r2 + K2()) * r2 + K1()) * r2);
     if (icdist < 0)

@@ -28,6 +28,7 @@ void Tracker::UpdateLocalPoints() {
   for (auto frame: local_key_frames_) {
     frame->ListMapPoints(local_map_points_);
   }
+  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_.size());
 }
 
 bool Tracker::TrackWithMotionModel(FrameBase * frame) {
@@ -72,9 +73,10 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
+
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = kf_counter >= 2;// && m.size() > 40;
+  bool need = local_map_points_.size() < 300 || kf_counter >= 2;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
@@ -99,15 +101,16 @@ TrackingResult Tracker::TrackInFirstImageState(FrameBase * frame) {
     local_key_frames_.insert(frame);
     local_key_frames_.insert(last_frame_);
     UpdateCovisibilityConnections();
-    frame->ListMapPoints(local_map_points_);
+    UpdateLocalMap(frame);
     reference_keyframe_ = frame;
+    local_mapper_.CreateNewMapPoints(frame);
+    local_mapper_.CreateNewMapPoints(last_frame_);
 
     state_ = OK;
     ComputeVelocity(frame, last_frame_);
 
 
     last_frame_ = last_key_frame_ = frame;
-    local_mapper_.CreateNewMapPoints(frame);
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});
   } else {
     delete frame;

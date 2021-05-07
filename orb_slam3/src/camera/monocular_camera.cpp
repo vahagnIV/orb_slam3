@@ -10,7 +10,7 @@ namespace orb_slam3 {
 namespace camera {
 
 void MonocularCamera::UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const {
-  unprojected << (point[0] - Cx()) * fx_inv_, (point[1] - Cy()) * fy_inv_, 1;
+  unprojected << (point.x() - Cx()) * fx_inv_, (point.y() - Cy()) * fy_inv_, 1;
 }
 
 void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
@@ -19,8 +19,9 @@ void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected)
 }
 
 bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const {
-  UnprojectPoint(point, unprojected);
-  return distortion_model_->UnDistortPoint(unprojected, unprojected);
+  HomogenousPoint unorojected_tmp;
+  UnprojectPoint(point, unorojected_tmp);
+  return distortion_model_->UnDistortPoint(unorojected_tmp, unprojected);
 }
 
 TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {

@@ -80,7 +80,7 @@ bool MonocularFrame::Link(FrameBase * other) {
     return false;
   }
 
-  geometry::TwoViewReconstructor reconstructor(10, camera_->FxInv());
+  geometry::TwoViewReconstructor reconstructor(200, camera_->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   std::unordered_set<size_t> inliers;
   if (!reconstructor.Reconstruct(features_.undistorted_and_unprojected_keypoints,
@@ -96,7 +96,7 @@ bool MonocularFrame::Link(FrameBase * other) {
     return false;
   }
 
-   cv::imshow("linked matches:",
+  cv::imshow("linked matches:",
              debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
 
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
@@ -153,7 +153,7 @@ bool MonocularFrame::Link(FrameBase * other) {
   std::unordered_map<map::MapPoint *,
                      std::unordered_set<MonocularFrame *>> inliers1;
   std::unordered_set<FrameBase *> frames{this, from_frame};
-  std::unordered_set<FrameBase *> fixed;
+  std::unordered_set<FrameBase *> fixed{this};
   ListMapPoints(map_points);
   BundleAdjustment(frames,
                    fixed,
@@ -611,7 +611,7 @@ bool MonocularFrame::FindNewMapPoints() {
 
   std::unordered_set<map::MapPoint *> new_map_points;
 
-  logging::RetrieveLogger()->debug("Initial local ma_points count: {}", existing_local_map_points.size());
+  logging::RetrieveLogger()->debug("LM: Initial local map point count: {}", existing_local_map_points.size());
   size_t min_new_map_point_id = Identifiable::GetNextId();
   for (frame::FrameBase * frame : neighbour_keyframes) {
 
@@ -663,6 +663,18 @@ bool MonocularFrame::FindNewMapPoints() {
     CreateNewMpPoints(keyframe, matches, existing_local_map_points);
   }
 
+  if (neighbour_keyframes == fixed_frames) {
+    for (auto map_point: existing_local_map_points) {
+      for (auto obs : map_point->Observations()) {
+        if (dynamic_cast<MonocularFrame *>(obs.first)->map_points_.find(obs.second)
+            == dynamic_cast<MonocularFrame *>(obs.first)->map_points_.end())
+          dynamic_cast<MonocularFrame *>(obs.first)->AddMapPoint(map_point, obs.second);
+      }
+      map_point->Refresh(feature_extractor_);
+    }
+    logging::RetrieveLogger()->debug("FNMPs: map_point count: {}", existing_local_map_points.size());
+    return true;
+  }
   std::unordered_map<map::MapPoint *, std::unordered_set<MonocularFrame *>> inliers;
   BundleAdjustment(neighbour_keyframes, fixed_frames, existing_local_map_points, inliers);
 
@@ -720,6 +732,7 @@ bool MonocularFrame::FindNewMapPoints() {
   logging::RetrieveLogger()->debug("Erased {} new and {} old connections",
                                    erased_new_connection,
                                    erased_old_connection);
+  logging::RetrieveLogger()->debug("Total map points {}", map_points_.size());
   for (auto frame: neighbour_keyframes) {
     frame->CovisibilityGraph().Update();
   }

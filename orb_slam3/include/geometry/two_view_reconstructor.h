@@ -30,17 +30,17 @@ class TwoViewReconstructor {
                    std::unordered_set<std::size_t> & out_inliers) const;
  private:
 
-  void GenerateRandomSubset(size_t min,
+  static void GenerateRandomSubset(size_t min,
                             size_t max,
                             size_t count,
-                            std::vector<size_t> & out_result) const;
+                            std::vector<size_t> & out_result) ;
 
-  void GenerateRandomSubsets(size_t min,
+  static void GenerateRandomSubsets(size_t min,
                              size_t max,
                              size_t count,
                              size_t subset_count,
                              const std::unordered_map<std::size_t, std::size_t> & matches,
-                             std::vector<std::vector<size_t>> & out_result) const;
+                             std::vector<std::vector<size_t>> & out_result) ;
 
  private:
   const unsigned number_of_ransac_iterations_;

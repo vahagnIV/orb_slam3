@@ -53,14 +53,14 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                         homography_inliers,
                                                         h_score);
 
-  if (false) {
+  if (h_score > f_score) {
     std::cout << "Homography: \n" << homography << std::endl;
     return homography_matrix_estimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,
                                                  matches,
                                                  out_inliers,
-                                                  out_points,
+                                                 out_points,
                                                  out_pose);
   }
 //  std::cout << "Essential: \n" << essential << std::endl;
@@ -78,12 +78,12 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
                                                  const size_t count,
                                                  size_t subset_count,
                                                  const std::unordered_map<std::size_t, std::size_t> & matches,
-                                                 std::vector<std::vector<size_t>> & out_result) const {
+                                                 std::vector<std::vector<size_t>> & out_result) {
 
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
 
   out_result.resize(subset_count);
-  while(subset_count--) {
+  while (subset_count--) {
     GenerateRandomSubset(min, max, count, out_result[subset_count]);
     std::sort(out_result[subset_count].begin(), out_result[subset_count].end());
     I b = matches.begin();
@@ -100,7 +100,7 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
 void TwoViewReconstructor::GenerateRandomSubset(const size_t min,
                                                 const size_t max,
                                                 const size_t count,
-                                                std::vector<size_t> & out_result) const {
+                                                std::vector<size_t> & out_result) {
   assert(max - min >= count);
 //  std::random_device rand_dev;
 //  std::mt19937 generator(rand_dev());
@@ -113,7 +113,7 @@ void TwoViewReconstructor::GenerateRandomSubset(const size_t min,
   std::unordered_set<size_t> chosen;
   out_result.reserve(count);
   while (chosen.size() < count) {
-    chosen.insert(rand() % (max ));
+    chosen.insert(rand() % (max));
   }
   std::copy(chosen.begin(), chosen.end(), std::back_inserter(out_result));
 }

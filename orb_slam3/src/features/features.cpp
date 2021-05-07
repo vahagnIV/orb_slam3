@@ -126,7 +126,9 @@ void Features::UndistortKeyPoints(const shared_ptr<camera::MonocularCamera> & ca
   unprojected_keypoints.resize(keypoints.size());
   for (size_t i = 0; i < undistorted_and_unprojected_keypoints.size(); ++i) {
     camera->UnprojectPoint(keypoints[i].pt, unprojected_keypoints[i]);
-    camera->GetDistortionModel()->UnDistortPoint(unprojected_keypoints[i], undistorted_and_unprojected_keypoints[i]);
+    if(!camera->GetDistortionModel()->UnDistortPoint(unprojected_keypoints[i], undistorted_and_unprojected_keypoints[i])){
+      undistorted_and_unprojected_keypoints[i] = unprojected_keypoints[i];
+    }
   }
 }
 

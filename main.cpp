@@ -271,10 +271,10 @@ void TestDrawMonocular(std::string original) {
   camera->SetFy(801.74251830283572);
   camera->SetCx(329.55062600354535);
   camera->SetCy(230.68815538052482);
-  distortion->SetK1(-8.3884801899896042e-03);
-  distortion->SetK2(2.0444610154269991e-02);
-  distortion->SetP1(-4.1265821859503889e-03);
-  distortion->SetP2(-5.9769204393686991e-04);
+//  distortion->SetK1(-8.3884801899896042e-03);
+//  distortion->SetK2(2.0444610154269991e-02);
+//  distortion->SetP1(-4.1265821859503889e-03);
+//  distortion->SetP2(-5.9769204393686991e-04);
 
   camera->ComputeImageBounds();
 
