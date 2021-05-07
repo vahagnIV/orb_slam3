@@ -111,9 +111,10 @@ bool MonocularFrame::Link(FrameBase * other) {
                                                     max_invariance_distance,
                                                     min_invariance_distance);
       auto map_point = new map::MapPoint(points[i->first], max_invariance_distance, min_invariance_distance);
-      AddMapPoint(map_point, i->first);
 
+      AddMapPoint(map_point, i->first);
       from_frame->AddMapPoint(map_points_[i->first], i->second);
+
       map_point->AddObservation(this, i->first);
       map_point->AddObservation(from_frame, i->second);
     }
@@ -153,7 +154,8 @@ bool MonocularFrame::Link(FrameBase * other) {
   std::unordered_map<map::MapPoint *,
                      std::unordered_set<MonocularFrame *>> inliers1;
   std::unordered_set<FrameBase *> frames{this, from_frame};
-  std::unordered_set<FrameBase *> fixed{this};
+//  std::unordered_set<FrameBase *> fixed{from_frame};
+  std::unordered_set<FrameBase *> fixed{from_frame};
   ListMapPoints(map_points);
   BundleAdjustment(frames,
                    fixed,
@@ -555,7 +557,7 @@ void MonocularFrame::SearchLocalPoints(unordered_set<map::MapPoint *> & all_cand
 #ifndef NDEBUG
   logging::RetrieveLogger()->debug("SLMP: {} MPs after pose optimization ", map_points_.size());
   std::stringstream ss;
-  ss << "SLMP: Local bundle adjustment. Pose after optimization\n";
+  ss << "SLMP: Pose optimization. Pose after optimization\n";
   ss << pose_.R << std::endl << pose_.T << std::endl;
   logging::RetrieveLogger()->debug(ss.str());
   cv::Mat current_image = cv::imread(Filename(), cv::IMREAD_COLOR);

@@ -24,6 +24,8 @@ void FrameBase::SetPosition(const geometry::Quaternion & pose) noexcept {
 void FrameBase::InitializeIdentity() noexcept {
   pose_.R.setIdentity();
   pose_.T.setZero();
+  inverse_pose_.R.setIdentity();
+  inverse_pose_.T.setZero();
 }
 
 g2o::VertexSE3Expmap * FrameBase::CreatePoseVertex() const {

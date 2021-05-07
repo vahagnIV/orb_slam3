@@ -64,6 +64,7 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
       UpdateCovisibilityConnections();
       last_key_frame_ = frame;
       atlas_->GetCurrentMap()->AddKeyFrame(frame);
+      reference_keyframe_ = frame;
     }
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
   }
