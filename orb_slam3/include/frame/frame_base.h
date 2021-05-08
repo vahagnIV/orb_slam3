@@ -81,7 +81,7 @@ class FrameBase : public Identifiable {
   void SetInitial(bool initial) { initial_ = initial; }
 
   /*!
-   * If needed, this should inizialize the position from the previous frames
+   * If needed, this should initialize the position from the previous frames
    * Used only for monocular case
    * @return
    */
@@ -93,17 +93,8 @@ class FrameBase : public Identifiable {
    */
   virtual void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const = 0;
 
-  static void ListAllMapPoints(const std::unordered_set<FrameBase *> & frames,
-                               std::unordered_set<map::MapPoint *> & out_map_points);
-
-  /*!
-   * Appends the descriptors that correspond to the map_point with feature_id to the provided vector.
-   * In case of multi-view frame 1 map point can correspond to multiple keypoints and, therefore, descriptors
-   * @param feature_id The id of the keypoint
-   * @param out_descriptor_ptr The vector to which the descriptors will be appended
-   */
-  virtual void AppendDescriptorsToList(size_t feature_id,
-                                       std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
+//  static void ListAllMapPoints(const std::unordered_set<FrameBase *> & frames,
+//                               std::unordered_set<map::MapPoint *> & out_map_points);
 
   /*!
    * Computes the normal of the point.
@@ -132,8 +123,17 @@ class FrameBase : public Identifiable {
    */
   virtual bool TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) = 0;
 
+  /*!
+   * TODO: add description
+   * @param map_points
+   * @return
+   */
   virtual bool FindNewMapPointsAndAdjustPosition(const std::unordered_set<map::MapPoint *> & map_points) = 0;
 
+  /*!
+   * Getter for the feature extractor
+   * @return
+   */
   const std::shared_ptr<features::IFeatureExtractor> & GetFeatureExtractor() const { return feature_extractor_; }
 
   /*!
@@ -143,9 +143,11 @@ class FrameBase : public Identifiable {
   CovisibilityGraphNode & CovisibilityGraph() { return covisibility_connections_; }
 
   /*!
-   * Creates new map points from the neighbouring frames
+   * Creates new map points by triangulating points between frames
+   * @param other The other frame for triangulation
+   * @param new_map_points Newly created map points that contain observations
    */
-  virtual bool FindNewMapPoints() = 0;
+  virtual void CreateNewMapPoints(FrameBase * other, std::unordered_set<map::MapPoint *> new_map_points) = 0;
 
   /*!
    * Computes the median of z coordinates of all visible map points
@@ -195,6 +197,8 @@ class FrameBase : public Identifiable {
   const std::string filename_;
 
 };
+
+typedef std::unordered_set<FrameBase *> FrameSet;
 
 }
 }

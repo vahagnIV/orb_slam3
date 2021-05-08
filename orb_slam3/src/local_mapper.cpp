@@ -3,6 +3,7 @@
 //
 
 #include "local_mapper.h"
+#include <frame/visible_map_point.h>
 
 namespace orb_slam3 {
 
@@ -43,12 +44,26 @@ void LocalMapper::Stop() {
   thread_ = nullptr;
 }
 
+void LocalMapper::MapPointCulling(unordered_set<map::MapPoint *> & map_points) {
 
+}
 
+void LocalMapper::EraseMapPoint(map::MapPoint * map_point) {
+  for(auto obs: map_point->Observations())
+    break;
+//    obs.first->Er
+}
 
 bool LocalMapper::CreateNewMapPoints(frame::FrameBase * frame) {
-  return frame->FindNewMapPoints();
-//  if (frame->FindNewMapPoints())
+  //TODO: decide the number of covisible frames from the type, i.e. Monocular 20,  else 10
+  auto covisible_frames = frame->CovisibilityGraph().GetCovisibleKeyFrames(20);
+  frame->CreateNewMapPoints(nullptr, std::unordered_set<map::MapPoint *>());
+//  const precision_t ratioFactor = 1.5f * frame->GetFeatureExtractor()->GetScaleFactor();
+
+  std::unordered_set<map::MapPoint *> new_map_points;
+  frame->CreateNewMapPoints(frame, new_map_points);
+  return true;
+//  if (frame->CreateNewMapPoints())
 
 }
 

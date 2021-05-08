@@ -20,13 +20,8 @@ namespace test {
    MOCK_METHOD(bool, IsValid, (), (const, override));
    MOCK_METHOD(bool, Link, (FrameBase * other), (override));
    MOCK_METHOD(void, ListMapPoints, (std::unordered_set<map::MapPoint *> & out_map_points), (const, override));
-   MOCK_METHOD(void, AppendDescriptorsToList, (size_t feature_id, std::vector<features::DescriptorType> & out_descriptor_ptr), (const, override));
    MOCK_METHOD(TVector3D, GetNormal, (const TPoint3D & point), (const, override));
-   MOCK_METHOD(void, AppendToOptimizerBA, (g2o::SparseOptimizer & optimizer, size_t & next_id), (override));
-   MOCK_METHOD(void, CollectFromOptimizerBA, (g2o::SparseOptimizer & optimizer), (override));
    MOCK_METHOD(bool, TrackWithReferenceKeyFrame, (FrameBase * reference_keyframe), (override));
-   MOCK_METHOD(bool, FindNewMapPointsAndAdjustPosition, (FrameBase * last_keyframe), (override));
-   MOCK_METHOD(bool, FindNewMapPoints, (), (override));
    MOCK_METHOD(precision_t, ComputeMedianDepth, (), (const, override));
    MOCK_METHOD(void, SearchLocalPoints, (std::unordered_set<map::MapPoint *> & map_points), (override));
 

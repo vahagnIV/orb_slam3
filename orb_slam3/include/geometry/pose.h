@@ -26,6 +26,9 @@ struct Pose {
     return R * point + T;
   }
 
+  Pose GetInversePose() {
+    return Pose{.R = R.transpose(), .T = -R.transpose() * T};
+  }
 
   friend std::ostream & operator<<(std::ostream & stream, const Pose & p) {
     stream << p.R << std::endl << p.T << std::endl;

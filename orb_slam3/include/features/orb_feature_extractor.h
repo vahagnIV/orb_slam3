@@ -33,6 +33,9 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   unsigned int PredictScale(precision_t distance, precision_t max_distance) const override;
   unsigned int ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const override;
   const std::vector<precision_t> & GetScaleFactors() const override { return scale_factors_; }
+  const precision_t GetScaleFactor() override {
+    return scale_factor_;
+  }
 
  private:
   class ExtractorNode {
@@ -62,14 +65,14 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                          std::vector<features::KeyPoint> & out_map_points);
   static void computeOrientation(const cv::Mat & image,
                                  std::vector<features::KeyPoint> & keypoints,
-                                 const int *umax);
-  static void IC_Angle(const cv::Mat & image, features::KeyPoint &, const int *u_max);
+                                 const int * umax);
+  static void IC_Angle(const cv::Mat & image, features::KeyPoint &, const int * u_max);
   static void computeDescriptors(const cv::Mat & image,
                                  std::vector<features::KeyPoint> & keypoints,
                                  cv::Mat & descriptors,
                                  const std::vector<cv::Point> & pattern);
   static void computeOrbDescriptor(const features::KeyPoint & kpt, const cv::Mat & img,
-                                   const cv::Point *pattern, uchar *desc);
+                                   const cv::Point * pattern, uchar * desc);
 
  private :
   unsigned image_width_;

@@ -36,25 +36,20 @@ class MonocularFrame : public FrameBase {
   bool IsValid() const override;
   FrameType Type() const override { return MONOCULAR; }
   bool Link(FrameBase * other) override;
-  void AppendDescriptorsToList(size_t feature_id,
-                               std::vector<features::DescriptorType> & out_descriptor_ptr) const override;
+
   TVector3D GetNormal(const TVector3D & point) const override;
   bool TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) override;
   bool FindNewMapPointsAndAdjustPosition(const std::unordered_set<map::MapPoint *> & map_points) override;
   const features::Features & GetFeatures() const { return features_; }
 
   // ==== Monocular ====
+  const std::shared_ptr<camera::MonocularCamera> & GetCamera() const { return camera_; }
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
-  bool FindNewMapPoints() override;
   precision_t ComputeMedianDepth() const override;
   const std::map<size_t, map::MapPoint *> & GetMapPoints() const { return map_points_; };
   ~MonocularFrame();
   void SearchLocalPoints(unordered_set<map::MapPoint *> & map_points) override;
  protected:
-  static void BundleAdjustment(std::unordered_set<FrameBase *> & local_frames,
-                               std::unordered_set<FrameBase *> & fixed_frames,
-                               std::unordered_set<map::MapPoint *> & map_points,
-                               std::unordered_map<map::MapPoint *, std::unordered_set<MonocularFrame *>> & out_inliers);
 
   inline void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
 
@@ -66,6 +61,10 @@ class MonocularFrame : public FrameBase {
                         VisibleMapPoint & out_map_point,
                         precision_t radius_multiplier = 1,
                         unsigned window_size = 0) const;
+
+ public:
+  void CreateNewMapPoints(FrameBase * other, std::unordered_set<map::MapPoint *> out_new_map_points) override;
+ protected:
 
   void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> map_points,
                               std::list<VisibleMapPoint> & out_filetered_map_points,
@@ -79,7 +78,6 @@ class MonocularFrame : public FrameBase {
   void ComputeBow();
   static void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
   bool BaselineIsNotEnough(const MonocularFrame * other) const;
-  void FindNewMapPointMatches(MonocularFrame * keyframe, std::unordered_map<std::size_t, std::size_t> & out_matches);
   void CreateNewMpPoints(MonocularFrame * frame,
                          const std::unordered_map<std::size_t, std::size_t> & matches,
                          std::unordered_set<map::MapPoint *> & out_map_points);
@@ -90,9 +88,9 @@ class MonocularFrame : public FrameBase {
                       bool reference_kf_keypoint_exists);
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const override;
   template<typename T>
-  void SetDiff(const std::unordered_set<T> & set1, const std::unordered_set<T> & set2, std::unordered_set<T> & result){
+  void SetDiff(const std::unordered_set<T> & set1, const std::unordered_set<T> & set2, std::unordered_set<T> & result) {
     for (auto & elem: set1) {
-      if(set2.find(elem) == set2.end())
+      if (set2.find(elem) == set2.end())
         result.insert(elem);
     }
   }

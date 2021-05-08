@@ -93,12 +93,5 @@ FrameBase *FrameBase::ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & o
   // TODO: list from children, list from parent
 }
 
-void FrameBase::ListAllMapPoints(const unordered_set<FrameBase *> & frames,
-                                 unordered_set<map::MapPoint *> & out_map_points) {
-  for (auto & frame: frames) {
-    frame->ListMapPoints(out_map_points);
-  }
-}
-
 }
 }  // namespace orb_slam3

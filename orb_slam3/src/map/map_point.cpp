@@ -18,19 +18,12 @@ MapPoint::MapPoint(const TPoint3D & point, precision_t max_invariance_distance, 
       found_(0) {
 }
 
-void MapPoint::AddObservation(frame::FrameBase * frame, size_t feature_id) {
-//  for (auto & obs : observations_) {
-//    obs.first->CovisibilityGraph().AddConnection(frame);
-//    frame->CovisibilityGraph().AddConnection(obs.first);
-//  }
-  observations_[frame] = feature_id;
+void MapPoint::AddObservation(frame::Observation * observation) {
+
+  observations_[observation->GetFrame()] = observation;
 }
 
 void MapPoint::EraseObservation(frame::FrameBase * frame) {
-//  for (auto & obs : observations_) {
-//    obs.first->CovisibilityGraph().RemoveConnection(frame);
-//    frame->CovisibilityGraph().RemoveConnection(obs.first);
-//  }
   observations_.erase(frame);
 }
 
@@ -42,8 +35,8 @@ void MapPoint::Refresh(const std::shared_ptr<features::IFeatureExtractor> & feat
 void MapPoint::ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor) {
 
   std::vector<features::DescriptorType> descriptors;
-  for (const auto & frame_id_pair: observations_) {
-    frame_id_pair.first->AppendDescriptorsToList(frame_id_pair.second, descriptors);
+  for (const auto & observation: observations_) {
+    observation.second->AppendDescriptorsToList(descriptors);
   }
   const unsigned N = descriptors.size();
   int distances[N][N];

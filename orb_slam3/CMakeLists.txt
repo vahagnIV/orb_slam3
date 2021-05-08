@@ -27,6 +27,7 @@ add_library(orbslam SHARED
         src/frame/frame_base.cpp
         src/frame/monocular_frame.cpp
         src/frame/covisibility_graph_node.cpp
+        src/frame/monocular_observation.cpp
 
         src/camera/monocular_camera.cpp
         src/camera/kannala_brandt_5.cpp
@@ -54,6 +55,7 @@ add_library(orbslam SHARED
 
         src/optimization/edges/se3_project_xyz_pose.cpp
         src/optimization/edges/se3_project_xyz_pose_only.cpp
+        src/optimization/bundle_adjustment.cpp
 
         src/debug/debug_utils.cpp
 
@@ -83,6 +85,8 @@ add_library(orbslam SHARED
         include/frame/frame_link.h
         include/frame/covisibility_graph_node.h
         include/frame/visible_map_point.h
+        include/frame/observation.h
+        include/frame/monocular_observation.h
 
         include/features/key_point.h
         include/features/orb_feature_extractor.h
@@ -112,6 +116,7 @@ add_library(orbslam SHARED
 
         include/optimization/edges/se3_project_xyz_pose.h
         include/optimization/edges/se3_project_xyz_pose_only.h
+        include/optimization/bundle_adjustment.h
 
         include/debug/debug_utils.h
 

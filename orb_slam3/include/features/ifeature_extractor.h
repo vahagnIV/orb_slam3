@@ -40,6 +40,8 @@ class IFeatureExtractor {
   virtual unsigned ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const = 0;
   virtual const std::vector<precision_t> & GetScaleFactors() const = 0;
 
+  virtual const precision_t GetScaleFactor()  = 0;
+
 
   /*!
    * Virtual destructor

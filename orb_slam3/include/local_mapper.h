@@ -22,7 +22,9 @@ class LocalMapper : public PositionObserver,
   void Stop();
   ~LocalMapper();
   bool CreateNewMapPoints(frame::FrameBase * frame) ;
+  void MapPointCulling(std::unordered_set<map::MapPoint *> & map_points);
  private:
+  void EraseMapPoint(map::MapPoint * map_point);
   void Run();
   map::Atlas * atlas_;
   std::atomic_bool cancelled_;
