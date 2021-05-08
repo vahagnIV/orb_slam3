@@ -7,22 +7,22 @@
 
 // === g2o ===
 #include <g2o/core/base_unary_edge.h>
-#include <g2o/types/sba/vertex_se3_expmap.h>
-
 // === orb-slam3 ===
+
 #include <camera/icamera.h>
+#include <optimization/vertices/frame_vertex.h>
 
 namespace orb_slam3 {
 namespace optimization {
 namespace edges {
 
-class SE3ProjectXYZPoseOnly : public g2o::BaseUnaryEdge<2, Eigen::Vector2d, g2o::VertexSE3Expmap> {
+class SE3ProjectXYZPoseOnly : public g2o::BaseUnaryEdge<2, Eigen::Vector2d, vertices::FrameVertex> {
  public:
   SE3ProjectXYZPoseOnly(const camera::ICamera * camera, const TPoint3D & point);
   void computeError() override;
   void linearizeOplus() override;
-  bool read(std::istream &is) override;
-  bool write(std::ostream &os) const override;
+  bool read(std::istream & is) override;
+  bool write(std::ostream & os) const override;
  private:
   const camera::ICamera * camera_;
   TPoint3D point_;

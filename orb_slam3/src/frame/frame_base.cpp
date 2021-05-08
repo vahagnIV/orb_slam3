@@ -28,14 +28,6 @@ void FrameBase::InitializeIdentity() noexcept {
   inverse_pose_.T.setZero();
 }
 
-g2o::VertexSE3Expmap * FrameBase::CreatePoseVertex() const {
-  auto pose_vertex = new g2o::VertexSE3Expmap();
-  pose_vertex->setEstimate(geometry::Quaternion(pose_.R, pose_.T));
-  pose_vertex->setId(Id());
-  pose_vertex->setFixed(false);
-  return pose_vertex;
-}
-
 void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_points,
                             const std::unordered_set<FrameBase *> & frames,
                             std::unordered_set<FrameBase *> & out_fixed_frames) {
@@ -65,32 +57,6 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
 }
 
 FrameBase::~FrameBase() {
-}
-
-FrameBase *FrameBase::ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
-                                         std::unordered_set<frame::FrameBase *> & out_frames) const {
-  out_map_points.clear();
-  ListMapPoints(out_map_points);
-
-  std::unordered_map<frame::FrameBase *, unsigned> key_frame_counter;
-  for (auto & map_point: out_map_points) {
-    for (auto observation: map_point->Observations()) {
-      ++key_frame_counter[observation.first];
-    }
-  }
-
-  FrameBase *max_covisible_key_frame = nullptr;
-  unsigned max_count = 0;
-  for (auto & kf_count: key_frame_counter) {
-    out_frames.insert(kf_count.first);
-    if (max_count < kf_count.second) {
-      max_count = kf_count.second;
-      max_covisible_key_frame = kf_count.first;
-    }
-  }
-  return max_covisible_key_frame;
-
-  // TODO: list from children, list from parent
 }
 
 }

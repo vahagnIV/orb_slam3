@@ -10,11 +10,11 @@
 namespace orb_slam3 {
 namespace frame {
 
-MonocularObservation::MonocularObservation(MonocularFrame * frame, size_t feature_id)
-    : frame_(frame), feature_id_(feature_id_) {
+MonocularObservation::MonocularObservation(map::MapPoint * map_point, MonocularFrame * frame, size_t feature_id)
+    : Observation(map_point), frame_(frame), feature_id_(feature_id) {
 }
 
-g2o::BaseEdge<2, Eigen::Vector2d> * MonocularObservation::CreateMultiEdge() {
+g2o::BaseEdge<2, Eigen::Vector2d> * MonocularObservation::CreateBinaryEdge() {
   const precision_t delta_mono = constants::HUBER_MONO_DELTA * frame_->GetCamera()->FxInv();
   auto edge = new optimization::edges::SE3ProjectXYZPose(frame_->GetCamera().get());
   auto measurement = frame_->GetFeatures().unprojected_keypoints[feature_id_];

@@ -16,6 +16,7 @@
 #include <typedefs.h>
 #include <identifiable.h>
 #include <frame/frame_type.h>
+#include <frame/observation.h>
 #include <frame/covisibility_graph_node.h>
 #include <features/ifeature_extractor.h>
 #include <geometry/pose.h>
@@ -155,14 +156,7 @@ class FrameBase : public Identifiable {
    */
   virtual precision_t ComputeMedianDepth() const = 0;
 
-  /*!
- * Lists all frames that have covisible map points with the current frame
- * @param out_map_points The map_points of the current frame
- * @param out_frames The list of frames
- * @return The frame that has maximal number of covisible map points with this
- */
-  FrameBase * ListLocalKeyFrames(std::unordered_set<map::MapPoint *> & out_map_points,
-                                 std::unordered_set<frame::FrameBase *> & out_frames) const;
+  virtual void AddMapPoint(Observation * observation) = 0;
 
   virtual void SearchLocalPoints(std::unordered_set<map::MapPoint *> & map_points) = 0;
 
@@ -171,7 +165,6 @@ class FrameBase : public Identifiable {
    */
   virtual ~FrameBase();
 
-  g2o::VertexSE3Expmap * CreatePoseVertex() const;
  protected:
 
   static void FixedFrames(const std::unordered_set<map::MapPoint *> & map_points,

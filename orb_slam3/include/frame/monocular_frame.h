@@ -64,7 +64,13 @@ class MonocularFrame : public FrameBase {
 
  public:
   void CreateNewMapPoints(FrameBase * other, std::unordered_set<map::MapPoint *> out_new_map_points) override;
+  void AddMapPoint(Observation * observation) override;
  protected:
+  bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches);
+  void InitializeMapPointsFromMatches(const unordered_map<std::size_t, std::size_t> & matches,
+                                      const std::unordered_map<size_t, TPoint3D> & points,
+                                      MonocularFrame * from_frame,
+                                      unordered_set<map::MapPoint *> & out_map_points);
 
   void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> map_points,
                               std::list<VisibleMapPoint> & out_filetered_map_points,

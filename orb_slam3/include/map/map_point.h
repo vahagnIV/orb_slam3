@@ -7,9 +7,6 @@
 // === stl ===
 #include <unordered_map>
 
-// === optimization ===
-#include <g2o/types/slam3d/vertex_pointxyz.h>
-
 // === orb-slam3 ===
 #include <typedefs.h>
 #include <identifiable.h>
@@ -18,9 +15,11 @@
 #include <frame/observation.h>
 
 namespace orb_slam3 {
+
 namespace frame {
 class FrameBase;
 }
+
 namespace map {
 
 class MapPoint : public Identifiable {
@@ -54,7 +53,6 @@ class MapPoint : public Identifiable {
 
   bool IsValid() const { return true; }
 
-  g2o::VertexPointXYZ * CreateVertex() const;
   void IncreaseVisible() { ++visible_; }
   void IncreaseFound() { ++found_; }
 

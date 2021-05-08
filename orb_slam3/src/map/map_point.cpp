@@ -77,13 +77,5 @@ void MapPoint::SetPosition(const TPoint3D & position) {
   position_ = position;
 }
 
-g2o::VertexPointXYZ * MapPoint::CreateVertex() const {
-  auto mp = new g2o::VertexPointXYZ();
-  mp->setId(Id());
-  mp->setMarginalized(true);
-  mp->setEstimate(GetPosition());
-  mp->setFixed(false);
-  return mp;
-}
 }
 }

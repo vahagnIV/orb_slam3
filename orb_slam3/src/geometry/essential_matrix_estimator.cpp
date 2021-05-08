@@ -16,7 +16,6 @@ bool EssentialMatrixEstimator::FindPose(const TMatrix33 & essential,
                                         const std::vector<HomogenousPoint> & points_to,
                                         const std::vector<HomogenousPoint> & points_from,
                                         const std::unordered_map<std::size_t, std::size_t> & matches,
-                                        std::unordered_set<std::size_t> & out_inliers,
                                         std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                         Pose & out_pose) const {
   // Hartley - Zisserman (page 258, 259)
@@ -48,7 +47,7 @@ bool EssentialMatrixEstimator::FindPose(const TMatrix33 & essential,
   candidate_solutions[2].T = T;
   candidate_solutions[3].R = R2;
   candidate_solutions[3].T = -T;
-  return this->FindCorrectPose(candidate_solutions, points_to, points_from, matches, out_inliers,
+  return this->FindCorrectPose(candidate_solutions, points_to, points_from, matches,
                                out_triangulated, out_pose);
 
 }

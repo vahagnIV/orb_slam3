@@ -30,7 +30,6 @@ class TransfromationEstimatorBase {
             const std::vector<HomogenousPoint> & points_to,
             const std::vector<HomogenousPoint> & points_from,
             const std::unordered_map<std::size_t, std::size_t> & matches,
-            std::unordered_set<size_t> & out_inliers,
             precision_t & out_parallax,
             std::unordered_map<std::size_t, TPoint3D> & out_triangulated) const;
  protected:
@@ -46,7 +45,6 @@ class TransfromationEstimatorBase {
                        const std::vector<HomogenousPoint> & points_to,
                        const std::vector<HomogenousPoint> & points_from,
                        const std::unordered_map<std::size_t, std::size_t> & matches,
-                       std::unordered_set<size_t> & out_inliers,
                        std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                        Pose & out_pose) const;
 };

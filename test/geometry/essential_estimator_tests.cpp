@@ -137,7 +137,6 @@ TEST_F(EssentialEstimatorTests, AAA) {
                              imto_features.undistorted_and_unprojected_keypoints,
                              imfrom_features.undistorted_and_unprojected_keypoints,
                              matches,
-                             inliers3d,
                              triangulated,
                              estimated_pose);
 

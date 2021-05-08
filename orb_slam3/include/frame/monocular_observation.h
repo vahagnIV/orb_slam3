@@ -14,9 +14,9 @@ namespace frame {
 class MonocularObservation : public Observation {
  public:
 
-  g2o::BaseEdge<2, Eigen::Vector2d> * CreateMultiEdge() override;
+  g2o::BaseEdge<2, Eigen::Vector2d> * CreateBinaryEdge() override;
   // Observation iface
-  MonocularObservation(MonocularFrame * frame, size_t feature_id);
+  MonocularObservation(map::MapPoint * map_point, MonocularFrame * frame, size_t feature_id);
   FrameBase * GetFrame() override { return frame_; }
   void AppendDescriptorsToList(vector<features::DescriptorType> & out_descriptor_ptr) const override;
   g2o::BaseEdge<2, Eigen::Vector2d> * CreateEdge() override;

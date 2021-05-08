@@ -19,15 +19,14 @@ namespace geometry {
 
 class TwoViewReconstructor {
  public:
-  TwoViewReconstructor(const unsigned number_of_ransac_iterations,
+  TwoViewReconstructor(unsigned number_of_ransac_iterations,
                        precision_t sigma_threshold = 1.0);
 
   bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
                    const std::vector<HomogenousPoint> & points_from,
                    const std::unordered_map<std::size_t, std::size_t> & matches,
                    Pose & out_pose,
-                   std::unordered_map<std::size_t, TPoint3D> & out_points,
-                   std::unordered_set<std::size_t> & out_inliers) const;
+                   std::unordered_map<std::size_t, TPoint3D> & out_points) const;
  private:
 
   static void GenerateRandomSubset(size_t min,
