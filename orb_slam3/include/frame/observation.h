@@ -4,7 +4,7 @@
 
 // === g2o ===
 #include <g2o/core/base_edge.h>
-
+#include <g2o/core/robust_kernel_impl.h>
 // === orb_slam3 ===
 #include <identifiable.h>
 #include <features/features.h>
@@ -53,6 +53,12 @@ class Observation : public Identifiable {
    * @param out_descriptor_ptr The vector to which the descriptors will be appended
    */
   virtual void AppendDescriptorsToList(std::vector<features::DescriptorType> & out_descriptor_ptr) const = 0;
+
+  /*!
+   * Creates a robust kernel for optimization
+   * @return The pointer for the newly created kernel
+   */
+  virtual g2o::RobustKernel * CreateRobustKernel() const = 0;
   virtual ~Observation() = default;
  protected:
   map::MapPoint * map_point_;

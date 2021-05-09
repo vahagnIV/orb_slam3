@@ -15,7 +15,6 @@ MonocularObservation::MonocularObservation(map::MapPoint * map_point, MonocularF
 }
 
 g2o::BaseEdge<2, Eigen::Vector2d> * MonocularObservation::CreateBinaryEdge() {
-  const precision_t delta_mono = constants::HUBER_MONO_DELTA * frame_->GetCamera()->FxInv();
   auto edge = new optimization::edges::SE3ProjectXYZPose(frame_->GetCamera().get());
   auto measurement = frame_->GetFeatures().unprojected_keypoints[feature_id_];
   edge->setMeasurement(Eigen::Map<Eigen::Matrix<double,
@@ -26,9 +25,6 @@ g2o::BaseEdge<2, Eigen::Vector2d> * MonocularObservation::CreateBinaryEdge() {
       frame_->GetFeatureExtractor()->GetAcceptableSquareError(frame_->GetFeatures().keypoints[feature_id_].level);
   edge->setInformation(Eigen::Matrix2d::Identity() * information_coefficient);
   edge->setId(Id());
-  auto rk = new g2o::RobustKernelHuber;
-  rk->setDelta(delta_mono);
-  edge->setRobustKernel(rk);
   return edge;
 }
 
@@ -38,6 +34,12 @@ g2o::BaseEdge<2, Eigen::Vector2d> * MonocularObservation::CreateEdge() {
 
 void MonocularObservation::AppendDescriptorsToList(vector<features::DescriptorType> & out_descriptor_ptr) const {
   out_descriptor_ptr.emplace_back(frame_->GetFeatures().descriptors.row(static_cast<int>(feature_id_)));
+}
+
+g2o::RobustKernel * MonocularObservation::CreateRobustKernel() const {
+  auto rk = new g2o::RobustKernelHuber;
+  rk->setDelta(constants::HUBER_MONO_DELTA * frame_->GetCamera()->FxInv());
+  return rk;
 }
 
 }

@@ -145,14 +145,17 @@ bool MonocularFrame::Link(FrameBase * other) {
 
     std::ofstream ofstream("map_points_before_ba.bin", std::ios::binary | std::ios::out);
 
-    for (const auto & mp: GetMapPoints()) {
-      if (mp.second == nullptr)
-        continue;
-      orb_slam3::TPoint3D pose = mp.second->GetPosition();
+//
+
+    for (const auto & mp: map_points) {
+
+      orb_slam3::TPoint3D pose = mp->GetPosition();
+      assert(!std::isnan(pose.x()) && !std::isnan(pose.y()) && !std::isnan(pose.z()));
+//      std::cout << pose.x() << "\t" << pose.y() << "\t" << pose.z() << std::endl;
       ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
       ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
       ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
-      orb_slam3::TVector3D normal = mp.second->GetNormal();
+      orb_slam3::TVector3D normal = mp->GetNormal();
       ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
       ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
       ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));
@@ -164,10 +167,11 @@ bool MonocularFrame::Link(FrameBase * other) {
   std::unordered_set<FrameBase *> fixed{from_frame};
   g2o::SparseOptimizer optimizer;
   optimization::InitializeOptimizer(optimizer);
+  optimizer.setVerbose(true);
   optimization::BundleAdjustment(optimizer,
                                  fixed,
                                  map_points,
-                                 20);
+                                 100);
 
   for (auto map_point: map_points) {
     auto mp_vertex_base = optimizer.vertex(map_point->Id());
@@ -188,14 +192,24 @@ bool MonocularFrame::Link(FrameBase * other) {
         delete observation.second;
     }
   }
+  for(auto map_point: map_points_)
+    map_point.second->Refresh(feature_extractor_);
 
   SetPosition(dynamic_cast<optimization::vertices::FrameVertex *>(optimizer.vertex(Id()))->estimate());
   logging::RetrieveLogger()->debug("Total map point count: {}", map_points_.size());
 
 #ifndef NDEBUG
   std::stringstream ss;
+
   ss << pose_.R << std::endl << pose_.T << std::endl;
   logging::RetrieveLogger()->debug("LINKING: Frame {} position after BA:", Id());
+  logging::RetrieveLogger()->debug(ss.str());
+  ss.clear();
+  ss << other->GetPose()->R << std::endl << other->GetPose()->T << std::endl;
+
+  from_frame->SetPosition(dynamic_cast<optimization::vertices::FrameVertex *>(optimizer.vertex(from_frame->Id()))->estimate());
+
+  logging::RetrieveLogger()->debug("Original frame pose :");
   logging::RetrieveLogger()->debug(ss.str());
   std::ofstream ofstream("map_points_after_ba.bin", std::ios::binary | std::ios::out);
 

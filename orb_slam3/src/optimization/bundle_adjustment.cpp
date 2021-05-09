@@ -10,7 +10,7 @@
 #include <g2o/core/block_solver.h>
 #include <g2o/solvers/eigen/linear_solver_eigen.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
-#include <g2o/core/robust_kernel_impl.h>
+
 
 namespace orb_slam3 {
 namespace optimization {
@@ -40,13 +40,12 @@ void BundleAdjustment(g2o::SparseOptimizer & optimizer,
         frame_vertex->setFixed(fixed_frames.find(frame_vertex->GetFrame()) != fixed_frames.end());
         optimizer.addVertex(frame_vertex);
       } else
-        frame_vertex = dynamic_cast<vertices::FrameVertex *>(observation.first);
+        frame_vertex = dynamic_cast<vertices::FrameVertex *>(optimizer.vertex(observation.first->Id()));
       auto edge = observation.second->CreateBinaryEdge();
       edge->setVertex(0, frame_vertex);
       edge->setVertex(1, mp_vertex);
-      auto rk = new g2o::RobustKernelHuber;
-      rk->setDelta(constants::HUBER_MONO_DELTA);
-      edge->setRobustKernel(rk);
+
+      edge->setRobustKernel(observation.second->CreateRobustKernel());
       optimizer.addEdge(edge);
     }
   }

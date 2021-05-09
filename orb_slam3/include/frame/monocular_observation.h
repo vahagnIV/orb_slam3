@@ -23,6 +23,7 @@ class MonocularObservation : public Observation {
 
   // Monocular
   size_t GetFeatureId() const { return feature_id_; }
+  g2o::RobustKernel * CreateRobustKernel() const override;
  private:
   MonocularFrame * frame_;
   size_t feature_id_;
