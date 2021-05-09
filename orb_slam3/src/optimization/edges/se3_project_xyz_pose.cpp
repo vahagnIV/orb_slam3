@@ -42,21 +42,14 @@ void SE3ProjectXYZPose::linearizeOplus() {
   camera::ProjectionJacobianType projection_jacobian;
   camera_->ComputeJacobian(pt_camera_system, projection_jacobian);
 
-  if (pose->fixed())
-    _jacobianOplusXi.setZero();
-  else {
-    Eigen::Matrix<double, 3, 6> se3_jacobian;
-    // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
-    se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
-        -z, 0.f, x, 0.f, 1.f, 0.f,
-        y, -x, 0.f, 0.f, 0.f, 1.f;
-    _jacobianOplusXi = projection_jacobian * se3_jacobian;
-  }
+  Eigen::Matrix<double, 3, 6> se3_jacobian;
+  // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+  se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
+      -z, 0.f, x, 0.f, 1.f, 0.f,
+      y, -x, 0.f, 0.f, 0.f, 1.f;
+  _jacobianOplusXi = projection_jacobian * se3_jacobian;
 
-  if (point->fixed())
-    _jacobianOplusXj.setZero();
-  else
-    _jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
+  _jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
 //  Eigen::Matrix<double, 2, 6> jacobianOplusXi = projection_jacobian * se3_jacobian;
 //  Eigen::Matrix<double, 2, 3> jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
 //  if (pose->fixed())
