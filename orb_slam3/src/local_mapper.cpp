@@ -4,6 +4,8 @@
 
 #include "local_mapper.h"
 #include <frame/visible_map_point.h>
+#include <logging.h>
+#include <optimization/bundle_adjustment.h>
 
 namespace orb_slam3 {
 
@@ -45,26 +47,64 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(unordered_set<map::MapPoint *> & map_points) {
-
+  unsigned erased = 0;
+  for (auto mp: map_points)
+    if (mp->GetVisible() / mp->GetFound() < 0.25) {
+      EraseMapPoint(mp);
+      ++erased;
+    }
+  logging::RetrieveLogger()->debug("LM: erased {} mps", erased);
 }
 
 void LocalMapper::EraseMapPoint(map::MapPoint * map_point) {
-  for(auto obs: map_point->Observations()){
-
+  for (auto obs: map_point->Observations()) {
+    obs.first->EraseMapPoint(map_point);
+    delete obs.second;
   }
-//    obs.first->Er
+  delete map_point;
+}
+
+void LocalMapper::ProcessNewKeyFrame(frame::FrameBase * frame) {
+  std::unique_ptr<std::unordered_set<frame::Observation *>> observations = frame->GetRecentObservations();
+  for (auto observation: *observations) {
+    frame->AddMapPoint(observation);
+    recently_added_map_points_.insert(observation->GetMapPoint());
+  }
+  frame->CovisibilityGraph().Update();
 }
 
 bool LocalMapper::CreateNewMapPoints(frame::FrameBase * frame) {
   //TODO: decide the number of covisible frames from the type, i.e. Monocular 20,  else 10
   auto covisible_frames = frame->CovisibilityGraph().GetCovisibleKeyFrames(20);
-  frame->CreateNewMapPoints(nullptr, std::unordered_set<map::MapPoint *>());
-//  const precision_t ratioFactor = 1.5f * frame->GetFeatureExtractor()->GetScaleFactor();
-
   std::unordered_set<map::MapPoint *> new_map_points;
-  frame->CreateNewMapPoints(frame, new_map_points);
+  for (auto existing_keyframe: covisible_frames) {
+    frame->CreateNewMapPoints(existing_keyframe);
+    auto observations = frame->GetRecentObservations();
+    std::transform(observations->begin(),
+                   observations->end(),
+                   std::inserter(new_map_points, new_map_points.begin()),
+                   [](frame::Observation * observation) { return observation->GetMapPoint(); });
+
+  }
+
+  // TODO: make bundle adjustment
+
+  g2o::SparseOptimizer optimizaer;
+  optimization::InitializeOptimizer(optimizaer);
+  optimization::BundleAdjustment(optimizaer, {}, new_map_points, 5);
   return true;
-//  if (frame->CreateNewMapPoints())
+
+}
+
+void LocalMapper::Optimize(frame::FrameBase * frame) {
+
+}
+
+void LocalMapper::AddKeyFrame(frame::FrameBase * frame) {
+  ProcessNewKeyFrame(frame);
+  MapPointCulling(recently_added_map_points_);
+  CreateNewMapPoints(frame);
+  Optimize(frame);
 
 }
 

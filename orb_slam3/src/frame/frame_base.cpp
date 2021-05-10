@@ -8,6 +8,8 @@
 namespace orb_slam3 {
 namespace frame {
 
+std::atomic_uint64_t FrameBase::frame_counter_(0);
+
 void FrameBase::SetPosition(const geometry::Pose & pose) noexcept {
   pose_ = pose;
   inverse_pose_.R = pose_.R.transpose();
@@ -39,7 +41,7 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
   }
 
   if (out_fixed_frames.size() < 2) {
-    FrameBase *earliest = nullptr, *second_earilest = nullptr;
+    FrameBase * earliest = nullptr, * second_earilest = nullptr;
     for (auto frame: frames) {
       if (nullptr == earliest || earliest->Id() < frame->Id()) {
         earliest = frame;
@@ -48,7 +50,7 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
       }
     }
 
-    if(nullptr == earliest)
+    if (nullptr == earliest)
       return; // TODO: log
     out_fixed_frames.insert(earliest);
     if (out_fixed_frames.size() < 2)
@@ -57,6 +59,9 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
 }
 
 FrameBase::~FrameBase() {
+  for(auto ob: *recent_observations_){
+    delete ob;
+  }
 }
 
 }

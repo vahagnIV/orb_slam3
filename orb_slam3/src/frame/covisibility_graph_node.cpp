@@ -22,6 +22,8 @@ void CovisibilityGraphNode::Update() {
   frame_->ListMapPoints(local_map_points_);
   for (auto map_point:local_map_points_) {
     for (auto obs: map_point->Observations()) {
+      if(obs.first == this->frame_)
+        continue;
       ++connected_frame_weights[obs.first];
     }
   }

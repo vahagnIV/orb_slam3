@@ -21,11 +21,16 @@ class LocalMapper : public PositionObserver,
   void Start();
   void Stop();
   ~LocalMapper();
+  void AddKeyFrame(frame::FrameBase * frame);
   bool CreateNewMapPoints(frame::FrameBase * frame) ;
-  void MapPointCulling(std::unordered_set<map::MapPoint *> & map_points);
+  void Optimize(frame::FrameBase * frame);
+  static void MapPointCulling(std::unordered_set<map::MapPoint *> & map_points);
  private:
-  void EraseMapPoint(map::MapPoint * map_point);
+  static void EraseMapPoint(map::MapPoint * map_point);
   void Run();
+  void ProcessNewKeyFrame(frame::FrameBase * frame);
+ private:
+  std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas * atlas_;
   std::atomic_bool cancelled_;
   std::thread * thread_;

@@ -58,11 +58,14 @@ class MapPoint : public Identifiable {
 
   unsigned GetVisible() const { return visible_; }
   unsigned GetFound() const { return found_; }
+  static uint64_t GetTotalMapPointCount() { return counter_; }
+  ~MapPoint();
 
  private:
   void ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
   void UpdateNormalAndDepth();
  private:
+  static atomic_uint64_t counter_;
   // Position in the world coordinate system
   TPoint3D position_;
   MapType observations_;

@@ -13,6 +13,7 @@ namespace orb_slam3 {
 Tracker::Tracker(orb_slam3::map::Atlas * atlas)
     : local_mapper_(atlas),
       atlas_(atlas),
+      velocity_is_valid_(false),
       last_frame_(nullptr),
       initial_frame_(nullptr),
       state_(NOT_INITIALIZED) {
@@ -43,19 +44,28 @@ TrackingResult Tracker::TrackInOkState(FrameBase * frame) {
   assert(OK == state_);
   ++kf_counter;
 
-  if (!TrackWithMotionModel(frame)) {
+  bool tracked = false;
+  if (!velocity_is_valid_) {
     frame->SetPosition(*last_frame_->GetPose());
-    if (!frame->TrackWithReferenceKeyFrame(reference_keyframe_)) {
-      logging::RetrieveLogger()->info("tracking failed");
-      delete frame;
-//      exit(1);
-      return TrackingResult::TRACKING_FAILED;
+    tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
+  }
+  else {
+    tracked = TrackWithMotionModel(frame);
+    if (!tracked) {
+      frame->SetPosition(*last_frame_->GetPose());
+      tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
     }
   }
 
+  if (!tracked) {
+    delete frame;
+    return TrackingResult::TRACKING_FAILED;
+  }
+  if(frame->GetIndex() - last_frame_->GetIndex() == 1 )
+    ComputeVelocity(frame, last_frame_);
+
   UpdateLocalMap(frame);
   frame->SearchLocalPoints(local_map_points_);
-  ComputeVelocity(frame, last_frame_);
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
 
@@ -85,8 +95,12 @@ bool Tracker::NeedNewKeyFrame(frame::FrameBase * frame) {
 }
 
 void Tracker::UpdateCovisibilityConnections() {
-  for(auto frame: local_key_frames_)
+  for (auto frame: local_key_frames_)
     frame->CovisibilityGraph().Update();
+}
+
+void Tracker::OptimizePose(FrameBase * frmae) {
+
 }
 
 TrackingResult Tracker::TrackInFirstImageState(FrameBase * frame) {
@@ -101,16 +115,10 @@ TrackingResult Tracker::TrackInFirstImageState(FrameBase * frame) {
     current_map->SetInitialKeyFrame(last_frame_);
     local_key_frames_.insert(frame);
     local_key_frames_.insert(last_frame_);
-    UpdateCovisibilityConnections();
-    UpdateLocalMap(frame);
     reference_keyframe_ = frame;
-    local_mapper_.CreateNewMapPoints(frame);
-    local_mapper_.CreateNewMapPoints(last_frame_);
-
+    local_mapper_.AddKeyFrame(last_frame_);
+    local_mapper_.AddKeyFrame(frame);
     state_ = OK;
-    ComputeVelocity(frame, last_frame_);
-
-
     last_frame_ = last_key_frame_ = frame;
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});
   } else {
@@ -166,6 +174,7 @@ TrackingResult Tracker::Track(FrameBase * frame) {
 void Tracker::ComputeVelocity(const FrameBase * frame2, const FrameBase * frame1) {
   velocity_ = frame1->GetInversePose()->T - frame2->GetInversePose()->T;
   angular_velocity_ = frame1->GetPose()->R * frame2->GetInversePose()->R;
+  velocity_is_valid_ = true;
 }
 
 void Tracker::PredictAndSetNewFramePosition(FrameBase * frame) const {

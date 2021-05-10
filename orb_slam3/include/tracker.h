@@ -56,6 +56,7 @@ class Tracker : public Observer<frame::FrameBase*>,
   void UpdateLocalPoints();
   void UpdateCovisibilityConnections();
   bool TrackWithMotionModel(FrameBase * frame);
+  void OptimizePose(FrameBase * frmae);
 
   bool NeedNewKeyFrame(frame::FrameBase * frame);
  private:
@@ -63,6 +64,7 @@ class Tracker : public Observer<frame::FrameBase*>,
   LocalMapper local_mapper_;
   int kf_counter = 0;
   map::Atlas * atlas_;
+  bool velocity_is_valid_;
   TVector3D velocity_;
   TMatrix33 angular_velocity_;
   frame::FrameBase * last_frame_;

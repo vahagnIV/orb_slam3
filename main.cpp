@@ -196,7 +196,7 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
       current_extractor = extractor2;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     cv::imshow("im", image);
-    cv::waitKey(0);
+    cv::waitKey(1);
 //    cv::waitKey();
   }
 }
@@ -315,15 +315,14 @@ void TestDrawMonocular(std::string original) {
 
     if (frame_o->Link(frame)) {
       std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);
-
-      for (const auto & mp: frame_o->GetMapPoints()) {
-        if (mp.second == nullptr)
-          continue;
-        orb_slam3::TPoint3D pose = mp.second->GetPosition();
+      std::unordered_set<orb_slam3::map::MapPoint *>  map_points;
+      frame_o->ListMapPoints(map_points);
+      for (const auto & mp: map_points) {
+        orb_slam3::TPoint3D pose = mp->GetPosition();
         ofstream.write(reinterpret_cast<char *>(&pose[0]), sizeof(decltype(pose[0])));
         ofstream.write(reinterpret_cast<char *>(&pose[1]), sizeof(decltype(pose[0])));
         ofstream.write(reinterpret_cast<char *>(&pose[2]), sizeof(decltype(pose[0])));
-        orb_slam3::TVector3D normal = mp.second->GetNormal();
+        orb_slam3::TVector3D normal = mp->GetNormal();
         ofstream.write(reinterpret_cast<char *>(&normal[0]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[1]), sizeof(decltype(normal[0])));
         ofstream.write(reinterpret_cast<char *>(&normal[2]), sizeof(decltype(normal[0])));

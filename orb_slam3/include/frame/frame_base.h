@@ -35,7 +35,9 @@ class FrameBase : public Identifiable {
   FrameBase(const TimePoint & timestamp,
             const std::shared_ptr<features::IFeatureExtractor> & feature_extractor,
             const std::string & filename)
-      : Identifiable(), timestamp_(timestamp),
+      : Identifiable(),
+        frame_index_(++frame_counter_),
+        timestamp_(timestamp),
         covisibility_connections_(this),
         feature_extractor_(feature_extractor),
         initial_(false), filename_(filename) {
@@ -148,7 +150,7 @@ class FrameBase : public Identifiable {
    * @param other The other frame for triangulation
    * @param new_map_points Newly created map points that contain observations
    */
-  virtual void CreateNewMapPoints(FrameBase * other, std::unordered_set<map::MapPoint *> new_map_points) = 0;
+  virtual void CreateNewMapPoints(FrameBase * other) = 0;
 
   /*!
    * Computes the median of z coordinates of all visible map points
@@ -156,7 +158,10 @@ class FrameBase : public Identifiable {
    */
   virtual precision_t ComputeMedianDepth() const = 0;
 
+  size_t GetIndex() const { return frame_index_; }
+
   virtual void AddMapPoint(Observation * observation) = 0;
+  virtual void EraseMapPoint(map::MapPoint *) = 0;
 
   virtual void SearchLocalPoints(std::unordered_set<map::MapPoint *> & map_points) = 0;
 
@@ -164,6 +169,7 @@ class FrameBase : public Identifiable {
    * Destructor
    */
   virtual ~FrameBase();
+  std::unique_ptr<std::unordered_set<Observation *>> GetRecentObservations() { return std::move(recent_observations_); }
 
  protected:
 
@@ -172,6 +178,9 @@ class FrameBase : public Identifiable {
                           std::unordered_set<FrameBase *> & out_fixed_frames);
 
  protected:
+  std::unique_ptr<std::unordered_set<Observation *>> recent_observations_;
+  static std::atomic_uint64_t frame_counter_;
+  size_t frame_index_;
 
   TimePoint timestamp_;
 

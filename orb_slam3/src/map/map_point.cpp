@@ -9,6 +9,8 @@
 namespace orb_slam3 {
 namespace map {
 
+std::atomic_uint64_t MapPoint::counter_(0);
+
 MapPoint::MapPoint(const TPoint3D & point, precision_t max_invariance_distance, precision_t min_invariance_distance)
     : Identifiable(),
       position_(point),
@@ -16,6 +18,11 @@ MapPoint::MapPoint(const TPoint3D & point, precision_t max_invariance_distance, 
       min_invariance_distance_(min_invariance_distance),
       visible_(0),
       found_(0) {
+  ++counter_;
+}
+
+MapPoint::~MapPoint() {
+  --counter_;
 }
 
 void MapPoint::AddObservation(frame::Observation * observation) {
