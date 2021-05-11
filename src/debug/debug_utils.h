@@ -6,8 +6,10 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_DEBUG_DEBUG_UTILS_H_
 
 #include <opencv2/opencv.hpp>
-#include "../features/features.h"
-#include "../features/match.h"
+#include <features/features.h>
+#include <features/match.h>
+#include <frame/monocular/monocular_frame.h>
+
 
 namespace orb_slam3 {
 namespace debug {
@@ -33,6 +35,8 @@ cv::Mat DrawMatches(const std::string & filename_to,
                  const std::vector<cv::DMatch> & matches,
                  const features::Features & features_to,
                  const features::Features & features_from);
+
+void DrawMapPointsWIthProjections(frame::monocular::MonocularFrame * frame1, frame::monocular::MonocularFrame * frame2);
 
 }
 }

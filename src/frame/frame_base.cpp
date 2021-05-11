@@ -59,7 +59,7 @@ void FrameBase::FixedFrames(const std::unordered_set<map::MapPoint *> & map_poin
 }
 
 FrameBase::~FrameBase() {
-  for(auto ob: *recent_observations_){
+  for(auto ob: recent_observations_){
     delete ob;
   }
 }
