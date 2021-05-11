@@ -168,8 +168,8 @@ bool MonocularFrame::Link(FrameBase * other) {
                                  map_points,
                                  100);
 
-  this->recent_observations_ = decltype(recent_observations_)(new std::unordered_set<Observation *>);
-  from_frame->recent_observations_ = decltype(recent_observations_)(new std::unordered_set<Observation *>);
+  this->recent_observations_ .clear();
+  from_frame->recent_observations_.clear();
 
   for (auto map_point: map_points) {
     auto mp_vertex_base = optimizer.vertex(map_point->Id());
@@ -185,7 +185,7 @@ bool MonocularFrame::Link(FrameBase * other) {
 
     for (auto observation: map_point->Observations()) {
       if (all_edges_pass_threshold) {
-        dynamic_cast<MonocularFrame *>(observation.first)->recent_observations_->insert(observation.second);
+        dynamic_cast<MonocularFrame *>(observation.first)->recent_observations_.insert(observation.second);
         observation.second->GetMapPoint()->IncreaseVisible();
         observation.second->GetMapPoint()->IncreaseFound();
       } else {
@@ -292,7 +292,7 @@ bool MonocularFrame::TrackWithReferenceKeyFrame(FrameBase * reference_keyframe) 
   // Add the existing map_point to the frame
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_[match.second];
-    recent_observations_->insert(new MonocularObservation(map_point, this, match.second));
+    recent_observations_.insert(new MonocularObservation(map_point, this, match.second));
   }
 //  std::unordered_set<std::size_t> inliers;
 //#ifndef NDEBUG
@@ -908,8 +908,6 @@ void MonocularFrame::CreateNewMapPoints(FrameBase * other) {
                                    other_frame->Id(),
                                    Id());
   unsigned newly_created_mps = 0;
-  this->recent_observations_ = decltype(recent_observations_)(new std::unordered_set<Observation *>);
-  other_frame->recent_observations_ = decltype(recent_observations_)(new std::unordered_set<Observation *>);
 
   for (auto match: matches) {
     precision_t parallax;
@@ -932,8 +930,8 @@ void MonocularFrame::CreateNewMapPoints(FrameBase * other) {
     auto map_point = new map::MapPoint(inverse_relative_pose.Transform(triangulated), max_invariance_distance, min_invariance_distance);
     auto this_observation = new MonocularObservation(map_point, this, match.first);
     auto other_observation = new MonocularObservation(map_point, other_frame, match.second);
-    this->recent_observations_->insert(this_observation);
-    other_frame->recent_observations_->insert(other_observation);
+    this->recent_observations_.insert(this_observation);
+    other_frame->recent_observations_.insert(other_observation);
     map_point->IncreaseVisible();
     map_point->IncreaseVisible();
     map_point->IncreaseFound();

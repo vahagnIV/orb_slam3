@@ -46,6 +46,7 @@ class MonocularFrame : public FrameBase {
 
   // ==== Monocular ====
   const std::shared_ptr<camera::MonocularCamera> & GetCamera() const { return camera_; }
+  const std::map<std::size_t, map::MapPoint *> & GetMapPoints() const {return map_points_; }
   void OptimizePose(std::unordered_set<std::size_t> & out_inliers);
   precision_t ComputeMedianDepth() const override;
   ~MonocularFrame();

@@ -40,7 +40,7 @@ class FrameBase : public Identifiable {
         timestamp_(timestamp),
         covisibility_connections_(this),
         feature_extractor_(feature_extractor),
-        initial_(false), filename_(filename) {
+        initial_(false), filename_(filename), is_keyfrme_(false) {
   }
 
   /*!
@@ -164,12 +164,14 @@ class FrameBase : public Identifiable {
   virtual void EraseMapPoint(map::MapPoint *) = 0;
 
   virtual void SearchLocalPoints(std::unordered_set<map::MapPoint *> & map_points) = 0;
+  void SetKeyFrame(bool is_keyframe) { is_keyfrme_ = is_keyframe; }
+  bool IsKeyFrame() const { return is_keyfrme_; }
 
   /*!
    * Destructor
    */
   virtual ~FrameBase();
-  std::unique_ptr<std::unordered_set<Observation *>> GetRecentObservations() { return std::move(recent_observations_); }
+  const std::unordered_set<Observation *> & GetRecentObservations() { return recent_observations_; }
 
  protected:
 
@@ -178,7 +180,7 @@ class FrameBase : public Identifiable {
                           std::unordered_set<FrameBase *> & out_fixed_frames);
 
  protected:
-  std::unique_ptr<std::unordered_set<Observation *>> recent_observations_;
+  std::unordered_set<Observation *> recent_observations_;
   static std::atomic_uint64_t frame_counter_;
   size_t frame_index_;
 
@@ -197,6 +199,8 @@ class FrameBase : public Identifiable {
   bool initial_;
 
   const std::string filename_;
+
+  bool is_keyfrme_;
 
 };
 

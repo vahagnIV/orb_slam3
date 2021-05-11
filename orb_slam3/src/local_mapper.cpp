@@ -65,8 +65,8 @@ void LocalMapper::EraseMapPoint(map::MapPoint * map_point) {
 }
 
 void LocalMapper::ProcessNewKeyFrame(frame::FrameBase * frame) {
-  std::unique_ptr<std::unordered_set<frame::Observation *>> observations = frame->GetRecentObservations();
-  for (auto observation: *observations) {
+  const std::unordered_set<frame::Observation *> & observations = frame->GetRecentObservations();
+  for (auto observation: observations) {
     frame->AddMapPoint(observation);
     recently_added_map_points_.insert(observation->GetMapPoint());
   }
@@ -79,9 +79,9 @@ bool LocalMapper::CreateNewMapPoints(frame::FrameBase * frame) {
   std::unordered_set<map::MapPoint *> new_map_points;
   for (auto existing_keyframe: covisible_frames) {
     frame->CreateNewMapPoints(existing_keyframe);
-    auto observations = frame->GetRecentObservations();
-    std::transform(observations->begin(),
-                   observations->end(),
+    const auto & observations = frame->GetRecentObservations();
+    std::transform(observations.begin(),
+                   observations.end(),
                    std::inserter(new_map_points, new_map_points.begin()),
                    [](frame::Observation * observation) { return observation->GetMapPoint(); });
 
@@ -91,7 +91,7 @@ bool LocalMapper::CreateNewMapPoints(frame::FrameBase * frame) {
 
   g2o::SparseOptimizer optimizaer;
   optimization::InitializeOptimizer(optimizaer);
-  optimization::BundleAdjustment(optimizaer, {}, new_map_points, 5);
+//  optimization::BundleAdjustment(optimizaer, {}, new_map_points, 5);
   return true;
 
 }

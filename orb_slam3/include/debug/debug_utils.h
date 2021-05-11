@@ -8,6 +8,8 @@
 #include <opencv2/opencv.hpp>
 #include <features/features.h>
 #include <features/match.h>
+#include <frame/monocular_frame.h>
+#include <frame/monocular_observation.h>
 
 namespace orb_slam3 {
 namespace debug {
@@ -17,10 +19,10 @@ void ToOpenCvMatches(const std::vector<features::Match> & matches, std::vector<c
 void ToOpenCvKeyPoints(const std::vector<features::KeyPoint> & keypoints, std::vector<cv::KeyPoint> & out_key_points);
 
 cv::Mat DrawMatches(const std::string & filename_to,
-                 const std::string & filename_from,
-                 const std::unordered_map<size_t, size_t> & matches,
-                 const features::Features & features_to,
-                 const features::Features & features_from);
+                    const std::string & filename_from,
+                    const std::unordered_map<size_t, size_t> & matches,
+                    const features::Features & features_to,
+                    const features::Features & features_from);
 
 cv::Mat DrawMatches(const std::string & filename_to,
                     const std::string & filename_from,
@@ -29,10 +31,12 @@ cv::Mat DrawMatches(const std::string & filename_to,
                     const features::Features & features_from);
 
 cv::Mat DrawMatches(const std::string & filename_to,
-                 const std::string & filename_from,
-                 const std::vector<cv::DMatch> & matches,
-                 const features::Features & features_to,
-                 const features::Features & features_from);
+                    const std::string & filename_from,
+                    const std::vector<cv::DMatch> & matches,
+                    const features::Features & features_to,
+                    const features::Features & features_from);
+
+void DrawMapPointsWIthProjections(frame::MonocularFrame * frame1, frame::MonocularFrame * frame2);
 
 }
 }
