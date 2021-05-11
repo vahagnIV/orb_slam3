@@ -84,8 +84,8 @@ cv::Mat DrawMatches(const string & filename_to,
   return result;
 }
 
-void DrawMapPointsWIthProjections(frame::MonocularFrame * frame1, frame::MonocularFrame * frame2)  {
-  for (auto mp: frame1->GetMapPoints()) {
+void DrawMapPointsWIthProjections(frame::monocular::MonocularFrame * frame1, frame::monocular::MonocularFrame * frame2)  {
+  /*for (auto mp: frame1->GetMapPoints()) {
     if (mp.second->Observations().find(frame2) == mp.second->Observations().end())
       continue;
     size_t feature_id1 = mp.first;
@@ -106,7 +106,7 @@ void DrawMapPointsWIthProjections(frame::MonocularFrame * frame1, frame::Monocul
     cv::imshow(frame1->Filename(), image1);
     cv::imshow(frame2->Filename(), image2);
 
-  }
+  }*/
 }
 
 }
