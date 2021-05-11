@@ -3,7 +3,7 @@
 //
 
 #include "feature_tests.h"
-#include <features/features.h>
+#include "../../src/features/features.h"
 namespace orb_slam3 {
 namespace test {
 

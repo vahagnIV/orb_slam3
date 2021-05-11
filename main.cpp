@@ -1,8 +1,7 @@
 #include <features/orb_feature_extractor.h>
-#include <frame/monocular_frame.h>
 #include <image_utils.h>
 #include <tracker.h>
-
+#include <frame/monocular/monocular_frame.h>
 #include <Eigen/Eigen>
 #include <boost/filesystem.hpp>
 #include <chrono>
@@ -143,8 +142,8 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImages(data, filenames, timestamps);
 
-  std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
-      std::make_shared<orb_slam3::camera::MonocularCamera>(512, 512);
+  orb_slam3::camera::MonocularCamera * camera =
+      new orb_slam3::camera::MonocularCamera(512, 512);
 
   auto distortion = camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
 //  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
@@ -166,13 +165,13 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
   size_t levels = 8;
   unsigned init_threshold = 20;
   unsigned min_threshold = 7;
-  std::shared_ptr<orb_slam3::features::IFeatureExtractor>
-      extractor = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
+  orb_slam3::features::IFeatureExtractor *
+      extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
-  std::shared_ptr<orb_slam3::features::IFeatureExtractor>
-      extractor2 = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
+  orb_slam3::features::IFeatureExtractor *
+      extractor2 = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(), 1000, scale_factor, levels,
       init_threshold, min_threshold);
 
@@ -182,15 +181,14 @@ void TestMonocular(const std::string & data_dit, const std::string & vocabulary_
 //  tracker.AddObserver(local_mapper);
 //  local_mapper->AddObserver(&tracker);
 //  local_mapper->Start();
-  std::shared_ptr<orb_slam3::features::IFeatureExtractor> current_extractor = extractor;
+  orb_slam3::features::IFeatureExtractor * current_extractor = extractor;
   for (size_t k = 0; k < filenames.size(); ++k) {
     cv::Mat image = cv::imread(filenames[k], cv::IMREAD_GRAYSCALE);
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[k]);
     auto eigen = FromCvMat(image);
     auto frame =
-        new orb_slam3::frame::MonocularFrame(eigen, timestamps[k],
-                                             current_extractor, filenames[k], camera, &voc);
-    std::string imname = std::to_string(frame->Id()) + ".jpg";
+        new orb_slam3::frame::monocular::MonocularFrame(eigen, timestamps[k],
+                                              filenames[k], current_extractor, camera, &voc);
 
     if (orb_slam3::TrackingResult::OK == tracker.Track(frame) && k!=0)
       current_extractor = extractor2;
@@ -261,8 +259,8 @@ void TestDrawMonocular(std::string original) {
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImages(data, filenames, timestamps);
 
-  std::shared_ptr<orb_slam3::camera::MonocularCamera> camera =
-      std::make_shared<orb_slam3::camera::MonocularCamera>(640, 480);
+  orb_slam3::camera::MonocularCamera * camera =
+      new orb_slam3::camera::MonocularCamera(640, 480);
 
   auto distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
 //  orb_slam3::camera::KannalaBrandt5 * distortion = camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
@@ -283,8 +281,8 @@ void TestDrawMonocular(std::string original) {
   size_t levels = 8;
   unsigned init_threshold = 20;
   unsigned min_threshold = 7;
-  std::shared_ptr<orb_slam3::features::IFeatureExtractor>
-      extractor = std::make_shared<orb_slam3::features::ORBFeatureExtractor>(
+  orb_slam3::features::IFeatureExtractor *
+      extractor =  new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(), nfeatures, scale_factor, levels,
       init_threshold, min_threshold);
 
@@ -295,10 +293,10 @@ void TestDrawMonocular(std::string original) {
   cv::waitKey(1);
 
   auto eigen = FromCvMat(image);
-  orb_slam3::frame::MonocularFrame * frame =
-      new orb_slam3::frame::MonocularFrame(eigen, std::chrono::system_clock::now(),
-                                           extractor, im1_name, camera, nullptr);
-  frame->InitializeIdentity();
+  orb_slam3::frame::monocular::MonocularFrame * frame =
+      new orb_slam3::frame::monocular::MonocularFrame(eigen, std::chrono::system_clock::now(),
+                                           im1_name, extractor , camera, nullptr);
+  frame->SetIdentity();
 
   for (size_t k = 0; k < 200; ++k) {
 
@@ -309,9 +307,9 @@ void TestDrawMonocular(std::string original) {
     cv::waitKey(1);
 
     auto eigen = FromCvMat(image_o);
-    std::shared_ptr<orb_slam3::frame::MonocularFrame> frame_o =
-        std::make_shared<orb_slam3::frame::MonocularFrame>(eigen, std::chrono::system_clock::now(),
-                                                           extractor, im2_name, camera, nullptr);
+    orb_slam3::frame::monocular::MonocularFrame * frame_o =
+        new orb_slam3::frame::monocular::MonocularFrame(eigen, std::chrono::system_clock::now(),
+                                                           im2_name, extractor, camera, nullptr);
 
     if (frame_o->Link(frame)) {
       std::ofstream ofstream("map_points.bin", std::ios::binary | std::ios::out);

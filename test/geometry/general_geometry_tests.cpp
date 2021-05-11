@@ -3,7 +3,7 @@
 //
 
 #include "general_geometry_tests.h"
-#include <geometry/utils.h>
+#include "../../src/geometry/utils.h"
 
 namespace orb_slam3 {
 namespace test {

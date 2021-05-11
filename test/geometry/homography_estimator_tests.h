@@ -6,7 +6,7 @@
 #define ORB_SLAM3_TEST_GEOMETRY_HOMOGRAPHY_ESTIMATOR_TESTS_H_
 
 #include <gtest/gtest.h>
-#include <typedefs.h>
+#include "../../src/typedefs.h"
 namespace orb_slam3 {
 namespace test {
 

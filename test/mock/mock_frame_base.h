@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_TEST_MOCK_MOCK_FRAME_BASE_H_
 #define ORB_SLAM3_TEST_MOCK_MOCK_FRAME_BASE_H_
 
-#include <frame/frame_base.h>
+#include "../../src/frame/frame_base.h"
 #include <gmock/gmock.h>
 
 namespace orb_slam3 {

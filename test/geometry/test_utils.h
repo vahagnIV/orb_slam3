@@ -4,8 +4,8 @@
 
 #ifndef ORB_SLAM3_TEST_GEOMETRY_TEST_UTILS_H_
 #define ORB_SLAM3_TEST_GEOMETRY_TEST_UTILS_H_
-#include <typedefs.h>
-#include <geometry/pose.h>
+#include "../../src/typedefs.h"
+#include "../../src/geometry/pose.h"
 #include <unordered_set>
 namespace orb_slam3 {
 namespace test {

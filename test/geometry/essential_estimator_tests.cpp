@@ -2,8 +2,8 @@
 // Created by vahagn on 31/03/2021.
 //
 
-#include <geometry/essential_matrix_estimator.h>
-#include <features/features.h>
+#include "../../src/geometry/essential_matrix_estimator.h"
+#include "../../src/features/features.h"
 
 #include "essential_estimator_tests.h"
 #include "test_utils.h"

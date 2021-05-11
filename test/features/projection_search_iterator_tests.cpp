@@ -4,8 +4,8 @@
 
 #include "projection_search_iterator_tests.h"
 #include <gmock/gmock.h>
-#include <features/ifeature_extractor.h>
-#include <features/features.h>
+#include "../../src/features/ifeature_extractor.h"
+#include "../../src/features/features.h"
 
 namespace orb_slam3 {
 namespace test {

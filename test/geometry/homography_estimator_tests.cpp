@@ -4,8 +4,8 @@
 
 #include "homography_estimator_tests.h"
 #include "test_utils.h"
-#include <geometry/homography_matrix_estimator.h>
-#include <geometry/utils.h>
+#include "../../src/geometry/homography_matrix_estimator.h"
+#include "../../src/geometry/utils.h"
 
 namespace orb_slam3 {
 namespace test {

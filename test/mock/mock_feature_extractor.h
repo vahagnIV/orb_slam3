@@ -4,7 +4,7 @@
 
 #ifndef ORB_SLAM3_TEST_MOCK_MOCK_FEATURE_EXTRACTOR_H_
 #define ORB_SLAM3_TEST_MOCK_MOCK_FEATURE_EXTRACTOR_H_
-#include <features/ifeature_extractor.h>
+#include "../../src/features/ifeature_extractor.h"
 namespace orb_slam3 {
 namespace test {
 
