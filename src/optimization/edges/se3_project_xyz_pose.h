@@ -5,7 +5,6 @@
 #ifndef ORB_SLAM3_SE3_PROJECT_XYZ_POSE_ONLY_H
 #define ORB_SLAM3_SE3_PROJECT_XYZ_POSE_ONLY_H
 
-
 #include <camera/monocular_camera.h>
 
 #include <optimization/vertices/frame_vertex.h>
@@ -17,9 +16,7 @@ namespace orb_slam3 {
 namespace optimization {
 namespace edges {
 
-
-class SE3ProjectXYZPose : public  BABinaryEdge {
-
+class SE3ProjectXYZPose : public BABinaryEdge {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera, precision_t threshold);

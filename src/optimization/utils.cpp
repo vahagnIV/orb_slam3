@@ -36,6 +36,7 @@ size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_fr
     max_id = std::max(max_id, static_cast<size_t>(vertex->id()));
     vertex->setFixed(key_frame->IsInitial());
     out_frame_map[key_frame] = vertex;
+    inout_optimizer.addVertex(vertex);
   }
   return max_id;
 }
@@ -54,6 +55,7 @@ void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
 
     mp_vertex->setId(++inout_id);
     inout_optimizer.addVertex(mp_vertex);
+    int s = inout_optimizer.vertices().size();
 
     unsigned number_of_edges = 0;
     for (auto observation: map_point->Observations()) {
@@ -62,10 +64,12 @@ void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
         continue;
 
       vertices::FrameVertex * frame_vertex = dynamic_cast<vertices::FrameVertex *>(it->second);
-      auto edge = observation.second.CreateBinaryEdge();
+      optimization::edges::BABinaryEdge *edge = observation.second.CreateBinaryEdge();
       edge->setVertex(0, frame_vertex);
       edge->setVertex(1, mp_vertex);
       edge->setId(++inout_id);
+      int id = edge->id();
+      auto measuurement = edge->measurement();
       if (robust)
         edge->setRobustKernel(observation.second.CreateRobustKernel());
       inout_optimizer.addEdge(edge);

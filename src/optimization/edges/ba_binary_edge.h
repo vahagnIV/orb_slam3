@@ -22,9 +22,10 @@ typedef g2o::BaseBinaryEdge<2, Eigen::Vector2d,
 
 class BABinaryEdge : public  G2OBinaryEdge {
  public:
-  BABinaryEdge() :G2OBinaryEdge(){ }
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   virtual bool IsValid() const = 0;
   virtual bool IsDepthPositive() const = 0;
+  ~BABinaryEdge() override = default;
 
 };
 

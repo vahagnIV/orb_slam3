@@ -125,22 +125,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     std::unordered_set<map::MapPoint *> map_points;
     current_key_frame->ListMapPoints(map_points);
 
-    {
-      std::stringstream ss;
-      ss << current_key_frame->GetPosition().R << current_key_frame->GetPosition().T;
-      logging::RetrieveLogger()->debug("Linking pose before BA: ");
-      logging::RetrieveLogger()->debug(ss.str());
-    }
-
     optimization::BundleAdjustment(key_frames, map_points, 30);
-
-    {
-      std::stringstream ss;
-      ss << current_key_frame->GetPosition().R << current_key_frame->GetPosition().T;
-      logging::RetrieveLogger()->debug("Linking pose before BA: ");
-      logging::RetrieveLogger()->debug(ss.str());
-    }
-    exit(0);
 
     reference_keyframe_ = current_key_frame;
     local_mapper_.AddKeyFrame(initial_key_frame);
