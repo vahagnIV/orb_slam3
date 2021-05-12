@@ -4,8 +4,8 @@
 
 #include "homography_estimator_tests.h"
 #include "test_utils.h"
-#include <geometry/homography_matrix_estimator.h>
-#include <geometry/utils.h>
+#include "../../src/geometry/homography_matrix_estimator.h"
+#include "../../src/geometry/utils.h"
 
 namespace orb_slam3 {
 namespace test {
@@ -52,14 +52,13 @@ TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
     ASSERT_TRUE(geometry::utils::ComputeReprojectionError(H.inverse() * points_to[i], points_from[i]) < 1e-12);
   }
 
-  std::unordered_set<std::size_t> inliers;
   std::unordered_map<size_t, TPoint3D> triangulated;
   geometry::Pose pose;
   for (int i = 0; i < points_to.size(); ++i) {
     points_to[i] /= points_to[i][2];
     points_from[i] /= points_from[i][2];
   }
-  estimator.FindPose(H, points_to, points_from, matches, inliers, triangulated, pose);
+  estimator.FindPose(H, points_to, points_from, matches, triangulated, pose);
   ASSERT_TRUE((pose.T.normalized() - T.normalized()).norm() < 1e-12);
   ASSERT_TRUE((pose.R - R).norm() < 1e-12);
 }
