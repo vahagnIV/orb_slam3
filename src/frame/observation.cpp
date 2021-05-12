@@ -10,19 +10,19 @@ namespace orb_slam3 {
 namespace frame {
 
 Observation::Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id) : map_point_(map_point),
-                                                                                                key_frame_(key_frame),
-                                                                                                feature_ids_({feature_id}){
+                                                                                               key_frame_(key_frame),
+                                                                                               feature_ids_({feature_id}) {
 }
 Observation::Observation(map::MapPoint * map_point,
                          KeyFrame * key_frame,
                          size_t feature_id_left,
                          size_t feature_id_right) : map_point_(map_point),
                                                     key_frame_(key_frame),
-                                                    feature_ids_({feature_id_left, feature_id_right}){
+                                                    feature_ids_({feature_id_left, feature_id_right}) {
 }
 
 g2o::BaseEdge<2, Eigen::Vector2d> * Observation::CreateBinaryEdge() {
-  if(IsMonocular()){
+  if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
     auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetCamera());
     auto measurement = monocular_key_frame->GetFeatures().unprojected_keypoints[feature_ids_[0]];
@@ -45,11 +45,10 @@ g2o::BaseEdge<2, Eigen::Vector2d> * Observation::CreateEdge() {
 }
 
 void Observation::AppendDescriptorsToList(vector<features::DescriptorType> & out_descriptor_ptr) const {
-  if(IsMonocular()){
+  if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
     out_descriptor_ptr.push_back(monocular_key_frame->GetFeatures().descriptors.row(feature_ids_[0]));
-  }
-  else
+  } else
     throw std::runtime_error("Stereo is not yet implemented");
 
 }
@@ -57,6 +56,21 @@ void Observation::AppendDescriptorsToList(vector<features::DescriptorType> & out
 bool Observation::IsMonocular() const {
   return feature_ids_.size() == 1;
 }
+
+g2o::RobustKernel * Observation::CreateRobustKernel() {
+  auto rk = new g2o::RobustKernelHuber;
+  rk->setDelta(constants::HUBER_MONO_DELTA
+                   * dynamic_cast<frame::monocular::MonocularKeyFrame *>(GetKeyFrame())->GetCamera()->FxInv());
+  return rk;
+}
+
+/*
+Observation & Observation::operator=(const Observation & other) {
+  map_point_ = other.map_point_;
+  key_frame_ = other.key_frame_;
+//  feature_ids_ = other.feature_ids_;
+  return *this;
+}*/
 
 }
 }

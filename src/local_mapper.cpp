@@ -60,7 +60,7 @@ void LocalMapper::MapPointCulling(unordered_set<map::MapPoint *> & map_points) {
 void LocalMapper::EraseMapPoint(map::MapPoint * map_point) {
   for (auto obs: map_point->Observations()) {
 //  TODO:  obs.first->EraseMapPoint(map_point);
-    delete obs.second;
+//    delete obs.second;
   }
   delete map_point;
 }

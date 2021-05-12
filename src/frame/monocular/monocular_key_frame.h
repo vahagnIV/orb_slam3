@@ -12,7 +12,7 @@ namespace frame {
 namespace monocular {
 class MonocularFrame;
 
-class MonocularKeyFrame : public KeyFrame, BaseMonocular {
+class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   friend class MonocularFrame;
  private:
   MonocularKeyFrame(MonocularFrame * frame);
@@ -20,8 +20,7 @@ class MonocularKeyFrame : public KeyFrame, BaseMonocular {
   virtual ~MonocularKeyFrame() = default;
 
  public:
-  const features::Features & GetFeatures() const;
-  const camera::MonocularCamera * GetCamera() const;
+
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;

@@ -24,9 +24,9 @@ MapPoint::~MapPoint() {
   --counter_;
 }
 
-void MapPoint::AddObservation(frame::Observation * observation) {
-
-  observations_[observation->GetKeyFrame()] = observation;
+void MapPoint::AddObservation(const frame::Observation & observation) {
+ observations_.emplace(observation.GetKeyFrame(), observation);
+//  observations_[observation.GetKeyFrame()] = observation;
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
@@ -42,7 +42,7 @@ void MapPoint::ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFea
 
   std::vector<features::DescriptorType> descriptors;
   for (const auto & observation: observations_) {
-    observation.second->AppendDescriptorsToList(descriptors);
+    observation.second.AppendDescriptorsToList(descriptors);
   }
   const unsigned N = descriptors.size();
   int distances[N][N];

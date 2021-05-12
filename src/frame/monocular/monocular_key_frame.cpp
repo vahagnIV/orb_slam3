@@ -4,6 +4,7 @@
 
 #include "monocular_key_frame.h"
 #include "monocular_frame.h"
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -15,14 +16,9 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->GetVocabulary(),
                                                                         Id()),
                                                                BaseMonocular(*frame) {
-}
-
-const features::Features & MonocularKeyFrame::GetFeatures() const {
-  return BaseMonocular::GetFeatures();
-}
-
-const camera::MonocularCamera * MonocularKeyFrame::GetCamera() const {
-  return BaseMonocular::GetCamera();
+  for(auto mp: map_points_){
+    mp.second->AddObservation(Observation(mp.second, this, mp.first));
+  }
 }
 
 FrameType MonocularKeyFrame::Type() const {
@@ -32,8 +28,11 @@ FrameType MonocularKeyFrame::Type() const {
 void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
   BaseMonocular::ListMapPoints(out_map_points);
 }
+
 TVector3D MonocularKeyFrame::GetNormal(const TPoint3D & point) const {
-  return orb_slam3::TVector3D();
+  TPoint3D normal = GetInversePosition().T - point;
+  normal.normalize();
+  return normal;
 }
 
 }

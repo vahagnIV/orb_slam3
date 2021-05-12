@@ -50,11 +50,11 @@ void BundleAdjustment(g2o::SparseOptimizer & optimizer,
         frame_map[observation.first] = frame_vertex->id();
       } else
         frame_vertex = dynamic_cast<vertices::FrameVertex *>(optimizer.vertex(it->second));
-      auto edge = observation.second->CreateBinaryEdge();
+      auto edge = observation.second.CreateBinaryEdge();
       edge->setVertex(0, frame_vertex);
       edge->setVertex(1, mp_vertex);
       edge->setId(id++);
-      edge->setRobustKernel(observation.second->CreateRobustKernel());
+      edge->setRobustKernel(observation.second.CreateRobustKernel());
       optimizer.addEdge(edge);
     }
   }

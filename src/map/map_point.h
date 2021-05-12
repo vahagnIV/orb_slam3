@@ -23,7 +23,7 @@ namespace map {
 
 class MapPoint {
  public:
-  typedef std::unordered_map<frame::KeyFrame *, frame::Observation *> MapType;
+  typedef std::unordered_map<frame::KeyFrame *, frame::Observation > MapType;
   MapPoint(const TPoint3D & point, precision_t max_invariance_distance, precision_t min_invariance_distance);
 
   /*!
@@ -31,7 +31,7 @@ class MapPoint {
    * @param frame The frame
    * @param feature_id The id of the corresponding keypoint withing the frame
    */
-  void AddObservation(frame::Observation * observation);
+  void AddObservation(const frame::Observation & observation);
 
   void EraseObservation(frame::KeyFrame *);
 

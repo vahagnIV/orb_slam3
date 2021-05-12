@@ -23,6 +23,9 @@ class Observation  {
  public:
   Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids) ;
   Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right) ;
+
+// Observation & operator=(const Observation & other);
+
   /*!
    * Creates a g2o edge for bundle adjustment
    * @return g2o edge with set vertices
@@ -39,7 +42,7 @@ class Observation  {
    * Getter for the corresponding frame
    * @return The frame base where the map point was observed
    */
-  virtual KeyFrame * GetKeyFrame() { return key_frame_; };
+  virtual KeyFrame * GetKeyFrame() const { return key_frame_; };
 
   /*!
    * Getter for the map point
@@ -58,7 +61,7 @@ class Observation  {
    * Creates a robust kernel for optimization
    * @return The pointer for the newly created kernel
    */
-  virtual g2o::RobustKernel * CreateRobustKernel() const = 0;
+  virtual g2o::RobustKernel * CreateRobustKernel();
   virtual ~Observation() = default;
  protected:
   bool IsMonocular() const;

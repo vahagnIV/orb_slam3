@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "logging.h"
 #include <frame/key_frame.h>
+#include <optimization/bundle_adjustment.h>
 
 namespace orb_slam3 {
 
@@ -49,8 +50,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (!velocity_is_valid_) {
     frame->SetPosition(last_frame_->GetPosition());
 // TODO:    tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
-  }
-  else {
+  } else {
     tracked = TrackWithMotionModel(frame);
     if (!tracked) {
       frame->SetPosition(last_frame_->GetPosition());
@@ -62,7 +62,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     delete frame;
     return TrackingResult::TRACKING_FAILED;
   }
-  if(frame->Id() - last_frame_->Id() == 1 )
+  if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
 
   UpdateLocalMap(frame);
@@ -114,6 +114,16 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     map::Map * current_map = atlas_->GetCurrentMap();
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
     frame::KeyFrame * current_key_frame = frame->CreateKeyFrame();
+
+    g2o::SparseOptimizer optimizer;
+    optimization::InitializeOptimizer(optimizer);
+
+    std::unordered_set<frame::KeyFrame *> fixed{initial_key_frame};
+    std::unordered_set<map::MapPoint *> map_points;
+    current_key_frame->ListMapPoints(map_points);
+    optimization::BundleAdjustment(optimizer, fixed, map_points, 30);
+
+
 
 
 
