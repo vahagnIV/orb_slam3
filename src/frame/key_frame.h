@@ -18,7 +18,10 @@ class KeyFrame : public BaseFrame {
            const features::IFeatureExtractor * feature_extractor,
            const features::BowVocabulary * vocabulary,
            size_t id) : BaseFrame(time_point, filename, feature_extractor, vocabulary, id),
-                                                         covisibility_graph_(this) {}
+                        covisibility_graph_(this),
+                        is_initial_(false),
+                        bad_flag_(false),
+                        kf_gba_(nullptr) {}
 
   virtual ~KeyFrame() = default;
  public:
@@ -26,8 +29,26 @@ class KeyFrame : public BaseFrame {
   CovisibilityGraphNode & GetCovisibilityGraph() {
     return covisibility_graph_;
   }
+  bool IsInitial() const { return is_initial_; }
+  void SetInitial(bool initial) { is_initial_ = initial; }
+  bool IsBad() const { return bad_flag_; }
+  void SetBad() { bad_flag_ = true; }
+  void SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
+    pose_gba_.R = R;
+    pose_gba_.T = T;
+  }
+  void SetKeyFrameGBA(KeyFrame * keyframe) {
+    kf_gba_ = keyframe;
+  }
+
  protected:
   CovisibilityGraphNode covisibility_graph_;
+  bool is_initial_;
+  bool bad_flag_;
+
+  // Container for saving the position after gba for LC
+  geometry::Pose pose_gba_;
+  KeyFrame * kf_gba_;
 
 };
 

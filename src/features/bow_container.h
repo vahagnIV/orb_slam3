@@ -19,7 +19,7 @@ struct BowContainer {
   BowContainer();
   DBoW2::FeatureVector feature_vector;
   DBoW2::BowVector bow_vector;
-  BowVocabulary *vocabulary;
+  const BowVocabulary *vocabulary;
   void ComputeBow(const std::vector<cv::Mat> &descriptors);
   class iterator {
     friend class BowContainer;

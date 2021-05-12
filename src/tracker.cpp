@@ -112,27 +112,42 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
+
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
+    initial_key_frame->SetInitial(true);
+
     frame::KeyFrame * current_key_frame = frame->CreateKeyFrame();
 
-    g2o::SparseOptimizer optimizer;
-    optimization::InitializeOptimizer(optimizer);
+    current_map->SetInitialKeyFrame(initial_key_frame);
+    current_map->AddKeyFrame(current_key_frame);
 
-    std::unordered_set<frame::KeyFrame *> fixed{initial_key_frame};
+    std::unordered_set<frame::KeyFrame *> key_frames{initial_key_frame, current_key_frame};
     std::unordered_set<map::MapPoint *> map_points;
     current_key_frame->ListMapPoints(map_points);
-    optimization::BundleAdjustment(optimizer, fixed, map_points, 30);
 
+    {
+      std::stringstream ss;
+      ss << current_key_frame->GetPosition().R << current_key_frame->GetPosition().T;
+      logging::RetrieveLogger()->debug("Linking pose before BA: ");
+      logging::RetrieveLogger()->debug(ss.str());
+    }
 
+    optimization::BundleAdjustment(key_frames, map_points, 30);
 
+    {
+      std::stringstream ss;
+      ss << current_key_frame->GetPosition().R << current_key_frame->GetPosition().T;
+      logging::RetrieveLogger()->debug("Linking pose before BA: ");
+      logging::RetrieveLogger()->debug(ss.str());
+    }
+    exit(0);
 
-
-    /*TODO: reference_keyframe_ = frame;
-    local_mapper_.AddKeyFrame(last_frame_);
-    local_mapper_.AddKeyFrame(frame);
+    reference_keyframe_ = current_key_frame;
+    local_mapper_.AddKeyFrame(initial_key_frame);
+    local_mapper_.AddKeyFrame(current_key_frame);
     state_ = OK;
-    last_frame_ = last_key_frame_ = frame;
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});*/
+    last_frame_ = frame;
+    /*this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});*/
   } else {
     delete frame;
     return TrackingResult::TRACKING_FAILED;

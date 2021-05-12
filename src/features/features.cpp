@@ -121,7 +121,7 @@ bool Features::PosInGrid(const TPoint2D & kp,
   return true;
 }
 
-void Features::UndistortKeyPoints(const shared_ptr<camera::MonocularCamera> & camera) {
+void Features::UndistortKeyPoints(const camera::MonocularCamera * camera) {
   undistorted_and_unprojected_keypoints.resize(keypoints.size());
   unprojected_keypoints.resize(keypoints.size());
   for (size_t i = 0; i < undistorted_and_unprojected_keypoints.size(); ++i) {
@@ -132,7 +132,7 @@ void Features::UndistortKeyPoints(const shared_ptr<camera::MonocularCamera> & ca
   }
 }
 
-void Features::SetVocabulary(BowVocabulary * vocabulary) {
+void Features::SetVocabulary(const BowVocabulary * vocabulary) {
   bow_container.vocabulary = vocabulary;
 }
 

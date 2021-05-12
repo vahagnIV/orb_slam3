@@ -3,14 +3,19 @@
 //
 
 #include "se3_project_xyz_pose.h"
+// === orb_slam3 ===
+#include <map/map_point.h>
+
 namespace orb_slam3 {
 namespace optimization {
 namespace edges {
 
-SE3ProjectXYZPose::SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera) : camera_(camera) {
+SE3ProjectXYZPose::SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera, precision_t threshold)
+    : camera_(camera), threshold_(threshold) {
   error()[0] = error()[1] = 0;
 }
-bool SE3ProjectXYZPose::IsDepthPositive() {
+
+bool SE3ProjectXYZPose::IsDepthPositive() const {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   return pose->estimate().map(point->estimate())[2] > 0;
@@ -60,6 +65,9 @@ void SE3ProjectXYZPose::linearizeOplus() {
 //  std::cout << _jacobianOplusXi << std::endl;
 //  std::cout << jacobianOplusXj << std::endl;
 //  std::cout << _jacobianOplusXj << std::endl;
+}
+bool SE3ProjectXYZPose::IsValid() const {
+  return IsDepthPositive() && chi2() < threshold_;
 }
 
 }

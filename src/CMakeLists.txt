@@ -59,6 +59,8 @@ add_library(orbslam SHARED
 
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp
+        optimization/vertices/map_point_vertex.cpp
+        optimization/utils.cpp
         optimization/bundle_adjustment.cpp
 
         debug/debug_utils.cpp

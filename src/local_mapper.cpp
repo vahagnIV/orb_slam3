@@ -79,8 +79,8 @@ bool LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
 
   // TODO: make bundle adjustment
 
-  g2o::SparseOptimizer optimizaer;
-  optimization::InitializeOptimizer(optimizaer);
+//  g2o::SparseOptimizer optimizaer;
+//  optimization::InitializeOptimizer(optimizaer);
 //  optimization::BundleAdjustment(optimizaer, {}, new_map_points, 5);
   return true;
 

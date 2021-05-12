@@ -36,7 +36,7 @@ class Features {
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
   BowContainer bow_container;
 
-  void SetVocabulary(BowVocabulary *vocabulary);
+  void SetVocabulary(const BowVocabulary *vocabulary);
   void ComputeBow();
   size_t GetImageHeight() const {return image_height_; }
   size_t GetImageWidth() const {return image_width_; }
@@ -50,7 +50,7 @@ class Features {
 
   void AssignFeaturesToGrid();
 
-  void UndistortKeyPoints(const std::shared_ptr<camera::MonocularCamera> & camera);
+  void UndistortKeyPoints(const camera::MonocularCamera * camera);
  private:
   bool PosInGrid(const TPoint2D & kp,
                  const precision_t & min_X,

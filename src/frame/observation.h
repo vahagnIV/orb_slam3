@@ -3,10 +3,11 @@
 //
 
 // === g2o ===
-#include <g2o/core/base_edge.h>
 #include <g2o/core/robust_kernel_impl.h>
 // === orb_slam3 ===
-#include "../features/features.h"
+#include <features/features.h>
+#include <optimization/edges/ba_binary_edge.h>
+#include <optimization/edges/ba_unary_edge.h>
 
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_OBSERVATION_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_OBSERVATION_H_
@@ -30,13 +31,13 @@ class Observation  {
    * Creates a g2o edge for bundle adjustment
    * @return g2o edge with set vertices
    */
-  virtual g2o::BaseEdge<2, Eigen::Vector2d> * CreateBinaryEdge();
+  optimization::edges::BABinaryEdge * CreateBinaryEdge() const;
 
   /*!
    * Create a g2o edge for pose optimization
    * @return g2o edge with set vertex
    */
-  virtual g2o::BaseEdge<2, Eigen::Vector2d> * CreateEdge();
+  optimization::edges::BAUnaryEdge *CreateEdge() const;
 
   /*!
    * Getter for the corresponding frame

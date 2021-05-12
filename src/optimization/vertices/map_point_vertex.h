@@ -6,22 +6,17 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_OPTIMIZATION_VERTICES_MAP_POINT_VERTEX_H_
 // === orb_slam3 ===
 #include <g2o/types/slam3d/vertex_pointxyz.h>
-
-// === orb_slam3 ===
-#include "../../map/map_point.h"
-
 namespace orb_slam3 {
+namespace map{
+class MapPoint;
+}
 namespace optimization {
 namespace vertices {
 
 class MapPointVertex : public g2o::VertexPointXYZ {
  public:
   MapPointVertex() = default;
-  explicit MapPointVertex(map::MapPoint * map_point) : map_point_(map_point) {
-    setEstimate(map_point->GetPosition());
-    setMarginalized(true);
-    setFixed(false);
-  }
+  explicit MapPointVertex(map::MapPoint * map_point);
 
   map::MapPoint * GetMapPoint() { return map_point_; }
 

@@ -14,8 +14,9 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->GetFilename(),
                                                                         frame->GetFeatureExtractor(),
                                                                         frame->GetVocabulary(),
-                                                                        Id()),
+                                                                        frame->Id()),
                                                                BaseMonocular(*frame) {
+  SetPosition(frame->GetPosition());
   for(auto mp: map_points_){
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
   }

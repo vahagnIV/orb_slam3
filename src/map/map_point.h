@@ -23,8 +23,8 @@ namespace map {
 
 class MapPoint {
  public:
-  typedef std::unordered_map<frame::KeyFrame *, frame::Observation > MapType;
-  MapPoint(const TPoint3D & point, precision_t max_invariance_distance, precision_t min_invariance_distance);
+  typedef std::unordered_map<frame::KeyFrame *, frame::Observation> MapType;
+  MapPoint(TPoint3D  point, precision_t max_invariance_distance, precision_t min_invariance_distance);
 
   /*!
    * Adds frame to the map points observations
@@ -35,7 +35,7 @@ class MapPoint {
 
   void EraseObservation(frame::KeyFrame *);
 
-  void Refresh(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
+  void Refresh(const features::IFeatureExtractor * feature_extractor);
 
   void SetPosition(const TPoint3D & position);
 
@@ -58,11 +58,13 @@ class MapPoint {
   unsigned GetVisible() const { return visible_; }
   unsigned GetFound() const { return found_; }
   static uint64_t GetTotalMapPointCount() { return counter_; }
+  inline bool IsBad() const { return bad_flag_; }
+  inline void SetBad() { bad_flag_ = true; }
   ~MapPoint();
 
- private:
-  void ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor);
   void UpdateNormalAndDepth();
+ private:
+  void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
  private:
   static atomic_uint64_t counter_;
   // Position in the world coordinate system
@@ -74,6 +76,7 @@ class MapPoint {
   precision_t min_invariance_distance_;
   unsigned visible_;
   unsigned found_;
+  bool bad_flag_;
 
 };
 

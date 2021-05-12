@@ -6,17 +6,20 @@
 #include "map_point.h"
 #include <frame/key_frame.h>
 
+#include <utility>
+
 namespace orb_slam3 {
 namespace map {
 
 std::atomic_uint64_t MapPoint::counter_(0);
 
-MapPoint::MapPoint(const TPoint3D & point, precision_t max_invariance_distance, precision_t min_invariance_distance)
-    : position_(point),
+MapPoint::MapPoint(TPoint3D point, precision_t max_invariance_distance, precision_t min_invariance_distance)
+    : position_(std::move(point)),
       max_invariance_distance_(max_invariance_distance),
       min_invariance_distance_(min_invariance_distance),
       visible_(0),
-      found_(0) {
+      found_(0),
+      bad_flag_(false) {
   ++counter_;
 }
 
@@ -25,7 +28,7 @@ MapPoint::~MapPoint() {
 }
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
- observations_.emplace(observation.GetKeyFrame(), observation);
+  observations_.emplace(observation.GetKeyFrame(), observation);
 //  observations_[observation.GetKeyFrame()] = observation;
 }
 
@@ -33,12 +36,12 @@ void MapPoint::EraseObservation(frame::KeyFrame * frame) {
   observations_.erase(frame);
 }
 
-void MapPoint::Refresh(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor) {
+void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
   ComputeDistinctiveDescriptor(feature_extractor);
   UpdateNormalAndDepth();
 }
 
-void MapPoint::ComputeDistinctiveDescriptor(const std::shared_ptr<features::IFeatureExtractor> & feature_extractor) {
+void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor) {
 
   std::vector<features::DescriptorType> descriptors;
   for (const auto & observation: observations_) {

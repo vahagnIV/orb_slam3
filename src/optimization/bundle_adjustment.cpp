@@ -3,64 +3,58 @@
 //
 
 #include "bundle_adjustment.h"
+#include <frame/observation.h>
+#include <map/map_point.h>
 #include "optimization/vertices/map_point_vertex.h"
 #include "optimization/vertices/frame_vertex.h"
-
-// === g2o ===
-#include <g2o/core/block_solver.h>
-#include <g2o/solvers/eigen/linear_solver_eigen.h>
-#include <g2o/core/optimization_algorithm_levenberg.h>
+#include "optimization/edges/ba_binary_edge.h"
+#include "optimization/edges/ba_unary_edge.h"
+#include "utils.h"
 
 namespace orb_slam3 {
 namespace optimization {
 
-void InitializeOptimizer(g2o::SparseOptimizer & optimizer) {
-  std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>
-      linearSolver(new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>());
+void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
+                      std::unordered_set<map::MapPoint *> & map_points,
+                      unsigned number_of_iterations,
+                      bool * stop_flag,
+                      frame::KeyFrame * loop_kf,
+                      bool robust) {
 
-  std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
-
-  auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
-  optimizer.setAlgorithm(solver);
-}
-
-void BundleAdjustment(g2o::SparseOptimizer & optimizer,
-                      unordered_set<frame::KeyFrame *> & fixed_key_frames,
-                      unordered_set<map::MapPoint *> & map_points,
-                      unsigned int number_of_iterations) {
-
+  g2o::SparseOptimizer optimizer;
   InitializeOptimizer(optimizer);
-  std::unordered_map<frame::KeyFrame *, int> frame_map;
-  std::unordered_map<map::MapPoint *, int> mp_map;
-  int id = 0;
+  optimizer.setVerbose(true);
 
-  for (auto map_point: map_points) {
-    auto mp_vertex = new vertices::MapPointVertex(map_point);
-    mp_vertex->setId(id++);
-    mp_map[map_point] = mp_vertex->id();
-    optimizer.addVertex(mp_vertex);
-    vertices::FrameVertex * frame_vertex;
-    for (auto observation: map_point->Observations()) {
-      auto it = frame_map.find(observation.first);
-      if (it == frame_map.end()) {
-        frame_vertex = new vertices::FrameVertex(observation.first);
-        frame_vertex->setId(id++);
-        frame_vertex->setFixed(fixed_key_frames.find(frame_vertex->GetFrame()) != fixed_key_frames.end());
-        optimizer.addVertex(frame_vertex);
-        frame_map[observation.first] = frame_vertex->id();
-      } else
-        frame_vertex = dynamic_cast<vertices::FrameVertex *>(optimizer.vertex(it->second));
-      auto edge = observation.second.CreateBinaryEdge();
-      edge->setVertex(0, frame_vertex);
-      edge->setVertex(1, mp_vertex);
-      edge->setId(id++);
-      edge->setRobustKernel(observation.second.CreateRobustKernel());
-      optimizer.addEdge(edge);
+  std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
+  std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
+
+  size_t max_kf_id = FillKeyFrameVertices(key_frames, optimizer, frame_map);
+  FillMpVertices(map_points, optimizer, frame_map, mp_map, robust, max_kf_id);
+
+  optimizer.initializeOptimization();
+  optimizer.setForceStopFlag(stop_flag);
+  optimizer.optimize(number_of_iterations);
+
+
+  // Collect frame positions
+  for (auto frame_vertex: frame_map) {
+    if (nullptr == loop_kf || loop_kf->IsInitial())
+      frame_vertex.first->SetPosition(frame_vertex.second->estimate());
+    else {
+      // TODO: Implement for loop closing
+      std::runtime_error("This is not implemented yet");
     }
   }
 
-  optimizer.initializeOptimization();
-  optimizer.optimize(number_of_iterations);
+  // Collect Map Point positions
+  for (auto mp_vertex: mp_map) {
+    if (nullptr == loop_kf || loop_kf->IsInitial()) {
+      mp_vertex.first->SetPosition(mp_vertex.second->estimate());
+      mp_vertex.first->UpdateNormalAndDepth();
+    } else {
+      std::runtime_error("BA not implemented for Loop closing");
+    }
+  }
 }
 
 }

@@ -36,8 +36,8 @@ class BaseMonocular {
 
  protected:
   std::map<size_t, map::MapPoint *> map_points_;
- private:
   features::Features features_;
+ private:
   const camera::MonocularCamera * camera_;
 
 };

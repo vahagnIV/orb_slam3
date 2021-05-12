@@ -21,10 +21,13 @@ Observation::Observation(map::MapPoint * map_point,
                                                     feature_ids_({feature_id_left, feature_id_right}) {
 }
 
-g2o::BaseEdge<2, Eigen::Vector2d> * Observation::CreateBinaryEdge() {
+optimization::edges::BABinaryEdge * Observation::CreateBinaryEdge() const {
   if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
-    auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetCamera());
+    auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetCamera(),
+                                                           constants::MONO_CHI2
+                                                               * monocular_key_frame->GetCamera()->FxInv()
+                                                               * monocular_key_frame->GetCamera()->FxInv());
     auto measurement = monocular_key_frame->GetFeatures().unprojected_keypoints[feature_ids_[0]];
     edge->setMeasurement(Eigen::Map<Eigen::Matrix<double,
                                                   2,
@@ -39,7 +42,7 @@ g2o::BaseEdge<2, Eigen::Vector2d> * Observation::CreateBinaryEdge() {
   return nullptr;
 }
 
-g2o::BaseEdge<2, Eigen::Vector2d> * Observation::CreateEdge() {
+optimization::edges::BAUnaryEdge * Observation::CreateEdge() const {
   throw std::runtime_error("Unary edges is not yet implemented");
   return nullptr;
 }
