@@ -41,6 +41,11 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
 // TODO: return frame->FindNewMapPointsAndAdjustPosition(all_candidate_map_points);
 }
 
+void Tracker::UpdateLastFrame(frame::Frame * frame) {
+  delete last_frame_;
+  last_frame_ = frame;
+}
+
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   assert(OK == state_);
@@ -71,14 +76,14 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
 
-    if (local_mapper_.CreateNewMapPoints(keyframe)) {
+    /*if (local_mapper_.CreateNewMapPoints(keyframe)) {
 
       UpdateCovisibilityConnections();
       last_key_frame_ = keyframe;
       atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
       reference_keyframe_ = keyframe;
-    }
-//    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = frame});
+    }*/
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
   }
 //  ComputeVelocity(frame, last_frame_);
   last_frame_ = frame;
@@ -128,11 +133,15 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     optimization::BundleAdjustment(key_frames, map_points, 30);
 
     reference_keyframe_ = current_key_frame;
-    local_mapper_.AddKeyFrame(initial_key_frame);
-    local_mapper_.AddKeyFrame(current_key_frame);
     state_ = OK;
     last_frame_ = frame;
-    /*this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=frame});*/
+
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=initial_key_frame});
+
+    // TODO: remove the following line in multithreading
+    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+
   } else {
     delete frame;
     return TrackingResult::TRACKING_FAILED;

@@ -22,13 +22,15 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                const string & filename,
                                const features::IFeatureExtractor * feature_extractor,
                                const camera::MonocularCamera * camera,
-                               const features::BowVocabulary * const vocabulary) : Frame(time_point,
-                                                                                         filename,
-                                                                                         feature_extractor,
-                                                                                         vocabulary),
-                                                                                   BaseMonocular(image.cols(),
-                                                                                                 image.rows(),
-                                                                                                 camera) {
+                               const features::BowVocabulary * vocabulary,
+                               const SensorConstants * sensor_constants) : Frame(time_point,
+                                                                                 filename,
+                                                                                 feature_extractor,
+                                                                                 vocabulary,
+                                                                                 sensor_constants),
+                                                                           BaseMonocular(image.cols(),
+                                                                                         image.rows(),
+                                                                                         camera) {
   const_cast<features::IFeatureExtractor *>(feature_extractor)->Extract(image, features_);
   features_.UndistortKeyPoints(GetCamera());
   features_.AssignFeaturesToGrid();
@@ -129,12 +131,11 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                   GetFeatures().keypoints[point.first],
                                                   max_invariance_distance,
                                                   min_invariance_distance);
-    auto map_point = new map::MapPoint(point.second, max_invariance_distance, min_invariance_distance);
+    auto map_point = new map::MapPoint(point.second, max_invariance_distance, min_invariance_distance, Id());
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
   }
-
 }
 
 void MonocularFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
@@ -152,6 +153,10 @@ bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
 
 bool MonocularFrame::IsValid() const {
   return GetFeatures().Size() > 0;
+}
+
+void MonocularFrame::ComputeBow() {
+  BaseMonocular::ComputeBow();
 }
 
 }

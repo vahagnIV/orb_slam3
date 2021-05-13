@@ -19,10 +19,11 @@ class Frame : public BaseFrame {
   Frame(TimePoint & time_point,
         const std::string & filename,
         const features::IFeatureExtractor * feature_extractor,
-        const features::BowVocabulary * vocabulary) : BaseFrame(time_point,
+        const features::BowVocabulary * vocabulary,
+        const SensorConstants * sensor_constants) : BaseFrame(time_point,
                                                                 filename,
                                                                 feature_extractor,
-                                                                vocabulary, ++next_id_) {}
+                                                                vocabulary, sensor_constants, ++next_id_) {}
 
   virtual ~Frame() = default;
  public:

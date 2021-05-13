@@ -13,13 +13,17 @@ namespace map {
 
 std::atomic_uint64_t MapPoint::counter_(0);
 
-MapPoint::MapPoint(TPoint3D point, precision_t max_invariance_distance, precision_t min_invariance_distance)
+MapPoint::MapPoint(TPoint3D point,
+                   size_t first_observed_frame_id,
+                   precision_t max_invariance_distance,
+                   precision_t min_invariance_distance)
     : position_(std::move(point)),
       max_invariance_distance_(max_invariance_distance),
       min_invariance_distance_(min_invariance_distance),
       visible_(0),
       found_(0),
-      bad_flag_(false) {
+      bad_flag_(false),
+      first_observed_frame_id_(first_observed_frame_id) {
   ++counter_;
 }
 
@@ -84,6 +88,21 @@ void MapPoint::UpdateNormalAndDepth() {
 
 void MapPoint::SetPosition(const TPoint3D & position) {
   position_ = position;
+}
+
+const MapPoint::MapType MapPoint::Observations() const {
+  std::unique_lock<std::mutex> (feature_mutex_);
+  return observations_;
+}
+
+size_t MapPoint::GetObservationCount() const {
+  std::unique_lock<std::mutex>(feature_mutex_);
+  return observations_.size();
+}
+
+bool MapPoint::IsInKeyFrame(frame::KeyFrame * keyframe) {
+  std::unique_lock<std::mutex>(feature_mutex_);
+  return observations_.find(keyframe) != observations_.end();
 }
 
 }

@@ -26,7 +26,7 @@ struct Pose {
     return R * point + T;
   }
 
-  Pose GetInversePose() {
+  Pose GetInversePose() const {
     return Pose{.R = R.transpose(), .T = -R.transpose() * T};
   }
 

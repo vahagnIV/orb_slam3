@@ -12,7 +12,7 @@ namespace validators {
 TriangulationValidator::TriangulationValidator(const Features * features_to,
                                                const Features * features_from,
                                                const geometry::Pose * relative_pose,
-                                               const std::shared_ptr<IFeatureExtractor> & feature_extractor,
+                                               const IFeatureExtractor * feature_extractor,
                                                const precision_t sigma)
     : features_to_(features_to),
       features_from_(features_from),

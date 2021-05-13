@@ -47,13 +47,25 @@ void LocalMapper::Stop() {
   thread_ = nullptr;
 }
 
-void LocalMapper::MapPointCulling(unordered_set<map::MapPoint *> & map_points) {
+void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
   unsigned erased = 0;
-  for (auto mp: map_points)
-    if (mp->GetVisible() / mp->GetFound() < 0.25) {
-      EraseMapPoint(mp);
-      ++erased;
+  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ++mp_it) {
+    map::MapPoint * mp = *mp_it;
+    if (mp->IsBad()) {
+      mp_it = recently_added_map_points_.erase(mp_it);
+    } else if (static_cast<precision_t>(mp->GetFound()) / mp->GetVisible() < 0.25) {
+      mp->SetBad();
+      mp_it = recently_added_map_points_.erase(mp_it);
+    } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2
+        && mp->GetObservationCount() < keyframe->GetSensorConstants()->max_mp_disappearance_count) {
+      mp->SetBad();
+      mp_it = recently_added_map_points_.erase(mp_it);
+    } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2) {
+      mp_it = recently_added_map_points_.erase(mp_it);
     }
+    ++erased;
+  }
+
   logging::RetrieveLogger()->debug("LM: erased {} mps", erased);
 }
 
@@ -65,24 +77,43 @@ void LocalMapper::EraseMapPoint(map::MapPoint * map_point) {
   delete map_point;
 }
 
-void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * frame) {
-  /*for (auto observation: *observations) {
-//    frame->AddMapPoint(observation);
-    recently_added_map_points_.insert(observation->GetMapPoint());
+void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
+  frame::KeyFrame::MapPointSet map_points;
+  keyframe->ComputeBow();
+  keyframe->ListMapPoints(map_points);
+  for (auto mp: map_points) {
+    if (mp->IsBad())
+      continue;
+
+    if (!mp->IsInKeyFrame(keyframe)) {
+      // TODO: find cases when this could happen
+      assert(false);
+    } else
+      recently_added_map_points_.insert(mp);
   }
-  frame->GetCovisibilityGraph().Update();*/
+  keyframe->GetCovisibilityGraph().Update();
+  // TODO: Add to Atlas
+
 }
 
-bool LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
+void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   //TODO: decide the number of covisible frames from the type, i.e. Monocular 20,  else 10
-  auto covisible_frames = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(20);
+  auto covisible_frames =
+      key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(key_frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
+
+  bool at_least_one_processed = false;
+  for (auto neighbour_keyframe: covisible_frames) {
+    key_frame->CreateNewMapPoints(neighbour_keyframe);
+
+    if(at_least_one_processed)
+      return;
+  }
 
   // TODO: make bundle adjustment
 
 //  g2o::SparseOptimizer optimizaer;
 //  optimization::InitializeOptimizer(optimizaer);
 //  optimization::BundleAdjustment(optimizaer, {}, new_map_points, 5);
-  return true;
 
 }
 
@@ -90,11 +121,17 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 
 }
 
-void LocalMapper::AddKeyFrame(frame::KeyFrame * frame) {
-  ProcessNewKeyFrame(frame);
-  MapPointCulling(recently_added_map_points_);
-  CreateNewMapPoints(frame);
-  Optimize(frame);
+bool LocalMapper::CheckNewKeyFrames() const {
+  return GetUpdateQueue().size_approx() > 0;
+}
+
+void LocalMapper::RunIteration() {
+  UpdateMessage message;
+  if (GetUpdateQueue().try_dequeue(message)) {
+    ProcessNewKeyFrame(message.frame);
+    MapPointCulling(message.frame);
+    CreateNewMapPoints(message.frame);
+  }
 
 }
 

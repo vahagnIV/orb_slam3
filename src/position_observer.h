@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_POISITION_OBSERVER_H
 #define ORB_SLAM3_POISITION_OBSERVER_H
 #include "observer.h"
-#include "frame/frame.h"
+#include "frame/key_frame.h"
 
 namespace orb_slam3 {
 
@@ -17,7 +17,7 @@ enum PositionMessageType {
 
 struct UpdateMessage {
   PositionMessageType type;
-  frame::Frame * frame;
+  frame::KeyFrame * frame;
 };
 
 class PositionObserver : public Observer<UpdateMessage> {

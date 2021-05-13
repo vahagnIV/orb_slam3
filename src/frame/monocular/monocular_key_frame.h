@@ -20,11 +20,17 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   virtual ~MonocularKeyFrame() = default;
 
  public:
-
+  void CreateNewMapPoints(frame::KeyFrame * other) override;
+  void ComputeBow() override;
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-
+ private:
+  static bool BaseLineIsEnough(const MapPointSet & others_map_points,
+                               const geometry::Pose & local_pose,
+                               const geometry::Pose & others_pose);
+  static precision_t ComputeBaseline(const geometry::Pose & local_pose, const geometry::Pose & others_pose);
+  static precision_t ComputeSceneMedianDepth(const MapPointSet & map_points, unsigned q, const geometry::Pose & pose);
 
 };
 

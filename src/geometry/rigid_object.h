@@ -5,6 +5,9 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_RIGID_OBJECT_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_RIGID_OBJECT_H_
 
+// === stl ===
+#include <mutex>
+
 // === g2o ====
 #include <g2o/types/slam3d/se3quat.h>
 
@@ -16,6 +19,7 @@ namespace geometry {
 
 class RigidObject {
  public:
+  virtual ~RigidObject() = default;
   void SetPosition(const geometry::Pose & pose) {
     SetPosition(pose.R, pose.T);
   }
@@ -33,8 +37,15 @@ class RigidObject {
   }
 
   const geometry::Pose & GetPosition() const { return pose_; }
+  geometry::Pose GetPositionWithLock() const {
+    std::unique_lock<std::mutex> lock(position_mutex_);
+    return pose_;
+  }
   const geometry::Pose & GetInversePosition() const { return inverse_pose_; }
-  virtual ~RigidObject() = default;
+  geometry::Pose GetIncersePositionWithLock() const {
+    std::unique_lock<std::mutex> lock(position_mutex_);
+    return inverse_pose_;
+  }
  private:
   void SetPosition(const TMatrix33 & R, const TPoint3D & T) {
     pose_.R = R;
@@ -44,6 +55,7 @@ class RigidObject {
   }
   geometry::Pose pose_;
   geometry::Pose inverse_pose_;
+  mutable std::mutex position_mutex_;
 };
 
 }

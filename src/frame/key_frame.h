@@ -17,7 +17,8 @@ class KeyFrame : public BaseFrame {
            const std::string & filename,
            const features::IFeatureExtractor * feature_extractor,
            const features::BowVocabulary * vocabulary,
-           size_t id) : BaseFrame(time_point, filename, feature_extractor, vocabulary, id),
+           const SensorConstants * sensor_constants,
+           size_t id) : BaseFrame(time_point, filename, feature_extractor, vocabulary, sensor_constants, id),
                         covisibility_graph_(this),
                         is_initial_(false),
                         bad_flag_(false),
@@ -40,6 +41,7 @@ class KeyFrame : public BaseFrame {
   void SetKeyFrameGBA(KeyFrame * keyframe) {
     kf_gba_ = keyframe;
   }
+  virtual void CreateNewMapPoints(frame::KeyFrame * other) = 0;
 
  protected:
   CovisibilityGraphNode covisibility_graph_;

@@ -55,8 +55,6 @@ void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
 
     mp_vertex->setId(++inout_id);
     inout_optimizer.addVertex(mp_vertex);
-    int s = inout_optimizer.vertices().size();
-
     unsigned number_of_edges = 0;
     for (auto observation: map_point->Observations()) {
       auto it = frame_map.find(observation.first);
@@ -68,8 +66,6 @@ void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
       edge->setVertex(0, frame_vertex);
       edge->setVertex(1, mp_vertex);
       edge->setId(++inout_id);
-      int id = edge->id();
-      auto measuurement = edge->measurement();
       if (robust)
         edge->setRobustKernel(observation.second.CreateRobustKernel());
       inout_optimizer.addEdge(edge);

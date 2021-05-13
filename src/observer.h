@@ -14,12 +14,13 @@ class Observer {
  public:
   typedef moodycamel::BlockingConcurrentQueue<MessageType> UpdateQueue;
   Observer(): queue_(){}
-  UpdateQueue & GetUpdateQueue(){
+  UpdateQueue & GetUpdateQueue() const{
     return queue_;
   }
+  virtual ~Observer() =default;
 
  private:
-  UpdateQueue queue_;
+  mutable UpdateQueue queue_;
 
 };
 

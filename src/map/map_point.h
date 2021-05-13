@@ -6,6 +6,7 @@
 #define ORB_SLAM3_INCLUDE_MAP_POINT_H_
 // === stl ===
 #include <unordered_map>
+#include <mutex>
 
 // === orb-slam3 ===
 #include "../typedefs.h"
@@ -24,7 +25,7 @@ namespace map {
 class MapPoint {
  public:
   typedef std::unordered_map<frame::KeyFrame *, frame::Observation> MapType;
-  MapPoint(TPoint3D  point, precision_t max_invariance_distance, precision_t min_invariance_distance);
+  MapPoint(TPoint3D point, size_t first_observed_frame_id, precision_t max_invariance_distance, precision_t min_invariance_distance);
 
   /*!
    * Adds frame to the map points observations
@@ -44,16 +45,19 @@ class MapPoint {
   const TPoint3D & GetPosition() const { return position_; }
   const TVector3D & GetNormal() const { return normal_; }
 
-  const MapType & Observations() const { return observations_; }
-  MapType & Observations() { return observations_; }
+  const MapType Observations() const;
+  size_t GetObservationCount() const;
 
   precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
   precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
+  bool IsInKeyFrame(frame::KeyFrame * keyframe);
 
   bool IsValid() const { return true; }
 
   void IncreaseVisible() { ++visible_; }
   void IncreaseFound() { ++found_; }
+
+  size_t GetFirstObservedFrameId() const { return first_observed_frame_id_; }
 
   unsigned GetVisible() const { return visible_; }
   unsigned GetFound() const { return found_; }
@@ -77,6 +81,13 @@ class MapPoint {
   unsigned visible_;
   unsigned found_;
   bool bad_flag_;
+  size_t first_observed_frame_id_;
+
+  // Mutex for locking observation
+  mutable std::mutex feature_mutex_;
+
+  // Mutex for locking position
+  std::mutex position_mutex_;
 
 };
 

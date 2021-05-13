@@ -24,7 +24,7 @@ class TriangulationValidator : public IMatchValidator<size_t, size_t> {
   TriangulationValidator(const Features * features_to,
                          const Features * features_from,
                          const geometry::Pose * relative_pose,
-                         const std::shared_ptr<IFeatureExtractor> & feature_extractor,
+                         const IFeatureExtractor * feature_extractor,
                          const precision_t sigma);
   bool Validate(size_t to_id, size_t from_id) const override;
  private:
@@ -35,7 +35,7 @@ class TriangulationValidator : public IMatchValidator<size_t, size_t> {
   const Features * features_from_;
   const geometry::Pose * relative_pose_;
   const HomogenousPoint epipole_;
-  const std::shared_ptr<IFeatureExtractor> feature_extractor_;
+  const IFeatureExtractor * feature_extractor_;
   const precision_t sigma_;
 
 };

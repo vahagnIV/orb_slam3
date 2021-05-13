@@ -18,7 +18,8 @@ class MonocularFrame : public Frame, public BaseMonocular {
                  const string & filename,
                  const features::IFeatureExtractor * feature_extractor,
                  const camera::MonocularCamera * camera,
-                 const features::BowVocabulary * vocabulary);
+                 const features::BowVocabulary * vocabulary,
+                 const SensorConstants * sensor_constants);
  public:
   // Frame
   FrameType Type() const override;
@@ -28,6 +29,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool EstimatePositionFromReferenceKeyframe(const KeyFrame * reference_keyframe) override;
   bool EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
+  void ComputeBow() override;
 
   // MonocularFame
  private:
@@ -38,8 +40,6 @@ class MonocularFrame : public Frame, public BaseMonocular {
                                       MapPointSet & out_map_points);
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
   bool MapPointExists(const map::MapPoint * map_point) const ;
-
-
 
 };
 
