@@ -298,7 +298,7 @@ void LoadBowVocabulary(orb_slam3::features::BowVocabulary & voc, const std::stri
   std::cout << "Done" << std::endl;
 }
 
-void loadConfig(nlohmann::json & config) {
+void LoadConfig(nlohmann::json & config) {
 
   std::ifstream ifs("config.json");
   config = nlohmann::json::parse(ifs);
@@ -313,7 +313,7 @@ int main(int argc, char * argv[]) {
 
   initialize();
   nlohmann::json config;
-  loadConfig(config);
+  LoadConfig(config);
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
