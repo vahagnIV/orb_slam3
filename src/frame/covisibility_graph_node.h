@@ -22,7 +22,7 @@ struct CovisibilityGraphNode {
   CovisibilityGraphNode(const frame::KeyFrame * frame);
 
   void Update();
-  std::unordered_set<KeyFrame *> GetCovisibleKeyFrames(unsigned count);
+  std::unordered_set<KeyFrame *> GetCovisibleKeyFrames(unsigned count = std::numeric_limits<unsigned >::max());
  private:
   const frame::KeyFrame * frame_;
 

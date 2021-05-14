@@ -28,8 +28,9 @@ class LocalMapper : public PositionObserver,
   static void EraseMapPoint(map::MapPoint * map_point);
   void Run();
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
-  void CreateNewMapPoints(frame::KeyFrame * key_frame) ;
+  void CreateNewMapPoints(frame::KeyFrame * key_frame) const ;
   bool CheckNewKeyFrames() const;
+  void FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *> & keyframes ,std::unordered_set<frame::KeyFrame *> & out_fixed) const;
  private:
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas * atlas_;

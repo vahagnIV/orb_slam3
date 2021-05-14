@@ -48,7 +48,7 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
-  unsigned erased = 0;
+  unsigned erased = recently_added_map_points_.size();
   for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ++mp_it) {
     map::MapPoint * mp = *mp_it;
     if (mp->IsBad()) {
@@ -62,8 +62,8 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2) {
       mp_it = recently_added_map_points_.erase(mp_it);
-    }
-    ++erased;
+    } else
+      --erased;
   }
 
   logging::RetrieveLogger()->debug("LM: erased {} mps", erased);
@@ -96,28 +96,35 @@ void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
 
 }
 
-void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
-  //TODO: decide the number of covisible frames from the type, i.e. Monocular 20,  else 10
+void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) const {
   auto covisible_frames =
       key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(key_frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
 
-  bool at_least_one_processed = false;
   for (auto neighbour_keyframe: covisible_frames) {
     key_frame->CreateNewMapPoints(neighbour_keyframe);
-
-    if(at_least_one_processed)
-      return;
   }
-
-  // TODO: make bundle adjustment
-
-//  g2o::SparseOptimizer optimizaer;
-//  optimization::InitializeOptimizer(optimizaer);
-//  optimization::BundleAdjustment(optimizaer, {}, new_map_points, 5);
-
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {
+  auto covisible_frames = frame->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  std::unordered_set<frame::KeyFrame *> local_keyframes;
+  std::copy_if(covisible_frames.begin(),
+               covisible_frames.end(),
+               std::inserter(local_keyframes, local_keyframes.begin()),
+               [](const frame::KeyFrame * frame) { return !frame->IsBad(); });
+  local_keyframes.insert(frame);
+  std:: unordered_set<frame::KeyFrame *> fixed_keyframes;
+  FilterFixedKeyFames(local_keyframes, fixed_keyframes);
+
+}
+
+void LocalMapper::FilterFixedKeyFames(const unordered_set<frame::KeyFrame *> & keyframes,
+                                      unordered_set<frame::KeyFrame *> & out_fixed) const {
+  unsigned number_of_fixed = 0;
+  for(auto keyframe: keyframes){
+    if(keyframe->IsInitial())
+      ++number_of_fixed;
+  }
 
 }
 
@@ -131,6 +138,9 @@ void LocalMapper::RunIteration() {
     ProcessNewKeyFrame(message.frame);
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);
+    if (!CheckNewKeyFrames()) {
+      Optimize(message.frame);
+    }
   }
 
 }

@@ -31,7 +31,7 @@ class BaseFrame : public geometry::RigidObject {
       feature_extractor_(feature_extractor),
       vocabulary_(vocabulary),
       sensor_constants_(sensor_constants),
-      id_(id){}
+      id_(id) {}
   ~BaseFrame() override = default;
 
  public:
@@ -42,13 +42,12 @@ class BaseFrame : public geometry::RigidObject {
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
   virtual const SensorConstants * GetSensorConstants() const { return sensor_constants_; }
 
-  size_t Id() {return id_;}
+  size_t Id() { return id_; }
 
   TimePoint GetTimeCreated() const { return time_point_; }
   const features::IFeatureExtractor * GetFeatureExtractor() const { return feature_extractor_; }
   const std::string & GetFilename() const { return filename_; }
   const features::BowVocabulary * GetVocabulary() const { return vocabulary_; }
-
 
  protected:
   const TimePoint time_point_;

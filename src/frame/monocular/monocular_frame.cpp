@@ -138,19 +138,6 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
   }
 }
 
-void MonocularFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
-  assert(!MapPointExists(map_point));
-  assert(map_points_.find(feature_id) == map_points_.end());
-  map_points_[feature_id] = map_point;
-}
-
-bool MonocularFrame::MapPointExists(const map::MapPoint * map_point) const {
-  for (auto mp: map_points_)
-    if (mp.second == map_point)
-      return true;
-  return false;
-}
-
 bool MonocularFrame::IsValid() const {
   return GetFeatures().Size() > 0;
 }

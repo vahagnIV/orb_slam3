@@ -52,6 +52,17 @@ class BaseMonocular {
   const features::Features & GetFeatures() const { return features_; }
   const camera::MonocularCamera * GetCamera() const { return camera_; }
   void ComputeBow() { features_.ComputeBow(); }
+  void AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
+    assert(!MapPointExists(map_point));
+    assert(map_points_.find(feature_id) == map_points_.end());
+    map_points_[feature_id] = map_point;
+  }
+  bool MapPointExists(const map::MapPoint * map_point) const {
+    for (auto mp: map_points_)
+      if (mp.second == map_point)
+        return true;
+    return false;
+  }
  protected:
   MonocularMapPoints map_points_;
   features::Features features_;

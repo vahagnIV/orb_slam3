@@ -38,8 +38,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
                                       const std::unordered_map<size_t, TPoint3D> & points,
                                       MonocularFrame * from_frame,
                                       MapPointSet & out_map_points);
-  void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
-  bool MapPointExists(const map::MapPoint * map_point) const ;
+
 
 };
 

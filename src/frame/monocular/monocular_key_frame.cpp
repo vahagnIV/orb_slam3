@@ -167,11 +167,11 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
                                        Id(),
                                        max_invariance_distance,
                                        min_invariance_distance);
+    map_point->AddObservation(Observation(map_point, this, match.first));
+    map_point->AddObservation(Observation(map_point, other, match.second));
+    AddMapPoint(map_point, match.first);
+    other_frame->AddMapPoint(map_point, match.second);
 
-    map_point->IncreaseVisible();
-    map_point->IncreaseVisible();
-    map_point->IncreaseFound();
-    map_point->IncreaseFound();
     ++newly_created_mps;
   }
   logging::RetrieveLogger()->debug("LM: Created {} new map_points between frames {} and {}",
