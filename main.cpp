@@ -4,7 +4,7 @@
 #include <tracker.h>
 
 #include <Eigen/Eigen>
-#include <boost/filesystem.hpp>
+#include <json/json.hpp>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -19,6 +19,7 @@
 #include <geometry/utils.h>
 #include <geometry/essential_matrix_estimator.h>
 #include <logging.h>
+
 
 const size_t NFEATURES1 = 1500;
 const size_t NFEATURES2 = 1000;
@@ -265,7 +266,8 @@ void TestLiveCamera(orb_slam3::features::BowVocabulary & voc) {
   StartForLiveCamera(voc, camera);
 }
 
-void TestMonocularTum(orb_slam3::features::BowVocabulary & voc) {
+void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::string & dataPath) {
+
   orb_slam3::frame::SensorConstants constants;
   constants.max_mp_disappearance_count = 2;
   constants.number_of_keyframe_to_search_lm = 20;
@@ -282,19 +284,24 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc) {
   CreateDistortionModel<FISH_EYE>(camera, distortion_coeffs);
   camera->ComputeImageBounds();
 
-  const std::string data = "/data/git/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/mav0/cam0/data";
   std::vector<std::string> filenames;
   std::vector<std::chrono::system_clock::time_point> timestamps;
-  ReadImagesForMonocularTestTum(data, filenames, timestamps);
+  ReadImagesForMonocularTestTum(dataPath, filenames, timestamps);
 
   StartForDataSet(voc, camera, filenames, &constants, timestamps);
 }
 
-void LoadBowVocabulary(orb_slam3::features::BowVocabulary & voc) {
+void LoadBowVocabulary(orb_slam3::features::BowVocabulary & voc, const std::string & path) {
 
   std::cout << "Loading Vocabulary file ..." << std::endl;
-  voc.loadFromTextFile("/data/git/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt");
+  voc.loadFromTextFile(path);
   std::cout << "Done" << std::endl;
+}
+
+void LoadConfig(nlohmann::json & config) {
+
+  std::ifstream ifs("config.json");
+  config = nlohmann::json::parse(ifs);
 }
 
 void initialize() {
@@ -305,11 +312,13 @@ void initialize() {
 int main(int argc, char * argv[]) {
 
   initialize();
+  nlohmann::json config;
+  LoadConfig(config);
 
   orb_slam3::features::BowVocabulary voc;
-  LoadBowVocabulary(voc);
+  LoadBowVocabulary(voc, config["vocabularyFilePath"]);
 
-  TestMonocularTum(voc);
+  TestMonocularTum(voc, config["datasetPath"]);
   //TestLiveCamera(voc);
 
   return 0;
