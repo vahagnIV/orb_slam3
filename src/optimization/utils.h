@@ -19,7 +19,8 @@ void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
 
 size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_frames,
                             g2o::SparseOptimizer & inout_optimizer,
-                            std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> & out_frame_map);
+                            std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> & out_frame_map,
+                            bool fixed = false);
 
 void FillMpVertices( const std::unordered_set<map::MapPoint *> & map_points,
                      g2o::SparseOptimizer & inout_optimizer,

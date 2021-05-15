@@ -3,12 +3,9 @@
 //
 
 #include "bundle_adjustment.h"
-#include <frame/observation.h>
 #include <map/map_point.h>
 #include "optimization/vertices/map_point_vertex.h"
 #include "optimization/vertices/frame_vertex.h"
-#include "optimization/edges/ba_binary_edge.h"
-#include "optimization/edges/ba_unary_edge.h"
 #include "utils.h"
 
 namespace orb_slam3 {
@@ -55,6 +52,34 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
       std::runtime_error("BA not implemented for Loop closing");
     }
   }
+}
+
+void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
+                           unordered_set<frame::KeyFrame *> & fixed_keyframes,
+                           frame::BaseFrame::MapPointSet & local_map_points,
+                           bool * stop_flag) {
+  g2o::SparseOptimizer optimizer;
+  InitializeOptimizer(optimizer);
+
+  std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
+  std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
+  size_t max_kf_id = FillKeyFrameVertices(keyframes, optimizer, frame_map);
+  max_kf_id = std::max(max_kf_id, FillKeyFrameVertices(fixed_keyframes, optimizer, frame_map, true));
+  FillMpVertices(local_map_points, optimizer, frame_map, mp_map, true, max_kf_id);
+
+  optimizer.initializeOptimization();
+  optimizer.setForceStopFlag(stop_flag);
+  optimizer.optimize(5);
+  if (stop_flag && !*stop_flag)
+    optimizer.optimize(5);
+
+  for (auto mp_vertex: mp_map) {
+    for (auto observation: mp_vertex.first->Observations()) {
+
+    }
+
+  }
+
 }
 
 }

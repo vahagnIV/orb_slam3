@@ -26,7 +26,8 @@ void InitializeOptimizer(g2o::SparseOptimizer & optimizer) {
 
 size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_frames,
                             g2o::SparseOptimizer & inout_optimizer,
-                            std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> & out_frame_map) {
+                            std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> & out_frame_map,
+                            bool fixed) {
   size_t max_id = 0;
   for (auto key_frame: key_frames) {
     if (key_frame->IsBad())
@@ -34,7 +35,7 @@ size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_fr
     auto vertex = new vertices::FrameVertex(key_frame);
     vertex->setId(key_frame->Id());
     max_id = std::max(max_id, static_cast<size_t>(vertex->id()));
-    vertex->setFixed(key_frame->IsInitial());
+    vertex->setFixed(fixed || key_frame->IsInitial());
     out_frame_map[key_frame] = vertex;
     inout_optimizer.addVertex(vertex);
   }
@@ -62,7 +63,7 @@ void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
         continue;
 
       vertices::FrameVertex * frame_vertex = dynamic_cast<vertices::FrameVertex *>(it->second);
-      optimization::edges::BABinaryEdge *edge = observation.second.CreateBinaryEdge();
+      optimization::edges::BABinaryEdge * edge = observation.second.CreateBinaryEdge();
       edge->setVertex(0, frame_vertex);
       edge->setVertex(1, mp_vertex);
       edge->setId(++inout_id);

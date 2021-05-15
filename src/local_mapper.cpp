@@ -96,7 +96,7 @@ void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
 
 }
 
-void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) const {
+void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   auto covisible_frames =
       key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(key_frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
 
@@ -106,26 +106,53 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) const {
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {
-  auto covisible_frames = frame->GetCovisibilityGraph().GetCovisibleKeyFrames();
-  std::unordered_set<frame::KeyFrame *> local_keyframes;
-  std::copy_if(covisible_frames.begin(),
-               covisible_frames.end(),
-               std::inserter(local_keyframes, local_keyframes.begin()),
-               [](const frame::KeyFrame * frame) { return !frame->IsBad(); });
+  std::unordered_set<frame::KeyFrame *> local_keyframes = frame->GetCovisibilityGraph().GetCovisibleKeyFrames(),
+      fixed_keyframes;
+  frame::KeyFrame::MapPointSet local_map_points;
+  for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
-  std:: unordered_set<frame::KeyFrame *> fixed_keyframes;
-  FilterFixedKeyFames(local_keyframes, fixed_keyframes);
+  FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
+  if (fixed_keyframes.empty())
+    return;
 
 }
 
-void LocalMapper::FilterFixedKeyFames(const unordered_set<frame::KeyFrame *> & keyframes,
+void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_keyframes,
+                                      frame::KeyFrame::MapPointSet & local_map_points,
                                       unordered_set<frame::KeyFrame *> & out_fixed) const {
   unsigned number_of_fixed = 0;
-  for(auto keyframe: keyframes){
-    if(keyframe->IsInitial())
+  for (auto keyframe: local_keyframes) {
+    if (keyframe->IsInitial())
       ++number_of_fixed;
   }
 
+  for (auto map_point: local_map_points) {
+    for (auto observation: map_point->Observations()) {
+      if (local_keyframes.find(observation.first) == local_keyframes.end())
+        out_fixed.insert(observation.first);
+    }
+  }
+  number_of_fixed += out_fixed.size();
+
+  if (number_of_fixed < 2) {
+    frame::KeyFrame * earliest_keyframe = nullptr, * second_eraliset_keyframe = nullptr;
+    for (auto frame: local_keyframes) {
+      if (nullptr == earliest_keyframe || frame->Id() < earliest_keyframe->Id())
+        earliest_keyframe = frame;
+      else if (nullptr == second_eraliset_keyframe || frame->Id() < second_eraliset_keyframe->Id())
+        second_eraliset_keyframe = frame;
+    }
+    if (nullptr != earliest_keyframe) {
+      ++number_of_fixed;
+      out_fixed.insert(earliest_keyframe);
+      local_keyframes.erase(earliest_keyframe);
+    }
+    if (number_of_fixed < 2 && nullptr != second_eraliset_keyframe) {
+      ++number_of_fixed;
+      out_fixed.insert(second_eraliset_keyframe);
+      local_keyframes.erase(second_eraliset_keyframe);
+    }
+  }
 }
 
 bool LocalMapper::CheckNewKeyFrames() const {

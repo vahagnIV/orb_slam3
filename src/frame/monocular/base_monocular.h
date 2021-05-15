@@ -8,11 +8,9 @@
 #include <mutex>
 
 #include <features/features.h>
+#include <map/map_point.h>
 
 namespace orb_slam3 {
-namespace map {
-class MapPoint;
-}
 namespace camera {
 class MonocularCamera;
 }
@@ -38,10 +36,11 @@ class BaseMonocular {
  public:
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
     std::unique_lock<std::mutex> lock(map_point_mutex_);
-    std::transform(map_points_.begin(),
-                   map_points_.end(),
-                   std::inserter(out_map_points, out_map_points.begin()),
-                   [](const std::pair<size_t, map::MapPoint *> & mp_id) { return mp_id.second; });
+    for (auto mp_id: map_points_) {
+      if (!mp_id.second->IsBad()) {
+        out_map_points.insert(mp_id.second);
+      }
+    }
   }
 
   MonocularMapPoints GetMapPoints() const {

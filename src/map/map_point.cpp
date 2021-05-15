@@ -91,17 +91,17 @@ void MapPoint::SetPosition(const TPoint3D & position) {
 }
 
 const MapPoint::MapType MapPoint::Observations() const {
-  std::unique_lock<std::mutex> (feature_mutex_);
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_;
 }
 
 size_t MapPoint::GetObservationCount() const {
-  std::unique_lock<std::mutex>(feature_mutex_);
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.size();
 }
 
 bool MapPoint::IsInKeyFrame(frame::KeyFrame * keyframe) {
-  std::unique_lock<std::mutex>(feature_mutex_);
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.find(keyframe) != observations_.end();
 }
 
