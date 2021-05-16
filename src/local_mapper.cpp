@@ -114,6 +114,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
   if (fixed_keyframes.empty())
     return;
+  optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
 
 }
 
@@ -156,12 +157,13 @@ void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_k
 }
 
 bool LocalMapper::CheckNewKeyFrames() const {
-  return GetUpdateQueue().size_approx() > 0;
+  bool new_keyframes =  GetUpdateQueue().size_approx() > 0;
+  return new_keyframes;
 }
 
 void LocalMapper::RunIteration() {
   UpdateMessage message;
-  if (GetUpdateQueue().try_dequeue(message)) {
+  while (GetUpdateQueue().try_dequeue(message)) {
     ProcessNewKeyFrame(message.frame);
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);

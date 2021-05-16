@@ -37,7 +37,16 @@ void MapPoint::AddObservation(const frame::Observation & observation) {
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   observations_.erase(frame);
+  if(observations_.size() < 1)
+    SetBad();
+}
+
+void MapPoint::SetBad() {
+  // TODO: Implement this
+  bad_flag_ = true;
+
 }
 
 void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {

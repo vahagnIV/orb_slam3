@@ -22,6 +22,7 @@ void InitializeOptimizer(g2o::SparseOptimizer & optimizer) {
 
   auto * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
+  optimizer.setVerbose(true);
 }
 
 size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_frames,
