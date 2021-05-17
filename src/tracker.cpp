@@ -26,12 +26,38 @@ Tracker::~Tracker() {
   delete atlas_;
 }
 
-void Tracker::UpdateLocalPoints() {
-  local_map_points_.clear();
-  for (auto key_frame: local_key_frames_) {
-    key_frame->ListMapPoints(local_map_points_);
+frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
+                                              unordered_set<frame::KeyFrame *> & out_local_keyframes) {
+  out_local_keyframes.clear();
+  std::unordered_set<map::MapPoint *> frame_map_points;
+  current_frame->ListMapPoints(frame_map_points);
+  std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
+  for (auto & map_point: frame_map_points) {
+    for (auto observation: map_point->Observations()) {
+      ++key_frame_counter[observation.first];
+    }
   }
-  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_.size());
+
+  frame::KeyFrame * max_covisible_key_frame = nullptr;
+  unsigned max_count = 0;
+  for (auto & kf_count: key_frame_counter) {
+    out_local_keyframes.insert(kf_count.first);
+    if (max_count < kf_count.second) {
+      max_count = kf_count.second;
+      max_covisible_key_frame = kf_count.first;
+    }
+  }
+
+  for (auto kf: key_frame_counter) {
+    auto covisible_frames = kf.first->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
+    if (out_local_keyframes.size() >= 80)
+      break;
+    std::copy(covisible_frames.begin(),
+              covisible_frames.end(),
+              std::inserter(out_local_keyframes, out_local_keyframes.begin()));
+  }
+
+  return max_covisible_key_frame;
 }
 
 bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
@@ -65,11 +91,29 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
 
-  UpdateLocalMap(frame);
+  std::unordered_set<frame::KeyFrame *> local_keyframes;
+  frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(frame, local_keyframes);
+  if (reference_keyframe)
+    reference_keyframe_ = reference_keyframe;
 
-  // TODO: Based on the state pick the right constant
+  frame::Frame::MapPointSet current_frame_map_points, local_map_points_except_current;
+  frame->ListMapPoints(current_frame_map_points);
+  for (auto mp: current_frame_map_points)
+    mp->IncreaseVisible();
+
+  for (auto keyframe: local_keyframes) {
+    frame::Frame::MapPointSet key_frame_map_points;
+    keyframe->ListMapPoints(key_frame_map_points);
+    for (auto mp: key_frame_map_points) {
+      if (current_frame_map_points.find(mp) == current_frame_map_points.end())
+        local_map_points_except_current.insert(mp);
+    }
+  }
+
+  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_except_current.size());
+
   std::list<frame::VisibleMapPoint> visible_map_points;
-  frame->FilterVisibleMapPoints(local_map_points_,
+  frame->FilterVisibleMapPoints(local_map_points_except_current,
                                 visible_map_points,
                                 frame->GetSensorConstants()->projection_search_radius_multiplier);
   for (auto & visible_map_point: visible_map_points)
@@ -79,7 +123,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->OptimizePose();
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
-  for(auto map_point: map_points)
+  for (auto map_point: map_points)
     map_point->IncreaseFound();
 
   //TODO: Add keyframe if necessary
@@ -106,7 +150,7 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
 
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = local_map_points_.size() < 300 || kf_counter >= 2;// && m.size() > 40;
+  bool need = kf_counter >= 2;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
@@ -202,44 +246,5 @@ void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
   frame->SetPosition(pose);
 }
 
-void Tracker::UpdateLocalMap(frame::Frame * current_frame) {
-  UpdateLocalKeyFrames(current_frame);
-  UpdateLocalPoints();
-}
-
-void Tracker::UpdateLocalKeyFrames(frame::Frame * current_frame) {
-  local_key_frames_.clear();
-  std::unordered_set<map::MapPoint *> frame_map_points;
-  current_frame->ListMapPoints(frame_map_points);
-  std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
-  for (auto & map_point: frame_map_points) {
-    for (auto observation: map_point->Observations()) {
-      ++key_frame_counter[observation.first];
-    }
-  }
-
-  frame::KeyFrame * max_covisible_key_frame = nullptr;
-  unsigned max_count = 0;
-  for (auto & kf_count: key_frame_counter) {
-    local_key_frames_.insert(kf_count.first);
-    if (max_count < kf_count.second) {
-      max_count = kf_count.second;
-      max_covisible_key_frame = kf_count.first;
-    }
-  }
-
-  for (auto kf: key_frame_counter) {
-    auto covisible_frames = kf.first->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
-    if (local_key_frames_.size() >= 80)
-      break;
-    std::copy(covisible_frames.begin(),
-              covisible_frames.end(),
-              std::inserter(local_key_frames_, local_key_frames_.begin()));
-  }
-
-  if (max_covisible_key_frame)
-    reference_keyframe_ = max_covisible_key_frame;
-
-}
 
 }  // namespace orb_slam3

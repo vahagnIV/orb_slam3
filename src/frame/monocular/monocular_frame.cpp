@@ -96,10 +96,10 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
                                   Id(),
                                   reference_keyframe->Id());
 
-  auto x =
-      debug::DrawMatches(GetFilename(), reference_kf->GetFilename(), matches, features_, reference_kf->GetFeatures());
-  cv::imshow("TWRKF", x);
-  cv::waitKey();
+//  auto x =
+//      debug::DrawMatches(GetFilename(), reference_kf->GetFilename(), matches, features_, reference_kf->GetFeatures());
+//  cv::imshow("TWRKF", x);
+//  cv::waitKey();
 
   if (matches.size() < 20) {
     return false;
@@ -251,6 +251,14 @@ void MonocularFrame::ComputeBow() {
 
 void MonocularFrame::OptimizePose() {
   optimization::OptimizePose(this);
+  cv::Mat image = cv::imread(GetFilename());
+  for (auto mp_id: map_points_) {
+    auto kp = features_.keypoints[mp_id.first];
+    cv::Point2f pt(kp.X(), kp.Y());
+    cv::circle(image, pt, 3, cv::Scalar(0, 255, 0));
+  }
+  cv::imshow("Local map", image);
+  cv::waitKey();
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
@@ -284,7 +292,7 @@ void MonocularFrame::SearchInVisiblePoints(const list<VisibleMapPoint> & filtere
   Matcher::MatchMapType matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_, matches);
   logging::RetrieveLogger()->debug("SLMM: SNN matcher found {} matches", matches.size());
-  for(auto & match: matches){
+  for (auto & match: matches) {
     AddMapPoint(match.first, match.second);
   }
 

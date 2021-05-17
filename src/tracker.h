@@ -50,13 +50,11 @@ class Tracker : public Observer<frame::FrameBase *>,
   TrackingResult TrackInNotInitializedState(frame::Frame * frame);
   void PredictAndSetNewFramePosition(frame::Frame * frame) const;
   void ComputeVelocity(const geometry::RigidObject * frame2, const geometry::RigidObject * frame1);
-  void UpdateLocalMap(frame::Frame * current_frame);
-  void UpdateLocalKeyFrames(frame::Frame * current_frame);
-  void UpdateLocalPoints();
   bool TrackWithMotionModel(frame::Frame * frame);
   bool TrackWithReferenceKeyFrame(frame::Frame * frame);
   void ReplaceLastFrame(frame::Frame * frame);
   bool NeedNewKeyFrame(frame::Frame * frame);
+  frame::KeyFrame * ListLocalKeyFrames(frame::Frame * current_frame, std::unordered_set<frame::KeyFrame *> & out_local_keyframes);
 
  private:
   /// Helper member variables
@@ -68,8 +66,6 @@ class Tracker : public Observer<frame::FrameBase *>,
   frame::Frame * last_frame_;
   frame::KeyFrame * last_key_frame_;
   frame::KeyFrame * reference_keyframe_;
-  std::unordered_set<map::MapPoint *> local_map_points_;
-  std::unordered_set<frame::KeyFrame *> local_key_frames_;
   State state_;
 
 };
