@@ -10,7 +10,7 @@
 #include <features/matching/iterators/area_to_iterator.h>
 #include <features/matching/orientation_validator.h>
 #include <geometry/two_view_reconstructor.h>
-#include <optimization/bundle_adjustment.h>
+#include <optimization/monocular_optimization.h>
 #include <features/matching/iterators/bow_to_iterator.h>
 #include "monocular_key_frame.h"
 
@@ -123,7 +123,7 @@ void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) cons
 }
 
 bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
-                                              unordered_map<size_t, size_t> & out_matches) {
+                                              unordered_map<size_t, size_t> & out_matches) const {
   features::matching::SNNMatcher<features::matching::iterators::AreaToIterator> matcher(0.9, 50);
   features::matching::iterators::AreaToIterator begin(0, &GetFeatures(), &from_frame->GetFeatures(), 100);
   features::matching::iterators::AreaToIterator
@@ -201,6 +201,10 @@ bool MonocularFrame::IsValid() const {
 
 void MonocularFrame::ComputeBow() {
   BaseMonocular::ComputeBow();
+}
+
+void MonocularFrame::OptimizePose() {
+  optimization::OptimizePose(this);
 }
 
 }

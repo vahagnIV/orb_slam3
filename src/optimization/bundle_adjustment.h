@@ -7,8 +7,7 @@
 
 // == orb_slam3 ===
 
-#include <frame/base_frame.h>
-#include <frame/monocular/monocular_frame.h>
+#include <frame/key_frame.h>
 
 namespace orb_slam3 {
 namespace optimization {
@@ -24,6 +23,7 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
                            std::unordered_set<frame::KeyFrame *> & fixed_keyframes,
                            frame::KeyFrame::MapPointSet & local_map_points,
                            bool * stop_flag = nullptr);
+
 
 }
 }

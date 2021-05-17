@@ -56,6 +56,11 @@ class BaseMonocular {
     assert(map_points_.find(feature_id) == map_points_.end());
     map_points_[feature_id] = map_point;
   }
+  void EraseMapPoint(size_t feature_id) {
+    assert(map_points_.find(feature_id) != map_points_.end());
+    map_points_.erase(feature_id);
+  }
+
   bool MapPointExists(const map::MapPoint * map_point) const {
     for (auto mp: map_points_)
       if (mp.second == map_point)

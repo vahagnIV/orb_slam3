@@ -82,8 +82,9 @@ void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
     for (auto edge_base: vertex->edges()) {
       auto edge = dynamic_cast<optimization::edges::BABinaryEdge *>(edge_base);
       if (!edge->IsValid()) {
-        observations_to_delete.emplace_back(mp_vertex.first,
-                                            dynamic_cast<vertices::FrameVertex *>(edge->vertex(0))->GetFrame());
+        auto key_frame =
+            dynamic_cast<frame::KeyFrame *>(dynamic_cast<vertices::FrameVertex *>(edge->vertex(0))->GetFrame());
+        observations_to_delete.emplace_back(mp_vertex.first, key_frame);
       }
     }
   }
@@ -92,21 +93,20 @@ void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
                                     observations_to_delete.size(),
                                     edge_count);
     return;
-  }
-  else {
+  } else {
     logging::RetrieveLogger()->info("Local BA: removing {} edges",
                                     observations_to_delete.size());
   }
 
-  for(auto to_delete: observations_to_delete){
+  for (auto to_delete: observations_to_delete) {
     to_delete.first->EraseObservation(to_delete.second);
   }
 
   for (auto mp_vertex: mp_map) {
     mp_vertex.first->SetPosition(mp_vertex.second->estimate());
   }
-  for(auto frame_vertex: frame_map){
-    if(!frame_vertex.second->fixed())
+  for (auto frame_vertex: frame_map) {
+    if (!frame_vertex.second->fixed())
       frame_vertex.first->SetPosition(frame_vertex.second->estimate());
   }
 

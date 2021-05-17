@@ -62,6 +62,7 @@ add_library(orbslam SHARED
         optimization/vertices/map_point_vertex.cpp
         optimization/utils.cpp
         optimization/bundle_adjustment.cpp
+        optimization/monocular_optimization.cpp
 
         debug/debug_utils.cpp
 

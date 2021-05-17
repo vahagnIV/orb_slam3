@@ -59,6 +59,8 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     delete frame;
     return TrackingResult::TRACKING_FAILED;
   }
+
+  frame->OptimizePose();
   if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
 
@@ -98,10 +100,6 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
 void Tracker::UpdateCovisibilityConnections() {
   for (auto frame: local_key_frames_)
     frame->GetCovisibilityGraph().Update();
-}
-
-void Tracker::OptimizePose(FrameBase * frmae) {
-
 }
 
 TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {

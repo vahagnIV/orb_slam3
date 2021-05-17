@@ -32,6 +32,7 @@ class Frame : public BaseFrame {
   virtual bool EstimatePositionFromReferenceKeyframe(const KeyFrame * reference_keyframe) = 0;
   virtual bool EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) = 0;
   virtual KeyFrame * CreateKeyFrame() = 0;
+  virtual void OptimizePose() = 0;
  private:
   static size_t next_id_;
 

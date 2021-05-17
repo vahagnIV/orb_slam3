@@ -31,10 +31,11 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;
+  void OptimizePose() override;
 
   // MonocularFame
  private:
-  bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches);
+  bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
   void InitializeMapPointsFromMatches(const std::unordered_map<std::size_t, std::size_t> & matches,
                                       const std::unordered_map<size_t, TPoint3D> & points,
                                       MonocularFrame * from_frame,
@@ -43,6 +44,8 @@ class MonocularFrame : public Frame, public BaseMonocular {
                       std::unordered_map<std::size_t, std::size_t> & out_matches,
                       bool self_keypoint_exists,
                       bool reference_kf_keypoint_exists) const;
+
+
 
 };
 
