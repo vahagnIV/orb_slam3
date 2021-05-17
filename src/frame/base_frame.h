@@ -42,7 +42,7 @@ class BaseFrame : public geometry::RigidObject {
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
   virtual const SensorConstants * GetSensorConstants() const { return sensor_constants_; }
 
-  size_t Id() { return id_; }
+  size_t Id() const { return id_; }
 
   TimePoint GetTimeCreated() const { return time_point_; }
   const features::IFeatureExtractor * GetFeatureExtractor() const { return feature_extractor_; }

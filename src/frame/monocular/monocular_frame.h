@@ -6,6 +6,7 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_MONOCULAR_FRAME_H_
 #include <frame/frame.h>
 #include "base_monocular.h"
+#include "monocular_key_frame.h"
 
 namespace orb_slam3 {
 namespace frame {
@@ -38,7 +39,10 @@ class MonocularFrame : public Frame, public BaseMonocular {
                                       const std::unordered_map<size_t, TPoint3D> & points,
                                       MonocularFrame * from_frame,
                                       MapPointSet & out_map_points);
-
+  void ComputeMatches(const orb_slam3::frame::monocular::MonocularKeyFrame * reference_kf,
+                      std::unordered_map<std::size_t, std::size_t> & out_matches,
+                      bool self_keypoint_exists,
+                      bool reference_kf_keypoint_exists) const;
 
 };
 

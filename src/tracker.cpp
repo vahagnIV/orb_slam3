@@ -34,16 +34,17 @@ void Tracker::UpdateLocalPoints() {
 }
 
 bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
+  if (!velocity_is_valid_)
+    return false;
   std::unordered_set<map::MapPoint *> all_candidate_map_points;
   PredictAndSetNewFramePosition(frame);
   last_frame_->ListMapPoints(all_candidate_map_points);
-  return true;
-// TODO: return frame->FindNewMapPointsAndAdjustPosition(all_candidate_map_points);
+  return frame->EstimatePositionByProjectingMapPoints(all_candidate_map_points);
 }
 
-void Tracker::UpdateLastFrame(frame::Frame * frame) {
-  delete last_frame_;
-  last_frame_ = frame;
+bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
+  frame->SetPosition(reference_keyframe_->GetPosition());
+  return frame->EstimatePositionFromReferenceKeyframe(reference_keyframe_);
 }
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
@@ -51,19 +52,10 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   assert(OK == state_);
   ++kf_counter;
 
-  bool tracked = false;
-  if (!velocity_is_valid_) {
-    frame->SetPosition(last_frame_->GetPosition());
-// TODO:    tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
-  } else {
-    tracked = TrackWithMotionModel(frame);
-    if (!tracked) {
-      frame->SetPosition(last_frame_->GetPosition());
-//TODO:      tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
-    }
-  }
+  bool tracked = (TrackWithMotionModel(frame) || TrackWithReferenceKeyFrame(frame));
 
   if (!tracked) {
+    // TODO: go to relocalization
     delete frame;
     return TrackingResult::TRACKING_FAILED;
   }
@@ -75,19 +67,21 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
-
-    /*if (local_mapper_.CreateNewMapPoints(keyframe)) {
-
-      UpdateCovisibilityConnections();
-      last_key_frame_ = keyframe;
-      atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
-      reference_keyframe_ = keyframe;
-    }*/
+    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
+
+    // TODO: remove the following line
+    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
   }
 //  ComputeVelocity(frame, last_frame_);
-  last_frame_ = frame;
+  ReplaceLastFrame(frame);
   return TrackingResult::OK;
+}
+
+void Tracker::ReplaceLastFrame(frame::Frame * frame) {
+  auto tmp = last_frame_;
+  last_frame_ = frame;
+  delete tmp;
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {

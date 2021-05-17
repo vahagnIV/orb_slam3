@@ -23,8 +23,8 @@ class VectorFromIterator {
  public:
   typedef VectorFromPointee value_type;
   VectorFromIterator() : pointee_(nullptr, 0) {}
-  VectorFromIterator(typename std::vector<IdType>::iterator begin,
-                     typename std::vector<IdType>::iterator end,
+  VectorFromIterator(typename std::vector<IdType>::const_iterator begin,
+                     typename std::vector<IdType>::const_iterator end,
                      const DescriptorSet *descriptors,
                      const std::map<std::size_t, map::MapPoint *> *map_points = nullptr,
                      bool map_point_exists = false) : pointee_(descriptors, *begin),
@@ -57,8 +57,8 @@ class VectorFromIterator {
       pointee_.SetId(*it_);
   }
   VectorFromPointee pointee_;
-  typename std::vector<IdType>::iterator it_;
-  typename std::vector<IdType>::iterator end_;
+  typename std::vector<IdType>::const_iterator it_;
+  typename std::vector<IdType>::const_iterator end_;
   const std::map<std::size_t, map::MapPoint *> *map_points_;
   bool map_point_exists_;
 };

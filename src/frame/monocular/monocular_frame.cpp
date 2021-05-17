@@ -11,6 +11,7 @@
 #include <features/matching/orientation_validator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <optimization/bundle_adjustment.h>
+#include <features/matching/iterators/bow_to_iterator.h>
 #include "monocular_key_frame.h"
 
 namespace orb_slam3 {
@@ -63,11 +64,6 @@ bool MonocularFrame::Link(Frame * other) {
                                     other->Id());
     return false;
   }
-//#ifndef NDEBUG
-//  cv::imshow("linked matches:",
-//             debug::DrawMatches(Filename(), other->Filename(), matches, features_, from_frame->features_));
-//  cv::waitKey(1);
-//#endif
 
   this->SetPosition(pose);
   std::unordered_set<map::MapPoint *> map_points;
@@ -77,7 +73,37 @@ bool MonocularFrame::Link(Frame * other) {
 }
 
 bool MonocularFrame::EstimatePositionFromReferenceKeyframe(const KeyFrame * reference_keyframe) {
-  return false;
+  logging::RetrieveLogger()->info("TWRKF: Tracking frame {} with reference keyframe {}",
+                                  Id(),
+                                  reference_keyframe->Id());
+  if (reference_keyframe->Type() != Type()) {
+    logging::RetrieveLogger()->warn("Frames {} and {} have different types", Id(), reference_keyframe->Id());
+    return false;
+  }
+  auto reference_kf = dynamic_cast<const MonocularKeyFrame *>(reference_keyframe);
+
+  // Ensure bows are computed
+  ComputeBow();
+
+  std::unordered_map<std::size_t, std::size_t> matches;
+  ComputeMatches(reference_kf, matches, false, true);
+
+  logging::RetrieveLogger()->info("TWRKF: SNNMatcher returned {} matches for frames {} and {}",
+                                  matches.size(),
+                                  Id(),
+                                  reference_keyframe->Id());
+  if (matches.size() < 20) {
+    return false;
+  }
+
+  // Add the existing map_point to the frame
+
+  for (const auto & match: matches) {
+    auto map_point = reference_kf->map_points_.find(match.second);
+    assert(map_point != reference_kf->map_points_.end());
+    AddMapPoint(map_point->second, map_point->first);
+  }
+  return true;
 }
 
 bool MonocularFrame::EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) {
@@ -136,6 +162,37 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
   }
+}
+
+void MonocularFrame::ComputeMatches(const MonocularKeyFrame * reference_kf,
+                                    std::unordered_map<std::size_t, std::size_t> & out_matches,
+                                    bool self_keypoint_exists,
+                                    bool reference_kf_keypoint_exists) const {
+  features::matching::SNNMatcher<features::matching::iterators::BowToIterator> bow_matcher(0.7, 50);
+  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
+                                                            &features_.bow_container.feature_vector,
+                                                            &reference_kf->features_.bow_container.feature_vector,
+                                                            &features_,
+                                                            &reference_kf->features_,
+                                                            &map_points_,
+                                                            &reference_kf->map_points_,
+                                                            self_keypoint_exists,
+                                                            reference_kf_keypoint_exists);
+
+  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
+                                                          &features_.bow_container.feature_vector,
+                                                          &reference_kf->features_.bow_container.feature_vector,
+                                                          &features_,
+                                                          &reference_kf->features_,
+                                                          &map_points_,
+                                                          &reference_kf->map_points_,
+                                                          self_keypoint_exists,
+                                                          reference_kf_keypoint_exists);
+
+  bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_, out_matches);
+  features::matching::OrientationValidator
+      (features_.keypoints, reference_kf->features_.keypoints).Validate(out_matches);
+
 }
 
 bool MonocularFrame::IsValid() const {
