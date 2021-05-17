@@ -14,7 +14,6 @@
 #include "map/atlas.h"
 #include "observable.h"
 #include "position_observer.h"
-#include "local_mapper.h"
 
 namespace orb_slam3 {
 
@@ -54,15 +53,13 @@ class Tracker : public Observer<frame::FrameBase *>,
   void UpdateLocalMap(frame::Frame * current_frame);
   void UpdateLocalKeyFrames(frame::Frame * current_frame);
   void UpdateLocalPoints();
-  void UpdateCovisibilityConnections();
   bool TrackWithMotionModel(frame::Frame * frame);
   bool TrackWithReferenceKeyFrame(frame::Frame * frame);
   void ReplaceLastFrame(frame::Frame * frame);
-
   bool NeedNewKeyFrame(frame::Frame * frame);
+
  private:
   /// Helper member variables
-  LocalMapper local_mapper_;
   int kf_counter = 0;
   map::Atlas * atlas_;
   bool velocity_is_valid_;

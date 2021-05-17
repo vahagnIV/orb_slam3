@@ -27,11 +27,20 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool IsValid() const override;
   KeyFrame * CreateKeyFrame() override;
   bool Link(Frame * other) override;
-  bool EstimatePositionFromReferenceKeyframe(const KeyFrame * reference_keyframe) override;
+  bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
   bool EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;
   void OptimizePose() override;
+  bool IsVisible(map::MapPoint * map_point,
+                 VisibleMapPoint & out_map_point,
+                 precision_t radius_multiplier,
+                 unsigned int window_size) const;
+  void FilterVisibleMapPoints(const unordered_set<map::MapPoint *> & map_points,
+                              list<VisibleMapPoint> & out_filetered_map_points,
+                              precision_t radius_multiplier,
+                              unsigned int window_size) const override;
+  void SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) override;
 
   // MonocularFame
  private:

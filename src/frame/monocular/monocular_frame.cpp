@@ -8,11 +8,14 @@
 #include <logging.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 #include <features/matching/iterators/area_to_iterator.h>
+#include <features/matching/iterators/projection_search_iterator.h>
 #include <features/matching/orientation_validator.h>
 #include <geometry/two_view_reconstructor.h>
 #include <optimization/monocular_optimization.h>
 #include <features/matching/iterators/bow_to_iterator.h>
 #include "monocular_key_frame.h"
+
+#include <debug/debug_utils.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -72,7 +75,7 @@ bool MonocularFrame::Link(Frame * other) {
   return true;
 }
 
-bool MonocularFrame::EstimatePositionFromReferenceKeyframe(const KeyFrame * reference_keyframe) {
+bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) {
   logging::RetrieveLogger()->info("TWRKF: Tracking frame {} with reference keyframe {}",
                                   Id(),
                                   reference_keyframe->Id());
@@ -92,17 +95,60 @@ bool MonocularFrame::EstimatePositionFromReferenceKeyframe(const KeyFrame * refe
                                   matches.size(),
                                   Id(),
                                   reference_keyframe->Id());
+
+  auto x =
+      debug::DrawMatches(GetFilename(), reference_kf->GetFilename(), matches, features_, reference_kf->GetFeatures());
+  cv::imshow("TWRKF", x);
+  cv::waitKey();
+
   if (matches.size() < 20) {
     return false;
   }
 
-  // Add the existing map_point to the frame
-
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_.find(match.second);
     assert(map_point != reference_kf->map_points_.end());
-    AddMapPoint(map_point->second, map_point->first);
+    AddMapPoint(map_point->second, match.first);
   }
+  return true;
+}
+
+bool MonocularFrame::IsVisible(map::MapPoint * map_point,
+                               VisibleMapPoint & out_map_point,
+                               precision_t radius_multiplier,
+                               unsigned int window_size) const {
+  const geometry::Pose pose = this->GetPosition();
+  const geometry::Pose inverse_pose = this->GetInversePosition();
+  out_map_point.map_point = map_point;
+  HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
+  precision_t distance = map_point_in_local_cf.norm();
+
+  if (distance < map_point->GetMinInvarianceDistance()
+      || distance > map_point->GetMaxInvarianceDistance()) {
+    return false;
+  }
+
+  this->GetCamera()->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
+  if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
+    return false;
+  }
+
+  TPoint3D local_pose = inverse_pose.T;
+  TVector3D relative_frame_map_point = local_pose - map_point->GetPosition();
+
+  precision_t track_view_cos = relative_frame_map_point.dot(map_point->GetNormal()) / relative_frame_map_point.norm();
+  if (track_view_cos < 0.5) {
+    return false;
+  }
+
+  out_map_point.level = feature_extractor_->PredictScale(distance, map_point->GetMaxInvarianceDistance() / 1.2);
+  if (window_size) {
+    out_map_point.window_size = window_size;
+  } else {
+    precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
+    out_map_point.window_size = r * feature_extractor_->GetScaleFactors()[out_map_point.level];
+  }
+
   return true;
 }
 
@@ -130,7 +176,7 @@ bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
       end(GetFeatures().Size(), &GetFeatures(), &from_frame->GetFeatures(), 100);
 
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_, out_matches);
-  logging::RetrieveLogger()->debug("Orientation validator discarderd {} matches",
+  logging::RetrieveLogger()->debug("Orientation validator discarded {} matches",
                                    features::matching::OrientationValidator
                                        (GetFeatures().keypoints, from_frame->GetFeatures().keypoints).Validate(
                                        out_matches));
@@ -157,7 +203,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                   GetFeatures().keypoints[point.first],
                                                   max_invariance_distance,
                                                   min_invariance_distance);
-    auto map_point = new map::MapPoint(point.second, max_invariance_distance, min_invariance_distance, Id());
+    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance);
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
@@ -205,6 +251,43 @@ void MonocularFrame::ComputeBow() {
 
 void MonocularFrame::OptimizePose() {
   optimization::OptimizePose(this);
+}
+
+void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
+                                            list<VisibleMapPoint> & out_filetered_map_points,
+                                            precision_t radius_multiplier,
+                                            unsigned int window_size) const {
+  VisibleMapPoint map_point;
+  for (auto mp: map_points) {
+    if (IsVisible(mp, map_point, radius_multiplier, window_size))
+      out_filetered_map_points.push_back(map_point);
+  }
+
+}
+
+void MonocularFrame::SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) {
+  ComputeBow();
+  features::matching::iterators::ProjectionSearchIterator begin
+      (filtered_map_points.begin(),
+       filtered_map_points.end(),
+       &features_,
+       &map_points_);
+
+  features::matching::iterators::ProjectionSearchIterator end
+      (filtered_map_points.end(),
+       filtered_map_points.end(),
+       &features_,
+       &map_points_);
+
+  typedef features::matching::SNNMatcher<features::matching::iterators::ProjectionSearchIterator> Matcher;
+  Matcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
+  Matcher::MatchMapType matches;
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_, matches);
+  logging::RetrieveLogger()->debug("SLMM: SNN matcher found {} matches", matches.size());
+  for(auto & match: matches){
+    AddMapPoint(match.first, match.second);
+  }
+
 }
 
 }

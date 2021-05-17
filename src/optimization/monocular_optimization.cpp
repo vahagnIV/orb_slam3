@@ -41,9 +41,15 @@ void OptimizePose(MonocularFrame * frame) {
     auto edge = new edges::SE3ProjectXYZPoseOnly(map_point, feature_id, frame->GetCamera(), map_point->GetPosition());
     edge->setId(++max_id);
     edge->setVertex(0, frame_vertex);
-    edge->setMeasurement(Eigen::Map<const Eigen::Matrix<double,
-                                                        2,
-                                                        1>>(features.unprojected_keypoints[feature_id].data()));
+    typedef Eigen::Map<const Eigen::Matrix<precision_t, 2, 1>> EigenMaType;
+    edge->setMeasurement(EigenMaType(features.unprojected_keypoints[feature_id].data()));
+    precision_t
+        information_coefficient =
+        frame->GetFeatureExtractor()->GetAcceptableSquareError(features.keypoints[feature_id].level);
+
+    edge->setInformation(
+        Eigen::Matrix<precision_t, 2, 2>::Identity() * information_coefficient);
+
     auto rk = new g2o::RobustKernelHuber;
     rk->setDelta(delta_mono);
     edge->setLevel(0);
@@ -58,7 +64,8 @@ void OptimizePose(MonocularFrame * frame) {
     frame_vertex->setEstimate(pose.GetQuaternion());
     optimizer.initializeOptimization(0);
     optimizer.optimize(10);
-    for (auto edge_base: optimizer.edges()) {
+    auto edges = optimizer.edges();
+    for (auto edge_base: edges) {
       auto edge = dynamic_cast<edges::SE3ProjectXYZPoseOnly *>(edge_base);
       if (1 == edge->level()) { // If  the edge was not included in the optimization
         edge->computeError();

@@ -10,11 +10,12 @@
 #include <frame/key_frame.h>
 #include <optimization/bundle_adjustment.h>
 
+#include "local_mapper.h"
+
 namespace orb_slam3 {
 
 Tracker::Tracker(orb_slam3::map::Atlas * atlas)
-    : local_mapper_(atlas),
-      atlas_(atlas),
+    : atlas_(atlas),
       velocity_is_valid_(false),
       last_frame_(nullptr),
       state_(NOT_INITIALIZED) {
@@ -44,7 +45,7 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
 
 bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
   frame->SetPosition(reference_keyframe_->GetPosition());
-  return frame->EstimatePositionFromReferenceKeyframe(reference_keyframe_);
+  return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
@@ -65,7 +66,22 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     ComputeVelocity(frame, last_frame_);
 
   UpdateLocalMap(frame);
-//TODO:  frame->SearchLocalPoints(local_map_points_);
+
+  // TODO: Based on the state pick the right constant
+  std::list<frame::VisibleMapPoint> visible_map_points;
+  frame->FilterVisibleMapPoints(local_map_points_,
+                                visible_map_points,
+                                frame->GetSensorConstants()->projection_search_radius_multiplier);
+  for (auto & visible_map_point: visible_map_points)
+    visible_map_point.map_point->IncreaseVisible();
+
+  frame->SearchInVisiblePoints(visible_map_points);
+  frame->OptimizePose();
+  frame::Frame::MapPointSet map_points;
+  frame->ListMapPoints(map_points);
+  for(auto map_point: map_points)
+    map_point->IncreaseFound();
+
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
@@ -95,11 +111,6 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
     kf_counter = 0;
 
   return need;
-}
-
-void Tracker::UpdateCovisibilityConnections() {
-  for (auto frame: local_key_frames_)
-    frame->GetCovisibilityGraph().Update();
 }
 
 TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {

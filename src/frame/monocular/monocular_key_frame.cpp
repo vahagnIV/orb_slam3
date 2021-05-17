@@ -25,6 +25,7 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
   SetPosition(frame->GetPosition());
   for (auto mp: map_points_) {
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
+    mp.second->Refresh(feature_extractor_);
   }
 }
 
@@ -171,7 +172,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
     map_point->AddObservation(Observation(map_point, other, match.second));
     AddMapPoint(map_point, match.first);
     other_frame->AddMapPoint(map_point, match.second);
-
+    map_point->Refresh(feature_extractor_);
     ++newly_created_mps;
   }
   logging::RetrieveLogger()->debug("LM: Created {} new map_points between frames {} and {}",

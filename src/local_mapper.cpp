@@ -49,7 +49,7 @@ void LocalMapper::Stop() {
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
   unsigned erased = recently_added_map_points_.size();
-  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ++mp_it) {
+  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ) {
     map::MapPoint * mp = *mp_it;
     if (mp->IsBad()) {
       mp_it = recently_added_map_points_.erase(mp_it);
@@ -62,8 +62,10 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2) {
       mp_it = recently_added_map_points_.erase(mp_it);
-    } else
+    } else {
       --erased;
+      ++mp_it;
+    }
   }
 
   logging::RetrieveLogger()->debug("LM: erased {} mps", erased);
