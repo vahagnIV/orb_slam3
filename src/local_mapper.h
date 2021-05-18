@@ -22,7 +22,6 @@ class LocalMapper : public PositionObserver,
  public:
   void Start();
   void Stop();
-  static void Optimize(frame::KeyFrame * frame);
   void MapPointCulling(frame::KeyFrame * keyframe);
   void RunIteration();
  private:
@@ -34,6 +33,7 @@ class LocalMapper : public PositionObserver,
                                   frame::KeyFrame::MapPointSet & local_map_points,
                                   std::unordered_set<frame::KeyFrame *> & out_fixed) ;
   static void CreateNewMapPoints(frame::KeyFrame * key_frame) ;
+  static void Optimize(frame::KeyFrame * frame);
 
  private:
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
