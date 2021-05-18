@@ -19,16 +19,16 @@ CovisibilityGraphNode::CovisibilityGraphNode(const frame::KeyFrame * frame) : fr
 void CovisibilityGraphNode::Update() {
 
   std::unordered_set<map::MapPoint *> local_map_points_;
-  std::unordered_map<KeyFrame *, unsigned> connected_frame_weights;
+  std::unordered_map<KeyFrame *, size_t> connected_frame_weights;
   frame_->ListMapPoints(local_map_points_);
   for (auto map_point:local_map_points_) {
     for (auto obs: map_point->Observations()) {
-      if(obs.first == this->frame_)
+      if (obs.first == this->frame_)
         continue;
       ++connected_frame_weights[obs.first];
     }
   }
-  std::vector<std::pair<unsigned, KeyFrame *>> weight_frame_pairs;
+  std::vector<std::pair<size_t, KeyFrame *>> weight_frame_pairs;
 
   weight_frame_pairs.reserve(connected_frame_weights.size());
   for (auto & fp: connected_frame_weights)
@@ -41,19 +41,18 @@ void CovisibilityGraphNode::Update() {
   sorted_weights_.clear();
   sorted_weights_.reserve(weight_frame_pairs.size());
   sorted_connected_frames_.reserve(weight_frame_pairs.size());
-  for (decltype(weight_frame_pairs)::reverse_iterator p = weight_frame_pairs.rbegin(); p != weight_frame_pairs.rend() && p->first >=15;
-       ++p) {
+  for (auto p = weight_frame_pairs.rbegin(); p != weight_frame_pairs.rend() && p->first >= 15; ++p) {
     sorted_weights_.push_back(p->first);
     sorted_connected_frames_.push_back(p->second);
   }
 }
 
-std::unordered_set<KeyFrame *> CovisibilityGraphNode::GetCovisibleKeyFrames(unsigned int count) {
+std::unordered_set<KeyFrame *> CovisibilityGraphNode::GetCovisibleKeyFrames(unsigned int count) const {
   std::lock_guard<std::mutex> m(mutex_);
   std::unordered_set<KeyFrame *> result;
-  for (size_t i = 0; i < count && i < sorted_connected_frames_.size(); ++i) {
-    result.insert(sorted_connected_frames_[i]);
-  }
+  for (size_t i = 0; sorted_connected_frames_.size() < count && i < sorted_connected_frames_.size(); ++i)
+    if (!sorted_connected_frames_[i]->IsBad())
+      result.insert(sorted_connected_frames_[i]);
   return result;
 
 }

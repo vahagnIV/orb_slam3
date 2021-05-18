@@ -10,11 +10,12 @@
 #include <frame/key_frame.h>
 #include <optimization/bundle_adjustment.h>
 
+#include "local_mapper.h"
+
 namespace orb_slam3 {
 
 Tracker::Tracker(orb_slam3::map::Atlas * atlas)
-    : local_mapper_(atlas),
-      atlas_(atlas),
+    : atlas_(atlas),
       velocity_is_valid_(false),
       last_frame_(nullptr),
       state_(NOT_INITIALIZED) {
@@ -25,25 +26,52 @@ Tracker::~Tracker() {
   delete atlas_;
 }
 
-void Tracker::UpdateLocalPoints() {
-  local_map_points_.clear();
-  for (auto key_frame: local_key_frames_) {
-    key_frame->ListMapPoints(local_map_points_);
+frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
+                                              unordered_set<frame::KeyFrame *> & out_local_keyframes) {
+  out_local_keyframes.clear();
+  std::unordered_set<map::MapPoint *> frame_map_points;
+  current_frame->ListMapPoints(frame_map_points);
+  std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
+  for (auto & map_point: frame_map_points) {
+    for (auto observation: map_point->Observations()) {
+      ++key_frame_counter[observation.first];
+    }
   }
-  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_.size());
+
+  frame::KeyFrame * max_covisible_key_frame = nullptr;
+  unsigned max_count = 0;
+  for (auto & kf_count: key_frame_counter) {
+    out_local_keyframes.insert(kf_count.first);
+    if (max_count < kf_count.second) {
+      max_count = kf_count.second;
+      max_covisible_key_frame = kf_count.first;
+    }
+  }
+
+  for (auto kf: key_frame_counter) {
+    auto covisible_frames = kf.first->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
+    if (out_local_keyframes.size() >= 80)
+      break;
+    std::copy(covisible_frames.begin(),
+              covisible_frames.end(),
+              std::inserter(out_local_keyframes, out_local_keyframes.begin()));
+  }
+
+  return max_covisible_key_frame;
 }
 
 bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
+  if (!velocity_is_valid_)
+    return false;
   std::unordered_set<map::MapPoint *> all_candidate_map_points;
   PredictAndSetNewFramePosition(frame);
   last_frame_->ListMapPoints(all_candidate_map_points);
-  return true;
-// TODO: return frame->FindNewMapPointsAndAdjustPosition(all_candidate_map_points);
+  return frame->EstimatePositionByProjectingMapPoints(all_candidate_map_points);
 }
 
-void Tracker::UpdateLastFrame(frame::Frame * frame) {
-  delete last_frame_;
-  last_frame_ = frame;
+bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
+  frame->SetPosition(reference_keyframe_->GetPosition());
+  return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
@@ -51,63 +79,82 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   assert(OK == state_);
   ++kf_counter;
 
-  bool tracked = false;
-  if (!velocity_is_valid_) {
-    frame->SetPosition(last_frame_->GetPosition());
-// TODO:    tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
-  } else {
-    tracked = TrackWithMotionModel(frame);
-    if (!tracked) {
-      frame->SetPosition(last_frame_->GetPosition());
-//TODO:      tracked = frame->TrackWithReferenceKeyFrame(reference_keyframe_);
-    }
-  }
+  bool tracked = (TrackWithMotionModel(frame) || TrackWithReferenceKeyFrame(frame));
 
   if (!tracked) {
+    // TODO: go to relocalization
     delete frame;
     return TrackingResult::TRACKING_FAILED;
   }
+
+  frame->OptimizePose();
   if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
 
-  UpdateLocalMap(frame);
-//TODO:  frame->SearchLocalPoints(local_map_points_);
+  std::unordered_set<frame::KeyFrame *> local_keyframes;
+  frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(frame, local_keyframes);
+  if (reference_keyframe)
+    reference_keyframe_ = reference_keyframe;
+
+  frame::Frame::MapPointSet current_frame_map_points, local_map_points_except_current;
+  frame->ListMapPoints(current_frame_map_points);
+  for (auto mp: current_frame_map_points)
+    mp->IncreaseVisible();
+
+  for (auto keyframe: local_keyframes) {
+    frame::Frame::MapPointSet key_frame_map_points;
+    keyframe->ListMapPoints(key_frame_map_points);
+    for (auto mp: key_frame_map_points) {
+      if (current_frame_map_points.find(mp) == current_frame_map_points.end())
+        local_map_points_except_current.insert(mp);
+    }
+  }
+
+  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_except_current.size());
+
+  std::list<frame::VisibleMapPoint> visible_map_points;
+  frame->FilterVisibleMapPoints(local_map_points_except_current,
+                                visible_map_points,
+                                frame->GetSensorConstants()->projection_search_radius_multiplier);
+  for (auto & visible_map_point: visible_map_points)
+    visible_map_point.map_point->IncreaseVisible();
+
+  frame->SearchInVisiblePoints(visible_map_points);
+  frame->OptimizePose();
+  frame::Frame::MapPointSet map_points;
+  frame->ListMapPoints(map_points);
+  for (auto map_point: map_points)
+    map_point->IncreaseFound();
+
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
-
-    /*if (local_mapper_.CreateNewMapPoints(keyframe)) {
-
-      UpdateCovisibilityConnections();
-      last_key_frame_ = keyframe;
-      atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
-      reference_keyframe_ = keyframe;
-    }*/
+    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
+
+    // TODO: remove the following line
+    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
   }
 //  ComputeVelocity(frame, last_frame_);
-  last_frame_ = frame;
+  ReplaceLastFrame(frame);
   return TrackingResult::OK;
+}
+
+void Tracker::ReplaceLastFrame(frame::Frame * frame) {
+  auto tmp = last_frame_;
+  last_frame_ = frame;
+  delete tmp;
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
 
   std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = local_map_points_.size() < 300 || kf_counter >= 2;// && m.size() > 40;
+  bool need = kf_counter >= 2;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
   return need;
-}
-
-void Tracker::UpdateCovisibilityConnections() {
-  for (auto frame: local_key_frames_)
-    frame->GetCovisibilityGraph().Update();
-}
-
-void Tracker::OptimizePose(FrameBase * frmae) {
-
 }
 
 TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
@@ -199,44 +246,5 @@ void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
   frame->SetPosition(pose);
 }
 
-void Tracker::UpdateLocalMap(frame::Frame * current_frame) {
-  UpdateLocalKeyFrames(current_frame);
-  UpdateLocalPoints();
-}
-
-void Tracker::UpdateLocalKeyFrames(frame::Frame * current_frame) {
-  local_key_frames_.clear();
-  std::unordered_set<map::MapPoint *> frame_map_points;
-  current_frame->ListMapPoints(frame_map_points);
-  std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
-  for (auto & map_point: frame_map_points) {
-    for (auto observation: map_point->Observations()) {
-      ++key_frame_counter[observation.first];
-    }
-  }
-
-  frame::KeyFrame * max_covisible_key_frame = nullptr;
-  unsigned max_count = 0;
-  for (auto & kf_count: key_frame_counter) {
-    local_key_frames_.insert(kf_count.first);
-    if (max_count < kf_count.second) {
-      max_count = kf_count.second;
-      max_covisible_key_frame = kf_count.first;
-    }
-  }
-
-  for (auto kf: key_frame_counter) {
-    auto covisible_frames = kf.first->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
-    if (local_key_frames_.size() >= 80)
-      break;
-    std::copy(covisible_frames.begin(),
-              covisible_frames.end(),
-              std::inserter(local_key_frames_, local_key_frames_.begin()));
-  }
-
-  if (max_covisible_key_frame)
-    reference_keyframe_ = max_covisible_key_frame;
-
-}
 
 }  // namespace orb_slam3

@@ -20,13 +20,13 @@ class BowToIterator {
  public:
   typedef BowToPointee value_type;
   BowToIterator(
-      DBoW2::FeatureVector::iterator begin,
-      DBoW2::FeatureVector * feature_vector_to,
-      DBoW2::FeatureVector * feature_vector_from,
-      features::Features * features_to,
-      features::Features * features_from,
-      std::map<std::size_t, map::MapPoint *> * map_points_to = nullptr,
-      std::map<std::size_t, map::MapPoint *> * map_points_from = nullptr,
+      DBoW2::FeatureVector::const_iterator begin,
+      const DBoW2::FeatureVector * feature_vector_to,
+      const DBoW2::FeatureVector * feature_vector_from,
+      const features::Features * features_to,
+      const features::Features * features_from,
+      const std::map<std::size_t, map::MapPoint *> * map_points_to = nullptr,
+      const std::map<std::size_t, map::MapPoint *> * map_points_from = nullptr,
       bool to_map_points_exist = false,
       bool from_map_points_exist = false) :
       bow_it_to_(begin),
@@ -63,20 +63,20 @@ class BowToIterator {
   void AdvanceUntilSameNode();
  private:
 
-  DBoW2::FeatureVector::iterator bow_it_to_;
-  DBoW2::FeatureVector::iterator bow_end_to_;
+  DBoW2::FeatureVector::const_iterator bow_it_to_;
+  DBoW2::FeatureVector::const_iterator bow_end_to_;
 
-  DBoW2::FeatureVector::iterator bow_it_from_;
-  DBoW2::FeatureVector::iterator bow_end_from_;
+  DBoW2::FeatureVector::const_iterator bow_it_from_;
+  DBoW2::FeatureVector::const_iterator bow_end_from_;
 
-  std::vector<unsigned>::iterator it_;
-  std::vector<unsigned>::iterator end_it_;
+  std::vector<unsigned>::const_iterator it_;
+  std::vector<unsigned>::const_iterator end_it_;
 
-  DBoW2::FeatureVector * feature_vector_to_;
-  DBoW2::FeatureVector * feature_vector_from_;
+  const DBoW2::FeatureVector * feature_vector_to_;
+  const DBoW2::FeatureVector * feature_vector_from_;
   BowToPointee pointee_;
 
-  std::map<std::size_t, map::MapPoint *> * map_points_to_;
+  const std::map<std::size_t, map::MapPoint *> * map_points_to_;
   bool to_map_points_exist_;
 
 };

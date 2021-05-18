@@ -3,12 +3,10 @@
 //
 
 #include "bundle_adjustment.h"
-#include <frame/observation.h>
 #include <map/map_point.h>
+#include <logging.h>
 #include "optimization/vertices/map_point_vertex.h"
 #include "optimization/vertices/frame_vertex.h"
-#include "optimization/edges/ba_binary_edge.h"
-#include "optimization/edges/ba_unary_edge.h"
 #include "utils.h"
 
 namespace orb_slam3 {
@@ -23,7 +21,6 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
 
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer(optimizer);
-  optimizer.setVerbose(true);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
   std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
@@ -55,6 +52,64 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
       std::runtime_error("BA not implemented for Loop closing");
     }
   }
+}
+
+void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
+                           unordered_set<frame::KeyFrame *> & fixed_keyframes,
+                           frame::BaseFrame::MapPointSet & local_map_points,
+                           bool * stop_flag) {
+  g2o::SparseOptimizer optimizer;
+  InitializeOptimizer(optimizer);
+
+  std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
+  std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
+  size_t max_kf_id = FillKeyFrameVertices(keyframes, optimizer, frame_map);
+  max_kf_id = std::max(max_kf_id, FillKeyFrameVertices(fixed_keyframes, optimizer, frame_map, true));
+  FillMpVertices(local_map_points, optimizer, frame_map, mp_map, true, max_kf_id);
+
+  optimizer.initializeOptimization();
+  optimizer.setForceStopFlag(stop_flag);
+  optimizer.optimize(5);
+  if (!stop_flag || !*stop_flag)
+    optimizer.optimize(5);
+
+  size_t edge_count = optimizer.edges().size();
+  std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
+  observations_to_delete.reserve(optimizer.edges().size());
+
+  for (auto mp_vertex: mp_map) {
+    optimization::vertices::MapPointVertex * vertex = mp_vertex.second;
+    for (auto edge_base: vertex->edges()) {
+      auto edge = dynamic_cast<optimization::edges::BABinaryEdge *>(edge_base);
+      if (!edge->IsValid()) {
+        auto key_frame =
+            dynamic_cast<frame::KeyFrame *>(dynamic_cast<vertices::FrameVertex *>(edge->vertex(0))->GetFrame());
+        observations_to_delete.emplace_back(mp_vertex.first, key_frame);
+      }
+    }
+  }
+  if (observations_to_delete.size() > edge_count / 2) {
+    logging::RetrieveLogger()->warn("Local BA is aborted.  {} out {} edges are invalid",
+                                    observations_to_delete.size(),
+                                    edge_count);
+    return;
+  } else {
+    logging::RetrieveLogger()->info("Local BA: removing {} edges",
+                                    observations_to_delete.size());
+  }
+
+  for (auto to_delete: observations_to_delete) {
+    to_delete.first->EraseObservation(to_delete.second);
+  }
+
+  for (auto mp_vertex: mp_map) {
+    mp_vertex.first->SetPosition(mp_vertex.second->estimate());
+  }
+  for (auto frame_vertex: frame_map) {
+    if (!frame_vertex.second->fixed())
+      frame_vertex.first->SetPosition(frame_vertex.second->estimate());
+  }
+
 }
 
 }

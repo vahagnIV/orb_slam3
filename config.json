@@ -1,4 +1,4 @@
 {
-    "vocabularyFilePath": "ORBvoc.txt",
-    "datasetPath": "dataset-corridor1_512_16/mav0/cam0/data"
+    "vocabularyFilePath": "/data/git/Orb_SLAM3_Customized/Vocabulary/ORBvoc.txt",
+    "datasetPath": "/data/git/Orb_SLAM3_Customized/db/dataset-corridor1_512_16/data"
 }

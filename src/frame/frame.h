@@ -5,6 +5,7 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_FRAME_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_FRAME_H_
 #include "base_frame.h"
+#include <frame/visible_map_point.h>
 
 namespace orb_slam3 {
 namespace map {
@@ -29,9 +30,17 @@ class Frame : public BaseFrame {
  public:
   virtual bool IsValid() const = 0;
   virtual bool Link(Frame * other) = 0;
-  virtual bool EstimatePositionFromReferenceKeyframe(const KeyFrame * reference_keyframe) = 0;
+  virtual bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) = 0;
   virtual bool EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) = 0;
   virtual KeyFrame * CreateKeyFrame() = 0;
+  virtual void OptimizePose() = 0;
+
+  virtual void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> & map_points,
+                              std::list<VisibleMapPoint> & out_filtered_map_points,
+                              precision_t radius_multiplier = 1,
+                              unsigned fixed_window_size = 0) const = 0;
+
+  virtual void SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points) = 0;
  private:
   static size_t next_id_;
 

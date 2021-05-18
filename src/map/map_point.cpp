@@ -37,7 +37,16 @@ void MapPoint::AddObservation(const frame::Observation & observation) {
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   observations_.erase(frame);
+  if(observations_.size() < 1)
+    SetBad();
+}
+
+void MapPoint::SetBad() {
+  // TODO: Implement this
+  bad_flag_ = true;
+
 }
 
 void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
@@ -91,17 +100,17 @@ void MapPoint::SetPosition(const TPoint3D & position) {
 }
 
 const MapPoint::MapType MapPoint::Observations() const {
-  std::unique_lock<std::mutex> (feature_mutex_);
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_;
 }
 
 size_t MapPoint::GetObservationCount() const {
-  std::unique_lock<std::mutex>(feature_mutex_);
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.size();
 }
 
 bool MapPoint::IsInKeyFrame(frame::KeyFrame * keyframe) {
-  std::unique_lock<std::mutex>(feature_mutex_);
+  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.find(keyframe) != observations_.end();
 }
 

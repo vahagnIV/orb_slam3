@@ -271,6 +271,9 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   orb_slam3::frame::SensorConstants constants;
   constants.max_mp_disappearance_count = 2;
   constants.number_of_keyframe_to_search_lm = 20;
+  constants.projection_search_radius_multiplier = 1.;
+  constants.projection_search_radius_multiplier_after_relocalization = 5.;
+  constants.projection_search_radius_multiplier_after_lost = 15.;
 
   typedef orb_slam3::camera::FishEye FISH_EYE;
 
