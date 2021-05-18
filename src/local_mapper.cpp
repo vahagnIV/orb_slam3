@@ -94,6 +94,8 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   auto covisible_frames =
       key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(key_frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
 
+  logging::RetrieveLogger()->debug("LM: covisible frame count: {}", covisible_frames.size());
+
   for (auto neighbour_keyframe: covisible_frames) {
     key_frame->CreateNewMapPoints(neighbour_keyframe);
   }
@@ -109,6 +111,8 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   if (fixed_keyframes.empty())
     return;
   optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
+  for(auto & kf: local_keyframes)
+    kf->GetCovisibilityGraph().Update();
 
 }
 
@@ -158,7 +162,6 @@ bool LocalMapper::CheckNewKeyFrames() const {
 void LocalMapper::RunIteration() {
   UpdateMessage message;
   while (GetUpdateQueue().try_dequeue(message)) {
-    message.frame->GetCovisibilityGraph().Update();
     ProcessNewKeyFrame(message.frame);
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);

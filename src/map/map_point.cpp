@@ -20,8 +20,8 @@ MapPoint::MapPoint(TPoint3D point,
     : position_(std::move(point)),
       max_invariance_distance_(max_invariance_distance),
       min_invariance_distance_(min_invariance_distance),
-      visible_(0),
-      found_(0),
+      visible_(1),
+      found_(1),
       bad_flag_(false),
       first_observed_frame_id_(first_observed_frame_id) {
   ++counter_;
@@ -39,8 +39,9 @@ void MapPoint::AddObservation(const frame::Observation & observation) {
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
   std::unique_lock<std::mutex> lock(feature_mutex_);
   observations_.erase(frame);
-  if(observations_.size() < 2)
+  if(observations_.size() < 2) {
     SetBad();
+  }
 }
 
 void MapPoint::SetBad() {

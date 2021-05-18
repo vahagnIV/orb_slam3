@@ -251,14 +251,6 @@ void MonocularFrame::ComputeBow() {
 
 void MonocularFrame::OptimizePose() {
   optimization::OptimizePose(this);
-  cv::Mat image = cv::imread(GetFilename());
-  for (auto mp_id: map_points_) {
-    auto kp = features_.keypoints[mp_id.first];
-    cv::Point2f pt(kp.X(), kp.Y());
-    cv::circle(image, pt, 3, cv::Scalar(0, 255, 0));
-  }
-  cv::imshow("Local map", image);
-  cv::waitKey();
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,

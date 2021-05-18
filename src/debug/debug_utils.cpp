@@ -108,7 +108,7 @@ void DrawCommonMapPoints(const string & filename1,
     TPoint2D kp2(frame2->GetFeatures().keypoints[it->second].X(), frame2->GetFeatures().keypoints[it->second].Y());
 
     cv::Point2f key_point1(kp1.x(), kp1.y());
-    cv::Point2f key_point2(frame1_image.cols + kp2.x(),  kp2.y());
+    cv::Point2f key_point2(frame1_image.cols + kp2.x(), kp2.y());
 
     cv::Mat match_image = image.clone();
     cv::circle(match_image, key_point1, 3, cv::Scalar(0, 255, 0));
@@ -116,23 +116,35 @@ void DrawCommonMapPoints(const string & filename1,
 
     TPoint2D projected1, projected2;
 
-    TPoint3D transfored1 = dynamic_cast<geometry::RigidObject *>(frame1)->GetPosition().Transform(mp_id.second->GetPosition()),
-    transformed2 = dynamic_cast<geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
+    TPoint3D transfored1 =
+        dynamic_cast<geometry::RigidObject *>(frame1)->GetPosition().Transform(mp_id.second->GetPosition()),
+        transformed2 =
+        dynamic_cast<geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
     frame1->GetCamera()->ProjectAndDistort(transfored1, projected1);
     frame1->GetCamera()->ProjectAndDistort(transformed2, projected2);
 
     cv::Point2f projected_key_point1(projected1.x(), projected1.y());
-    cv::Point2f projected_key_point2(frame1_image.cols + projected2.x(),  projected2.y());
+    cv::Point2f projected_key_point2(frame1_image.cols + projected2.x(), projected2.y());
 
     cv::circle(match_image, projected_key_point1, 3, cv::Scalar(0, 255, 255));
     cv::circle(match_image, projected_key_point2, 3, cv::Scalar(0, 255, 255));
 
     cv::imshow("Match", match_image);
     char key = cv::waitKey();
-    if('c' == key)
+    if ('c' == key)
       return;
     std::cout << key << std::endl;
   }
+}
+
+cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame) {
+  cv::Mat image = cv::imread(filename);
+  for (auto mp_id: frame->GetMapPoints()) {
+    auto kp = frame->GetFeatures().keypoints[mp_id.first];
+    cv::Point2f pt(kp.X(), kp.Y());
+    cv::circle(image, pt, 3, cv::Scalar(0, 255, 0));
+  }
+  return image;
 }
 
 }

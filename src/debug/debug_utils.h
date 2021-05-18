@@ -40,6 +40,8 @@ void DrawCommonMapPoints(const std::string & filename1,
                                   frame::monocular::BaseMonocular * frame1,
                                   frame::monocular::BaseMonocular * frame2);
 
+cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame);
+
 }
 }
 

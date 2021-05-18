@@ -34,9 +34,7 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   current_frame->ListMapPoints(frame_map_points);
   std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
   for (auto & map_point: frame_map_points) {
-    for (auto observation: map_point->Observations()) {
-      ++key_frame_counter[observation.first];
-    }
+    for (const auto& observation: map_point->Observations()) ++key_frame_counter[observation.first];
   }
 
   frame::KeyFrame * max_covisible_key_frame = nullptr;
@@ -92,10 +90,10 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
 
-  debug::DrawCommonMapPoints(frame->GetFilename(),
-                             reference_keyframe_->GetFilename(),
-                             dynamic_cast<frame::monocular::MonocularFrame *>(frame),
-                             dynamic_cast<frame::monocular::MonocularKeyFrame *>(reference_keyframe_));
+//  debug::DrawCommonMapPoints(frame->GetFilename(),
+//                             reference_keyframe_->GetFilename(),
+//                             dynamic_cast<frame::monocular::MonocularFrame *>(frame),
+//                             dynamic_cast<frame::monocular::MonocularKeyFrame *>(reference_keyframe_));
 
   std::unordered_set<frame::KeyFrame *> local_keyframes;
   frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(frame, local_keyframes);
@@ -116,7 +114,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     }
   }
 
-  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_except_current.size());
+
 
   std::list<frame::VisibleMapPoint> visible_map_points;
   frame->FilterVisibleMapPoints(local_map_points_except_current,
@@ -127,8 +125,14 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   frame->SearchInVisiblePoints(visible_map_points);
   frame->OptimizePose();
+
+  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_except_current.size());
+  cv::imshow("After SLMP", debug::DrawMapPoints(frame->GetFilename(), dynamic_cast<frame::monocular::MonocularFrame *>(frame)));
+//  cv::waitKey();
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
+  if(map_points.size() < 20)
+    return TrackingResult::TRACKING_FAILED;
   for (auto map_point: map_points)
     map_point->IncreaseFound();
 
@@ -153,10 +157,7 @@ void Tracker::ReplaceLastFrame(frame::Frame * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
-
-  std::unordered_set<map::MapPoint *> m;
-  frame->ListMapPoints(m);
-  bool need = kf_counter >= 2;// && m.size() > 40;
+  bool need = kf_counter >= 4;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
