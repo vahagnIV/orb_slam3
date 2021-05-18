@@ -114,7 +114,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 
 void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_keyframes,
                                       frame::KeyFrame::MapPointSet & local_map_points,
-                                      unordered_set<frame::KeyFrame *> & out_fixed) const {
+                                      unordered_set<frame::KeyFrame *> & out_fixed) {
   size_t number_of_fixed = 0;
   for (auto keyframe: local_keyframes) {
     if (keyframe->IsInitial())

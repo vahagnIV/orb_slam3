@@ -29,10 +29,10 @@ class LocalMapper : public PositionObserver,
   void Run();
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
   bool CheckNewKeyFrames() const;
-  void FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
-                           frame::KeyFrame::MapPointSet & local_map_points,
-                           std::unordered_set<frame::KeyFrame *> & out_fixed) const;
  private:
+  static void FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
+                                  frame::KeyFrame::MapPointSet & local_map_points,
+                                  std::unordered_set<frame::KeyFrame *> & out_fixed) ;
   static void CreateNewMapPoints(frame::KeyFrame * key_frame) ;
 
  private:
