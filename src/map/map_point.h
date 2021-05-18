@@ -61,7 +61,7 @@ class MapPoint {
 
   unsigned GetVisible() const { return visible_; }
   unsigned GetFound() const { return found_; }
-  static uint64_t GetTotalMapPointCount() { return counter_; }
+  static size_t GetTotalMapPointCount() { return counter_; }
   inline bool IsBad() const { return bad_flag_; }
   void SetBad();
   ~MapPoint();

@@ -18,21 +18,23 @@ class LocalMapper : public PositionObserver,
                     public Observable<frame::FrameBase *> {
  public:
   explicit LocalMapper(map::Atlas * atlas);
+  ~LocalMapper() override;
+ public:
   void Start();
   void Stop();
-  ~LocalMapper() override;
   void Optimize(frame::KeyFrame * frame);
   void MapPointCulling(frame::KeyFrame * keyframe);
   void RunIteration();
  private:
-  static void EraseMapPoint(map::MapPoint * map_point);
   void Run();
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
-  static void CreateNewMapPoints(frame::KeyFrame * key_frame) ;
   bool CheckNewKeyFrames() const;
   void FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
                            frame::KeyFrame::MapPointSet & local_map_points,
                            std::unordered_set<frame::KeyFrame *> & out_fixed) const;
+ private:
+  static void CreateNewMapPoints(frame::KeyFrame * key_frame) ;
+
  private:
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas * atlas_;

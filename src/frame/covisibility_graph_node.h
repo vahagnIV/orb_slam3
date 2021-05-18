@@ -9,8 +9,6 @@
 #include <mutex>
 #include <unordered_set>
 #include <vector>
-#include <unordered_map>
-#include <map>
 
 namespace orb_slam3 {
 namespace frame {

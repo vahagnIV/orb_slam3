@@ -41,9 +41,7 @@ void CovisibilityGraphNode::Update() {
   sorted_weights_.clear();
   sorted_weights_.reserve(weight_frame_pairs.size());
   sorted_connected_frames_.reserve(weight_frame_pairs.size());
-  for (decltype(weight_frame_pairs)::reverse_iterator p = weight_frame_pairs.rbegin();
-       p != weight_frame_pairs.rend() && p->first >= 15;
-       ++p) {
+  for (auto p = weight_frame_pairs.rbegin(); p != weight_frame_pairs.rend() && p->first >= 15; ++p) {
     sorted_weights_.push_back(p->first);
     sorted_connected_frames_.push_back(p->second);
   }

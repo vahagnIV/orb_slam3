@@ -71,14 +71,6 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
   logging::RetrieveLogger()->debug("LM: erased {} mps", erased);
 }
 
-void LocalMapper::EraseMapPoint(map::MapPoint * map_point) {
-  for (auto obs: map_point->Observations()) {
-//  TODO:  obs.first->EraseMapPoint(map_point);
-//    delete obs.second;
-  }
-  delete map_point;
-}
-
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ComputeBow();
@@ -166,6 +158,7 @@ bool LocalMapper::CheckNewKeyFrames() const {
 void LocalMapper::RunIteration() {
   UpdateMessage message;
   while (GetUpdateQueue().try_dequeue(message)) {
+    message.frame->GetCovisibilityGraph().Update();
     ProcessNewKeyFrame(message.frame);
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);
