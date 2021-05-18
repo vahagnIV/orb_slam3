@@ -48,7 +48,7 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
-  unsigned erased = recently_added_map_points_.size();
+  size_t erased = recently_added_map_points_.size();
   for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ) {
     map::MapPoint * mp = *mp_it;
     if (mp->IsBad()) {
@@ -115,7 +115,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_keyframes,
                                       frame::KeyFrame::MapPointSet & local_map_points,
                                       unordered_set<frame::KeyFrame *> & out_fixed) const {
-  unsigned number_of_fixed = 0;
+  size_t number_of_fixed = 0;
   for (auto keyframe: local_keyframes) {
     if (keyframe->IsInitial())
       ++number_of_fixed;

@@ -19,7 +19,7 @@ CovisibilityGraphNode::CovisibilityGraphNode(const frame::KeyFrame * frame) : fr
 void CovisibilityGraphNode::Update() {
 
   std::unordered_set<map::MapPoint *> local_map_points_;
-  std::unordered_map<KeyFrame *, unsigned> connected_frame_weights;
+  std::unordered_map<KeyFrame *, size_t> connected_frame_weights;
   frame_->ListMapPoints(local_map_points_);
   for (auto map_point:local_map_points_) {
     for (auto obs: map_point->Observations()) {
@@ -28,7 +28,7 @@ void CovisibilityGraphNode::Update() {
       ++connected_frame_weights[obs.first];
     }
   }
-  std::vector<std::pair<unsigned, KeyFrame *>> weight_frame_pairs;
+  std::vector<std::pair<size_t, KeyFrame *>> weight_frame_pairs;
 
   weight_frame_pairs.reserve(connected_frame_weights.size());
   for (auto & fp: connected_frame_weights)
@@ -47,7 +47,7 @@ void CovisibilityGraphNode::Update() {
   }
 }
 
-std::unordered_set<KeyFrame *> CovisibilityGraphNode::GetCovisibleKeyFrames(unsigned int count) {
+std::unordered_set<KeyFrame *> CovisibilityGraphNode::GetCovisibleKeyFrames(unsigned int count) const {
   std::lock_guard<std::mutex> m(mutex_);
   std::unordered_set<KeyFrame *> result;
   for (size_t i = 0; sorted_connected_frames_.size() < count && i < sorted_connected_frames_.size(); ++i)
