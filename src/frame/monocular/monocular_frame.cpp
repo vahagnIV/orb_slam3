@@ -104,13 +104,20 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   if (matches.size() < 20) {
     return false;
   }
+  OptimizePose();
+
+  cv::imshow("TWRKF",debug::DrawMatches(GetFilename(),
+                                reference_keyframe->GetFilename(),
+                                matches,
+                                features_,
+                                reference_kf->GetFeatures()));
 
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_.find(match.second);
     assert(map_point != reference_kf->map_points_.end());
     AddMapPoint(map_point->second, match.first);
   }
-  return true;
+  return matches.size() > 15;
 }
 
 bool MonocularFrame::IsVisible(map::MapPoint * map_point,
@@ -152,8 +159,43 @@ bool MonocularFrame::IsVisible(map::MapPoint * map_point,
   return true;
 }
 
-bool MonocularFrame::EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) {
-  return false;
+bool MonocularFrame::EstimatePositionByProjectingMapPoints(const std::list<VisibleMapPoint> & filtered_map_points) {
+  ComputeBow();
+  features::matching::iterators::ProjectionSearchIterator begin
+      (filtered_map_points.begin(),
+       filtered_map_points.end(),
+       &features_,
+       &map_points_);
+
+  features::matching::iterators::ProjectionSearchIterator end
+      (filtered_map_points.end(),
+       filtered_map_points.end(),
+       &features_,
+       &map_points_);
+
+  typedef features::matching::SNNMatcher<features::matching::iterators::ProjectionSearchIterator> Matcher;
+  Matcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
+  Matcher::MatchMapType matches;
+  matcher.MatchWithIteratorV2(begin, end, feature_extractor_, matches);
+  logging::RetrieveLogger()->debug("TWMM: SNN matcher found {} matches", matches.size());
+  for (auto & match: matches) {
+    AddMapPoint(match.first, match.second);
+  }
+  if(map_points_.size() < 20) {
+    map_points_.clear();
+    return false;
+  }
+  OptimizePose();
+
+  if(map_points_.size() < 20) {
+    map_points_.clear();
+    return false;
+  }
+  return true;
+}
+
+size_t MonocularFrame::GetMapPointCount() const {
+  return map_points_.size();
 }
 
 FrameType MonocularFrame::Type() const {
@@ -254,7 +296,7 @@ void MonocularFrame::OptimizePose() {
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
-                                            list<VisibleMapPoint> & out_filetered_map_points,
+                                            std::list<VisibleMapPoint> & out_filetered_map_points,
                                             precision_t radius_multiplier,
                                             unsigned int window_size) const {
   VisibleMapPoint map_point;
@@ -265,7 +307,7 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
 
 }
 
-void MonocularFrame::SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) {
+void MonocularFrame::SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points) {
   ComputeBow();
   features::matching::iterators::ProjectionSearchIterator begin
       (filtered_map_points.begin(),

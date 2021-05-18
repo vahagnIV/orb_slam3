@@ -15,7 +15,7 @@
 namespace orb_slam3 {
 
 class LocalMapper : public PositionObserver,
-                    public Observable<frame::FrameBase *> {
+                    public Observable<frame::KeyFrame *> {
  public:
   explicit LocalMapper(map::Atlas * atlas);
   ~LocalMapper() override;

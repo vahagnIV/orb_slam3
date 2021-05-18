@@ -8,6 +8,7 @@ namespace orb_slam3 {
 enum TrackingResult {
   OK,
   TRACKING_FAILED,
+  LINKING_FAILED,
   TRACK_LM_FAILED,
   INVALID_FRAME
 };

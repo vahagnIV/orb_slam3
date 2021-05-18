@@ -206,9 +206,13 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame = new MF(eigen_image, std::chrono::system_clock::now(), image_path, feature_extractor, camera, &voc, &constants);
-    if (orb_slam3::TrackingResult::OK == tracker.Track(frame))
+
+    auto result = tracker.Track(frame);
+    if (orb_slam3::TrackingResult::OK == result)
       feature_extractor = _feature_extractor;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    if(orb_slam3::TrackingResult::TRACKING_FAILED == result)
+      exit(1);
     //std::cout << i << std::endl;
     if (cv::waitKey(10) == 27) break;
   }
@@ -224,7 +228,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Tracker tracker(atlas);
   orb_slam3::LocalMapper local_mapper(atlas);
   tracker.AddObserver(&local_mapper);
-//  local_mapper.AddObserver(&tracker);
+  local_mapper.AddObserver(&tracker);
   //local_mapper.Start();
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(),
@@ -234,16 +238,19 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
       camera->Width(), camera->Height(),
       NFEATURES2, SCALE_FACTOR, LEVELS,
       INIT_THRESHOLD, MIN_THRESHOLD);
-
+  orb_slam3::features::IFeatureExtractor * fe = feature_extractor;
   for (size_t i = 0; i < filenames.size(); ++i) {
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
-    MF * frame = new MF(eigen, timestamps[i], filenames[i], feature_extractor, camera, &voc, sensor_constants);
-    tracker.Track(frame);
+    MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, &voc, sensor_constants);
+    auto result = tracker.Track(frame);
+    if (orb_slam3::TrackingResult::OK == result)
+      fe = _feature_extractor;
+    if(orb_slam3::TrackingResult::TRACKING_FAILED == result)
+      exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    feature_extractor = _feature_extractor;
     cv::imshow("im", image);
     cv::waitKey(1);
   }

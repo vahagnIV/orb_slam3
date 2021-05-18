@@ -18,7 +18,7 @@
 namespace orb_slam3 {
 
 using frame::FrameBase;
-class Tracker : public Observer<frame::FrameBase *>,
+class Tracker : public Observer<frame::KeyFrame *>,
                 public Observable<UpdateMessage> {
  public:
   enum State {

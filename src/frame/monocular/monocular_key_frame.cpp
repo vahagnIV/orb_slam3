@@ -115,7 +115,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
 
   other_frame->ComputeBow();
   typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> SNNM;
-  SNNM bow_matcher(0.6, 100);
+  SNNM bow_matcher(0.6, 50);
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
                                                             &features_.bow_container.feature_vector,
                                                             &other_frame->features_.bow_container.feature_vector,

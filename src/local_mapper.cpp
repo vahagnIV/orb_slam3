@@ -168,6 +168,7 @@ void LocalMapper::RunIteration() {
     if (!CheckNewKeyFrames()) {
       Optimize(message.frame);
     }
+    NotifyObservers(message.frame);
   }
 
 }
