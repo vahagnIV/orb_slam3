@@ -19,7 +19,7 @@ namespace edges {
 class SE3ProjectXYZPose : public BABinaryEdge {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  explicit SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera, precision_t threshold);
+  explicit SE3ProjectXYZPose(const camera::MonocularCamera  * camera, precision_t threshold);
   bool read(std::istream & is) { return false; }
 
   bool write(std::ostream & os) const { return false; }
@@ -32,7 +32,7 @@ class SE3ProjectXYZPose : public BABinaryEdge {
 
   bool IsValid() const override;
  private:
-  const orb_slam3::camera::ICamera * camera_;
+  const camera::MonocularCamera * camera_;
   precision_t threshold_;
 
 };

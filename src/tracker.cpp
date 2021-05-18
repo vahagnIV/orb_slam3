@@ -11,6 +11,7 @@
 #include <optimization/bundle_adjustment.h>
 
 #include "local_mapper.h"
+#include "debug/debug_utils.h"
 
 namespace orb_slam3 {
 
@@ -90,6 +91,11 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->OptimizePose();
   if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
+
+  debug::DrawCommonMapPoints(frame->GetFilename(),
+                             reference_keyframe_->GetFilename(),
+                             dynamic_cast<frame::monocular::MonocularFrame *>(frame),
+                             dynamic_cast<frame::monocular::MonocularKeyFrame *>(reference_keyframe_));
 
   std::unordered_set<frame::KeyFrame *> local_keyframes;
   frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(frame, local_keyframes);
@@ -245,6 +251,5 @@ void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
   pose.T = -pose.R * (last_frame_->GetInversePosition().T + velocity_);
   frame->SetPosition(pose);
 }
-
 
 }  // namespace orb_slam3

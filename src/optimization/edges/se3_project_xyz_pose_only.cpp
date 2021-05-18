@@ -9,7 +9,7 @@ namespace edges {
 
 SE3ProjectXYZPoseOnly::SE3ProjectXYZPoseOnly(map::MapPoint * map_point,
                                              size_t feature_id,
-                                             const camera::ICamera * camera,
+                                             const camera::MonocularCamera * camera,
                                              const TPoint3D & point)
     : BAUnaryEdge(map_point, feature_id), camera_(camera), point_(point) {
 
@@ -17,14 +17,10 @@ SE3ProjectXYZPoseOnly::SE3ProjectXYZPoseOnly(map::MapPoint * map_point,
 
 void SE3ProjectXYZPoseOnly::computeError() {
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
-  g2o::Vector3 pt_camera_system = pose->estimate().map(point_);
-  g2o::Vector3::Scalar inv_z = 1. / pt_camera_system[2];
-
-  HomogenousPoint projected = pt_camera_system * inv_z, distorted;
-
-  camera_->GetDistortionModel()->DistortPoint(projected, distorted);
-  _error[0] = distorted[0] - _measurement[0];
-  _error[1] = distorted[1] - _measurement[1];
+  TPoint3D pt_camera_system = pose->estimate().map(point_);
+  TPoint2D distorted;
+  camera_->ProjectAndDistort(pt_camera_system, distorted);
+  _error = distorted - _measurement;
 }
 
 bool SE3ProjectXYZPoseOnly::read(std::istream & is) {

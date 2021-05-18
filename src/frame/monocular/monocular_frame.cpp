@@ -71,7 +71,7 @@ bool MonocularFrame::Link(Frame * other) {
   this->SetPosition(pose);
   std::unordered_set<map::MapPoint *> map_points;
   InitializeMapPointsFromMatches(matches, points, from_frame, map_points);
-  std::cout << " Mps: " << map_points.size() << std::endl;
+  logging::RetrieveLogger()->debug("Linking found {} matches", map_points_.size());
   return true;
 }
 

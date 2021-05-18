@@ -10,7 +10,6 @@
 #include <features/match.h>
 #include <frame/monocular/monocular_frame.h>
 
-
 namespace orb_slam3 {
 namespace debug {
 
@@ -19,10 +18,10 @@ void ToOpenCvMatches(const std::vector<features::Match> & matches, std::vector<c
 void ToOpenCvKeyPoints(const std::vector<features::KeyPoint> & keypoints, std::vector<cv::KeyPoint> & out_key_points);
 
 cv::Mat DrawMatches(const std::string & filename_to,
-                 const std::string & filename_from,
-                 const std::unordered_map<size_t, size_t> & matches,
-                 const features::Features & features_to,
-                 const features::Features & features_from);
+                    const std::string & filename_from,
+                    const std::unordered_map<size_t, size_t> & matches,
+                    const features::Features & features_to,
+                    const features::Features & features_from);
 
 cv::Mat DrawMatches(const std::string & filename_to,
                     const std::string & filename_from,
@@ -31,12 +30,15 @@ cv::Mat DrawMatches(const std::string & filename_to,
                     const features::Features & features_from);
 
 cv::Mat DrawMatches(const std::string & filename_to,
-                 const std::string & filename_from,
-                 const std::vector<cv::DMatch> & matches,
-                 const features::Features & features_to,
-                 const features::Features & features_from);
+                    const std::string & filename_from,
+                    const std::vector<cv::DMatch> & matches,
+                    const features::Features & features_to,
+                    const features::Features & features_from);
 
-void DrawMapPointsWIthProjections(frame::monocular::MonocularFrame * frame1, frame::monocular::MonocularFrame * frame2);
+void DrawCommonMapPoints(const std::string & filename1,
+                                  const std::string & filename2,
+                                  frame::monocular::BaseMonocular * frame1,
+                                  frame::monocular::BaseMonocular * frame2);
 
 }
 }

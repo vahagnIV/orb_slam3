@@ -17,9 +17,7 @@ using namespace frame::monocular;
 void OptimizePose(MonocularFrame * frame) {
   BaseMonocular::MonocularMapPoints map_points = frame->GetMapPoints();
 
-  static const precision_t delta_mono = constants::HUBER_MONO_DELTA * frame->GetCamera()->FxInv();
-  static const precision_t
-      chi2_threshold = constants::MONO_CHI2 * frame->GetCamera()->FxInv() * frame->GetCamera()->FxInv();
+  static const precision_t delta_mono = constants::HUBER_MONO_DELTA;
 
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer(optimizer);
@@ -41,11 +39,11 @@ void OptimizePose(MonocularFrame * frame) {
     auto edge = new edges::SE3ProjectXYZPoseOnly(map_point, feature_id, frame->GetCamera(), map_point->GetPosition());
     edge->setId(++max_id);
     edge->setVertex(0, frame_vertex);
-    typedef Eigen::Map<const Eigen::Matrix<precision_t, 2, 1>> EigenMaType;
-    edge->setMeasurement(EigenMaType(features.unprojected_keypoints[feature_id].data()));
+
+    edge->setMeasurement(features.keypoints[feature_id].pt);
     precision_t
         information_coefficient =
-        frame->GetFeatureExtractor()->GetAcceptableSquareError(features.keypoints[feature_id].level);
+        1. / frame->GetFeatureExtractor()->GetAcceptableSquareError(features.keypoints[feature_id].level);
 
     edge->setInformation(
         Eigen::Matrix<precision_t, 2, 2>::Identity() * information_coefficient);
@@ -70,7 +68,7 @@ void OptimizePose(MonocularFrame * frame) {
       if (1 == edge->level()) { // If  the edge was not included in the optimization
         edge->computeError();
       }
-      if (edge->chi2() < chi2_threshold) {
+      if (edge->chi2() < constants::MONO_CHI2) {
         edge->setLevel(0);
       } else {
         if (N - 1 == i) {

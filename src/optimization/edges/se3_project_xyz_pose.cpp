@@ -10,7 +10,7 @@ namespace orb_slam3 {
 namespace optimization {
 namespace edges {
 
-SE3ProjectXYZPose::SE3ProjectXYZPose(const orb_slam3::camera::ICamera * camera, precision_t threshold)
+SE3ProjectXYZPose::SE3ProjectXYZPose(const camera::MonocularCamera * camera, precision_t threshold)
     : camera_(camera), threshold_(threshold) {
   error()[0] = error()[1] = 0;
 }
@@ -24,18 +24,17 @@ bool SE3ProjectXYZPose::IsDepthPositive() const {
 void SE3ProjectXYZPose::computeError() {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
-  g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
-  g2o::Vector3::Scalar inv_z = 1. / pt_camera_system[2];
-  HomogenousPoint projected = pt_camera_system * inv_z, distorted;
+  TPoint3D pt_camera_system = pose->estimate().map(point->estimate());
 
-  camera_->GetDistortionModel()->DistortPoint(projected, distorted);
-  _error[0] = distorted[0] - _measurement[0];
-  _error[1] = distorted[1] - _measurement[1];
+  TPoint2D distorted;
+  camera_->ProjectAndDistort(pt_camera_system, distorted);
+
+  _error = distorted - _measurement;
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-//  BaseFixedSizedEdge::linearizeOplus();
-//      return;
+  BaseFixedSizedEdge::linearizeOplus();
+  return;
   computeError();
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);

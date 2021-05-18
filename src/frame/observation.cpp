@@ -25,16 +25,14 @@ optimization::edges::BABinaryEdge * Observation::CreateBinaryEdge() const {
   if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
     auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetCamera(),
-                                                           constants::MONO_CHI2
-                                                               * monocular_key_frame->GetCamera()->FxInv()
-                                                               * monocular_key_frame->GetCamera()->FxInv());
-    auto measurement = monocular_key_frame->GetFeatures().unprojected_keypoints[feature_ids_[0]];
-    edge->setMeasurement(Eigen::Map<Eigen::Matrix<double,
-                                                  2,
-                                                  1>>(measurement.data()));
+                                                           constants::MONO_CHI2);
+    const size_t & feature_id = feature_ids_[0];
+    auto & kp = monocular_key_frame->GetFeatures().keypoints[feature_id];
+    edge->setMeasurement(kp.pt);
     precision_t
         information_coefficient =
-        monocular_key_frame->GetFeatureExtractor()->GetAcceptableSquareError(monocular_key_frame->GetFeatures().keypoints[feature_ids_[0]].level);
+        1. / monocular_key_frame->GetFeatureExtractor()->GetAcceptableSquareError(kp.level);
+    std::cout << "Information coefficient: " << information_coefficient << std::endl;
     edge->setInformation(Eigen::Matrix2d::Identity() * information_coefficient);
     return edge;
   }
@@ -62,8 +60,7 @@ bool Observation::IsMonocular() const {
 
 g2o::RobustKernel * Observation::CreateRobustKernel() {
   auto rk = new g2o::RobustKernelHuber;
-  rk->setDelta(constants::HUBER_MONO_DELTA
-                   * dynamic_cast<frame::monocular::MonocularKeyFrame *>(GetKeyFrame())->GetCamera()->FxInv());
+  rk->setDelta(constants::HUBER_MONO_DELTA);
   return rk;
 }
 
