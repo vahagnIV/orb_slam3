@@ -24,18 +24,6 @@ bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPo
   return distortion_model_->UnDistortPoint(unorojected_tmp, unprojected);
 }
 
-TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {
-
-  // TODO: rethink definition
-  double z_inv = 1 / point3d[2];
-  TPoint3D distorted;
-  distortion_model_->DistortPoint(TPoint3D{point3d[0] * z_inv, point3d[2] * z_inv, 1}, distorted);
-
-  TPoint2D result;
-  ProjectPoint(distorted, result);
-  return result;
-}
-
 bool MonocularCamera::UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const {
   TPoint3D unprojected, undistorted;
   UnprojectPoint(point, unprojected);

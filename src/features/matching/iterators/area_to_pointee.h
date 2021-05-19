@@ -38,8 +38,7 @@ class AreaToPointee : public VectorFromPointee {
   }
  private:
   void InitializeIterators() {
-    features_from_->ListFeaturesInArea(features_to_->keypoints[id_].X(),
-                                       features_to_->keypoints[id_].Y(),
+    features_from_->ListFeaturesInArea(features_to_->undistorted_keypoints[id_],
                                        window_size_, 0, 0,
 
 //                                       features_to_->keypoints[id_].level ,

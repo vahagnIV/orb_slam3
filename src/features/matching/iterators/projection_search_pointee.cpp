@@ -21,8 +21,7 @@ void ProjectionSearchPointee::SetVisibileMapPoint(const frame::VisibleMapPoint &
 
 void ProjectionSearchPointee::InitializeIterators() {
 
-  from_features_->ListFeaturesInArea(map_point_.position.x(),
-                                     map_point_.position.y(),
+  from_features_->ListFeaturesInArea(map_point_.position,
                                      map_point_.window_size,
                                      std::max(map_point_.level - 1, 0),
                                      map_point_.level + 1,

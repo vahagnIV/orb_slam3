@@ -61,6 +61,7 @@ class BowToIterator {
   }
  private:
   void AdvanceUntilSameNode();
+  void AdvanceUntilValidIterator();
  private:
 
   DBoW2::FeatureVector::const_iterator bow_it_to_;

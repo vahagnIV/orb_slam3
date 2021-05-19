@@ -32,13 +32,12 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                                                                  feature_extractor,
                                                                                  vocabulary,
                                                                                  sensor_constants),
-                                                                           BaseMonocular(image.cols(),
-                                                                                         image.rows(),
-                                                                                         camera) {
+                                                                           BaseMonocular(camera) {
   const_cast<features::IFeatureExtractor *>(feature_extractor)->Extract(image, features_);
-  features_.UndistortKeyPoints(GetCamera());
+  features_.UndistortKeyPoints();
   features_.AssignFeaturesToGrid();
   features_.SetVocabulary(vocabulary);
+  features_.ComputeBow();
 
 }
 
@@ -104,19 +103,22 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   if (matches.size() < 20) {
     return false;
   }
-  OptimizePose();
-
-  cv::imshow("TWRKF",debug::DrawMatches(GetFilename(),
-                                reference_keyframe->GetFilename(),
-                                matches,
-                                features_,
-                                reference_kf->GetFeatures()));
 
   for (const auto & match: matches) {
     auto map_point = reference_kf->map_points_.find(match.second);
     assert(map_point != reference_kf->map_points_.end());
     AddMapPoint(map_point->second, match.first);
   }
+
+  OptimizePose();
+
+  cv::imshow("TWRKF", debug::DrawMatches(GetFilename(),
+                                         reference_keyframe->GetFilename(),
+                                         matches,
+                                         features_,
+                                         reference_kf->GetFeatures()));
+
+
   return matches.size() > 15;
 }
 
@@ -181,13 +183,13 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(const std::list<Visib
   for (auto & match: matches) {
     AddMapPoint(match.first, match.second);
   }
-  if(map_points_.size() < 20) {
+  if (map_points_.size() < 20) {
     map_points_.clear();
     return false;
   }
   OptimizePose();
 
-  if(map_points_.size() < 20) {
+  if (map_points_.size() < 20) {
     map_points_.clear();
     return false;
   }

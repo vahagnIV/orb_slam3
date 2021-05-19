@@ -105,13 +105,6 @@ class MonocularCamera
   inline const precision_t & ImageBoundMaxY() const { return max_Y_; }
 
   /*!
-   * Projects a 3D point on the image plane using the camera model
-   * @param point3d The 3D point in the camera frame
-   * @return 2D image point
-   */
-  TPoint2D Map(const TPoint3D & point3d) const;
-
-  /*!
    * Undistorts keypoint
    * @param points input
    * @param undistorted_points output

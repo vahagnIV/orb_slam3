@@ -27,22 +27,19 @@ typedef Eigen::Matrix<uint8_t, 1, Eigen::Dynamic, Eigen::RowMajor> DescriptorTyp
 
 class Features {
  public:
-  Features(size_t image_width, size_t image_height);
+  Features(const camera::MonocularCamera * camera);
 
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
   std::vector<HomogenousPoint> undistorted_and_unprojected_keypoints;
-  std::vector<HomogenousPoint> unprojected_keypoints;
+  std::vector<TPoint2D> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
   BowContainer bow_container;
 
   void SetVocabulary(const BowVocabulary *vocabulary);
   void ComputeBow();
-  size_t GetImageHeight() const {return image_height_; }
-  size_t GetImageWidth() const {return image_width_; }
   size_t Size() const { return keypoints.size(); }
-  void ListFeaturesInArea(const precision_t & x,
-                          const precision_t & y,
+  void ListFeaturesInArea(const TPoint2D & point,
                           const size_t & window_size,
                           const int & minLevel,
                           const int & maxLevel,
@@ -50,17 +47,14 @@ class Features {
 
   void AssignFeaturesToGrid();
 
-  void UndistortKeyPoints(const camera::MonocularCamera * camera);
+  void UndistortKeyPoints();
  private:
   bool PosInGrid(const TPoint2D & kp,
-                 const precision_t & min_X,
-                 const precision_t & min_Y,
                  size_t & posX,
                  size_t & posY) const;
 
  private:
-  const size_t image_width_;
-  const size_t image_height_;
+  const camera::MonocularCamera * camera_;
   const precision_t grid_element_width_inv_;
   const precision_t grid_element_height_inv_;
 };

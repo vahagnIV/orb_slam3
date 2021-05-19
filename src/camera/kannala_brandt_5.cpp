@@ -4,6 +4,7 @@
 
 // == orb-slam3 ===
 #include "kannala_brandt_5.h"
+#include <opencv2/opencv.hpp>
 
 namespace orb_slam3 {
 namespace camera {
@@ -27,6 +28,16 @@ bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, Homogenous
 }
 
 bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
+
+  cv::Mat point(1, 1, CV_64FC2), undistorted_point;
+  point.at<cv::Point2d>(0) = cv::Point2d(distorted.x(), distorted.y());
+
+  cv::undistortPoints(point,
+                               undistorted_point,
+                               cv::Mat::eye(3, 3, CV_64F),
+                               cv::Mat(1, 4, CV_64F, (void *) (estimate_ + 4)));
+  undistorted << undistorted_point.at<cv::Point2d>(0).x, undistorted_point.at<cv::Point2d>(0).y, 1;
+  return true;
 
   undistorted = distorted;
 

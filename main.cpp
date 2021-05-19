@@ -76,9 +76,10 @@ void FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(
   intrinsics.push_back(256.8974428996504);
 
   distortion_coeffs.push_back(0.0034823894022493434);
-  distortion_coeffs.push_back(0.0007150348452162257);
   distortion_coeffs.push_back(-0.0020532361418706202);
+  distortion_coeffs.push_back(0.0007150348452162257);
   distortion_coeffs.push_back(0.00020293673591811182);
+  distortion_coeffs.push_back(0.);
 }
 
 void ReadImagesForMonocularTestTum(
@@ -251,7 +252,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     if(orb_slam3::TrackingResult::TRACKING_FAILED == result)
       exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    cv::imshow("im", image);
+//    cv::imshow("im", image);
     cv::waitKey(1);
   }
 }
@@ -283,15 +284,16 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   constants.projection_search_radius_multiplier_after_lost = 15.;
 
   typedef orb_slam3::camera::FishEye FISH_EYE;
+  typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;
 
   std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics;
-  std::vector<FISH_EYE::Scalar> distortion_coeffs;
+  std::vector<KANNALA_BRANDT5::Scalar> distortion_coeffs;
   FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(intrinsics, distortion_coeffs);
 
   const size_t width = 512;
   const size_t height = 512;
   auto camera = CreateMonocularCamera(width, height, intrinsics);
-  CreateDistortionModel<FISH_EYE>(camera, distortion_coeffs);
+  CreateDistortionModel<KANNALA_BRANDT5>(camera, distortion_coeffs);
   camera->ComputeImageBounds();
 
   std::vector<std::string> filenames;

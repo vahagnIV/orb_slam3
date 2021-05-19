@@ -20,9 +20,8 @@ namespace monocular {
 class BaseMonocular {
  public:
   typedef std::map<size_t, map::MapPoint *> MonocularMapPoints;
-  BaseMonocular(size_t image_width, size_t image_height,
-                const camera::MonocularCamera * camera)
-      : features_(image_width, image_height),
+  BaseMonocular(const camera::MonocularCamera * camera)
+      : features_(camera),
         camera_(camera) {}
 
   BaseMonocular(const BaseMonocular & other)
