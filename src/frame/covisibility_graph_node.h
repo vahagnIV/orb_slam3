@@ -17,18 +17,16 @@ class KeyFrame;
 struct CovisibilityGraphNode {
 
  public:
-  CovisibilityGraphNode(const frame::KeyFrame * frame);
+  explicit CovisibilityGraphNode(const frame::KeyFrame * frame);
 
   void Update();
-  std::unordered_set<KeyFrame *> GetCovisibleKeyFrames(unsigned count = std::numeric_limits<unsigned >::max()) const;
+  std::unordered_set<KeyFrame *> GetCovisibleKeyFrames(size_t count = std::numeric_limits<unsigned>::max()) const;
  private:
   const frame::KeyFrame * frame_;
 
   std::vector<KeyFrame *> sorted_connected_frames_;
   std::vector<size_t> sorted_weights_;
   mutable std::mutex mutex_;
-
-
 
 };
 

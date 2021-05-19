@@ -45,7 +45,12 @@ class BaseMonocular {
 
   MonocularMapPoints GetMapPoints() const {
     std::unique_lock<std::mutex> lock(map_point_mutex_);
-    return map_points_;
+    std::map<size_t, map::MapPoint *> result;
+    std::copy_if(map_points_.begin(),
+                 map_points_.end(),
+                 std::inserter(result, result.begin()),
+                 [](const std::pair<size_t, map::MapPoint *> & mp_id) { return !mp_id.second->IsBad(); });
+    return result;
   }
 
   const features::Features & GetFeatures() const { return features_; }
@@ -53,7 +58,7 @@ class BaseMonocular {
   void ComputeBow() { features_.ComputeBow(); }
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
     assert(!MapPointExists(map_point));
-    assert(map_points_.find(feature_id) == map_points_.end());
+//    assert(map_points_.find(feature_id) == map_points_.end());
     map_points_[feature_id] = map_point;
   }
   void EraseMapPoint(size_t feature_id) {

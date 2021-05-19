@@ -28,7 +28,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   KeyFrame * CreateKeyFrame() override;
   bool Link(Frame * other) override;
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
-  bool EstimatePositionByProjectingMapPoints(const MapPointSet & map_points) override;
+  bool EstimatePositionByProjectingMapPoints(const list<VisibleMapPoint> & filtered_map_points) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;
   void OptimizePose() override;
@@ -41,6 +41,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
                               precision_t radius_multiplier,
                               unsigned int window_size) const override;
   void SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) override;
+  size_t GetMapPointCount() const override;
 
   // MonocularFame
  private:

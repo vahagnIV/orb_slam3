@@ -27,6 +27,10 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
     mp.second->Refresh(feature_extractor_);
   }
+  logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
+  logging::RetrieveLogger()->debug("Number of map points:  {}", map_points_.size());
+
+  covisibility_graph_.Update();
 }
 
 FrameType MonocularKeyFrame::Type() const {
@@ -98,8 +102,10 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
 
   auto local_pose = GetPositionWithLock();
   auto other_pose = other_frame->GetPositionWithLock();
-  if (!BaseLineIsEnough(others_map_points, local_pose, other_pose))
+  if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
+    logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());
     return;
+  }
 
   logging::RetrieveLogger()->debug("LM: Initial local map point count: {}", local_map_points.size());
 
@@ -129,7 +135,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
                                                           &others_map_points_map,
                                                           false,
                                                           false);
-  geometry::Pose relative_pose ;
+  geometry::Pose relative_pose;
   geometry::utils::ComputeRelativeTransformation(GetPosition(), other_frame->GetPosition(), relative_pose);
 
   features::matching::validators::TriangulationValidator

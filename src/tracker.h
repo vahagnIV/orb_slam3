@@ -18,7 +18,7 @@
 namespace orb_slam3 {
 
 using frame::FrameBase;
-class Tracker : public Observer<frame::FrameBase *>,
+class Tracker : public Observer<frame::KeyFrame *>,
                 public Observable<UpdateMessage> {
  public:
   enum State {
@@ -54,7 +54,9 @@ class Tracker : public Observer<frame::FrameBase *>,
   bool TrackWithReferenceKeyFrame(frame::Frame * frame);
   void ReplaceLastFrame(frame::Frame * frame);
   bool NeedNewKeyFrame(frame::Frame * frame);
-  frame::KeyFrame * ListLocalKeyFrames(frame::Frame * current_frame, std::unordered_set<frame::KeyFrame *> & out_local_keyframes);
+ private:
+  static frame::KeyFrame * ListLocalKeyFrames(frame::Frame * current_frame,
+                                              std::unordered_set<frame::KeyFrame *> & out_local_keyframes);
 
  private:
   /// Helper member variables
