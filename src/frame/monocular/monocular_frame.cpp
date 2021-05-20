@@ -66,6 +66,9 @@ bool MonocularFrame::Link(Frame * other) {
                                     other->Id());
     return false;
   }
+  cv::imshow("Linking",
+             debug::DrawMatches(GetFilename(), other->GetFilename(), matches, features_, from_frame->features_));
+  cv::waitKey();
 
   this->SetPosition(pose);
   std::unordered_set<map::MapPoint *> map_points;
@@ -118,7 +121,6 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
                                          features_,
                                          reference_kf->GetFeatures()));
 
-
   return matches.size() > 15;
 }
 
@@ -127,7 +129,6 @@ bool MonocularFrame::IsVisible(map::MapPoint * map_point,
                                precision_t radius_multiplier,
                                unsigned int window_size) const {
   const geometry::Pose pose = this->GetPosition();
-  const geometry::Pose inverse_pose = this->GetInversePosition();
   out_map_point.map_point = map_point;
   HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
   precision_t distance = map_point_in_local_cf.norm();
@@ -137,12 +138,12 @@ bool MonocularFrame::IsVisible(map::MapPoint * map_point,
     return false;
   }
 
-  this->GetCamera()->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
+  this->GetCamera()->ProjectPoint(map_point_in_local_cf, out_map_point.position);
   if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }
 
-  TPoint3D local_pose = inverse_pose.T;
+  TPoint3D local_pose = this->GetInversePosition().T;
   TVector3D relative_frame_map_point = local_pose - map_point->GetPosition();
 
   precision_t track_view_cos = relative_frame_map_point.dot(map_point->GetNormal()) / relative_frame_map_point.norm();
@@ -180,13 +181,15 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(const std::list<Visib
   Matcher::MatchMapType matches;
   matcher.MatchWithIteratorV2(begin, end, feature_extractor_, matches);
   logging::RetrieveLogger()->debug("TWMM: SNN matcher found {} matches", matches.size());
+
+
+  if (matches.size() < 20)
+    return false;
+
   for (auto & match: matches) {
     AddMapPoint(match.first, match.second);
   }
-  if (map_points_.size() < 20) {
-    map_points_.clear();
-    return false;
-  }
+
   OptimizePose();
 
   if (map_points_.size() < 20) {

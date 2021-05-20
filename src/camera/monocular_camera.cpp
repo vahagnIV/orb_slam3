@@ -14,8 +14,8 @@ void MonocularCamera::UnprojectPoint(const TPoint2D & point, HomogenousPoint & u
 }
 
 void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
-  double z_inv = 1 / point[2];
-  projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy();
+  double z_inv = 1 / point.z();
+  projected << point.x() * z_inv * Fx() + Cx(), point.y() * z_inv * Fy() + Cy();
 }
 
 bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const {
@@ -44,7 +44,7 @@ bool MonocularCamera::DistortPoint(const TPoint2D & undistorted, TPoint2D & dist
 }
 
 void MonocularCamera::ComputeImageBounds() {
-  TPoint2D top_left{0, 0}, top_right{width_ - 1, 0}, bottom_left{height_ - 1, 0}, bottom_right{width_ - 1, height_ - 1};
+  TPoint2D top_left{0, 0}, top_right{width_ , 0}, bottom_left{height_ , 0}, bottom_right{width_ , height_ };
   UndistortPoint(top_left, top_left);
   UndistortPoint(top_right, top_right);
   UndistortPoint(bottom_left, bottom_left);

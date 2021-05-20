@@ -21,8 +21,8 @@
 #include <logging.h>
 
 
-const size_t NFEATURES1 = 1500;
-const size_t NFEATURES2 = 1000;
+const size_t NFEATURES1 = 7500;
+const size_t NFEATURES2 = 1500;
 orb_slam3::precision_t SCALE_FACTOR = 1.2;
 const size_t LEVELS = 8;
 const size_t INIT_THRESHOLD = 20;
@@ -229,7 +229,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Tracker tracker(atlas);
   orb_slam3::LocalMapper local_mapper(atlas);
   tracker.AddObserver(&local_mapper);
-  local_mapper.AddObserver(&tracker);
+//  local_mapper.AddObserver(&tracker);
   //local_mapper.Start();
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(),

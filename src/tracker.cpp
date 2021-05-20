@@ -157,7 +157,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
 
     // TODO: remove the following line
-//    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
   }
 //  ComputeVelocity(frame, last_frame_);
   ReplaceLastFrame(frame);
@@ -226,7 +226,7 @@ TrackingResult Tracker::TrackInNotInitializedState(frame::Frame * frame) {
 //  frame->SetInitial(true);
   state_ = FIRST_IMAGE;
   last_frame_ = frame;
-  return TrackingResult::OK;
+  return TrackingResult::NEED_MORE_IMAGES;
 }
 
 TrackingResult Tracker::Track(frame::Frame * frame) {
