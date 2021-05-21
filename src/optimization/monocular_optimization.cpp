@@ -62,7 +62,7 @@ void OptimizePose(MonocularFrame * frame) {
   for (int i = 0; i < N; ++i) {
     frame_vertex->setEstimate(pose.GetQuaternion());
     optimizer.initializeOptimization(0);
-    optimizer.optimize(10                                                                                                 );
+    optimizer.optimize(10);
     auto edges = optimizer.edges();
     for (auto edge_base: edges) {
       auto edge = dynamic_cast<edges::SE3ProjectXYZPoseOnly *>(edge_base);

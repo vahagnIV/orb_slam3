@@ -168,6 +168,7 @@ void LocalMapper::RunIteration() {
     if (!CheckNewKeyFrames()) {
       Optimize(message.frame);
     }
+    KeyFrameCulling(message.frame);
     if (!CheckNewKeyFrames()) {
       FuseMapPoints(message.frame);
     }
@@ -182,7 +183,7 @@ void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unord
   for (auto kf: covisibles) {
     std::unordered_set<frame::KeyFrame *> second_covisibles = kf->GetCovisibilityGraph().GetCovisibleKeyFrames(20);
     for (auto second_frame: second_covisibles) {
-      if (frame!= second_frame && covisibles.find(kf) != covisibles.end())
+      if (frame != second_frame && covisibles.find(kf) != covisibles.end())
         out.insert(second_frame);
     }
   }
@@ -196,10 +197,32 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   for (auto kf: second_neighbours) {
     kf->FuseMapPoints(map_points);
   }
-  frame::KeyFrame::MapPointSet  mps;
+  frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);
-  for(auto mp:mps)mp->Refresh(frame->GetFeatureExtractor());
+  for (auto mp:mps)mp->Refresh(frame->GetFeatureExtractor());
   frame->GetCovisibilityGraph().Update();
+}
+
+void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
+  auto local_keyframes = keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  for (auto kf: local_keyframes) {
+    if(kf->IsInitial())
+      continue;
+    frame::KeyFrame::MapPointSet map_points;
+    kf->ListMapPoints(map_points);
+    int mobs = 0;
+    for (auto mp: map_points)
+      if (mp->GetObservationCount() >= 3)
+        ++mobs;
+    if (mobs > map_points.size() * 0.9) {
+      for(auto mp: map_points)
+        mp->EraseObservation(kf);
+      kf->SetBad();
+    }
+    for(auto mp : map_points)
+      mp->Refresh(kf->GetFeatureExtractor());
+  }
+
 }
 
 }

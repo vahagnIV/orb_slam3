@@ -34,7 +34,8 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                                                                  feature_extractor,
                                                                                  vocabulary,
                                                                                  sensor_constants),
-                                                                           BaseMonocular(camera) {
+                                                                           BaseMonocular(camera),
+                                                                           reference_keyframe_(nullptr) {
   const_cast<features::IFeatureExtractor *>(feature_extractor)->Extract(image, features_);
   features_.UndistortKeyPoints();
   features_.AssignFeaturesToGrid();
@@ -184,7 +185,7 @@ FrameType MonocularFrame::Type() const {
 }
 
 KeyFrame * MonocularFrame::CreateKeyFrame() {
-  return new MonocularKeyFrame(this);
+  return reference_keyframe_ = new MonocularKeyFrame(this);
 }
 
 void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
@@ -311,6 +312,13 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<VisibleMapPoint> & fi
     AddMapPoint(match.first, match.second);
   }
 
+}
+
+void MonocularFrame::UpdateFromReferenceKeyFrame() {
+  if (reference_keyframe_) {
+    SetPosition(reference_keyframe_->GetPosition());
+    map_points_ = reference_keyframe_->GetMapPoints();
+  }
 }
 
 }

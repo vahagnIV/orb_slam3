@@ -81,7 +81,7 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 }
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
-
+  last_frame_->UpdateFromReferenceKeyFrame();
   assert(OK == state_);
   ++kf_counter;
 

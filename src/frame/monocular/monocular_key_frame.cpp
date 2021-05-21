@@ -216,6 +216,7 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
         continue;;
       if (match.first->GetObservationCount() > it->second->GetObservationCount()) {
         it->second->SetReplaced(match.first);
+        this->map_points_[match.second] = match.first;
       } else
         match.first->SetReplaced(it->second);
     }

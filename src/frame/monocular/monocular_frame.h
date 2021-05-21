@@ -42,8 +42,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
                               unsigned int window_size) const override;
   void SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
-
-  // MonocularFame
+  void UpdateFromReferenceKeyFrame() override;
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
   void InitializeMapPointsFromMatches(const std::unordered_map<std::size_t, std::size_t> & matches,
@@ -54,8 +53,10 @@ class MonocularFrame : public Frame, public BaseMonocular {
                       std::unordered_map<std::size_t, std::size_t> & out_matches,
                       bool self_keypoint_exists,
                       bool reference_kf_keypoint_exists) const;
-
-
+ public:
+  // MonocularFame
+ private:
+  MonocularKeyFrame * reference_keyframe_;
 
 };
 

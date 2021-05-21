@@ -23,6 +23,7 @@ class LocalMapper : public PositionObserver,
   void Start();
   void Stop();
   void MapPointCulling(frame::KeyFrame * keyframe);
+  void KeyFrameCulling(frame::KeyFrame * keyframe);
   void RunIteration();
  private:
   void Run();

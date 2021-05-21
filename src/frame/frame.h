@@ -41,6 +41,7 @@ class Frame : public BaseFrame {
                               unsigned fixed_window_size = 0) const = 0;
 
   virtual void SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points) = 0;
+  virtual void UpdateFromReferenceKeyFrame() = 0;
  private:
   static size_t next_id_;
 
