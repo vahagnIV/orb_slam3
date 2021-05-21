@@ -196,6 +196,10 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   for (auto kf: second_neighbours) {
     kf->FuseMapPoints(map_points);
   }
+  frame::KeyFrame::MapPointSet  mps;
+  frame->ListMapPoints(mps);
+  for(auto mp:mps)mp->Refresh(frame->GetFeatureExtractor());
+  frame->GetCovisibilityGraph().Update();
 }
 
 }
