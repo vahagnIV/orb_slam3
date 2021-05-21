@@ -35,7 +35,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool IsVisible(map::MapPoint * map_point,
                  VisibleMapPoint & out_map_point,
                  precision_t radius_multiplier,
-                 unsigned int window_size) const;
+                 unsigned int window_size) const override;
   void FilterVisibleMapPoints(const unordered_set<map::MapPoint *> & map_points,
                               list<VisibleMapPoint> & out_filetered_map_points,
                               precision_t radius_multiplier,

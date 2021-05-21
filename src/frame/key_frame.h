@@ -42,6 +42,7 @@ class KeyFrame : public BaseFrame {
     kf_gba_ = keyframe;
   }
   virtual void CreateNewMapPoints(frame::KeyFrame * other) = 0;
+  virtual void FuseMapPoints(MapPointSet & map_points) = 0;
 
  protected:
   CovisibilityGraphNode covisibility_graph_;

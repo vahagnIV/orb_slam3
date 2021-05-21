@@ -8,6 +8,7 @@
 #include "vertices/map_point_vertex.h"
 #include "edges/se3_project_xyz_pose_only.h"
 #include <logging.h>
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace optimization {

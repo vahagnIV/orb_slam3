@@ -26,10 +26,10 @@ add_library(orbslam SHARED
 
 #        frame/frame_base.cpp
 #        frame/monocular_frame_old.cpp
+        frame/monocular/base_monocular.cpp
         frame/monocular/monocular_frame.cpp
         frame/monocular/monocular_key_frame.cpp
         frame/covisibility_graph_node.cpp
-#        frame/monocular_observation.cpp
         frame/observation.cpp
         frame/frame.cpp
 

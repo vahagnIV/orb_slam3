@@ -5,9 +5,12 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_VISIBLE_MAP_POINT_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_VISIBLE_MAP_POINT_H_
 
-#include "../map/map_point.h"
+
 
 namespace orb_slam3 {
+namespace map{
+class MapPoint;
+}
 namespace frame {
 
 struct VisibleMapPoint {

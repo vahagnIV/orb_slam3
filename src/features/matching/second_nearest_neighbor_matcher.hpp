@@ -31,10 +31,10 @@ class SNNMatcher {
       nearest_neighbour_ratio_(nearest_neighbour_ratio),
       THRESHOLD_(threshold) {}
 
-  void MatchWithIteratorV2(IteratorType to_begin,
-                           IteratorType to_end,
-                           const IFeatureExtractor * feature_extractor,
-                           MatchMapType & out_matches) {
+  void MatchWithIterators(IteratorType to_begin,
+                          IteratorType to_end,
+                          const IFeatureExtractor * feature_extractor,
+                          MatchMapType & out_matches) {
 
     std::unordered_map<FromIdType, ToIdType> matches_from_to;
     std::unordered_map<FromIdType, unsigned> best_distances_from;

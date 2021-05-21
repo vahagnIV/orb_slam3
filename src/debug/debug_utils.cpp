@@ -3,6 +3,7 @@
 //
 
 #include "debug_utils.h"
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace debug {
@@ -129,7 +130,7 @@ void DrawCommonMapPoints(const string & filename1,
     cv::circle(match_image, projected_key_point1, 3, cv::Scalar(0, 255, 255));
     cv::circle(match_image, projected_key_point2, 3, cv::Scalar(0, 255, 255));
 
-    cv::imshow("Match", match_image);
+    cv::imshow("MatchWithIterators", match_image);
     char key = cv::waitKey();
     if ('c' == key)
       return;

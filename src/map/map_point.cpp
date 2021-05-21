@@ -23,12 +23,21 @@ MapPoint::MapPoint(TPoint3D point,
       visible_(1),
       found_(1),
       bad_flag_(false),
-      first_observed_frame_id_(first_observed_frame_id) {
+      first_observed_frame_id_(first_observed_frame_id),
+      replaced_map_point_(nullptr) {
   ++counter_;
 }
 
 MapPoint::~MapPoint() {
   --counter_;
+}
+
+void MapPoint::SetReplaced(map::MapPoint * replaced) {
+  replaced_map_point_ = replaced;
+}
+
+map::MapPoint * MapPoint::GetReplaced() {
+  return replaced_map_point_;
 }
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
@@ -39,7 +48,7 @@ void MapPoint::AddObservation(const frame::Observation & observation) {
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
   std::unique_lock<std::mutex> lock(feature_mutex_);
   observations_.erase(frame);
-  if(observations_.size() < 2) {
+  if (observations_.size() < 2) {
     SetBad();
   }
 }

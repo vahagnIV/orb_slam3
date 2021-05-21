@@ -49,7 +49,7 @@ void LocalMapper::Stop() {
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
   size_t erased = recently_added_map_points_.size();
-  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ) {
+  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end();) {
     map::MapPoint * mp = *mp_it;
     if (mp->IsBad()) {
       mp_it = recently_added_map_points_.erase(mp_it);
@@ -111,7 +111,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   if (fixed_keyframes.empty())
     return;
   optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
-  for(auto & kf: local_keyframes)
+  for (auto & kf: local_keyframes)
     kf->GetCovisibilityGraph().Update();
 
 }
@@ -155,7 +155,7 @@ void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_k
 }
 
 bool LocalMapper::CheckNewKeyFrames() const {
-  bool new_keyframes =  GetUpdateQueue().size_approx() > 0;
+  bool new_keyframes = GetUpdateQueue().size_approx() > 0;
   return new_keyframes;
 }
 
@@ -168,9 +168,34 @@ void LocalMapper::RunIteration() {
     if (!CheckNewKeyFrames()) {
       Optimize(message.frame);
     }
+    if (!CheckNewKeyFrames()) {
+      FuseMapPoints(message.frame);
+    }
+
 //    NotifyObservers(message.frame);
   }
+}
 
+void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out) {
+  std::unordered_set<frame::KeyFrame *> covisibles =
+      frame->GetCovisibilityGraph().GetCovisibleKeyFrames(frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
+  for (auto kf: covisibles) {
+    std::unordered_set<frame::KeyFrame *> second_covisibles = kf->GetCovisibilityGraph().GetCovisibleKeyFrames(20);
+    for (auto second_frame: second_covisibles) {
+      if (frame!= second_frame && covisibles.find(kf) != covisibles.end())
+        out.insert(second_frame);
+    }
+  }
+}
+
+void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
+  std::unordered_set<frame::KeyFrame *> second_neighbours;
+  ListCovisiblesOfCovisibles(frame, second_neighbours);
+  std::unordered_set<map::MapPoint *> map_points;
+  frame->ListMapPoints(map_points);
+  for (auto kf: second_neighbours) {
+    kf->FuseMapPoints(map_points);
+  }
 }
 
 }

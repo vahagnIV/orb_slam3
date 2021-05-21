@@ -7,6 +7,7 @@
 #include <map/map_point.h>
 #include <logging.h>
 #include <features/matching/iterators/bow_to_iterator.h>
+#include <features/matching/iterators/projection_search_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 #include <features/matching/validators/triangulation_validator.h>
 #include <geometry/utils.h>
@@ -143,7 +144,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
   bow_matcher.AddValidator(&validator);
 
   SNNM::MatchMapType matches;
-  bow_matcher.MatchWithIteratorV2(bow_it_begin, bow_it_end, feature_extractor_, matches);
+  bow_matcher.MatchWithIterators(bow_it_begin, bow_it_end, feature_extractor_, matches);
 
   logging::RetrieveLogger()->debug("LM: SNNMatcher found {} matches between {} and {}",
                                    matches.size(),
@@ -190,6 +191,60 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
 
 void MonocularKeyFrame::ComputeBow() {
   BaseMonocular::ComputeBow();
+}
+
+void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
+  std::list<VisibleMapPoint> visibles;
+  FilterVisibleMapPoints(map_points, visibles);
+  typedef features::matching::iterators::ProjectionSearchIterator IteratorType;
+  IteratorType begin(visibles.begin(), visibles.end(), &features_, nullptr);
+  IteratorType end(visibles.end(), visibles.end(), &features_, nullptr);
+  typedef features::matching::SNNMatcher<IteratorType> MatcherType;
+  MatcherType::MatchMapType matches;
+  MatcherType matcher(1., 50);
+  matcher.MatchWithIterators(begin, end, feature_extractor_, matches);
+
+  MonocularMapPoints local_map_points = GetMapPoints();
+
+  for (auto match: matches) {
+    auto it = local_map_points.find(match.second);
+    if (it == local_map_points.end()) {
+      match.first->AddObservation(Observation(match.first, this, match.second));
+      AddMapPoint(match.first, match.second);
+    } else {
+      if (it->second == match.first)
+        continue;;
+      if (match.first->GetObservationCount() > it->second->GetObservationCount()) {
+        it->second->SetReplaced(match.first);
+      } else
+        match.first->SetReplaced(it->second);
+    }
+  }
+}
+
+bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
+                                  VisibleMapPoint & out_map_point,
+                                  precision_t radius_multiplier,
+                                  unsigned int window_size) const {
+  return BaseMonocular::IsVisible(map_point,
+                                  out_map_point,
+                                  radius_multiplier,
+                                  window_size,
+                                  this->GetPosition(),
+                                  this->GetInversePosition(),
+                                  feature_extractor_);
+}
+
+void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
+                                               list<VisibleMapPoint> & out_visibles) {
+  VisibleMapPoint visible_map_point;
+  MapPointSet local_map_points;
+  ListMapPoints(local_map_points);
+  for (auto mp: map_points) {
+    if (local_map_points.find(mp) == local_map_points.end()
+        && IsVisible(mp, visible_map_point, 1, GetSensorConstants()->max_allowed_discrepancy))
+      out_visibles.push_back(visible_map_point);
+  }
 }
 
 }
