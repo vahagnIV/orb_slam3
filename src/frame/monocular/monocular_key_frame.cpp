@@ -248,6 +248,10 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
   }
 }
 
+void MonocularKeyFrame::EraseMapPoint(Observation & obs) {
+  map_points_.erase(obs.GetFeatutreIds()[0]);
+}
+
 }
 }
 }

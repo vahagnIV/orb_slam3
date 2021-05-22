@@ -11,6 +11,8 @@
 namespace orb_slam3 {
 namespace frame {
 
+class Observation;
+
 class KeyFrame : public BaseFrame {
  public:
   KeyFrame(TimePoint time_point,
@@ -43,6 +45,7 @@ class KeyFrame : public BaseFrame {
   }
   virtual void CreateNewMapPoints(frame::KeyFrame * other) = 0;
   virtual void FuseMapPoints(MapPointSet & map_points) = 0;
+  virtual void EraseMapPoint(Observation & obs) = 0;
 
  protected:
   CovisibilityGraphNode covisibility_graph_;

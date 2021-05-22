@@ -57,6 +57,7 @@ class Observation  {
    * @param out_descriptor_ptr The vector to which the descriptors will be appended
    */
   virtual void AppendDescriptorsToList(std::vector<features::DescriptorType> & out_descriptor_ptr) const;
+  const std::vector<std::size_t> GetFeatutreIds() const;
 
   /*!
    * Creates a robust kernel for optimization

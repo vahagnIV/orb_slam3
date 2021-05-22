@@ -199,14 +199,17 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   }
   frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);
-  for (auto mp:mps)mp->Refresh(frame->GetFeatureExtractor());
+  for (auto mp:mps) {
+    if (!mp->IsBad())
+      mp->Refresh(frame->GetFeatureExtractor());
+  }
   frame->GetCovisibilityGraph().Update();
 }
 
 void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
   auto local_keyframes = keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
   for (auto kf: local_keyframes) {
-    if(kf->IsInitial())
+    if (kf->IsInitial())
       continue;
     frame::KeyFrame::MapPointSet map_points;
     kf->ListMapPoints(map_points);
@@ -215,12 +218,14 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       if (mp->GetObservationCount() >= 3)
         ++mobs;
     if (mobs > map_points.size() * 0.9) {
-      for(auto mp: map_points)
+      for (auto mp: map_points)
         mp->EraseObservation(kf);
       kf->SetBad();
     }
-    for(auto mp : map_points)
-      mp->Refresh(kf->GetFeatureExtractor());
+    for (auto mp : map_points) {
+      if (!mp->IsBad())
+        mp->Refresh(kf->GetFeatureExtractor());
+    }
   }
 
 }

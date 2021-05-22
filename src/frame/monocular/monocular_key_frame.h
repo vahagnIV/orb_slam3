@@ -29,6 +29,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void FuseMapPoints(MapPointSet & map_points) override;
+  void EraseMapPoint(Observation & obs) override;
  private:
   static bool BaseLineIsEnough(const MapPointSet & others_map_points,
                                const geometry::Pose & local_pose,

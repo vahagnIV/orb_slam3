@@ -82,6 +82,7 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   last_frame_->UpdateFromReferenceKeyFrame();
+
   assert(OK == state_);
   ++kf_counter;
 
@@ -93,12 +94,11 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     return TrackingResult::TRACKING_FAILED;
   }
 
-  if(frame->GetMapPointCount() < 15){
+  if (frame->GetMapPointCount() < 15) {
     // TODO: go to relocalization
     delete frame;
     return TrackingResult::TRACKING_FAILED;
   }
-
 
   if (frame->Id() - last_frame_->Id() == 1)
     ComputeVelocity(frame, last_frame_);
@@ -133,13 +133,19 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->FilterVisibleMapPoints(local_map_points_except_current,
                                 visible_map_points,
                                 frame->GetSensorConstants()->projection_search_radius_multiplier);
+
+  logging::RetrieveLogger()->debug("Filtering visible map points: {} / {}",
+                                   visible_map_points.size(),
+                                   local_map_points_except_current.size());
+
   for (auto & visible_map_point: visible_map_points)
     visible_map_point.map_point->IncreaseVisible();
 
   frame->SearchInVisiblePoints(visible_map_points);
   frame->OptimizePose();
 
-  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_except_current.size());
+  std::cout << "Frame Position after SLMP " << frame->GetInversePosition() << std::endl;
+  logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
   cv::imshow("After SLMP",
              debug::DrawMapPoints(frame->GetFilename(), dynamic_cast<frame::monocular::MonocularFrame *>(frame)));
 //  cv::waitKey();
@@ -203,6 +209,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
+
+    std::cout << "Linked position " << frame->GetInversePosition() << std::endl;
 
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=initial_key_frame});

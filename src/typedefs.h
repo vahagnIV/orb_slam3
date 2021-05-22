@@ -5,6 +5,10 @@
 #ifndef ORB_SLAM3_INCLUDE_TYPEDEFS_H_
 #define ORB_SLAM3_INCLUDE_TYPEDEFS_H_
 
+#ifndef DUMP
+#define  DUMP
+#endif
+
 // == stl ===
 #include <chrono>
 #include <cstddef>
