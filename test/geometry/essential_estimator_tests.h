@@ -11,7 +11,22 @@ namespace test {
 
 class EssentialEstimatorTests : public ::testing::Test {
  public:
-  EssentialEstimatorTests() = default;
+  EssentialEstimatorTests();
+  virtual ~EssentialEstimatorTests();
+ protected:
+  static camera::MonocularCamera * InitializeCamera();
+  static void GenerateRandomKeyPoints(std::vector<features::KeyPoint> & out_keyoints,
+                                      std::vector<TPoint3D> & out_ground_truth_points,
+                                      size_t count,
+                                      const camera::MonocularCamera * camera);
+  static TPoint2D GenerateGaussianNoise(precision_t sigma);
+ protected:
+  const camera::MonocularCamera * camera_;
+  features::Features from_features_;
+  features::Features to_features_;
+  std::vector<TPoint3D> ground_truth_points_;
+  TMatrix33 ground_truth_E_;
+  geometry::Pose transformation_;
 
 };
 

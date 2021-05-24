@@ -21,14 +21,22 @@ void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected)
 bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const {
   HomogenousPoint unorojected_tmp;
   UnprojectPoint(point, unorojected_tmp);
-  return distortion_model_->UnDistortPoint(unorojected_tmp, unprojected);
+  if(distortion_model_)
+    return distortion_model_->UnDistortPoint(unorojected_tmp, unprojected);
+  unprojected = unorojected_tmp;
+  return true;
 }
 
 bool MonocularCamera::UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const {
+  if (!distortion_model_) {
+    undistorted_point = point;
+    return true;
+  }
   TPoint3D unprojected, undistorted;
   UnprojectPoint(point, unprojected);
   if (!distortion_model_->UnDistortPoint(unprojected, undistorted))
     return false;
+
   ProjectPoint(undistorted, undistorted_point);
   return true;
 }
@@ -44,7 +52,7 @@ bool MonocularCamera::DistortPoint(const TPoint2D & undistorted, TPoint2D & dist
 }
 
 void MonocularCamera::ComputeImageBounds() {
-  TPoint2D top_left{0, 0}, top_right{width_ , 0}, bottom_left{height_ , 0}, bottom_right{width_ , height_ };
+  TPoint2D top_left{0, 0}, top_right{width_, 0}, bottom_left{height_, 0}, bottom_right{width_, height_};
   UndistortPoint(top_left, top_left);
   UndistortPoint(top_right, top_right);
   UndistortPoint(bottom_left, bottom_left);
@@ -75,7 +83,10 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
 void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const {
   double z_inv = 1 / point.z();
   TPoint3D p{point.x() * z_inv, point.y() * z_inv, 1}, projected;
-  distortion_model_->DistortPoint(p, projected);
+  if(distortion_model_)
+    distortion_model_->DistortPoint(p, projected);
+  else
+    projected = p;
   out_projected << projected.x() * Fx() + Cx(), projected.y() * Fy() + Cy();
 }
 

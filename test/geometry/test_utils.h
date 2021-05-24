@@ -16,7 +16,7 @@ TMatrix33 GetEssentialMatrixFromPose(const geometry::Pose & pose);
 
 double DoubleRand(double fMin, double fMax);
 
-TPoint2D GenerateRandom2DPoint(double max_x, double max_y);
+TPoint2D GenerateRandom2DPoint(double min_x, double min_y, double max_x, double max_y);
 
 HomogenousPoint GenerateRandomHomogenousPoint(double max_x, double max_y);
 
