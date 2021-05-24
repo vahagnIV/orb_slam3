@@ -155,7 +155,7 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
 
   precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
 
-  ASSERT_LE((s * E - ground_truth_E_).norm() , 1e-13);
+  ASSERT_LE((s * E - ground_truth_E_).norm() , 1e-11);
 
   std::unordered_set<std::size_t> inliers3d;
   std::unordered_map<std::size_t, TPoint3D> triangulated;
@@ -166,14 +166,14 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
                              matches,
                              triangulated,
                              estimated_pose);
-  ASSERT_TRUE((transformation_.R - estimated_pose.R).norm() < 1e-13);
+  ASSERT_LE((transformation_.R - estimated_pose.R).norm() , 1e-12);
 
   estimated_pose.T *= transformation_.T.norm() / estimated_pose.T.norm();
-  ASSERT_LE((estimated_pose.T - transformation_.T).norm() , 1e-12);
+  ASSERT_LE((estimated_pose.T - transformation_.T).norm() , 1e-11);
 
   for (auto match: matches) {
     triangulated[match.first] *= ground_truth_points_[match.second].norm() / triangulated[match.first].norm();
-    ASSERT_TRUE((triangulated[match.first] - ground_truth_points_[match.second]).norm() < 1e-12);
+    ASSERT_TRUE((triangulated[match.first] - ground_truth_points_[match.second]).norm() < 1e-11);
   }
 
 }

@@ -71,8 +71,8 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
   const double z_inv = 1 / z;
   const double z_inv2 = z_inv * z_inv;
   ProjectionJacobianType projection_jacobian;
-  projection_jacobian << z_inv, 0, -x * z_inv2,
-      0, z_inv, -y * z_inv2;
+  projection_jacobian << Fx() * z_inv, 0, -x * z_inv2 * Fx(),
+      0, z_inv * Fy(), -y * z_inv2 * Fy();
   IDistortionModel::JacobianType distortion_jacobian;
   TPoint2D projected;
   projected << x * z_inv, y * z_inv;
