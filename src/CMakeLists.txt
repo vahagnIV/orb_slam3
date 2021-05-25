@@ -86,13 +86,10 @@ add_library(orbslam SHARED
         camera/fish_eye.h
         camera/icamera.h
 
-#        frame/frame_base.h
-#        frame/monocular_frame_old.h
         frame/frame_type.h
         frame/covisibility_graph_node.h
         frame/visible_map_point.h
         frame/observation.h
-#        frame/monocular_observation.h
 
         features/key_point.h
         features/orb_feature_extractor.h
@@ -128,7 +125,7 @@ add_library(orbslam SHARED
 
         orb_vocabulary.h
         identifiable.h
-        logging.h features/matching/iterators/triangulate_from_pointee.cpp features/matching/iterators/triangulate_from_pointee.h features/matching/iterators/triangulate_from_iterator.cpp features/matching/iterators/triangulate_from_iterator.h)
+        logging.h )
 
 target_include_directories(orbslam INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 

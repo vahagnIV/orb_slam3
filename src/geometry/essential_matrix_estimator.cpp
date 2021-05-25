@@ -151,13 +151,13 @@ void EssentialMatrixEstimator::FindBestEssentialMatrix(const std::vector<Homogen
   std::unordered_set<std::size_t> tmp_inliers;
   std::vector<HomogenousPoint> normalized_to, normalized_from;
   TMatrix33 S_to, S_from;
-//  NormalizePoints(points_to, normalized_to, S_to);
-//  NormalizePoints(points_from, normalized_from, S_from);
+  NormalizePoints(points_to, normalized_to, S_to);
+  NormalizePoints(points_from, normalized_from, S_from);
   for (const auto & good_matches_rnd : good_match_random_idx) {
     TMatrix33 tmp_essential;
-//    FindEssentialMatrix(normalized_to, normalized_from, matches, good_matches_rnd, tmp_essential);
-    FindEssentialMatrix(points_to, points_from, matches, good_matches_rnd, tmp_essential);
-//    tmp_essential = S_to.transpose() * tmp_essential * S_from;
+    FindEssentialMatrix(normalized_to, normalized_from, matches, good_matches_rnd, tmp_essential);
+//    FindEssentialMatrix(points_to, points_from, matches, good_matches_rnd, tmp_essential);
+    tmp_essential = S_to.transpose() * tmp_essential * S_from;
     tmp_essential.normalize();
     precision_t score = ComputeEssentialReprojectionError(tmp_essential, points_to, points_from, matches, tmp_inliers);
     if (score > 0 && out_score < score) {

@@ -29,17 +29,6 @@ bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, Homogenous
 
 bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
 
-//  cv::Mat point(1, 2, CV_64F), undistorted_point;
-//  point.at<precision_t>(0, 0) = distorted.x();
-//  point.at<precision_t>(0, 1) = distorted.y();
-//
-//  cv::undistortPoints(point,
-//                               undistorted_point,
-//                               cv::Mat::eye(3, 3, CV_64F),
-//                               cv::Mat(1, 4, CV_64F, (void *) (estimate_ + 4)));
-//  undistorted << undistorted_point.at<cv::Point2d>(0).x, undistorted_point.at<cv::Point2d>(0).y, 1;
-//  return true;
-
   undistorted = distorted;
 
   Scalar &x = undistorted[0];

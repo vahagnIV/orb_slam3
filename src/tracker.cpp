@@ -191,6 +191,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
+    std::cout << "Position after linking " << frame->GetPosition() << std::endl;
 
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
     initial_key_frame->SetInitial(true);
@@ -205,6 +206,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->ListMapPoints(map_points);
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
+    std::cout << "Position after linking BS " << frame->GetPosition() << std::endl;
 
     reference_keyframe_ = current_key_frame;
     state_ = OK;

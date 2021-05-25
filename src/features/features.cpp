@@ -28,8 +28,14 @@ void Features::ListFeaturesInArea(const TPoint2D & point,
 
   PosInGrid(TPoint2D{point.x() - window_size, point.y() - window_size}, min_cell_x, min_cell_y);
   PosInGrid(TPoint2D{point.x() + window_size, point.y() + window_size}, max_cell_x, max_cell_y);
-
-
+  if(min_cell_x > constants::FRAME_GRID_COLS)
+    min_cell_x = 0;
+  if(min_cell_y > constants::FRAME_GRID_ROWS)
+    min_cell_y = 0;
+  if(max_cell_x > constants::FRAME_GRID_COLS)
+    max_cell_x = constants::FRAME_GRID_COLS -1;
+  if(max_cell_y > constants::FRAME_GRID_ROWS)
+    max_cell_y = constants::FRAME_GRID_ROWS -1;
 
   const bool bCheckLevels = (minLevel > 0) || (maxLevel >= 0);
 
@@ -40,8 +46,11 @@ void Features::ListFeaturesInArea(const TPoint2D & point,
         continue;
 
       for (size_t j = 0; j < cell.size(); j++) {
+//      for (size_t j = 0; j < keypoints.size(); j++) {
         const KeyPoint & candidate_keypoint = undistorted_keypoints[cell[j]];
+//        const KeyPoint & candidate_keypoint = undistorted_keypoints[j];
         const int & level = keypoints[cell[j]].level;
+//        const int & level = keypoints[j].level;
 
         if (bCheckLevels) {
           if (level < minLevel)
@@ -69,20 +78,31 @@ void Features::AssignFeaturesToGrid() {
       grid[pos_X][pos_Y].push_back(i);
     }
   }
+
+//  for (int j = 0; j < constants::FRAME_GRID_ROWS; ++j) {
+//    for (int i = 0; i < constants::FRAME_GRID_COLS; ++i) {
+//      std::cout << grid[i][j].size() << " \t";
+//    }
+//    std::cout << std::endl;
+//  }
 }
 
 bool Features::PosInGrid(const TPoint2D & kp,
                          size_t & posX,
                          size_t & posY) const {
+  if(kp.x() < camera_->ImageBoundMinX() )
+    return false;
+  if(kp.x() > camera_->ImageBoundMaxX() )
+    return false;
 
-  precision_t x = std::min(kp.x(), camera_->ImageBoundMaxX() - 0.5);
-  x = std::max(x, camera_->ImageBoundMinX() + 0.5);
+  if(kp.y() < camera_->ImageBoundMinY() )
+    return false;
+  if(kp.y() > camera_->ImageBoundMaxY() )
+    return false;
 
-  precision_t y = std::min(kp.y(), camera_->ImageBoundMaxY() - 0.5);
-  y = std::max(y, camera_->ImageBoundMinY() + 0.5);
 
-  posX =  (x - camera_->ImageBoundMinX()) * grid_element_width_inv_;
-  posY =  (y - camera_->ImageBoundMinY()) * grid_element_height_inv_;
+  posX = (kp.x() - camera_->ImageBoundMinX()) * grid_element_width_inv_;
+  posY = (kp.y() - camera_->ImageBoundMinY()) * grid_element_height_inv_;
 
   return true;
 }

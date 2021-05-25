@@ -7,109 +7,137 @@
 
 #include "essential_estimator_tests.h"
 #include "test_utils.h"
+#include <random>
 
 namespace orb_slam3 {
 namespace test {
 
-TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
-  std::vector<TPoint3D> points_from(8), points_to(8);
-  points_from[0] << 0.5, 2.6, 8.1;
-  points_from[1] << 0.3, 3.6, 9.6;
-  points_from[2] << 0.9, -4.2, 4.3;
-  points_from[3] << -1.5, -3.1, 2.8;
-  points_from[4] << 2.5, 2.9, 5.1;
-  points_from[5] << 1.99, 3.1, 6.3;
-  points_from[6] << 2.5, 1.6, 2.7;
-  points_from[7] << -0.5, 0.6, 11.4;
+const size_t NUMBER_OF_KEYPOINTS = 200;
+const unsigned APPROX_NUMBER_OF_MATCHES = 150;
 
-  TMatrix33 R = GetRotationMatrixRollPitchYaw(0, 0, M_PI / 6);;
-
-  TVector3D T;
-  T << 1.2, -7.5, 4.1;
-
-  std::transform(points_from.begin(),
-                 points_from.end(),
-                 points_to.begin(),
-                 [&](const TPoint3D & pt) { return R * pt + T; });
-//  for (int i = 0; i < points_from.size(); ++i) {
-//    points_to[points_to.size() - i - 1] = R * points_from[i] + T;
-//  }
-
-
-
-//  geometry::EssentialMatrixEstimator system_under_test(1e-7);
-//  std::unordered_map<std::size_t, std::size_t> matches;
-//  std::vector<size_t> random_subset_idx(8);
-//  for (size_t i = 0; i < points_from.size(); ++i) {
-//    matches.emplace(i, i);
-//    random_subset_idx[i] = i;
-//  }
-//  TMatrix33 E;
-//  system_under_test.FindEssentialMatrix(points_to, points_from, matches, random_subset_idx, E);
-//  for (size_t i = 0; i < points_from.size(); ++i) {
-//    ASSERT_TRUE(std::abs(points_to[i].dot(E * points_from[i])) < 1e-12);
-//  }
-//
-//  ASSERT_TRUE(E.determinant() < 1e-6);
-//
-//  std::unordered_set<std::size_t> inliers;
-//  std::unordered_map<size_t, TPoint3D> triangulated;
-//  geometry::Pose pose;
-//  for (int i = 0; i < points_to.size(); ++i) {
-//    points_to[i] /= points_to[i][2];
-//    points_from[i] /= points_from[i][2];
-//  }
-//  system_under_test.FindPose(E, points_to, points_from, matches, inliers, triangulated, pose);
-//  ASSERT_TRUE((pose.T.normalized() - T.normalized()).norm() < 1e-12);
-//  ASSERT_TRUE((pose.R - R).norm() < 1e-12);
-
+EssentialEstimatorTests::EssentialEstimatorTests()
+    : camera_(InitializeCamera()), from_features_(camera_), to_features_(camera_) {
+  GenerateRandomKeyPoints(from_features_.keypoints, ground_truth_points_, NUMBER_OF_KEYPOINTS, camera_);
+  transformation_.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 10, M_PI / 180 * 4, M_PI / 180 * 5);
+  transformation_.T = TVector3D{0.7, 1.2, 0.7};
+  for (size_t i = 0; i < from_features_.Size(); ++i) {
+    TPoint2D to_point;
+    camera_->ProjectAndDistort(transformation_.Transform(ground_truth_points_[i]), to_point);
+    to_features_.keypoints.emplace_back(to_point);
+  }
+  from_features_.UndistortKeyPoints();
+  to_features_.UndistortKeyPoints();
+  ground_truth_E_ = GetEssentialMatrixFromPose(transformation_);
 }
 
-TEST_F(EssentialEstimatorTests, AAA) {
+void EssentialEstimatorTests::GenerateRandomKeyPoints(vector<features::KeyPoint> & out_keyoints,
+                                                      std::vector<TPoint3D> & out_ground_truth_points,
+                                                      size_t count,
+                                                      const camera::MonocularCamera * camera) {
+  while (count--) {
+    out_keyoints.emplace_back(GenerateRandom2DPoint(camera->ImageBoundMinX(),
+                                                    camera->ImageBoundMinY(),
+                                                    camera->ImageBoundMaxX(),
+                                                    camera->ImageBoundMaxX()));
+    TPoint3D unprojected;
+    camera->UnprojectAndUndistort(out_keyoints.back().pt, unprojected);
+    out_ground_truth_points.push_back(unprojected * DoubleRand(15, 42));
+  }
+}
+
+camera::MonocularCamera * EssentialEstimatorTests::InitializeCamera() {
   const unsigned image_width = 640;
   const unsigned image_height = 480;
-  const size_t keypoint_count = 200;
-  const unsigned match_count = 150;
+  auto camera = new camera::MonocularCamera(image_width, image_height);
+  camera->SetFx(800);
+  camera->SetCx(image_width / 2);
+  camera->SetFy(800);
+  camera->SetCy(image_height / 2);
+  camera->ComputeImageBounds();
+  return camera;
+}
 
-  features::Features imfrom_features(image_width, image_height), imto_features(image_width, image_height);
-  for (size_t i = 0; i < keypoint_count; ++i) {
-    imfrom_features.keypoints.emplace_back(GenerateRandom2DPoint(image_width, image_height));
+EssentialEstimatorTests::~EssentialEstimatorTests() {
+  delete camera_;
+}
+
+TPoint2D EssentialEstimatorTests::GenerateGaussianNoise(precision_t sigma) {
+  std::normal_distribution<precision_t> dist(0, sigma);
+  std::random_device rd{};
+  std::mt19937 gen{rd()};
+
+  return orb_slam3::TPoint2D{dist(gen), dist(gen)};
+}
+
+TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
+  precision_t sigma = 0.5;
+  for (size_t i = 0; i < to_features_.Size(); ++i) {
+    to_features_.keypoints[i].pt += GenerateGaussianNoise(sigma);
+    from_features_.keypoints[i].pt += GenerateGaussianNoise(sigma);
   }
-
-  precision_t fx = 800;
-  precision_t fy = 800;
-  precision_t cx = image_width / 2;
-  precision_t cy = image_height / 2;
-
-  std::vector<TPoint3D> gt_points;
-
-  for (features::KeyPoint & kp: imfrom_features.keypoints) {
-    HomogenousPoint undistorted_point{(kp.pt.x() - cx) / fx, (kp.pt.y() - cy) / fy, 1};
-    imfrom_features.undistorted_and_unprojected_keypoints.push_back(undistorted_point);
-    gt_points.push_back(undistorted_point * DoubleRand(5, 45));
-  }
-
-  geometry::Pose pose;
-  pose.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 10, M_PI / 180 * 4, M_PI / 180 * 5);
-  pose.T = TVector3D{0.7, 1.2, 0.7};
+  to_features_.UndistortKeyPoints();
+  from_features_.UndistortKeyPoints();
 
   std::unordered_map<std::size_t, std::size_t> matches;
-  for (size_t i = 0; i < keypoint_count; ++i) {
-    if (rand() % imfrom_features.Size() > match_count)
+  for (size_t i = 0, j = 0; i < to_features_.Size(); ++i) {
+    if (rand() % to_features_.Size() > APPROX_NUMBER_OF_MATCHES)
       continue;
+    matches[i] = i;
+  }
 
-    auto transformed_point = pose.Transform(gt_points[i]);
-    features::KeyPoint & from_kp = imfrom_features.keypoints[i];
-    features::KeyPoint to_kp(TPoint2D{from_kp.pt.x() * fx + cx, from_kp.pt.y() * fy + cy});
-    imto_features.keypoints.push_back(to_kp);
+  geometry::EssentialMatrixEstimator system_under_test(1);
+  TMatrix33 E;
 
-    imto_features.undistorted_and_unprojected_keypoints.push_back(HomogenousPoint{
-        transformed_point.x() / transformed_point.z(), transformed_point.y() / transformed_point.z(), 1});
-    matches[imto_features.undistorted_and_unprojected_keypoints.size() - 1] = i;
+  std::unordered_set<std::size_t> inliers;
+  precision_t score;
+  std::vector<std::vector<std::size_t>> random_matches;
+
+  GenerateRandomSubsets(0, matches.size(), 8, 200, matches, random_matches);
+
+  system_under_test.FindBestEssentialMatrix(to_features_.undistorted_and_unprojected_keypoints,
+                                            from_features_.undistorted_and_unprojected_keypoints,
+                                            matches,
+                                            random_matches,
+                                            E,
+                                            inliers,
+                                            score);
+
+  precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
+
+  ASSERT_LE((s * E - ground_truth_E_).norm() , 0.5);
+
+  std::unordered_set<std::size_t> inliers3d;
+  std::unordered_map<std::size_t, TPoint3D> triangulated;
+  geometry::Pose estimated_pose;
+  system_under_test.FindPose(E,
+                             to_features_.undistorted_and_unprojected_keypoints,
+                             from_features_.undistorted_and_unprojected_keypoints,
+                             matches,
+                             triangulated,
+                             estimated_pose);
+
+  ASSERT_LE((transformation_.R.transpose() * estimated_pose.R - TMatrix33::Identity(3,3)).norm() , 0.5);
+
+  estimated_pose.T *= transformation_.T.norm() / estimated_pose.T.norm();
+  ASSERT_LE((estimated_pose.T - transformation_.T).norm() , 0.5);
+
+  for (auto match: matches) {
+    triangulated[match.first] *= ground_truth_points_[match.second].norm() / triangulated[match.first].norm();
+    ASSERT_TRUE((triangulated[match.first] - ground_truth_points_[match.second]).norm() < 0.5);
+  }
+}
+
+TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
+
+  std::unordered_map<std::size_t, std::size_t> matches;
+  for (size_t i = 0, j = 0; i < to_features_.Size(); ++i) {
+    if (rand() % to_features_.Size() > APPROX_NUMBER_OF_MATCHES)
+      continue;
+    matches[i] = i;
   }
 
   geometry::EssentialMatrixEstimator system_under_test(1e-7);
-  TMatrix33 E, gt_E = GetEssentialMatrixFromPose(pose);
+  TMatrix33 E;
 
   std::unordered_set<std::size_t> inliers;
   precision_t score;
@@ -117,39 +145,35 @@ TEST_F(EssentialEstimatorTests, AAA) {
 
   GenerateRandomSubsets(0, matches.size(), 8, 5, matches, random_matches);
 
-  system_under_test.FindBestEssentialMatrix(imto_features.undistorted_and_unprojected_keypoints,
-                                            imfrom_features.undistorted_and_unprojected_keypoints,
+  system_under_test.FindBestEssentialMatrix(to_features_.undistorted_and_unprojected_keypoints,
+                                            from_features_.undistorted_and_unprojected_keypoints,
                                             matches,
                                             random_matches,
                                             E,
                                             inliers,
                                             score);
 
+  precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
 
-  precision_t s = E(0, 0) * gt_E(0, 0) < 0 ? -1 : 1;
-
-  ASSERT_TRUE((s * E - gt_E).norm() < 1e-10);
+  ASSERT_LE((s * E - ground_truth_E_).norm() , 1e-11);
 
   std::unordered_set<std::size_t> inliers3d;
   std::unordered_map<std::size_t, TPoint3D> triangulated;
   geometry::Pose estimated_pose;
   system_under_test.FindPose(E,
-                             imto_features.undistorted_and_unprojected_keypoints,
-                             imfrom_features.undistorted_and_unprojected_keypoints,
+                             to_features_.undistorted_and_unprojected_keypoints,
+                             from_features_.undistorted_and_unprojected_keypoints,
                              matches,
                              triangulated,
                              estimated_pose);
+  ASSERT_LE((transformation_.R - estimated_pose.R).norm() , 1e-12);
 
-  ASSERT_TRUE((pose.R - estimated_pose.R).norm() < 1e-11);
-
-  estimated_pose.T *= pose.T.norm() / estimated_pose.T.norm();
-  ASSERT_TRUE((estimated_pose.T - pose.T).norm() < 1e-11);
+  estimated_pose.T *= transformation_.T.norm() / estimated_pose.T.norm();
+  ASSERT_LE((estimated_pose.T - transformation_.T).norm() , 1e-11);
 
   for (auto match: matches) {
-    if (inliers3d.find(match.first) == inliers3d.end())
-      continue;
-    triangulated[match.first] *= gt_points[match.second].norm() / triangulated[match.first].norm();
-    ASSERT_TRUE((triangulated[match.first] - gt_points[match.second]).norm() < 1e-11);
+    triangulated[match.first] *= ground_truth_points_[match.second].norm() / triangulated[match.first].norm();
+    ASSERT_TRUE((triangulated[match.first] - ground_truth_points_[match.second]).norm() < 1e-11);
   }
 
 }

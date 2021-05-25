@@ -2,8 +2,6 @@
 // Created by vahagn on 11/05/2021.
 //
 
-#include <g2o/core/sparse_optimizer.h>
-
 #include "monocular_frame.h"
 #include <logging.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
@@ -41,7 +39,12 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
   features_.AssignFeaturesToGrid();
   features_.SetVocabulary(vocabulary);
   features_.ComputeBow();
-
+  std::map<int, std::size_t> counter;
+  for (int i = 0; i < features_.keypoints.size(); ++i) {
+    counter[features_.keypoints[i].level]++;
+  }
+  for(auto a: counter)
+    std::cout << a.first << "\t" << a.second << std::endl;
 }
 
 bool MonocularFrame::Link(Frame * other) {
@@ -50,7 +53,7 @@ bool MonocularFrame::Link(Frame * other) {
     throw std::runtime_error("Linking frames of different types is not implemented yet.");
   }
 
-  MonocularFrame * from_frame = dynamic_cast<MonocularFrame *>(other);
+  auto from_frame = dynamic_cast<MonocularFrame *>(other);
   std::unordered_map<std::size_t, std::size_t> matches;
   if (!ComputeMatchesForLinking(from_frame, matches))
     return false;

@@ -36,8 +36,8 @@ double DoubleRand(double fMin, double fMax) {
   return fMin + f * (fMax - fMin);
 }
 
-TPoint2D GenerateRandom2DPoint(double max_x, double max_y) {
-  return orb_slam3::TPoint2D{DoubleRand(0, max_x), DoubleRand(0, max_y)};
+TPoint2D GenerateRandom2DPoint(double min_x, double min_y, double max_x, double max_y) {
+  return orb_slam3::TPoint2D{DoubleRand(min_x, max_x), DoubleRand(min_y, max_y)};
 }
 
 HomogenousPoint GenerateRandomHomogenousPoint(double max_x, double max_y) {
