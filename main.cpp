@@ -21,8 +21,8 @@
 #include <logging.h>
 
 
-const size_t NFEATURES1 = 7500;
-const size_t NFEATURES2 = 1500;
+const size_t NFEATURES1 = 1500;
+const size_t NFEATURES2 = 1000;
 orb_slam3::precision_t SCALE_FACTOR = 1.2;
 const size_t LEVELS = 8;
 const size_t INIT_THRESHOLD = 20;

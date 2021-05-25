@@ -58,10 +58,10 @@ void MonocularCamera::ComputeImageBounds() {
   UndistortPoint(bottom_left, bottom_left);
   UndistortPoint(bottom_right, bottom_right);
 
-  max_X_ = std::max(top_right[0], bottom_right[0]);
-  max_Y_ = std::max(bottom_left[1], bottom_right[1]);
-  min_X_ = std::min(top_right[0], top_left[0]);
-  min_Y_ = std::max(top_left[1], bottom_left[1]);
+  max_X_ = std::max(top_right.x(), bottom_right.x());
+  max_Y_ = std::max(bottom_left.y(), bottom_right.y());
+  min_X_ = std::min(top_left.x(), bottom_left.x());
+  min_Y_ = std::min(top_left.y(), top_left.y());
 }
 
 void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianType & out_jacobian) const {

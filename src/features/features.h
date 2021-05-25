@@ -23,7 +23,7 @@ namespace features {
 
 typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DescriptorSet;
 
-typedef Eigen::Matrix<uint8_t, 1, Eigen::Dynamic, Eigen::RowMajor> DescriptorType;
+typedef Eigen::Matrix<uint8_t, 1, 32, Eigen::RowMajor> DescriptorType;
 
 class Features {
  public:
