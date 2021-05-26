@@ -34,6 +34,21 @@ void EssentialEstimatorTests::GenerateRandomKeyPoints(vector<features::KeyPoint>
                                                       std::vector<TPoint3D> & out_ground_truth_points,
                                                       size_t count,
                                                       const camera::MonocularCamera * camera) {
+
+  geometry::Pose transformation;
+  transformation.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 0.05, M_PI / 180 * 0.05, M_PI / 180 * 0.05);
+  transformation.T = TVector3D{0.07, 0.02, 0.07};
+  TMatrix33 E1 = GetEssentialMatrixFromPose(transformation);
+  E1 = camera->K().inverse().transpose() * E1 * camera->K().inverse();
+
+  transformation.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 10, M_PI / 180 * 14, M_PI / 180 * 5);
+  transformation.T = TVector3D{0.6, 1.2, 0.7};
+  TMatrix33 E2 = GetEssentialMatrixFromPose(transformation);
+  E2 = camera->K().inverse().transpose() * E2 * camera->K().inverse();
+  std::cout << "E1" << E1 / E1.norm() << std::endl;
+  std::cout << "E2" << E2 / E2.norm() << std::endl;
+  std::cout << " =========== " << std::endl;
+
   while (count--) {
     out_keyoints.emplace_back(GenerateRandom2DPoint(camera->ImageBoundMinX(),
                                                     camera->ImageBoundMinY(),
@@ -100,11 +115,11 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
                                             random_matches,
                                             E,
                                             inliers,
-                                            score);
+                                            score, camera_);
 
   precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
 
-  ASSERT_LE((s * E - ground_truth_E_).norm() , 0.5);
+  ASSERT_LE((s * E - ground_truth_E_).norm(), 0.5);
 
   std::unordered_set<std::size_t> inliers3d;
   std::unordered_map<std::size_t, TPoint3D> triangulated;
@@ -116,10 +131,10 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
                              triangulated,
                              estimated_pose);
 
-  ASSERT_LE((transformation_.R.transpose() * estimated_pose.R - TMatrix33::Identity(3,3)).norm() , 0.5);
+  ASSERT_LE((transformation_.R.transpose() * estimated_pose.R - TMatrix33::Identity(3, 3)).norm(), 0.5);
 
   estimated_pose.T *= transformation_.T.norm() / estimated_pose.T.norm();
-  ASSERT_LE((estimated_pose.T - transformation_.T).norm() , 0.5);
+  ASSERT_LE((estimated_pose.T - transformation_.T).norm(), 0.5);
 
   for (auto match: matches) {
     triangulated[match.first] *= ground_truth_points_[match.second].norm() / triangulated[match.first].norm();
@@ -151,11 +166,11 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
                                             random_matches,
                                             E,
                                             inliers,
-                                            score);
+                                            score, camera_);
 
   precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
 
-  ASSERT_LE((s * E - ground_truth_E_).norm() , 1e-11);
+  ASSERT_LE((s * E - ground_truth_E_).norm(), 1e-11);
 
   std::unordered_set<std::size_t> inliers3d;
   std::unordered_map<std::size_t, TPoint3D> triangulated;
@@ -166,10 +181,10 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
                              matches,
                              triangulated,
                              estimated_pose);
-  ASSERT_LE((transformation_.R - estimated_pose.R).norm() , 1e-12);
+  ASSERT_LE((transformation_.R - estimated_pose.R).norm(), 1e-12);
 
   estimated_pose.T *= transformation_.T.norm() / estimated_pose.T.norm();
-  ASSERT_LE((estimated_pose.T - transformation_.T).norm() , 1e-11);
+  ASSERT_LE((estimated_pose.T - transformation_.T).norm(), 1e-11);
 
   for (auto match: matches) {
     triangulated[match.first] *= ground_truth_points_[match.second].norm() / triangulated[match.first].norm();

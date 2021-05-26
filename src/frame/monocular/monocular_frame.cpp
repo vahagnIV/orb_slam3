@@ -40,11 +40,12 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
   features_.SetVocabulary(vocabulary);
   features_.ComputeBow();
   std::map<int, std::size_t> counter;
-  for (int i = 0; i < features_.keypoints.size(); ++i) {
+  for (size_t i = 0; i < features_.keypoints.size(); ++i) {
     counter[features_.keypoints[i].level]++;
   }
   for(auto a: counter)
     std::cout << a.first << "\t" << a.second << std::endl;
+  std::cout << "Total number of features: " << features_.Size() << std::endl;
 }
 
 bool MonocularFrame::Link(Frame * other) {

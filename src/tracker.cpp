@@ -206,7 +206,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->ListMapPoints(map_points);
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
-    std::cout << "Position after linking BS " << frame->GetPosition() << std::endl;
+    std::cout << "Position after linking BA " << frame->GetPosition() << std::endl;
 
     reference_keyframe_ = current_key_frame;
     state_ = OK;

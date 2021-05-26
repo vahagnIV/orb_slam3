@@ -63,7 +63,7 @@ void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
       if (it == frame_map.end())
         continue;
 
-      vertices::FrameVertex * frame_vertex = dynamic_cast<vertices::FrameVertex *>(it->second);
+      auto * frame_vertex = dynamic_cast<vertices::FrameVertex *>(it->second);
       optimization::edges::BABinaryEdge * edge = observation.second.CreateBinaryEdge();
       edge->setVertex(0, frame_vertex);
       edge->setVertex(1, mp_vertex);
