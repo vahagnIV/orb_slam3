@@ -159,8 +159,9 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
     if (!geometry::utils::TriangulateAndValidate(other_frame->features_.undistorted_and_unprojected_keypoints[match.second],
                                                  features_.undistorted_and_unprojected_keypoints[match.first],
                                                  relative_pose,
-                                                 GetCamera()->FxInv(),
-                                                 other_frame->GetCamera()->FxInv(),
+                                                 2 * GetCamera()->FxInv() * GetCamera()->FxInv(),
+                                                 2 * other_frame->GetCamera()->FxInv()
+                                                     * other_frame->GetCamera()->FxInv(),
                                                  constants::PARALLAX_THRESHOLD,
                                                  parallax,
                                                  triangulated))

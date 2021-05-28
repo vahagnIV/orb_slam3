@@ -66,11 +66,12 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
   PredictAndSetNewFramePosition(frame);
   last_frame_->ListMapPoints(all_candidate_map_points);
   std::list<frame::VisibleMapPoint> visible_map_points;
-  frame->FilterVisibleMapPoints(all_candidate_map_points, visible_map_points, 1, 15);
+  frame->FilterVisibleMapPoints(all_candidate_map_points, visible_map_points, 15);
   if (frame->EstimatePositionByProjectingMapPoints(visible_map_points))
     return true;
-  for (auto & vmp: visible_map_points)
-    vmp.window_size = 30;
+  frame->FilterVisibleMapPoints(all_candidate_map_points, visible_map_points, 30);
+//  for (auto & vmp: visible_map_points)
+//    vmp.window_size = 60;
   return frame->EstimatePositionByProjectingMapPoints(visible_map_points);
 
 }
@@ -132,7 +133,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   std::list<frame::VisibleMapPoint> visible_map_points;
   frame->FilterVisibleMapPoints(local_map_points_except_current,
                                 visible_map_points,
-                                frame->GetSensorConstants()->projection_search_radius_multiplier);
+                                5* frame->GetSensorConstants()->projection_search_radius_multiplier);
 
   logging::RetrieveLogger()->debug("Filtering visible map points: {} / {}",
                                    visible_map_points.size(),
@@ -177,7 +178,7 @@ void Tracker::ReplaceLastFrame(frame::Frame * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
-  bool need = frame->GetMapPointCount() > 20 && kf_counter >= 4;// && m.size() > 40;
+  bool need = frame->GetMapPointCount() > 20 && kf_counter >= 2;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
@@ -206,19 +207,17 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->ListMapPoints(map_points);
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
-    std::cout << "Position after linking BA " << frame->GetPosition() << std::endl;
+    std::cout << "Position after linking BA " << current_key_frame->GetPosition() << std::endl;
 
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
 
-    std::cout << "Linked position " << frame->GetInversePosition() << std::endl;
-
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=initial_key_frame});
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
 
     // TODO: remove the following line in multithreading
-    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+//    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
 
   } else {
     delete frame;

@@ -67,7 +67,7 @@ precision_t EssentialMatrixEstimator::ComputeEssentialReprojectionError(const TM
     const HomogenousPoint & point_to = points_to[i->first];
 
     HomogenousPoint f_from = E * point_from;
-    HomogenousPoint to_f =  E.transpose() * point_to;
+    HomogenousPoint to_f = E.transpose() * point_to;
 
     precision_t err = point_to.dot(f_from);
 
@@ -116,12 +116,6 @@ void EssentialMatrixEstimator::FindEssentialMatrix(const std::vector<HomogenousP
     return;
 
   const Eigen::Matrix<precision_t, 9, 9> & v = svd.matrixV();
-
-//  Eigen::JacobiSVD<Eigen::Matrix<precision_t, Eigen::Dynamic, 9>> svd2(v, Eigen::ComputeFullU | Eigen::ComputeFullV);
-  if (!svd.computeV())
-    return;
-//  auto S = svd2.singularValues();
-//  S[2] = 0;
 
   TMatrix33 E, W;
   E << v(0, 8), v(1, 8), v(2, 8),
@@ -186,11 +180,11 @@ void EssentialMatrixEstimator::NormalizePoints(const std::vector<HomogenousPoint
   for (size_t i = 0; i < points.size(); ++i) {
     out_normalized_points[i].x() = points[i].x() - meanx;
     out_normalized_points[i].y() = points[i].y() - meany;
-    devx += std::abs(out_normalized_points[i].x());
-    devy += std::abs(out_normalized_points[i].y());
+    devx += out_normalized_points[i].x() * out_normalized_points[i].x();
+    devy += out_normalized_points[i].y() * out_normalized_points[i].y();
   }
-  precision_t sx = 1. / devx;
-  precision_t sy = 1. / devy;
+  precision_t sx = std::sqrt(points.size() / devx);
+  precision_t sy = std::sqrt(points.size() / devy);
   for (auto & out_point: out_normalized_points) {
     out_point.x() *= sx;
     out_point.y() *= sy;

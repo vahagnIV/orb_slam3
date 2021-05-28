@@ -31,14 +31,14 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
 
     precision_t point_cos_parallax;
     TPoint3D triangulated;
-    if (! utils::TriangulateAndValidate(point_from,
-          point_to,
-          solution,
-          4 * sigma_threshold__square_,
-          4 * sigma_threshold__square_,
-          PARALLAX_THRESHOLD,
-          point_cos_parallax,
-          triangulated)) {
+    if (!utils::TriangulateAndValidate(point_from,
+                                       point_to,
+                                       solution,
+                                       sigma_threshold__square_,
+                                       sigma_threshold__square_,
+                                       PARALLAX_THRESHOLD,
+                                       point_cos_parallax,
+                                       triangulated)) {
 
       continue;
     }

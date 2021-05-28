@@ -71,7 +71,7 @@ void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
   optimizer.setForceStopFlag(stop_flag);
   optimizer.optimize(5);
   if (!stop_flag || !*stop_flag)
-    optimizer.optimize(5);
+    optimizer.optimize(10);
 
   size_t edge_count = optimizer.edges().size();
   std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
