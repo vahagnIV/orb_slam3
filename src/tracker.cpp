@@ -132,8 +132,8 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   std::list<frame::VisibleMapPoint> visible_map_points;
   frame->FilterVisibleMapPoints(local_map_points_except_current,
-                                visible_map_points,
-                                5* frame->GetSensorConstants()->projection_search_radius_multiplier);
+                                visible_map_points,0,
+                                5 * frame->GetSensorConstants()->projection_search_radius_multiplier);
 
   logging::RetrieveLogger()->debug("Filtering visible map points: {} / {}",
                                    visible_map_points.size(),
@@ -178,7 +178,7 @@ void Tracker::ReplaceLastFrame(frame::Frame * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
-  bool need = frame->GetMapPointCount() > 20 && kf_counter >= 2;// && m.size() > 40;
+  bool need = frame->GetMapPointCount() > 20 && kf_counter >= 4;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 

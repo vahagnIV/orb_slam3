@@ -81,7 +81,7 @@ void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
 
     if (!mp->IsInKeyFrame(keyframe)) {
       // TODO: find cases when this could happen
-      assert(false);
+//      assert(false);
     } else
       recently_added_map_points_.insert(mp);
   }

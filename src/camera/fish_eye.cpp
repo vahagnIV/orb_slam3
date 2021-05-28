@@ -39,17 +39,17 @@ bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint 
 }
 
 bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const {
-  cv::Mat point(1, 1, CV_64FC2), undistorted_point;
-  point.at<cv::Point2d>(0) = cv::Point2d(distorted.x(), distorted.y());
+//  cv::Mat point(1, 1, CV_64FC2), undistorted_point;
+//  point.at<cv::Point2d>(0) = cv::Point2d(distorted.x(), distorted.y());
+//
+//  cv::fisheye::undistortPoints(point,
+//                               undistorted_point,
+//                               cv::Mat::eye(3, 3, CV_64F),
+//                               cv::Mat(1, 4, CV_64F, (void *) (estimate_ + 4)));
+//  undistorted << undistorted_point.at<cv::Point2d>(0).x, undistorted_point.at<cv::Point2d>(0).y, 1;
+//  return true;
 
-  cv::fisheye::undistortPoints(point,
-                               undistorted_point,
-                               cv::Mat::eye(3, 3, CV_64F),
-                               cv::Mat(1, 4, CV_64F, (void *) (estimate_ + 4)));
-  undistorted << undistorted_point.at<cv::Point2d>(0).x, undistorted_point.at<cv::Point2d>(0).y, 1;
-  return true;
-
-  /*double theta_d = std::sqrt(distorted.x() * distorted.x() + distorted.y() * distorted.y());
+  double theta_d = std::sqrt(distorted.x() * distorted.x() + distorted.y() * distorted.y());
   theta_d = std::min(M_PI_2, std::max(-M_PI_2, theta_d));
 
   double theta = theta_d; // Initial guess
@@ -85,11 +85,13 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
   bool flipped = ((theta_d < 0 && theta > 0) || (theta_d > 0 && theta < 0));
 
   if (converged && !flipped) {
-    undistorted = distorted * scale;
+    undistorted.x() = distorted.x() * scale;
+    undistorted.y() = distorted.y() * scale;
+    undistorted.z() = 1;
     return true;
   }
   undistorted << distorted[0], distorted[1], 1;
-  return false;*/
+  return false;
 }
 
 void FishEye::ComputeJacobian(const TPoint2D & point,
