@@ -45,10 +45,6 @@ class BaseFrame : public geometry::RigidObject {
   virtual FrameType Type() const = 0;
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
   virtual const SensorConstants * GetSensorConstants() const { return sensor_constants_; }
-  virtual bool IsVisible(map::MapPoint * map_point,
-                 VisibleMapPoint & out_map_point,
-                 precision_t radius_multiplier,
-                 unsigned int window_size) const = 0;
 
   size_t Id() const { return id_; }
 

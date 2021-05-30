@@ -83,6 +83,9 @@ void Features::AssignFeaturesToGrid() {
 bool Features::PosInGrid(const TPoint2D & kp,
                          size_t & posX,
                          size_t & posY) const {
+  posX = 0;
+  posY = 0;
+  return true;
 
   precision_t x = std::max(kp.x(), camera_->ImageBoundMinX());
   x = std::min(x, camera_->ImageBoundMaxX());

@@ -51,7 +51,7 @@ class VectorFromIterator {
  private:
   void AdvanceUntilMapPointConditionSatisfied() {
     while (map_points_ && it_ != end_
-        && (map_point_exists_ ^ (map_points_->find(*it_) != map_points_->end())))
+        && (map_point_exists_ ^ (map_points_->find(*it_) != map_points_->end() && !map_points_->find(*it_)->second->IsBad() )))
       ++it_;
     if (it_ != end_)
       pointee_.SetId(*it_);

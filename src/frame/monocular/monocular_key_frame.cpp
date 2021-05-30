@@ -162,7 +162,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
                                                  4 * GetCamera()->FxInv() * GetCamera()->FxInv(),
                                                  4 * other_frame->GetCamera()->FxInv()
                                                      * other_frame->GetCamera()->FxInv(),
-                                                 constants::PARALLAX_THRESHOLD,
+                                                 2* constants::PARALLAX_THRESHOLD,
                                                  parallax,
                                                  triangulated))
       continue;
@@ -232,6 +232,7 @@ bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
                                   out_map_point,
                                   radius_multiplier,
                                   window_size,
+                                  -1,
                                   this->GetPosition(),
                                   this->GetInversePosition(),
                                   feature_extractor_);

@@ -9,7 +9,6 @@
 #include <frame/visible_map_point.h>
 #include <features/ifeature_extractor.h>
 
-
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
@@ -65,6 +64,7 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
                               VisibleMapPoint & out_map_point,
                               precision_t radius_multiplier,
                               unsigned int window_size,
+                              int level,
                               const geometry::Pose & pose,
                               const geometry::Pose & inverse_position,
                               const features::IFeatureExtractor * feature_extractor) const {
@@ -91,7 +91,8 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
     return false;
   }
 
-  out_map_point.level = feature_extractor->PredictScale(distance, map_point->GetMaxInvarianceDistance() / 1.2);
+  out_map_point.level =
+      level > 0 ? level : feature_extractor->PredictScale(distance, map_point->GetMaxInvarianceDistance() / 1.2);
   if (window_size) {
     out_map_point.window_size = window_size;
   } else {

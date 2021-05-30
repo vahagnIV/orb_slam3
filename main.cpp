@@ -253,7 +253,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
       exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 //    cv::imshow("im", image);
-    cv::waitKey(0);
+    cv::waitKey(1);
   }
 }
 

@@ -21,7 +21,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   bool IsVisible(map::MapPoint * map_point,
                  VisibleMapPoint & out_map_point,
                  precision_t radius_multiplier,
-                 unsigned int window_size) const override;
+                 unsigned int window_size) const ;
  public:
   void CreateNewMapPoints(frame::KeyFrame * other) override;
   void ComputeBow() override;

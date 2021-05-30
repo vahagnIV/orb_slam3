@@ -29,7 +29,8 @@ void BowToIterator::AdvanceUntilValidIterator() {
   // If to_map_points_exist_ is true, we should skip all
   // ids that do not correspond to a map point.
   while (map_points_to_ && it_ != end_it_
-      && (to_map_points_exist_ ^ (map_points_to_->find(*it_) != map_points_to_->end())))
+      && (to_map_points_exist_
+          ^ (map_points_to_->find(*it_) != map_points_to_->end() && !map_points_to_->find(*it_)->second->IsBad())))
     ++it_;
 }
 

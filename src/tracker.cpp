@@ -64,16 +64,7 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
     return false;
   std::unordered_set<map::MapPoint *> all_candidate_map_points;
   PredictAndSetNewFramePosition(frame);
-  last_frame_->ListMapPoints(all_candidate_map_points);
-  std::list<frame::VisibleMapPoint> visible_map_points;
-  frame->FilterVisibleMapPoints(all_candidate_map_points, visible_map_points, 15);
-  if (frame->EstimatePositionByProjectingMapPoints(visible_map_points))
-    return true;
-  frame->FilterVisibleMapPoints(all_candidate_map_points, visible_map_points, 30);
-//  for (auto & vmp: visible_map_points)
-//    vmp.window_size = 60;
-  return frame->EstimatePositionByProjectingMapPoints(visible_map_points);
-
+  return frame->EstimatePositionByProjectingMapPoints(last_frame_);
 }
 
 bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
@@ -91,20 +82,11 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   if (!tracked) {
     // TODO: go to relocalization
-    delete frame;
-    return TrackingResult::TRACKING_FAILED;
-  }
-
-  if (frame->GetMapPointCount() < 15) {
-    // TODO: go to relocalization
-    delete frame;
-    return TrackingResult::TRACKING_FAILED;
-  }
-
-  if (frame->Id() - last_frame_->Id() == 1)
-    ComputeVelocity(frame, last_frame_);
-  else
     velocity_is_valid_ = false;
+    delete frame;
+    return TrackingResult::TRACKING_FAILED;
+  }
+  ComputeVelocity(frame, last_frame_);
 
 //  debug::DrawCommonMapPoints(frame->GetFilename(),
 //                             reference_keyframe_->GetFilename(),
@@ -132,8 +114,8 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   std::list<frame::VisibleMapPoint> visible_map_points;
   frame->FilterVisibleMapPoints(local_map_points_except_current,
-                                visible_map_points,0,
-                                5 * frame->GetSensorConstants()->projection_search_radius_multiplier);
+                                visible_map_points,
+                                frame->GetSensorConstants()->projection_search_radius_multiplier);
 
   logging::RetrieveLogger()->debug("Filtering visible map points: {} / {}",
                                    visible_map_points.size(),
@@ -152,8 +134,6 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 //  cv::waitKey();
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
-  if (map_points.size() < 20)
-    return TrackingResult::TRACKING_FAILED;
   for (auto map_point: map_points)
     map_point->IncreaseFound();
 
@@ -178,7 +158,7 @@ void Tracker::ReplaceLastFrame(frame::Frame * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
-  bool need = frame->GetMapPointCount() > 20 && kf_counter >= 4;// && m.size() > 40;
+  bool need =  kf_counter >= 2;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 

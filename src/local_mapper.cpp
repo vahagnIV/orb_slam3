@@ -48,6 +48,7 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
+  recently_added_map_points_.clear();
   size_t erased = recently_added_map_points_.size();
   for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end();) {
     map::MapPoint * mp = *mp_it;
@@ -81,7 +82,7 @@ void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
 
     if (!mp->IsInKeyFrame(keyframe)) {
       // TODO: find cases when this could happen
-//      assert(false);
+      assert(false);
     } else
       recently_added_map_points_.insert(mp);
   }
@@ -170,7 +171,7 @@ void LocalMapper::RunIteration() {
     }
     KeyFrameCulling(message.frame);
     if (!CheckNewKeyFrames()) {
-      FuseMapPoints(message.frame);
+//      FuseMapPoints(message.frame);
     }
 
 //    NotifyObservers(message.frame);

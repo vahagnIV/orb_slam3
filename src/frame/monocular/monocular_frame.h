@@ -28,14 +28,15 @@ class MonocularFrame : public Frame, public BaseMonocular {
   KeyFrame * CreateKeyFrame() override;
   bool Link(Frame * other) override;
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
-  bool EstimatePositionByProjectingMapPoints(const list<VisibleMapPoint> & filtered_map_points) override;
+//  bool EstimatePositionByProjectingMapPoints(const list<VisibleMapPoint> & filtered_map_points) override;
+  bool EstimatePositionByProjectingMapPoints(Frame * frame) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;
   void OptimizePose() override;
   bool IsVisible(map::MapPoint * map_point,
                  VisibleMapPoint & out_map_point,
                  precision_t radius_multiplier,
-                 unsigned int window_size) const override;
+                 unsigned int window_size) const ;
   void FilterVisibleMapPoints(const unordered_set<map::MapPoint *> & map_points,
                               list<VisibleMapPoint> & out_filetered_map_points,
                               precision_t radius_multiplier,
@@ -49,10 +50,14 @@ class MonocularFrame : public Frame, public BaseMonocular {
                                       const std::unordered_map<size_t, TPoint3D> & points,
                                       MonocularFrame * from_frame,
                                       MapPointSet & out_map_points);
-  void ComputeMatches(const orb_slam3::frame::monocular::MonocularKeyFrame * reference_kf,
-                      std::unordered_map<std::size_t, std::size_t> & out_matches,
-                      bool self_keypoint_exists,
-                      bool reference_kf_keypoint_exists) const;
+  void ComputeMatchesFromReferenceKF(const orb_slam3::frame::monocular::MonocularKeyFrame * reference_kf,
+                                     std::unordered_map<std::size_t, std::size_t> & out_matches,
+                                     bool self_keypoint_exists,
+                                     bool reference_kf_keypoint_exists) const;
+  void FilterFromLastFrame(MonocularFrame * last_frame, std::list<VisibleMapPoint> & out_visibles,
+                           precision_t radius_multiplier);
+
+  void SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points, precision_t matcher_snn_threshold);
  public:
   // MonocularFame
  private:
