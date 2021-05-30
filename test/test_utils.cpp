@@ -89,5 +89,17 @@ void GenerateRandomSubset(const size_t min,
   std::copy(chosen.begin(), chosen.end(), std::back_inserter(out_result));
 }
 
+camera::MonocularCamera * CreateSampleCamera() {
+  const unsigned image_width = 640;
+  const unsigned image_height = 480;
+  auto camera = new camera::MonocularCamera(image_width, image_height);
+  camera->SetFx(800);
+  camera->SetCx(image_width / 2);
+  camera->SetFy(800);
+  camera->SetCy(image_height / 2);
+  camera->ComputeImageBounds();
+  return camera;
+}
+
 }
 }

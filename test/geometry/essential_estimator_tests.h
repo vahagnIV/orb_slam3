@@ -12,9 +12,8 @@ namespace test {
 class EssentialEstimatorTests : public ::testing::Test {
  public:
   EssentialEstimatorTests();
-  virtual ~EssentialEstimatorTests();
+  ~EssentialEstimatorTests() override;
  protected:
-  static camera::MonocularCamera * InitializeCamera();
   static void GenerateRandomKeyPoints(std::vector<features::KeyPoint> & out_keyoints,
                                       std::vector<TPoint3D> & out_ground_truth_points,
                                       size_t count,

@@ -4,9 +4,10 @@
 
 #ifndef ORB_SLAM3_TEST_GEOMETRY_TEST_UTILS_H_
 #define ORB_SLAM3_TEST_GEOMETRY_TEST_UTILS_H_
-#include "../../src/typedefs.h"
-#include "../../src/geometry/pose.h"
+#include "src/typedefs.h"
+#include "src/geometry/pose.h"
 #include <unordered_set>
+#include <camera/monocular_camera.h>
 namespace orb_slam3 {
 namespace test {
 
@@ -31,6 +32,8 @@ void GenerateRandomSubset(const size_t min,
                           const size_t max,
                           const size_t count,
                           std::vector<size_t> & out_result);
+
+camera::MonocularCamera * CreateSampleCamera();
 
 }
 }

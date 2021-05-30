@@ -16,7 +16,7 @@ const size_t NUMBER_OF_KEYPOINTS = 200;
 const unsigned APPROX_NUMBER_OF_MATCHES = 150;
 
 EssentialEstimatorTests::EssentialEstimatorTests()
-    : camera_(InitializeCamera()), from_features_(camera_), to_features_(camera_) {
+    : camera_(CreateSampleCamera()), from_features_(camera_), to_features_(camera_) {
   GenerateRandomKeyPoints(from_features_.keypoints, ground_truth_points_, NUMBER_OF_KEYPOINTS, camera_);
   transformation_.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 10, M_PI / 180 * 4, M_PI / 180 * 5);
   transformation_.T = TVector3D{0.7, 1.2, 0.7};
@@ -60,17 +60,6 @@ void EssentialEstimatorTests::GenerateRandomKeyPoints(vector<features::KeyPoint>
   }
 }
 
-camera::MonocularCamera * EssentialEstimatorTests::InitializeCamera() {
-  const unsigned image_width = 640;
-  const unsigned image_height = 480;
-  auto camera = new camera::MonocularCamera(image_width, image_height);
-  camera->SetFx(800);
-  camera->SetCx(image_width / 2);
-  camera->SetFy(800);
-  camera->SetCy(image_height / 2);
-  camera->ComputeImageBounds();
-  return camera;
-}
 
 EssentialEstimatorTests::~EssentialEstimatorTests() {
   delete camera_;
