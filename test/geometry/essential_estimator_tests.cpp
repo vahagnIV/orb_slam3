@@ -115,7 +115,7 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
                                             random_matches,
                                             E,
                                             inliers,
-                                            score, camera_);
+                                            score);
 
   precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
 
@@ -166,7 +166,7 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
                                             random_matches,
                                             E,
                                             inliers,
-                                            score, camera_);
+                                            score);
 
   precision_t s = E(0, 0) * ground_truth_E_(0, 0) < 0 ? -1 : 1;
 
