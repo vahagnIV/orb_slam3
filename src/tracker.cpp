@@ -59,12 +59,13 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   return max_covisible_key_frame;
 }
 
-bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
+bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::VisibleMapPoint> & out_visibles) {
   if (!velocity_is_valid_)
     return false;
-  std::unordered_set<map::MapPoint *> all_candidate_map_points;
+//  std::unordered_set<map::MapPoint *> all_candidate_map_points;
   PredictAndSetNewFramePosition(frame);
-  return frame->EstimatePositionByProjectingMapPoints(last_frame_);
+  return frame->EstimatePositionByProjectingMapPoints(last_frame_, out_visibles);
+
 }
 
 bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
@@ -72,13 +73,17 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
+int time_to_wait = 0;
+int mode = 7;
+
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   last_frame_->UpdateFromReferenceKeyFrame();
 
   assert(OK == state_);
   ++kf_counter;
 
-  bool tracked = (TrackWithMotionModel(frame) || TrackWithReferenceKeyFrame(frame));
+  std::list<frame::VisibleMapPoint> frame_visibles;
+  bool tracked = (TrackWithMotionModel(frame, frame_visibles) || TrackWithReferenceKeyFrame(frame));
 
   if (!tracked) {
     // TODO: go to relocalization
@@ -87,6 +92,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     return TrackingResult::TRACKING_FAILED;
   }
   ComputeVelocity(frame, last_frame_);
+
 
 //  debug::DrawCommonMapPoints(frame->GetFilename(),
 //                             reference_keyframe_->GetFilename(),
@@ -116,22 +122,59 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->FilterVisibleMapPoints(local_map_points_except_current,
                                 visible_map_points,
                                 frame->GetSensorConstants()->projection_search_radius_multiplier);
+  for (auto & vmp: visible_map_points)
+    vmp.map_point->IncreaseVisible();
 
   logging::RetrieveLogger()->debug("Filtering visible map points: {} / {}",
                                    visible_map_points.size(),
                                    local_map_points_except_current.size());
 
-  for (auto & visible_map_point: visible_map_points)
-    visible_map_point.map_point->IncreaseVisible();
-
   frame->SearchInVisiblePoints(visible_map_points);
   frame->OptimizePose();
 
-  std::cout << "Frame Position after SLMP " << frame->GetInversePosition() << std::endl;
+  // =======================debug ======================
+  cv::Mat image = cv::imread(frame->GetFilename());
+  auto fr = dynamic_cast<frame::monocular::MonocularFrame *> (frame);
+
+  if (mode & 1) {
+    for (auto vmp: frame_visibles) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
+    }
+  }
+
+  if (mode & 2) {
+    for (auto mp: fr->GetMapPoints()) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 5, cv::Scalar(0, 255, 0));
+    }
+  }
+
+  if (mode & 4) {
+    for (auto mp: fr->GetBadMapPoints()) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 2, cv::Scalar(0, 0, 255));
+    }
+  }
+
+  std::cout << "Frame Position after SLMP " << frame->GetPosition() << std::endl;
   logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
-  cv::imshow("After SLMP",
-             debug::DrawMapPoints(frame->GetFilename(), dynamic_cast<frame::monocular::MonocularFrame *>(frame)));
-//  cv::waitKey();
+  cv::imshow("After SLMP", image);
+  char key = cv::waitKey(time_to_wait);
+  switch (key) {
+    case 'c':time_to_wait = !time_to_wait;
+      break;
+    case 'm':mode ^= 1;
+      break;
+    case 'v':mode ^= 2;
+      break;
+
+  }
+  //=====================================================
+
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
   for (auto map_point: map_points)
@@ -158,7 +201,7 @@ void Tracker::ReplaceLastFrame(frame::Frame * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
-  bool need =  kf_counter >= 2;// && m.size() > 40;
+  bool need = kf_counter >= 4;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 

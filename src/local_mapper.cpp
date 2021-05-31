@@ -48,7 +48,7 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
-  recently_added_map_points_.clear();
+//  recently_added_map_points_.clear();
   size_t erased = recently_added_map_points_.size();
   for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end();) {
     map::MapPoint * mp = *mp_it;

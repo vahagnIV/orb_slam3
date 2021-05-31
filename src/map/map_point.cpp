@@ -57,7 +57,7 @@ void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
   for(auto & obs: observations_){
-    obs.first->EraseMapPoint(obs.second);
+//    obs.first->EraseMapPoint(obs.second);
   }
   observations_.clear();
 

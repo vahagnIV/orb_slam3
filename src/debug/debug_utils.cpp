@@ -143,7 +143,7 @@ cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular *
   for (auto mp_id: frame->GetMapPoints()) {
     auto kp = frame->GetFeatures().keypoints[mp_id.first];
     cv::Point2f pt(kp.X(), kp.Y());
-    cv::circle(image, pt, 3, cv::Scalar(0, 255, 0));
+    cv::circle(image, pt, 4, cv::Scalar(0, 255, 0));
   }
   return image;
 }

@@ -354,16 +354,26 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   }
 }
 
-bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame) {
+BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() {
+
+  BaseMonocular::MonocularMapPoints result;
+  for (auto mp: map_points_)
+    if (mp.second->IsBad())
+      result.insert(mp);
+
+  return result;
+}
+
+bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<VisibleMapPoint> & out_visibles) {
 
   auto last_frame = dynamic_cast<MonocularFrame *>(frame);
   precision_t radiuses[] = {15, 30};
 
   for (precision_t radius: radiuses) {
     map_points_.clear();
-    std::list<VisibleMapPoint> visibles;
-    FilterFromLastFrame(last_frame, visibles, radius);
-    SearchInVisiblePoints(visibles, 0.9);
+    out_visibles.clear();
+    FilterFromLastFrame(last_frame, out_visibles, radius);
+    SearchInVisiblePoints(out_visibles, 0.9);
     if (map_points_.size() >= 20) {
       OptimizePose();
       if (map_points_.size() >= 10)

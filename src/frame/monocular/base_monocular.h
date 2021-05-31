@@ -34,6 +34,7 @@ class VisibleMapPoint;
 namespace monocular {
 
 class BaseMonocular {
+
  public:
   typedef std::map<size_t, map::MapPoint *> MonocularMapPoints;
   explicit BaseMonocular(const camera::MonocularCamera * camera);

@@ -29,7 +29,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool Link(Frame * other) override;
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
 //  bool EstimatePositionByProjectingMapPoints(const list<VisibleMapPoint> & filtered_map_points) override;
-  bool EstimatePositionByProjectingMapPoints(Frame * frame) override;
+  bool EstimatePositionByProjectingMapPoints(Frame * frame, list<VisibleMapPoint> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;
   void OptimizePose() override;
@@ -44,6 +44,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;
+  BaseMonocular::MonocularMapPoints GetBadMapPoints();
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
   void InitializeMapPointsFromMatches(const std::unordered_map<std::size_t, std::size_t> & matches,
