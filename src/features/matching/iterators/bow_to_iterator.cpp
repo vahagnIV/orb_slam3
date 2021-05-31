@@ -10,6 +10,7 @@ namespace matching {
 namespace iterators {
 
 BowToIterator & BowToIterator::operator++() {
+  assert(it_ != end_it_);
   ++it_;
   AdvanceUntilValidIterator();
 
