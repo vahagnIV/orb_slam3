@@ -130,8 +130,10 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
                                    local_map_points_except_current.size());
 
   frame->SearchInVisiblePoints(visible_map_points);
-  frame->OptimizePose();
 
+  frame->OptimizePose();
+//  if(frame->GetMapPointCount() < 30)
+//    return TrackingResult::TRACKING_FAILED;
   // =======================debug ======================
   cv::Mat image = cv::imread(frame->GetFilename());
   auto fr = dynamic_cast<frame::monocular::MonocularFrame *> (frame);
@@ -178,6 +180,12 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
       break;
 
   }
+
+  std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
+  for (auto mp: atlas_->GetCurrentMap()->GetAllMapPoints()) {
+    ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
+  }
+
   //=====================================================
 
   frame::Frame::MapPointSet map_points;
@@ -236,6 +244,26 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
     std::cout << "Position after linking BA " << current_key_frame->GetPosition() << std::endl;
+    std::vector<precision_t> depths;
+    for (auto mp: map_points) {
+      current_map->AddMapPoint(mp);
+      depths.push_back(mp->GetPosition().z());
+    }
+
+    auto pose = current_key_frame->GetPosition();
+    pose.T /= depths[depths.size() / 2];
+    current_key_frame->SetPosition(pose);
+    frame->SetPosition(pose);
+
+    std::sort(depths.begin(), depths.end());
+    for (auto mp: map_points) {
+      TPoint3D pose = mp->GetPosition();
+      pose /= depths[depths.size() / 2];
+      mp->min_invariance_distance_ /= depths[depths.size() / 2];
+      mp->max_invariance_distance_ /= depths[depths.size() / 2];
+      mp->SetPosition(pose);
+      mp->Refresh(frame->GetFeatureExtractor());
+    }
 
     reference_keyframe_ = current_key_frame;
     state_ = OK;
@@ -244,8 +272,9 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
 
+
     // TODO: remove the following line in multithreading
-//    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
 
   } else {
     delete frame;

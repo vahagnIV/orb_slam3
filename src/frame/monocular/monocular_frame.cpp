@@ -178,6 +178,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                     MonocularFrame * from_frame,
                                                     BaseFrame::MapPointSet & out_map_points) {
   for (const auto & point : points) {
+    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
 
     precision_t max_invariance_distance, min_invariance_distance;
     feature_extractor_->ComputeInvariantDistances(GetPosition().Transform(point.second),

@@ -2,6 +2,8 @@
 // Created by vahagn on 17/05/2021.
 //
 
+#include <g2o/solvers/dense/linear_solver_dense.h>
+
 #include "monocular_optimization.h"
 #include "utils.h"
 #include "vertices/frame_vertex.h"
@@ -19,7 +21,7 @@ void OptimizePose(MonocularFrame * frame) {
   BaseMonocular::MonocularMapPoints map_points = frame->GetMapPoints();
 
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer(optimizer);
+  InitializeOptimizer<g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
 
   geometry::Pose pose = frame->GetPosition();
 

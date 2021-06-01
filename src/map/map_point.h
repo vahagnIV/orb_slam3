@@ -79,8 +79,10 @@ class MapPoint {
   MapType observations_;
   features::DescriptorType descriptor_;
   TVector3D normal_;
+ public:
   precision_t max_invariance_distance_;
   precision_t min_invariance_distance_;
+ private:
   unsigned visible_;
   unsigned found_;
   bool bad_flag_;

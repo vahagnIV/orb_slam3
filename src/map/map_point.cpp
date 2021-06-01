@@ -41,8 +41,8 @@ map::MapPoint * MapPoint::GetReplaced() {
 }
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
-//  observations_.emplace(observation.GetKeyFrame(), observation);
-  observations_.insert(std::make_pair(observation.GetKeyFrame(), observation));
+  observations_.emplace(observation.GetKeyFrame(), observation);
+//  observations_.insert(std::make_pair(observation.GetKeyFrame(), observation));
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
@@ -57,7 +57,7 @@ void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
   for(auto & obs: observations_){
-//    obs.first->EraseMapPoint(obs.second);
+    obs.first->EraseMapPoint(obs.second);
   }
   observations_.clear();
 

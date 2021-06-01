@@ -7,6 +7,7 @@
 #include "frame/key_frame.h"
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"
+#include <map/atlas.h>
 
 namespace orb_slam3 {
 
@@ -100,6 +101,10 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   for (auto neighbour_keyframe: covisible_frames) {
     key_frame->CreateNewMapPoints(neighbour_keyframe);
   }
+  frame::KeyFrame::MapPointSet map_points;
+  key_frame->ListMapPoints(map_points);
+  for (auto mp: map_points)
+    atlas_->GetCurrentMap()->AddMapPoint(mp);
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {
@@ -109,7 +114,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
-  if (fixed_keyframes.empty())
+  if (fixed_keyframes.size() < 2)
     return;
   optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
   for (auto & kf: local_keyframes)

@@ -162,22 +162,26 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
                                                  5.991 * GetCamera()->FxInv() * GetCamera()->FxInv(),
                                                  5.991 * other_frame->GetCamera()->FxInv()
                                                      * other_frame->GetCamera()->FxInv(),
-                                                 2* constants::PARALLAX_THRESHOLD,
+                                                  constants::PARALLAX_THRESHOLD,
                                                  parallax,
                                                  triangulated))
       continue;
 
     precision_t min_invariance_distance, max_invariance_distance;
     feature_extractor_->ComputeInvariantDistances(triangulated,
-                                                  features_.keypoints[match.first],
+                                                  other_frame->features_.keypoints[match.second],
                                                   max_invariance_distance,
                                                   min_invariance_distance);
     auto map_point = new map::MapPoint(other_frame->GetInversePosition().Transform(triangulated),
                                        Id(),
                                        max_invariance_distance,
                                        min_invariance_distance);
+    std::cout << map_point->GetPosition() << std::endl;
+
     map_point->AddObservation(Observation(map_point, this, match.first));
     map_point->AddObservation(Observation(map_point, other, match.second));
+
+
     AddMapPoint(map_point, match.first);
     other_frame->AddMapPoint(map_point, match.second);
     map_point->Refresh(feature_extractor_);
@@ -245,7 +249,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
   ListMapPoints(local_map_points);
   for (auto mp: map_points) {
     if (local_map_points.find(mp) == local_map_points.end()
-        && IsVisible(mp, visible_map_point, 1, GetSensorConstants()->max_allowed_discrepancy))
+        && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy,0 ))
       out_visibles.push_back(visible_map_point);
   }
 }
