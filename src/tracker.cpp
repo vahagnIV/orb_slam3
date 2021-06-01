@@ -142,6 +142,11 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
       fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
       cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
     }
+    for (auto vmp: visible_map_points) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
+    }
   }
 
   if (mode & 2) {

@@ -14,7 +14,7 @@ bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint 
 
   /*ACHTUNG: NOT TESTED*/
 
-  double r2 = undistorted[0] * undistorted[0] + undistorted[1] * undistorted[1];
+  double r2 = undistorted.x() * undistorted.x() + undistorted.y() * undistorted.y();
   double r = std::sqrt(r2);
 
   // Angle of the incoming ray:
@@ -34,7 +34,7 @@ bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint 
   double inv_r = r > 1e-8 ? 1.0 / r : 1;
   double cdist = r > 1e-8 ? theta_d * inv_r : 1;
 
-  distorted << undistorted[0] * cdist, undistorted[1] * cdist, 1;
+  distorted << undistorted.x() * cdist, undistorted.y() * cdist, 1;
   return true;
 }
 
@@ -66,8 +66,6 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
     double theta_g9 = theta_g8 * theta;
     double fp = 1 + 3 * K1() * theta_g2 + 5 * K2() * theta_g4 + 7 * K3() * theta_g6 + 9 * K4() * theta_g8;
     double theta_fix = (theta + K1() * theta_g3 + K2() * theta_g5 + K3() * theta_g7 + K4() * theta_g9 - theta_d) / fp;
-    // double fpp = 6 * K1() * theta + 20 * K2() * theta_g3 + 42 * K3() * theta_g5 + 72 * K4() * theta_g7;
-    // double delta_theta = -theta_d1111 * fp / (fp * fp + fpp * theta_d1111);
 
     theta -= theta_fix;
     converged = std::abs(theta_fix) < 7e-8;
@@ -90,7 +88,7 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
     undistorted.z() = 1;
     return true;
   }
-  undistorted << distorted[0], distorted[1], 1;
+  undistorted = distorted;
   return false;
 }
 

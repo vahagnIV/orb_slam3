@@ -18,8 +18,6 @@ using namespace frame::monocular;
 void OptimizePose(MonocularFrame * frame) {
   BaseMonocular::MonocularMapPoints map_points = frame->GetMapPoints();
 
-  static const precision_t delta_mono = constants::HUBER_MONO_DELTA;
-
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer(optimizer);
 
@@ -46,13 +44,12 @@ void OptimizePose(MonocularFrame * frame) {
         information_coefficient =
         1. / frame->GetFeatureExtractor()->GetAcceptableSquareError(features.keypoints[feature_id].level);
 
-    edge->setInformation(
-        Eigen::Matrix<precision_t, 2, 2>::Identity() * information_coefficient);
+    edge->setInformation(Eigen::Matrix2d::Identity() * information_coefficient);
 
     auto rk = new g2o::RobustKernelHuber;
-    rk->setDelta(delta_mono);
-    edge->setLevel(0);
     edge->setRobustKernel(rk);
+    rk->setDelta(constants::HUBER_MONO_DELTA);
+    edge->setLevel(0);
     optimizer.addEdge(edge);
   }
 
@@ -69,7 +66,7 @@ void OptimizePose(MonocularFrame * frame) {
       if (1 == edge->level()) { // If  the edge was not included in the optimization
         edge->computeError();
       }
-      if (edge->chi2() < constants::MONO_CHI2) {
+      if (edge->IsValid(constants::MONO_CHI2)) {
         edge->setLevel(0);
       } else {
         if (N - 1 == i) {

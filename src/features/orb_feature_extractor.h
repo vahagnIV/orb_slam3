@@ -21,7 +21,9 @@ namespace features {
 class ORBFeatureExtractor : public IFeatureExtractor {
  public:
   ORBFeatureExtractor(unsigned image_width, unsigned image_height,
-                      size_t features, precision_t scale_factor, size_t levels,
+                      size_t features,
+                      precision_t scale_factor,
+                      size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
   int Extract(const TImageGray8U & image, Features & out_features) override;
@@ -62,7 +64,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                          const int & maxY,
                          const int & nFeatures,
                          const int & level,
-                         std::vector<features::KeyPoint> & out_map_points);
+                         std::vector<features::KeyPoint> & out_map_points) const;
   static void computeOrientation(const cv::Mat & image,
                                  std::vector<features::KeyPoint> & keypoints,
                                  const int * umax);

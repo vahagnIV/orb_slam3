@@ -39,13 +39,6 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
   features_.AssignFeaturesToGrid();
   features_.SetVocabulary(vocabulary);
   features_.ComputeBow();
-//  std::map<int, std::size_t> counter;
-//  for (size_t i = 0; i < features_.keypoints.size(); ++i) {
-//    counter[features_.keypoints[i].level]++;
-//  }
-//  for(auto a: counter)
-//    std::cout << a.first << "\t" << a.second << std::endl;
-//  std::cout << "Total number of features: " << features_.Size() << std::endl;
 }
 
 bool MonocularFrame::Link(Frame * other) {
@@ -105,12 +98,7 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
                                   Id(),
                                   reference_keyframe->Id());
 
-//  auto x =
-//      debug::DrawMatches(GetFilename(), reference_kf->GetFilename(), matches, features_, reference_kf->GetFeatures());
-//  cv::imshow("TWRKF", x);
-//  cv::waitKey();
-
-  if (matches.size() < 20) {
+  if (matches.size() < 15) {
     return false;
   }
 
@@ -144,42 +132,6 @@ bool MonocularFrame::IsVisible(map::MapPoint * map_point,
                                   this->GetInversePosition(),
                                   feature_extractor_);
 }
-
-/*bool MonocularFrame::EstimatePositionByProjectingMapPoints(const std::list<VisibleMapPoint> & filtered_map_points) {
-  ComputeBow();
-  features::matching::iterators::ProjectionSearchIterator begin
-      (filtered_map_points.begin(),
-       filtered_map_points.end(),
-       &features_,
-       &map_points_);
-
-  features::matching::iterators::ProjectionSearchIterator end
-      (filtered_map_points.end(),
-       filtered_map_points.end(),
-       &features_,
-       &map_points_);
-
-  typedef features::matching::SNNMatcher<features::matching::iterators::ProjectionSearchIterator> Matcher;
-  Matcher matcher(constants::NNRATIO_MONOCULAR_TWMM, constants::MONO_TWMM_THRESHOLD_HIGH);
-  Matcher::MatchMapType matches;
-  matcher.MatchWithIterators(begin, end, feature_extractor_, matches);
-  logging::RetrieveLogger()->debug("TWMM: SNN matcher found {} matches", matches.size());
-
-  if (matches.size() < 20)
-    return false;
-
-  for (auto & match: matches) {
-    AddMapPoint(match.first, match.second);
-  }
-
-  OptimizePose();
-
-  if (map_points_.size() < 10) {
-    map_points_.clear();
-    return false;
-  }
-  return true;
-}*/
 
 size_t MonocularFrame::GetMapPointCount() const {
   return map_points_.size();

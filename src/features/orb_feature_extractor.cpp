@@ -222,16 +222,15 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
             vKeysCell, init_threshold_FAST_, true);
 
         if (vKeysCell.empty()) {
-          FAST(image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+          cv::FAST(image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
                vKeysCell, min_threshold_FAST_, true);
         }
 
         if (!vKeysCell.empty()) {
-          for (std::vector<cv::KeyPoint>::iterator vit = vKeysCell.begin();
-               vit != vKeysCell.end(); vit++) {
-            (*vit).pt.x += j * wCell;
-            (*vit).pt.y += i * hCell;
-            vToDistributeKeys.push_back(*vit);
+          for (auto & vit : vKeysCell) {
+            vit.pt.x += j * wCell;
+            vit.pt.y += i * hCell;
+            vToDistributeKeys.push_back(vit);
           }
         }
       }
@@ -247,8 +246,8 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 
     // Add border to coordinates and scale information    
     for (size_t i = 0; i < keypoints.size(); i++) {
-      keypoints[i].X() += minBorderX;
-      keypoints[i].Y() += minBorderY;
+      keypoints[i].pt.x() += minBorderX;
+      keypoints[i].pt.y() += minBorderY;
       keypoints[i].level = level;
       keypoints[i].size = scaledPatchSize;
     }
@@ -267,9 +266,9 @@ void ORBFeatureExtractor::DistributeOctTree(
     const int & maxY,
     const int & nFeatures,
     const int & level,
-    std::vector<features::KeyPoint> & out_map_points) {
+    std::vector<features::KeyPoint> & out_map_points) const {
   // SetMapPointAndCompute how many initial nodes
-  const int nIni = round(static_cast<float>(maxX - minX) / (maxY - minY));
+  const int nIni = std::round(static_cast<precision_t>(maxX - minX) / (maxY - minY));
 
   const float hX = static_cast<float>(maxX - minX) / nIni;
 
@@ -296,7 +295,7 @@ void ORBFeatureExtractor::DistributeOctTree(
     vpIniNodes[kp.pt.x / hX]->vKeys.push_back(kp);
   }
 
-  std::list<ExtractorNode>::iterator lit = lNodes.begin();
+  auto lit = lNodes.begin();
 
   while (lit != lNodes.end()) {
     if (lit->vKeys.size() == 1) {

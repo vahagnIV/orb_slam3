@@ -18,11 +18,17 @@ namespace edges {
 
 class SE3ProjectXYZPoseOnly : public BAUnaryEdge {
  public:
-  SE3ProjectXYZPoseOnly(map::MapPoint * map_point, size_t feature_id, const camera::MonocularCamera * camera, const TPoint3D & point);
+  SE3ProjectXYZPoseOnly(map::MapPoint * map_point,
+                        size_t feature_id,
+                        const camera::MonocularCamera * camera,
+                        const TPoint3D & point);
   void computeError() override;
   void linearizeOplus() override;
+  bool IsValid(precision_t threshold);
   bool read(std::istream & is) override;
   bool write(std::ostream & os) const override;
+ private:
+  bool IsDepthPositive();
  private:
   const camera::MonocularCamera * camera_;
   TPoint3D point_;

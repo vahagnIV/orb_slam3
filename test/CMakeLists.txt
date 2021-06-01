@@ -23,10 +23,9 @@ add_subdirectory(${CMAKE_BINARY_DIR}/test/googletest-src
 set(ALL_TEST_SOURCE_FILES
         mock/mock_feature_extractor.h
         features/feature_tests.cpp
-        features/feature_tests.h
+        features/fish_eye_tests.cpp
         features/bow_match_iterator_tests.cpp
         frame/monocular_frame_tests.cpp
-        frame/monocular_frame_tests.h
         geometry/homography_estimator_tests.h
         geometry/homography_estimator_tests.cpp
         geometry/essential_estimator_tests.cpp
