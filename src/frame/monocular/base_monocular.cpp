@@ -80,12 +80,10 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
     return false;
   }
 
-  this->GetCamera()->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
-
+  this->GetCamera()->ProjectPoint(map_point_in_local_cf, out_map_point.position);
   if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }
-  this->GetCamera()->ProjectPoint(map_point_in_local_cf, out_map_point.position);
 
   TPoint3D local_pose = inverse_position.T;
   TVector3D relative_frame_map_point = local_pose - map_point->GetPosition();

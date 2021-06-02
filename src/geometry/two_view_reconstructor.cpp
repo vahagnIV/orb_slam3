@@ -28,7 +28,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                        std::unordered_map<std::size_t, TPoint3D> & out_points) const {
 
   std::vector<std::vector<size_t>> random_match_subset_idx;
-  GenerateRandomSubsets(0, matches.size(), 8, number_of_ransac_iterations_, matches, random_match_subset_idx);
+  GenerateRandomSubsets(0, matches.size(), 12, number_of_ransac_iterations_, matches, random_match_subset_idx);
 
   precision_t h_score;
   precision_t f_score;

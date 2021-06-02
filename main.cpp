@@ -288,13 +288,13 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;
 
   std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics;
-  std::vector<KANNALA_BRANDT5::Scalar> distortion_coeffs;
+  std::vector<FISH_EYE::Scalar> distortion_coeffs;
   FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(intrinsics, distortion_coeffs);
 
   const size_t width = 512;
   const size_t height = 512;
   auto camera = CreateMonocularCamera(width, height, intrinsics);
-  CreateDistortionModel<KANNALA_BRANDT5>(camera, distortion_coeffs);
+  CreateDistortionModel<FISH_EYE>(camera, distortion_coeffs);
   camera->ComputeImageBounds();
 
   std::vector<std::string> filenames;

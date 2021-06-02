@@ -49,7 +49,7 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   for (auto mp_vertex: mp_map) {
     if (nullptr == loop_kf || loop_kf->IsInitial()) {
       mp_vertex.first->SetPosition(mp_vertex.second->estimate());
-      mp_vertex.first->UpdateNormalAndDepth();
+      mp_vertex.first->Refresh((*key_frames.begin())->GetFeatureExtractor());
     } else {
       std::runtime_error("BA not implemented for Loop closing");
     }
