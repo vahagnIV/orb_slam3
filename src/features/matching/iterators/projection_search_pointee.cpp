@@ -23,8 +23,8 @@ void ProjectionSearchPointee::InitializeIterators() {
 
   from_features_->ListFeaturesInArea(map_point_.position,
                                      map_point_.window_size,
-                                     -1,//std::max(map_point_.level - 1, 0),
-                                     -1,//map_point_.level + 1,
+                                     std::max(map_point_.level - 1, 0),
+                                     map_point_.level + 1,
                                      from_indices_);
 
   begin_iterator_ =

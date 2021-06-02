@@ -19,6 +19,7 @@ class Map {
   void SetInitialKeyFrame(frame::KeyFrame * frame);
   void AddMapPoint(MapPoint * map_point);
   std::unordered_set<MapPoint *> GetAllMapPoints();
+  std::unordered_set<frame::KeyFrame *> GetAllKeyFrames();
  private:
   std::unordered_set<frame::KeyFrame *> key_frames_;
   frame::KeyFrame * initial_keyframe_;

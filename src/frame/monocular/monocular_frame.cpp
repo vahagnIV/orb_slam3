@@ -66,6 +66,13 @@ bool MonocularFrame::Link(Frame * other) {
                                     other->Id());
     return false;
   }
+  for(auto it = matches.begin(); it!=matches.end();){
+    if(points.find(it->first) == points.end()){
+      it = matches.erase(it);
+    }
+    else
+      ++it;
+  }
   cv::imshow("Linking",
              debug::DrawMatches(GetFilename(), other->GetFilename(), matches, features_, from_frame->features_));
   cv::waitKey();
@@ -178,7 +185,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                     MonocularFrame * from_frame,
                                                     BaseFrame::MapPointSet & out_map_points) {
   for (const auto & point : points) {
-    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
+//    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
 
     precision_t max_invariance_distance, min_invariance_distance;
     feature_extractor_->ComputeInvariantDistances(GetPosition().Transform(point.second),

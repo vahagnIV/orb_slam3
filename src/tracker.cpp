@@ -167,16 +167,27 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     }
   }
 
+  char key = ']';
+  if (mode & 8) {
+    key = debug::DrawCommonMapPoints(fr->GetFilename(),
+                                     last_frame_->GetFilename(),
+                                     dynamic_cast<frame::monocular::MonocularFrame *>(fr),
+                                     dynamic_cast<frame::monocular::MonocularFrame *>(last_frame_));
+  }
+
   std::cout << "Frame Position after SLMP " << frame->GetPosition() << std::endl;
   logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
   cv::imshow("After SLMP", image);
-  char key = cv::waitKey(time_to_wait);
+
+  key = cv::waitKey(time_to_wait);
   switch (key) {
     case 'c':time_to_wait = !time_to_wait;
       break;
     case 'm':mode ^= 1;
       break;
     case 'v':mode ^= 2;
+      break;
+    case 'b':mode ^= 8;
       break;
 
   }

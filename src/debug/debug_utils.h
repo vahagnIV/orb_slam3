@@ -35,7 +35,7 @@ cv::Mat DrawMatches(const std::string & filename_to,
                     const features::Features & features_to,
                     const features::Features & features_from);
 
-void DrawCommonMapPoints(const std::string & filename1,
+char DrawCommonMapPoints(const std::string & filename1,
                                   const std::string & filename2,
                                   frame::monocular::BaseMonocular * frame1,
                                   frame::monocular::BaseMonocular * frame2);

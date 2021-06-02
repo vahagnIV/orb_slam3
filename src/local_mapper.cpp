@@ -49,7 +49,7 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
-  recently_added_map_points_.clear();
+//  recently_added_map_points_.clear();
   size_t erased = recently_added_map_points_.size();
   for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end();) {
     map::MapPoint * mp = *mp_it;
@@ -59,10 +59,10 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
       mp->SetBad();
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2
-        && mp->GetObservationCount() < keyframe->GetSensorConstants()->max_mp_disappearance_count) {
+        && mp->GetObservationCount() < keyframe->GetSensorConstants()->min_mp_disappearance_count) {
       mp->SetBad();
       mp_it = recently_added_map_points_.erase(mp_it);
-    } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2) {
+    } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 3) {
       mp_it = recently_added_map_points_.erase(mp_it);
     } else {
       --erased;
@@ -99,7 +99,9 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   logging::RetrieveLogger()->debug("LM: covisible frame count: {}", covisible_frames.size());
 
   for (auto neighbour_keyframe: covisible_frames) {
-    key_frame->CreateNewMapPoints(neighbour_keyframe);
+    frame::KeyFrame::MapPointSet new_map_points;
+    key_frame->CreateNewMapPoints(neighbour_keyframe, new_map_points);
+    recently_added_map_points_.insert(new_map_points.begin(), new_map_points.end());
   }
   frame::KeyFrame::MapPointSet map_points;
   key_frame->ListMapPoints(map_points);
@@ -172,7 +174,7 @@ void LocalMapper::RunIteration() {
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);
     if (!CheckNewKeyFrames()) {
-//      FuseMapPoints(message.frame);
+      FuseMapPoints(message.frame);
       Optimize(message.frame);
       KeyFrameCulling(message.frame);
     }

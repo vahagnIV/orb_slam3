@@ -82,7 +82,7 @@ precision_t MonocularKeyFrame::ComputeSceneMedianDepth(const MapPointSet & map_p
   return depths[(depths.size() - 1) / q];
 }
 
-void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
+void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) {
 
   auto other_frame = dynamic_cast<MonocularKeyFrame *> (other);
   if (other_frame == this)
@@ -162,10 +162,19 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
                                                  5.991 * GetCamera()->FxInv() * GetCamera()->FxInv(),
                                                  5.991 * other_frame->GetCamera()->FxInv()
                                                      * other_frame->GetCamera()->FxInv(),
-                                                  constants::PARALLAX_THRESHOLD,
+                                                 constants::PARALLAX_THRESHOLD,
                                                  parallax,
                                                  triangulated))
       continue;
+    TPoint2D pt_other, pt_this;
+    other_frame->GetCamera()->ProjectAndDistort(triangulated, pt_other);
+    GetCamera()->ProjectAndDistort(relative_pose.Transform(triangulated), pt_this);
+    if (!other_frame->GetCamera()->IsInFrustum(pt_other))
+      continue;
+    if (!GetCamera()->IsInFrustum(pt_this))
+      continue;
+//    TPoint3D world_pos = other_frame->GetInversePosition().Transform(triangulated);
+//    assert(world_pos.z() > 0);
 
     precision_t min_invariance_distance, max_invariance_distance;
     feature_extractor_->ComputeInvariantDistances(triangulated,
@@ -176,15 +185,15 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other) {
                                        Id(),
                                        max_invariance_distance,
                                        min_invariance_distance);
-    std::cout << map_point->GetPosition() << std::endl;
+//    std::cout << map_point->GetPosition() << std::endl;
 
     map_point->AddObservation(Observation(map_point, this, match.first));
     map_point->AddObservation(Observation(map_point, other, match.second));
-
-
     AddMapPoint(map_point, match.first);
     other_frame->AddMapPoint(map_point, match.second);
+
     map_point->Refresh(feature_extractor_);
+    out_newly_created.insert(map_point);
     ++newly_created_mps;
   }
   logging::RetrieveLogger()->debug("LM: Created {} new map_points between frames {} and {}",
@@ -214,6 +223,8 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
   for (auto match: matches) {
     auto it = local_map_points.find(match.second);
     if (it == local_map_points.end()) {
+      if(match.first->IsInKeyFrame(this))
+        continue;
       match.first->AddObservation(Observation(match.first, this, match.second));
       AddMapPoint(match.first, match.second);
     } else {
@@ -249,13 +260,21 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
   ListMapPoints(local_map_points);
   for (auto mp: map_points) {
     if (local_map_points.find(mp) == local_map_points.end()
-        && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy,0 ))
+        && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy, 0))
       out_visibles.push_back(visible_map_point);
   }
 }
 
 void MonocularKeyFrame::EraseMapPoint(Observation & obs) {
   map_points_.erase(obs.GetFeatutreIds()[0]);
+}
+
+void MonocularKeyFrame::ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) {
+  size_t feature_id = observation.GetFeatutreIds()[0];
+  assert(observation.GetKeyFrame() == this);
+//  assert(map_points_.find(feature_id) != map_points_.end());
+  map_points_[feature_id] = map_point;
+  map_point->AddObservation(Observation(map_point, this, feature_id));
 }
 
 }

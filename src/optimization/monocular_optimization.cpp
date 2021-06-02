@@ -28,6 +28,7 @@ void OptimizePose(MonocularFrame * frame) {
   auto frame_vertex = new vertices::FrameVertex(frame);
   size_t max_id = frame->Id();
   frame_vertex->setId(max_id);
+  frame_vertex->setFixed(false);
   optimizer.addVertex(frame_vertex);
 
   const auto & features = frame->GetFeatures();
@@ -41,6 +42,7 @@ void OptimizePose(MonocularFrame * frame) {
     edge->setId(++max_id);
     edge->setVertex(0, frame_vertex);
 
+//    edge->setMeasurement(features.undistorted_keypoints[feature_id]);
     edge->setMeasurement(features.keypoints[feature_id].pt);
     precision_t
         information_coefficient =
@@ -59,7 +61,7 @@ void OptimizePose(MonocularFrame * frame) {
 
   size_t discarded_count = 0;
   for (int i = 0; i < N; ++i) {
-    frame_vertex->setEstimate(pose.GetQuaternion());
+    dynamic_cast<vertices::FrameVertex *>(optimizer.vertex(frame_vertex->id()))->setEstimate(pose.GetQuaternion());
     optimizer.initializeOptimization(0);
     optimizer.optimize(10);
     auto edges = optimizer.edges();
@@ -80,6 +82,10 @@ void OptimizePose(MonocularFrame * frame) {
       if (N - 2 == i)
         edge->setRobustKernel(nullptr);
     }
+
+    std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
+    std::cout << "VERTEX POSE " << i << frame_vertex->estimate() << std::endl;
+
   }
 
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);

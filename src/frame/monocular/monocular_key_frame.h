@@ -23,13 +23,14 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                  precision_t radius_multiplier,
                  unsigned int window_size) const ;
  public:
-  void CreateNewMapPoints(frame::KeyFrame * other) override;
+  void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
   void ComputeBow() override;
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void FuseMapPoints(MapPointSet & map_points) override;
   void EraseMapPoint(Observation & obs) override;
+  void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
  private:
   static bool BaseLineIsEnough(const MapPointSet & others_map_points,
                                const geometry::Pose & local_pose,

@@ -58,10 +58,18 @@ void MonocularCamera::ComputeImageBounds() {
   UndistortPoint(bottom_left, bottom_left);
   UndistortPoint(bottom_right, bottom_right);
 
+  TPoint2D test;
+  DistortPoint(top_left, test);
+  std::cout << test << std::endl;
+
   max_X_ = std::max(top_right.x(), bottom_right.x());
   max_Y_ = std::max(bottom_left.y(), bottom_right.y());
   min_X_ = std::min(top_left.x(), bottom_left.x());
   min_Y_ = std::min(top_left.y(), top_left.y());
+//  max_X_ = 570;
+//  max_Y_ = 570;
+//  min_X_ = -45;
+//  min_Y_ = -45;
 }
 
 void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianType & out_jacobian) const {
@@ -91,7 +99,8 @@ void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_p
 }
 
 bool MonocularCamera::IsInFrustum(const TPoint2D & distorted) const {
-  return distorted.x() >= min_X_ && distorted.x() < max_X_ && distorted.y() >= min_Y_ && distorted.y() < max_Y_;
+  return distorted.x() >= 0 && distorted.x() < width_ && distorted.y() >= 0 && height_;
+//  return distorted.x() >= min_X_ && distorted.x() < max_X_ && distorted.y() >= min_Y_ && distorted.y() < max_Y_;
 }
 
 }

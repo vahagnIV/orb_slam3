@@ -164,7 +164,7 @@ CreateMonocularCamera(
 void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
                         orb_slam3::camera::MonocularCamera * camera) {
   orb_slam3::frame::SensorConstants constants;
-  constants.max_mp_disappearance_count = 2;
+  constants.min_mp_disappearance_count = 2;
   constants.number_of_keyframe_to_search_lm = 20;
 
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
@@ -242,7 +242,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::IFeatureExtractor * fe = feature_extractor;
   for (size_t i = 0; i < filenames.size(); ++i) {
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
-    orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[i]);
+    orb_slam3::logging::RetrieveLogger()->info( "{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, &voc, sensor_constants);
@@ -277,7 +277,7 @@ void TestLiveCamera(orb_slam3::features::BowVocabulary & voc) {
 void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::string & dataPath) {
 
   orb_slam3::frame::SensorConstants constants;
-  constants.max_mp_disappearance_count = 2;
+  constants.min_mp_disappearance_count = 2;
   constants.max_allowed_discrepancy = 5.9991;
   constants.number_of_keyframe_to_search_lm = 20;
   constants.projection_search_radius_multiplier = 1.;
@@ -288,13 +288,13 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;
 
   std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics;
-  std::vector<FISH_EYE::Scalar> distortion_coeffs;
+  std::vector<KANNALA_BRANDT5::Scalar> distortion_coeffs;
   FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(intrinsics, distortion_coeffs);
 
   const size_t width = 512;
   const size_t height = 512;
   auto camera = CreateMonocularCamera(width, height, intrinsics);
-  CreateDistortionModel<FISH_EYE>(camera, distortion_coeffs);
+  CreateDistortionModel<KANNALA_BRANDT5>(camera, distortion_coeffs);
   camera->ComputeImageBounds();
 
   std::vector<std::string> filenames;

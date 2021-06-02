@@ -43,9 +43,10 @@ class KeyFrame : public BaseFrame {
   void SetKeyFrameGBA(KeyFrame * keyframe) {
     kf_gba_ = keyframe;
   }
-  virtual void CreateNewMapPoints(frame::KeyFrame * other) = 0;
+  virtual void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) = 0;
   virtual void FuseMapPoints(MapPointSet & map_points) = 0;
   virtual void EraseMapPoint(Observation & obs) = 0;
+  virtual void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) = 0;
 
  protected:
   CovisibilityGraphNode covisibility_graph_;

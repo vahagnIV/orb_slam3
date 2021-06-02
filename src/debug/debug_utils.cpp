@@ -85,7 +85,7 @@ cv::Mat DrawMatches(const string & filename_to,
   return result;
 }
 
-void DrawCommonMapPoints(const string & filename1,
+char DrawCommonMapPoints(const string & filename1,
                          const string & filename2,
                          frame::monocular::BaseMonocular * frame1,
                          frame::monocular::BaseMonocular * frame2) {
@@ -133,9 +133,10 @@ void DrawCommonMapPoints(const string & filename1,
     cv::imshow("MatchWithIterators", match_image);
     char key = cv::waitKey();
     if ('c' == key)
-      return;
+      return key;
     std::cout << key << std::endl;
   }
+  return '[';
 }
 
 cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame) {

@@ -18,10 +18,11 @@ namespace edges {
 
 class SE3ProjectXYZPoseOnly : public BAUnaryEdge {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   SE3ProjectXYZPoseOnly(map::MapPoint * map_point,
                         size_t feature_id,
                         const camera::MonocularCamera * camera,
-                        const TPoint3D & point);
+                        TPoint3D  point);
   void computeError() override;
   void linearizeOplus() override;
   bool IsValid(precision_t threshold);

@@ -20,10 +20,10 @@ class MapPoint;
 namespace frame {
 class KeyFrame;
 
-class Observation  {
+class Observation {
  public:
-  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids) ;
-  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right) ;
+  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids);
+  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right);
 
   virtual ~Observation() = default;
   /*!
@@ -36,7 +36,7 @@ class Observation  {
    * Create a g2o edge for pose optimization
    * @return g2o edge with set vertex
    */
-  optimization::edges::BAUnaryEdge *CreateEdge() const;
+  optimization::edges::BAUnaryEdge * CreateEdge() const;
 
   /*!
    * Getter for the corresponding frame
@@ -49,6 +49,7 @@ class Observation  {
    * @return
    */
   map::MapPoint * GetMapPoint() { return map_point_; }
+  void SetMapPoint(map::MapPoint * map_point) { map_point_ = map_point; }
 
   /*!
    * Appends the descriptors that correspond to the map_point and frame to the list
