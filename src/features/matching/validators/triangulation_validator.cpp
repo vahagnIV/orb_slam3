@@ -31,8 +31,8 @@ bool TriangulationValidator::Validate(size_t to_id, size_t from_id) const {
   return EpipolarDistanceIsEnough(to_id) && geometry::utils::TriangulateAndValidate(kp_from,
                                                                                     kp_to,
                                                                                     *relative_pose_,
-                                                                                    sigma_,
-                                                                                    sigma_,
+                                                                                    5.991 * sigma_,
+                                                                                    5.991 * sigma_,
                                                                                     constants::PARALLAX_THRESHOLD,
                                                                                     parallax,
                                                                                     triangulated);

@@ -21,8 +21,8 @@
 #include <logging.h>
 
 
-const size_t NFEATURES1 = 1500;
-const size_t NFEATURES2 = 1000;
+const size_t NFEATURES1 = 7500;
+const size_t NFEATURES2 = 1500;
 orb_slam3::precision_t SCALE_FACTOR = 1.2;
 const size_t LEVELS = 8;
 const size_t INIT_THRESHOLD = 20;
@@ -76,9 +76,10 @@ void FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(
   intrinsics.push_back(256.8974428996504);
 
   distortion_coeffs.push_back(0.0034823894022493434);
-  distortion_coeffs.push_back(0.0007150348452162257);
   distortion_coeffs.push_back(-0.0020532361418706202);
+  distortion_coeffs.push_back(0.0007150348452162257);
   distortion_coeffs.push_back(0.00020293673591811182);
+  distortion_coeffs.push_back(0.);
 }
 
 void ReadImagesForMonocularTestTum(
@@ -134,7 +135,7 @@ void CreateDistortionModel<orb_slam3::camera::FishEye>(
 
   orb_slam3::camera::FishEye * distortion =
       camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
-  assert(4 == distortion_coeffs.size());
+  assert(4 <= distortion_coeffs.size());
   size_t i = 0;
   distortion->SetK1(distortion_coeffs[i++]);
   distortion->SetK2(distortion_coeffs[i++]);
@@ -163,7 +164,7 @@ CreateMonocularCamera(
 void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
                         orb_slam3::camera::MonocularCamera * camera) {
   orb_slam3::frame::SensorConstants constants;
-  constants.max_mp_disappearance_count = 2;
+  constants.min_mp_disappearance_count = 2;
   constants.number_of_keyframe_to_search_lm = 20;
 
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
@@ -228,7 +229,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Tracker tracker(atlas);
   orb_slam3::LocalMapper local_mapper(atlas);
   tracker.AddObserver(&local_mapper);
-  local_mapper.AddObserver(&tracker);
+//  local_mapper.AddObserver(&tracker);
   //local_mapper.Start();
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(),
@@ -241,7 +242,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::IFeatureExtractor * fe = feature_extractor;
   for (size_t i = 0; i < filenames.size(); ++i) {
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
-    orb_slam3::logging::RetrieveLogger()->info("processing frame {}", filenames[i]);
+    orb_slam3::logging::RetrieveLogger()->info( "{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, &voc, sensor_constants);
@@ -251,7 +252,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     if(orb_slam3::TrackingResult::TRACKING_FAILED == result)
       exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    cv::imshow("im", image);
+//    cv::imshow("im", image);
     cv::waitKey(1);
   }
 }
@@ -276,13 +277,15 @@ void TestLiveCamera(orb_slam3::features::BowVocabulary & voc) {
 void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::string & dataPath) {
 
   orb_slam3::frame::SensorConstants constants;
-  constants.max_mp_disappearance_count = 2;
+  constants.min_mp_disappearance_count = 2;
+  constants.max_allowed_discrepancy = 5.9991;
   constants.number_of_keyframe_to_search_lm = 20;
   constants.projection_search_radius_multiplier = 1.;
   constants.projection_search_radius_multiplier_after_relocalization = 5.;
   constants.projection_search_radius_multiplier_after_lost = 15.;
 
   typedef orb_slam3::camera::FishEye FISH_EYE;
+  typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;
 
   std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics;
   std::vector<FISH_EYE::Scalar> distortion_coeffs;

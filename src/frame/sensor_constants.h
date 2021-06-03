@@ -11,8 +11,9 @@ namespace orb_slam3 {
 namespace frame {
 
 struct SensorConstants {
-  unsigned max_mp_disappearance_count;
+  unsigned min_mp_disappearance_count;
   unsigned number_of_keyframe_to_search_lm;
+  precision_t max_allowed_discrepancy;
   precision_t projection_search_radius_multiplier;
   precision_t projection_search_radius_multiplier_after_relocalization;
   precision_t projection_search_radius_multiplier_after_lost;

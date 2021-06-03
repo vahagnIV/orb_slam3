@@ -33,8 +33,8 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-  BaseFixedSizedEdge::linearizeOplus();
-  return;
+//  BaseFixedSizedEdge::linearizeOplus();
+//  return;
   computeError();
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
@@ -52,19 +52,9 @@ void SE3ProjectXYZPose::linearizeOplus() {
       -z, 0.f, x, 0.f, 1.f, 0.f,
       y, -x, 0.f, 0.f, 0.f, 1.f;
   _jacobianOplusXi = projection_jacobian * se3_jacobian;
-
   _jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
-//  Eigen::Matrix<double, 2, 6> jacobianOplusXi = projection_jacobian * se3_jacobian;
-//  Eigen::Matrix<double, 2, 3> jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
-//  if (pose->fixed())
-//    jacobianOplusXi.setZero();
-//
-//
-//  std::cout << jacobianOplusXi << std::endl;
-//  std::cout << _jacobianOplusXi << std::endl;
-//  std::cout << jacobianOplusXj << std::endl;
-//  std::cout << _jacobianOplusXj << std::endl;
 }
+
 bool SE3ProjectXYZPose::IsValid() const {
   return IsDepthPositive() && chi2() < threshold_;
 }

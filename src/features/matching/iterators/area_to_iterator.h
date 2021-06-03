@@ -35,9 +35,10 @@ class AreaToIterator {
   AreaToPointee * operator->() { return &pointee_; }
 
   AreaToIterator & operator++() {
-    if (pointee_.id_ >= descriptor_count_)
-      return *this;
-    ++pointee_.id_;
+    do{
+      ++pointee_.id_;
+    } while (pointee_.id_ < descriptor_count_ && !pointee_.IsValid());
+
     pointee_.InitializeIterators();
     return *this;
   }

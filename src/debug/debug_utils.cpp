@@ -3,6 +3,7 @@
 //
 
 #include "debug_utils.h"
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace debug {
@@ -84,7 +85,7 @@ cv::Mat DrawMatches(const string & filename_to,
   return result;
 }
 
-void DrawCommonMapPoints(const string & filename1,
+char DrawCommonMapPoints(const string & filename1,
                          const string & filename2,
                          frame::monocular::BaseMonocular * frame1,
                          frame::monocular::BaseMonocular * frame2) {
@@ -129,12 +130,13 @@ void DrawCommonMapPoints(const string & filename1,
     cv::circle(match_image, projected_key_point1, 3, cv::Scalar(0, 255, 255));
     cv::circle(match_image, projected_key_point2, 3, cv::Scalar(0, 255, 255));
 
-    cv::imshow("Match", match_image);
+    cv::imshow("MatchWithIterators", match_image);
     char key = cv::waitKey();
     if ('c' == key)
-      return;
+      return key;
     std::cout << key << std::endl;
   }
+  return '[';
 }
 
 cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame) {
@@ -142,7 +144,7 @@ cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular *
   for (auto mp_id: frame->GetMapPoints()) {
     auto kp = frame->GetFeatures().keypoints[mp_id.first];
     cv::Point2f pt(kp.X(), kp.Y());
-    cv::circle(image, pt, 3, cv::Scalar(0, 255, 0));
+    cv::circle(image, pt, 4, cv::Scalar(0, 255, 0));
   }
   return image;
 }

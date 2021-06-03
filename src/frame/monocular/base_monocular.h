@@ -5,74 +5,61 @@
 #ifndef ORB_SLAM3_SRC_FRAME_MONOCULAR_BASE_MONOCULAR_H_
 #define ORB_SLAM3_SRC_FRAME_MONOCULAR_BASE_MONOCULAR_H_
 
+/// === stl ====
 #include <mutex>
+#include <unordered_set>
 
+
+// === orb_slam3 ===
 #include <features/features.h>
-#include <map/map_point.h>
+#include <geometry/pose.h>
 
 namespace orb_slam3 {
+
 namespace camera {
 class MonocularCamera;
 }
+
+namespace features {
+class IFeatureExtractor;
+}
+
+namespace map {
+class MapPoint;
+}
+
 namespace frame {
+class VisibleMapPoint;
+
 namespace monocular {
 
 class BaseMonocular {
+
  public:
   typedef std::map<size_t, map::MapPoint *> MonocularMapPoints;
-  BaseMonocular(size_t image_width, size_t image_height,
-                const camera::MonocularCamera * camera)
-      : features_(image_width, image_height),
-        camera_(camera) {}
+  explicit BaseMonocular(const camera::MonocularCamera * camera);
 
-  BaseMonocular(const BaseMonocular & other)
-      : map_points_(other.map_points_),
-        features_(other.features_),
-        camera_(other.camera_),
-        map_point_mutex_() {
-
-  }
+  BaseMonocular(const BaseMonocular & other);
   virtual ~BaseMonocular() = default;
  public:
-  void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
-    std::unique_lock<std::mutex> lock(map_point_mutex_);
-    for (auto mp_id: map_points_) {
-      if (!mp_id.second->IsBad()) {
-        out_map_points.insert(mp_id.second);
-      }
-    }
-  }
-
-  MonocularMapPoints GetMapPoints() const {
-    std::unique_lock<std::mutex> lock(map_point_mutex_);
-    std::map<size_t, map::MapPoint *> result;
-    std::copy_if(map_points_.begin(),
-                 map_points_.end(),
-                 std::inserter(result, result.begin()),
-                 [](const std::pair<size_t, map::MapPoint *> & mp_id) { return !mp_id.second->IsBad(); });
-    return result;
-  }
+  void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const;
+  MonocularMapPoints GetMapPoints() const;
 
   const features::Features & GetFeatures() const { return features_; }
   const camera::MonocularCamera * GetCamera() const { return camera_; }
   void ComputeBow() { features_.ComputeBow(); }
-  void AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
-    assert(!MapPointExists(map_point));
-//    assert(map_points_.find(feature_id) == map_points_.end());
-    map_points_[feature_id] = map_point;
-  }
-  void EraseMapPoint(size_t feature_id) {
-    assert(map_points_.find(feature_id) != map_points_.end());
-    map_points_.erase(feature_id);
-  }
-
-  bool MapPointExists(const map::MapPoint * map_point) const {
-    for (auto mp: map_points_)
-      if (mp.second == map_point)
-        return true;
-    return false;
-  }
+  void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
+  void EraseMapPoint(size_t feature_id);
+  bool MapPointExists(const map::MapPoint * map_point) const;
  protected:
+  bool IsVisible(map::MapPoint * map_point,
+                 VisibleMapPoint & out_map_point,
+                 precision_t radius_multiplier,
+                 unsigned int window_size,
+                 int level ,
+                 const geometry::Pose & pose,
+                 const geometry::Pose & inverse_position,
+                 const features::IFeatureExtractor * feature_extractor) const;
   MonocularMapPoints map_points_;
   features::Features features_;
  private:

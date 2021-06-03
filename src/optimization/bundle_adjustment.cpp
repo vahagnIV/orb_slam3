@@ -1,6 +1,8 @@
 //
 // Created by vahagn on 08.05.21.
 //
+#include <g2o/solvers/eigen/linear_solver_eigen.h>
+
 
 #include "bundle_adjustment.h"
 #include <map/map_point.h>
@@ -20,7 +22,7 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
                       bool robust) {
 
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer(optimizer);
+  InitializeOptimizer<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
   std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
@@ -47,7 +49,7 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   for (auto mp_vertex: mp_map) {
     if (nullptr == loop_kf || loop_kf->IsInitial()) {
       mp_vertex.first->SetPosition(mp_vertex.second->estimate());
-      mp_vertex.first->UpdateNormalAndDepth();
+      mp_vertex.first->Refresh((*key_frames.begin())->GetFeatureExtractor());
     } else {
       std::runtime_error("BA not implemented for Loop closing");
     }
@@ -59,7 +61,7 @@ void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
                            frame::BaseFrame::MapPointSet & local_map_points,
                            bool * stop_flag) {
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer(optimizer);
+  InitializeOptimizer<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
   std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
@@ -71,7 +73,7 @@ void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
   optimizer.setForceStopFlag(stop_flag);
   optimizer.optimize(5);
   if (!stop_flag || !*stop_flag)
-    optimizer.optimize(5);
+    optimizer.optimize(10);
 
   size_t edge_count = optimizer.edges().size();
   std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;

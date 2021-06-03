@@ -31,7 +31,7 @@ class Frame : public BaseFrame {
   virtual bool IsValid() const = 0;
   virtual bool Link(Frame * other) = 0;
   virtual bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) = 0;
-  virtual bool EstimatePositionByProjectingMapPoints(const list<VisibleMapPoint> & filtered_map_points) = 0;
+  virtual bool EstimatePositionByProjectingMapPoints(Frame * frame, list<VisibleMapPoint> & out_visibles) = 0;
   virtual KeyFrame * CreateKeyFrame() = 0;
   virtual void OptimizePose() = 0;
   virtual size_t GetMapPointCount() const = 0;
@@ -41,6 +41,7 @@ class Frame : public BaseFrame {
                               unsigned fixed_window_size = 0) const = 0;
 
   virtual void SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points) = 0;
+  virtual void UpdateFromReferenceKeyFrame() = 0;
  private:
   static size_t next_id_;
 

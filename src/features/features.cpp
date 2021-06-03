@@ -8,82 +8,54 @@
 namespace orb_slam3 {
 namespace features {
 
-Features::Features(size_t image_width, size_t image_height)
-    : image_width_(image_width), image_height_(image_height), grid_element_width_inv_(
-    static_cast<precision_t >(constants::FRAME_GRID_COLS) / image_width), grid_element_height_inv_(
-    static_cast<precision_t >(constants::FRAME_GRID_ROWS) / image_height) {
-
+Features::Features(const camera::MonocularCamera * camera)
+    : camera_(camera),
+      grid_element_width_inv_(static_cast<precision_t >(constants::FRAME_GRID_COLS)
+                                  / (camera->ImageBoundMaxX() - camera->ImageBoundMinX())),
+      grid_element_height_inv_(static_cast<precision_t >(constants::FRAME_GRID_ROWS)
+                                   / (camera->ImageBoundMaxY() - camera->ImageBoundMinY())) {
 }
 
-void Features::ListFeaturesInArea(const precision_t & x,
-                                  const precision_t & y,
+void Features::ListFeaturesInArea(const TPoint2D & point,
                                   const size_t & window_size,
                                   const int & minLevel,
                                   const int & maxLevel,
                                   std::vector<size_t> & out_idx) const {
   out_idx.clear();
-
-  const precision_t min_X = 0;
-  const precision_t min_Y = 0;
-
   out_idx.reserve(keypoints.size());
 
-  float factorX = window_size;
-  float factorY = window_size;
+  size_t min_cell_x, min_cell_y, max_cell_x, max_cell_y;
 
-  /*cout << "fX " << factorX << endl;
-  cout << "fY " << factorY << endl;*/
-
-  const size_t nMinCellX =
-      std::max(0, (int) floor((x - min_X - factorX) * grid_element_width_inv_));
-  if (nMinCellX >= constants::FRAME_GRID_COLS) {
-    return;
-  }
-
-  const int nMaxCellX =
-      std::min((int) constants::FRAME_GRID_COLS - 1,
-               (int) ceil((x - min_X + factorX) * grid_element_width_inv_));
-  if (nMaxCellX < 0) {
-    return;
-  }
-
-  const size_t nMinCellY =
-      std::max(0, (int) floor((y - min_Y - factorY) * grid_element_height_inv_));
-  if (nMinCellY >= constants::FRAME_GRID_ROWS) {
-    return;
-  }
-
-  const int nMaxCellY =
-      std::min((int) constants::FRAME_GRID_ROWS - 1,
-               (int) ceil((y - min_Y + factorY) * grid_element_height_inv_));
-  if (nMaxCellY < 0) {
-    return;
-  }
+  PosInGrid(TPoint2D{point.x() - window_size, point.y() - window_size}, min_cell_x, min_cell_y);
+  PosInGrid(TPoint2D{point.x() + window_size, point.y() + window_size}, max_cell_x, max_cell_y);
 
   const bool bCheckLevels = (minLevel > 0) || (maxLevel >= 0);
 
-  for (int ix = nMinCellX; ix <= nMaxCellX; ix++) {
-    for (int iy = nMinCellY; iy <= nMaxCellY; iy++) {
-      const std::vector<size_t> & vCell = grid[ix][iy];
-      if (vCell.empty())
+  for (size_t ix = min_cell_x; ix <= max_cell_x; ix++) {
+    for (size_t iy = min_cell_y; iy <= max_cell_y; iy++) {
+      const std::vector<size_t> & cell = grid[ix][iy];
+      if (cell.empty())
         continue;
 
-      for (size_t j = 0, jend = vCell.size(); j < jend; j++) {
-        const KeyPoint & kpUn = keypoints[vCell[j]];
+      for (size_t j = 0; j < cell.size(); j++) {
+//      for (size_t j = 0; j < keypoints.size(); j++) {
+        const KeyPoint & candidate_keypoint = undistorted_keypoints[cell[j]];
+//        const KeyPoint & candidate_keypoint = undistorted_keypoints[j];
+        const int & level = keypoints[cell[j]].level;
+//        const int & level = keypoints[j].level;
 
         if (bCheckLevels) {
-          if (kpUn.level < minLevel)
+          if (level < minLevel)
             continue;
-          if (maxLevel >= 0)
-            if (kpUn.level > maxLevel)
-              continue;
+          if (maxLevel >= 0 && level > maxLevel)
+            continue;
         }
 
-        const float distance_x = kpUn.pt[0] - x;
-        const float distance_y = kpUn.pt[1] - y;
+        const precision_t distance_x = candidate_keypoint.pt.x() - point.x();
+        const precision_t distance_y = candidate_keypoint.pt.y() - point.y();
 
-        if (fabs(distance_x) < factorX && fabs(distance_y) < factorY)
-          out_idx.push_back(vCell[j]);
+        if (std::abs(distance_x) < window_size && std::abs(distance_y) < window_size)
+          out_idx.push_back(cell[j]);
       }
     }
   }
@@ -91,44 +63,47 @@ void Features::ListFeaturesInArea(const precision_t & x,
 }
 
 void Features::AssignFeaturesToGrid() {
-  const precision_t min_X = 0;
-  const precision_t min_Y = 0;
-
-  for (size_t i = 0; i < keypoints.size(); i++) {
-    const TPoint2D & kp = keypoints[i].pt;
+  for (size_t i = 0; i < undistorted_keypoints.size(); i++) {
     size_t pos_X, pos_Y;
-    if (PosInGrid(kp, min_X, min_Y, pos_X, pos_Y)) {
+    if (PosInGrid(undistorted_keypoints[i], pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);
     }
   }
+
+//  for (int j = 0; j < constants::FRAME_GRID_ROWS; ++j) {
+//    for (int i = 0; i < constants::FRAME_GRID_COLS; ++i) {
+//      std::cout << grid[i][j].size() << " \t";
+//    }
+//    std::cout << std::endl;
+//  }
 }
 
 bool Features::PosInGrid(const TPoint2D & kp,
-                         const precision_t & min_X,
-                         const precision_t & min_Y,
                          size_t & posX,
                          size_t & posY) const {
-  if (kp[0] < min_X || kp[1] < min_Y)
-    return false;
+  posX = 0;
+  posY = 0;
+  return true;
 
-  posX = round((kp[0] - min_X) * grid_element_width_inv_);
-  posY = round((kp[1] - min_Y) * grid_element_height_inv_);
+  precision_t x = std::max(kp.x(), camera_->ImageBoundMinX());
+  x = std::min(x, camera_->ImageBoundMaxX());
+  precision_t y = std::max(kp.y(), camera_->ImageBoundMinY());
+  y = std::min(y, camera_->ImageBoundMaxY());
 
-  //Keypoint's coordinates are undistorted, which could cause to go out of the image
-  if (posX >= constants::FRAME_GRID_COLS || posY >= constants::FRAME_GRID_ROWS)
-    return false;
+  posX = std::min(constants::FRAME_GRID_COLS - 1,
+                  static_cast<size_t>((x - camera_->ImageBoundMinX()) * grid_element_width_inv_));
+  posY = std::min(constants::FRAME_GRID_ROWS - 1,
+                  static_cast<size_t>((y - camera_->ImageBoundMinY()) * grid_element_height_inv_));
 
   return true;
 }
 
-void Features::UndistortKeyPoints(const camera::MonocularCamera * camera) {
+void Features::UndistortKeyPoints() {
   undistorted_and_unprojected_keypoints.resize(keypoints.size());
-  unprojected_keypoints.resize(keypoints.size());
+  undistorted_keypoints.resize(keypoints.size());
   for (size_t i = 0; i < undistorted_and_unprojected_keypoints.size(); ++i) {
-    camera->UnprojectPoint(keypoints[i].pt, unprojected_keypoints[i]);
-    if(!camera->GetDistortionModel()->UnDistortPoint(unprojected_keypoints[i], undistorted_and_unprojected_keypoints[i])){
-      undistorted_and_unprojected_keypoints[i] = unprojected_keypoints[i];
-    }
+    camera_->UndistortPoint(keypoints[i].pt, undistorted_keypoints[i]);
+    camera_->UnprojectPoint(undistorted_keypoints[i], undistorted_and_unprojected_keypoints[i]);
   }
 }
 

@@ -21,16 +21,11 @@ add_subdirectory(${CMAKE_BINARY_DIR}/test/googletest-src
         EXCLUDE_FROM_ALL)
 
 set(ALL_TEST_SOURCE_FILES
-        mock/mock_frame_base.h
         mock/mock_feature_extractor.h
         features/feature_tests.cpp
-        features/feature_tests.h
-        features/projection_search_iterator_tests.h
-        features/projection_search_iterator_tests.cpp
+        features/fish_eye_tests.cpp
+        features/bow_match_iterator_tests.cpp
         frame/monocular_frame_tests.cpp
-        frame/monocular_frame_tests.h
-        frame/frame_base_tests.h
-        frame/frame_base_tests.cpp
         geometry/homography_estimator_tests.h
         geometry/homography_estimator_tests.cpp
         geometry/essential_estimator_tests.cpp
@@ -39,8 +34,8 @@ set(ALL_TEST_SOURCE_FILES
         geometry/general_geometry_tests.h
         geometry/utils_tests.h
         geometry/utils_tests.cpp
-        geometry/test_utils.cpp
-        geometry/test_utils.h)
+        test_utils.cpp
+        test_utils.h)
 add_executable(orb_slam_unit_tests ${ALL_TEST_SOURCE_FILES})
 target_link_libraries(orb_slam_unit_tests orbslam gmock gmock_main)
 

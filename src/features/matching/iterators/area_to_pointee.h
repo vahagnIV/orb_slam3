@@ -23,7 +23,10 @@ class AreaToPointee : public VectorFromPointee {
  public:
   typedef VectorFromIterator<std::size_t> iterator;
   AreaToPointee() = default;
-  AreaToPointee(VectorFromPointee::id_type id, const Features * features_to, const Features * features_from, size_t window_size)
+  AreaToPointee(VectorFromPointee::id_type id,
+                const Features * features_to,
+                const Features * features_from,
+                size_t window_size)
       : VectorFromPointee(&features_to->descriptors, id),
         features_to_(features_to),
         features_from_(features_from),
@@ -38,15 +41,16 @@ class AreaToPointee : public VectorFromPointee {
   }
  private:
   void InitializeIterators() {
-    features_from_->ListFeaturesInArea(features_to_->keypoints[id_].X(),
-                                       features_to_->keypoints[id_].Y(),
-                                       window_size_, 0, 0,
-
-//                                       features_to_->keypoints[id_].level ,
-//                                       features_to_->keypoints[id_].level ,
+    features_from_->ListFeaturesInArea(features_to_->undistorted_keypoints[id_],
+                                       window_size_,
+                                       0,
+                                       0,
                                        from_indices_);
     end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), nullptr);
     begin_iterator_ = iterator(from_indices_.begin(), from_indices_.end(), &features_from_->descriptors);
+  }
+  bool IsValid(){
+    return features_to_->keypoints[id_].level == 0;
   }
   const Features * features_to_;
   const Features * features_from_;

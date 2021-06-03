@@ -36,8 +36,8 @@ double DoubleRand(double fMin, double fMax) {
   return fMin + f * (fMax - fMin);
 }
 
-TPoint2D GenerateRandom2DPoint(double max_x, double max_y) {
-  return orb_slam3::TPoint2D{DoubleRand(0, max_x), DoubleRand(0, max_y)};
+TPoint2D GenerateRandom2DPoint(double min_x, double min_y, double max_x, double max_y) {
+  return orb_slam3::TPoint2D{DoubleRand(min_x, max_x), DoubleRand(min_y, max_y)};
 }
 
 HomogenousPoint GenerateRandomHomogenousPoint(double max_x, double max_y) {
@@ -87,6 +87,18 @@ void GenerateRandomSubset(const size_t min,
 //    chosen.insert(rand() % (max ));
 //  }
   std::copy(chosen.begin(), chosen.end(), std::back_inserter(out_result));
+}
+
+camera::MonocularCamera * CreateSampleCamera() {
+  const unsigned image_width = 640;
+  const unsigned image_height = 480;
+  auto camera = new camera::MonocularCamera(image_width, image_height);
+  camera->SetFx(800);
+  camera->SetCx(image_width / 2);
+  camera->SetFy(800);
+  camera->SetCy(image_height / 2);
+  camera->ComputeImageBounds();
+  return camera;
 }
 
 }

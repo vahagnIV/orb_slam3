@@ -15,22 +15,30 @@ class MonocularFrame;
 class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   friend class MonocularFrame;
  private:
-  MonocularKeyFrame(MonocularFrame * frame);
+  explicit MonocularKeyFrame(MonocularFrame * frame);
  public:
-  virtual ~MonocularKeyFrame() = default;
-
+  ~MonocularKeyFrame() override = default;
+  bool IsVisible(map::MapPoint * map_point,
+                 VisibleMapPoint & out_map_point,
+                 precision_t radius_multiplier,
+                 unsigned int window_size) const ;
  public:
-  void CreateNewMapPoints(frame::KeyFrame * other) override;
+  void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
   void ComputeBow() override;
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
+  void FuseMapPoints(MapPointSet & map_points) override;
+  void EraseMapPoint(Observation & obs) override;
+  void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
  private:
   static bool BaseLineIsEnough(const MapPointSet & others_map_points,
                                const geometry::Pose & local_pose,
                                const geometry::Pose & others_pose);
   static precision_t ComputeBaseline(const geometry::Pose & local_pose, const geometry::Pose & others_pose);
   static precision_t ComputeSceneMedianDepth(const MapPointSet & map_points, unsigned q, const geometry::Pose & pose);
+ private:
+  void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<VisibleMapPoint> & out_visibles);
 
 };
 

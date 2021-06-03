@@ -20,13 +20,12 @@ class MapPoint;
 namespace frame {
 class KeyFrame;
 
-class Observation  {
+class Observation {
  public:
-  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids) ;
-  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right) ;
+  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids);
+  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right);
 
-// Observation & operator=(const Observation & other);
-
+  virtual ~Observation() = default;
   /*!
    * Creates a g2o edge for bundle adjustment
    * @return g2o edge with set vertices
@@ -37,7 +36,7 @@ class Observation  {
    * Create a g2o edge for pose optimization
    * @return g2o edge with set vertex
    */
-  optimization::edges::BAUnaryEdge *CreateEdge() const;
+  optimization::edges::BAUnaryEdge * CreateEdge() const;
 
   /*!
    * Getter for the corresponding frame
@@ -50,6 +49,7 @@ class Observation  {
    * @return
    */
   map::MapPoint * GetMapPoint() { return map_point_; }
+  void SetMapPoint(map::MapPoint * map_point) { map_point_ = map_point; }
 
   /*!
    * Appends the descriptors that correspond to the map_point and frame to the list
@@ -57,13 +57,14 @@ class Observation  {
    * @param out_descriptor_ptr The vector to which the descriptors will be appended
    */
   virtual void AppendDescriptorsToList(std::vector<features::DescriptorType> & out_descriptor_ptr) const;
+  const std::vector<std::size_t> GetFeatutreIds() const;
 
   /*!
    * Creates a robust kernel for optimization
    * @return The pointer for the newly created kernel
    */
   virtual g2o::RobustKernel * CreateRobustKernel();
-  virtual ~Observation() = default;
+
  protected:
   bool IsMonocular() const;
   map::MapPoint * map_point_;

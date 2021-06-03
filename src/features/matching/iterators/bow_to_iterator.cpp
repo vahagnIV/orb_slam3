@@ -10,12 +10,9 @@ namespace matching {
 namespace iterators {
 
 BowToIterator & BowToIterator::operator++() {
+  assert(it_ != end_it_);
   ++it_;
-  // If to_map_points_exist_ is true, we should skip all
-  // ids that do not correspond to a map point.
-  while (map_points_to_ && it_ != end_it_
-      && (to_map_points_exist_ ^ (map_points_to_->find(*it_) != map_points_to_->end())))
-    ++it_;
+  AdvanceUntilValidIterator();
 
   if (it_ != end_it_) {
     pointee_.SetId(*it_);
@@ -26,28 +23,32 @@ BowToIterator & BowToIterator::operator++() {
   if (bow_it_from_ != bow_end_from_)
     ++bow_it_from_;
   AdvanceUntilSameNode();
-
-
   return *this;
+}
+
+void BowToIterator::AdvanceUntilValidIterator() {
+  // If to_map_points_exist_ is true, we should skip all
+  // ids that do not correspond to a map point.
+  while (it_ != end_it_ && map_points_to_
+      && (to_map_points_exist_
+          ^ (map_points_to_->find(*it_) != map_points_to_->end() && !map_points_to_->find(*it_)->second->IsBad())))
+    ++it_;
 }
 
 void BowToIterator::AdvanceUntilSameNode() {
   while (bow_it_to_ != bow_end_to_ && bow_it_from_ != bow_end_from_) {
-
     if (bow_it_to_->first == bow_it_from_->first) {
       it_ = bow_it_to_->second.begin();
       end_it_ = bow_it_to_->second.end();
-      while (map_points_to_ && it_ != end_it_
-          && (to_map_points_exist_ ^ (map_points_to_->find(*it_) != map_points_to_->end())))
-        ++it_;
-      if(it_ == end_it_) {
+      AdvanceUntilValidIterator();
+      if (it_ == end_it_) {
         ++bow_it_to_;
         ++bow_it_from_;
         continue;
       }
       pointee_.SetBowId(bow_it_to_->first);
       pointee_.SetId(*it_);
-      break;
+      return;
     }
 
     if (bow_it_to_->first < bow_it_from_->first) {

@@ -7,15 +7,19 @@
 
 #include <unordered_set>
 
+#include <typedefs.h>
 #include "frame_type.h"
-#include "sensor_constants.h"
-#include <geometry/rigid_object.h>
 #include <features/ifeature_extractor.h>
+#include <geometry/rigid_object.h>
+#include "sensor_constants.h"
+#include "visible_map_point.h"
 
 namespace orb_slam3 {
-namespace map {
+
+namespace map{
 class MapPoint;
 }
+
 namespace frame {
 
 class BaseFrame : public geometry::RigidObject {

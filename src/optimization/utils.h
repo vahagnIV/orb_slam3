@@ -7,6 +7,8 @@
 
 // === g2o ===
 #include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
 
 // === orb_slam3 ===
 #include <frame/key_frame.h>
@@ -15,7 +17,14 @@
 namespace orb_slam3 {
 namespace optimization {
 
-void InitializeOptimizer(g2o::SparseOptimizer & optimizer);
+template<typename T>
+void InitializeOptimizer(g2o::SparseOptimizer & optimizer){
+  std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>  linearSolver(new T());
+  std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
+  auto solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+  optimizer.setAlgorithm(solver);
+  optimizer.setVerbose(true);
+}
 
 size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_frames,
                             g2o::SparseOptimizer & inout_optimizer,

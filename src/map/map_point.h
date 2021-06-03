@@ -9,10 +9,10 @@
 #include <mutex>
 
 // === orb-slam3 ===
-#include "../typedefs.h"
-#include "../features/features.h"
-#include "../features/ifeature_extractor.h"
-#include "../frame/observation.h"
+#include <typedefs.h>
+#include <features/features.h>
+#include <features/ifeature_extractor.h>
+#include <frame/observation.h>
 
 namespace orb_slam3 {
 
@@ -66,6 +66,9 @@ class MapPoint {
   void SetBad();
   ~MapPoint();
 
+  void SetReplaced(map::MapPoint * replaced);
+  map::MapPoint * GetReplaced();
+
   void UpdateNormalAndDepth();
  private:
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
@@ -76,8 +79,10 @@ class MapPoint {
   MapType observations_;
   features::DescriptorType descriptor_;
   TVector3D normal_;
+ public:
   precision_t max_invariance_distance_;
   precision_t min_invariance_distance_;
+ private:
   unsigned visible_;
   unsigned found_;
   bool bad_flag_;
@@ -88,6 +93,7 @@ class MapPoint {
 
   // Mutex for locking position
   std::mutex position_mutex_;
+  map::MapPoint * replaced_map_point_;
 
 };
 

@@ -14,33 +14,29 @@ void MonocularCamera::UnprojectPoint(const TPoint2D & point, HomogenousPoint & u
 }
 
 void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
-  double z_inv = 1 / point[2];
-  projected << point[0] * z_inv * Fx() + Cx(), point[1] * z_inv * Fy() + Cy();
+  double z_inv = 1 / point.z();
+  projected << point.x() * z_inv * Fx() + Cx(), point.y() * z_inv * Fy() + Cy();
 }
 
 bool MonocularCamera::UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const {
   HomogenousPoint unorojected_tmp;
   UnprojectPoint(point, unorojected_tmp);
-  return distortion_model_->UnDistortPoint(unorojected_tmp, unprojected);
-}
-
-TPoint2D MonocularCamera::Map(const TPoint3D & point3d) const {
-
-  // TODO: rethink definition
-  double z_inv = 1 / point3d[2];
-  TPoint3D distorted;
-  distortion_model_->DistortPoint(TPoint3D{point3d[0] * z_inv, point3d[2] * z_inv, 1}, distorted);
-
-  TPoint2D result;
-  ProjectPoint(distorted, result);
-  return result;
+  if(distortion_model_)
+    return distortion_model_->UnDistortPoint(unorojected_tmp, unprojected);
+  unprojected = unorojected_tmp;
+  return true;
 }
 
 bool MonocularCamera::UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const {
+  if (!distortion_model_) {
+    undistorted_point = point;
+    return true;
+  }
   TPoint3D unprojected, undistorted;
   UnprojectPoint(point, unprojected);
   if (!distortion_model_->UnDistortPoint(unprojected, undistorted))
     return false;
+
   ProjectPoint(undistorted, undistorted_point);
   return true;
 }
@@ -56,16 +52,24 @@ bool MonocularCamera::DistortPoint(const TPoint2D & undistorted, TPoint2D & dist
 }
 
 void MonocularCamera::ComputeImageBounds() {
-  TPoint2D top_left{0, 0}, top_right{width_ - 1, 0}, bottom_left{height_ - 1, 0}, bottom_right{width_ - 1, height_ - 1};
+  TPoint2D top_left{0, 0}, top_right{width_, 0}, bottom_left{height_, 0}, bottom_right{width_, height_};
   UndistortPoint(top_left, top_left);
   UndistortPoint(top_right, top_right);
   UndistortPoint(bottom_left, bottom_left);
   UndistortPoint(bottom_right, bottom_right);
 
-  max_X_ = std::max(top_right[0], bottom_right[0]);
-  max_Y_ = std::max(bottom_left[1], bottom_right[1]);
-  min_X_ = std::min(top_right[0], top_left[0]);
-  min_Y_ = std::max(top_left[1], bottom_left[1]);
+  TPoint2D test;
+  DistortPoint(top_left, test);
+  std::cout << test << std::endl;
+
+  max_X_ = std::max(top_right.x(), bottom_right.x());
+  max_Y_ = std::max(bottom_left.y(), bottom_right.y());
+  min_X_ = std::min(top_left.x(), bottom_left.x());
+  min_Y_ = std::min(top_left.y(), top_left.y());
+//  max_X_ = 570;
+//  max_Y_ = 570;
+//  min_X_ = -45;
+//  min_Y_ = -45;
 }
 
 void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianType & out_jacobian) const {
@@ -75,8 +79,8 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
   const double z_inv = 1 / z;
   const double z_inv2 = z_inv * z_inv;
   ProjectionJacobianType projection_jacobian;
-  projection_jacobian << z_inv, 0, -x * z_inv2,
-      0, z_inv, -y * z_inv2;
+  projection_jacobian << Fx() * z_inv, 0, -x * z_inv2 * Fx(),
+      0, z_inv * Fy(), -y * z_inv2 * Fy();
   IDistortionModel::JacobianType distortion_jacobian;
   TPoint2D projected;
   projected << x * z_inv, y * z_inv;
@@ -87,12 +91,16 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
 void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const {
   double z_inv = 1 / point.z();
   TPoint3D p{point.x() * z_inv, point.y() * z_inv, 1}, projected;
-  distortion_model_->DistortPoint(p, projected);
+  if(distortion_model_)
+    distortion_model_->DistortPoint(p, projected);
+  else
+    projected = p;
   out_projected << projected.x() * Fx() + Cx(), projected.y() * Fy() + Cy();
 }
 
 bool MonocularCamera::IsInFrustum(const TPoint2D & distorted) const {
-  return distorted.x() > min_X_ && distorted.x() < max_X_ && distorted.y() > min_Y_ && distorted.y() < max_Y_;
+  return distorted.x() >= 0 && distorted.x() < width_ && distorted.y() >= 0 && height_;
+//  return distorted.x() >= min_X_ && distorted.x() < max_X_ && distorted.y() >= min_Y_ && distorted.y() < max_Y_;
 }
 
 }

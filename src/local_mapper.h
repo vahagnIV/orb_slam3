@@ -23,17 +23,20 @@ class LocalMapper : public PositionObserver,
   void Start();
   void Stop();
   void MapPointCulling(frame::KeyFrame * keyframe);
+  void KeyFrameCulling(frame::KeyFrame * keyframe);
   void RunIteration();
  private:
   void Run();
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
   bool CheckNewKeyFrames() const;
+  void CreateNewMapPoints(frame::KeyFrame * key_frame);
  private:
   static void FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
                                   frame::KeyFrame::MapPointSet & local_map_points,
-                                  std::unordered_set<frame::KeyFrame *> & out_fixed) ;
-  static void CreateNewMapPoints(frame::KeyFrame * key_frame) ;
+                                  std::unordered_set<frame::KeyFrame *> & out_fixed);
   static void Optimize(frame::KeyFrame * frame);
+  static void ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out);
+  static void FuseMapPoints(frame::KeyFrame * frame);
 
  private:
   std::unordered_set<map::MapPoint *> recently_added_map_points_;

@@ -23,7 +23,8 @@ MapPoint::MapPoint(TPoint3D point,
       visible_(1),
       found_(1),
       bad_flag_(false),
-      first_observed_frame_id_(first_observed_frame_id) {
+      first_observed_frame_id_(first_observed_frame_id),
+      replaced_map_point_(nullptr) {
   ++counter_;
 }
 
@@ -31,15 +32,30 @@ MapPoint::~MapPoint() {
   --counter_;
 }
 
+void MapPoint::SetReplaced(map::MapPoint * replaced) {
+  auto ob = Observations();
+  SetBad();
+  for(auto & obs: ob){
+    obs.first->ReplaceMapPoint(replaced, obs.second);
+  }
+  replaced_map_point_ = replaced;
+}
+
+map::MapPoint * MapPoint::GetReplaced() {
+  return replaced_map_point_;
+}
+
 void MapPoint::AddObservation(const frame::Observation & observation) {
   observations_.emplace(observation.GetKeyFrame(), observation);
-//  observations_[observation.GetKeyFrame()] = observation;
+//  observations_.insert(std::make_pair(observation.GetKeyFrame(), observation));
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
   std::unique_lock<std::mutex> lock(feature_mutex_);
-  observations_.erase(frame);
-  if(observations_.size() < 2) {
+  auto it = observations_.find(frame);
+  frame->EraseMapPoint(it->second);
+  observations_.erase(it);
+  if (observations_.size() < 2) {
     SetBad();
   }
 }
@@ -47,6 +63,10 @@ void MapPoint::EraseObservation(frame::KeyFrame * frame) {
 void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
+  for(auto & obs: observations_){
+    obs.first->EraseMapPoint(obs.second);
+  }
+  observations_.clear();
 
 }
 

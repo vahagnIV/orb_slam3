@@ -28,7 +28,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                        std::unordered_map<std::size_t, TPoint3D> & out_points) const {
 
   std::vector<std::vector<size_t>> random_match_subset_idx;
-  GenerateRandomSubsets(0, matches.size(), 8, number_of_ransac_iterations_, matches, random_match_subset_idx);
+  GenerateRandomSubsets(0, matches.size(), 12, number_of_ransac_iterations_, matches, random_match_subset_idx);
 
   precision_t h_score;
   precision_t f_score;
@@ -53,7 +53,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                         h_score);
 
   if (h_score > f_score) {
-    std::cout << "Homography: \n" << homography << std::endl;
+    std::cout << "Homography" << std::endl;
     return homography_matrix_estimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,
@@ -61,7 +61,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                  out_points,
                                                  out_pose);
   }
-//  std::cout << "Essential: \n" << essential << std::endl;
+  std::cout << "Essential" << std::endl;
   return essential_matrix_estimator_.FindPose(essential,
                                               points_to,
                                               points_from,

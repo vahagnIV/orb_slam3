@@ -4,6 +4,7 @@
 
 // == orb-slam3 ===
 #include "kannala_brandt_5.h"
+#include <opencv2/opencv.hpp>
 
 namespace orb_slam3 {
 namespace camera {

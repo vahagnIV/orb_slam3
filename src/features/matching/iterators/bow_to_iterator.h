@@ -54,13 +54,23 @@ class BowToIterator {
 
   // TODO: implement correctly
   friend bool operator==(const BowToIterator & a, const BowToIterator & b) {
-    return a.bow_it_to_ == b.bow_it_to_;
+    if ((a.bow_it_to_ == a.bow_end_to_ || a.bow_it_from_ == a.bow_end_from_)
+            && (b.bow_it_to_ == b.bow_end_to_ || b.bow_it_from_ == b.bow_end_from_))
+      return true;
+    if ((a.bow_it_to_ == a.bow_end_to_ || a.bow_it_from_ == a.bow_end_from_)
+            || (b.bow_it_to_ == b.bow_end_to_ || b.bow_it_from_ == b.bow_end_from_)) {
+      return false;
+    }
+    return a.bow_it_to_ == b.bow_it_to_
+              && a.bow_end_from_ == b.bow_it_from_
+              && a.it_ == b.it_;
   }
   friend bool operator!=(const BowToIterator & a, const BowToIterator & b) {
-    return a.bow_it_to_ != b.bow_it_to_;
+    return !(a == b);
   }
  private:
   void AdvanceUntilSameNode();
+  void AdvanceUntilValidIterator();
  private:
 
   DBoW2::FeatureVector::const_iterator bow_it_to_;

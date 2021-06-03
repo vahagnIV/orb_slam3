@@ -59,19 +59,12 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   return max_covisible_key_frame;
 }
 
-bool Tracker::TrackWithMotionModel(frame::Frame * frame) {
+bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::VisibleMapPoint> & out_visibles) {
   if (!velocity_is_valid_)
     return false;
-  std::unordered_set<map::MapPoint *> all_candidate_map_points;
+//  std::unordered_set<map::MapPoint *> all_candidate_map_points;
   PredictAndSetNewFramePosition(frame);
-  last_frame_->ListMapPoints(all_candidate_map_points);
-  std::list<frame::VisibleMapPoint> visible_map_points;
-  frame->FilterVisibleMapPoints(all_candidate_map_points, visible_map_points, 1, 15);
-  if (frame->EstimatePositionByProjectingMapPoints(visible_map_points))
-    return true;
-  for (auto & vmp: visible_map_points)
-    vmp.window_size = 30;
-  return frame->EstimatePositionByProjectingMapPoints(visible_map_points);
+  return frame->EstimatePositionByProjectingMapPoints(last_frame_, out_visibles);
 
 }
 
@@ -80,30 +73,26 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
+int time_to_wait = 0;
+int mode = 7;
+
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
+  last_frame_->UpdateFromReferenceKeyFrame();
 
   assert(OK == state_);
   ++kf_counter;
 
-  bool tracked = (TrackWithMotionModel(frame) || TrackWithReferenceKeyFrame(frame));
+  std::list<frame::VisibleMapPoint> frame_visibles;
+  bool tracked = (TrackWithMotionModel(frame, frame_visibles) || TrackWithReferenceKeyFrame(frame));
 
   if (!tracked) {
     // TODO: go to relocalization
-    delete frame;
-    return TrackingResult::TRACKING_FAILED;
-  }
-
-  if(frame->GetMapPointCount() < 15){
-    // TODO: go to relocalization
-    delete frame;
-    return TrackingResult::TRACKING_FAILED;
-  }
-
-
-  if (frame->Id() - last_frame_->Id() == 1)
-    ComputeVelocity(frame, last_frame_);
-  else
     velocity_is_valid_ = false;
+    delete frame;
+    return TrackingResult::TRACKING_FAILED;
+  }
+  ComputeVelocity(frame, last_frame_);
+
 
 //  debug::DrawCommonMapPoints(frame->GetFilename(),
 //                             reference_keyframe_->GetFilename(),
@@ -133,20 +122,85 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->FilterVisibleMapPoints(local_map_points_except_current,
                                 visible_map_points,
                                 frame->GetSensorConstants()->projection_search_radius_multiplier);
-  for (auto & visible_map_point: visible_map_points)
-    visible_map_point.map_point->IncreaseVisible();
+  for (auto & vmp: visible_map_points)
+    vmp.map_point->IncreaseVisible();
+
+  logging::RetrieveLogger()->debug("Filtering visible map points: {} / {}",
+                                   visible_map_points.size(),
+                                   local_map_points_except_current.size());
 
   frame->SearchInVisiblePoints(visible_map_points);
-  frame->OptimizePose();
 
-  logging::RetrieveLogger()->debug("Local mp count {}", local_map_points_except_current.size());
-  cv::imshow("After SLMP",
-             debug::DrawMapPoints(frame->GetFilename(), dynamic_cast<frame::monocular::MonocularFrame *>(frame)));
-//  cv::waitKey();
+  frame->OptimizePose();
+//  if(frame->GetMapPointCount() < 30)
+//    return TrackingResult::TRACKING_FAILED;
+  // =======================debug ======================
+  cv::Mat image = cv::imread(frame->GetFilename());
+  auto fr = dynamic_cast<frame::monocular::MonocularFrame *> (frame);
+
+  if (mode & 1) {
+    for (auto vmp: frame_visibles) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
+    }
+    for (auto vmp: visible_map_points) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
+    }
+  }
+
+  if (mode & 2) {
+    for (auto mp: fr->GetMapPoints()) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 5, cv::Scalar(0, 255, 0));
+    }
+  }
+
+  if (mode & 4) {
+    for (auto mp: fr->GetBadMapPoints()) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 2, cv::Scalar(0, 0, 255));
+    }
+  }
+
+  char key = ']';
+  if (mode & 8) {
+    key = debug::DrawCommonMapPoints(fr->GetFilename(),
+                                     last_frame_->GetFilename(),
+                                     dynamic_cast<frame::monocular::MonocularFrame *>(fr),
+                                     dynamic_cast<frame::monocular::MonocularFrame *>(last_frame_));
+  }
+
+  std::cout << "Frame Position after SLMP " << frame->GetPosition() << std::endl;
+  logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
+  cv::imshow("After SLMP", image);
+
+  key = cv::waitKey(time_to_wait);
+  switch (key) {
+    case 'c':time_to_wait = !time_to_wait;
+      break;
+    case 'm':mode ^= 1;
+      break;
+    case 'v':mode ^= 2;
+      break;
+    case 'b':mode ^= 8;
+      break;
+
+  }
+
+  std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
+  for (auto mp: atlas_->GetCurrentMap()->GetAllMapPoints()) {
+    ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
+  }
+
+  //=====================================================
+
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
-  if (map_points.size() < 20)
-    return TrackingResult::TRACKING_FAILED;
   for (auto map_point: map_points)
     map_point->IncreaseFound();
 
@@ -171,7 +225,7 @@ void Tracker::ReplaceLastFrame(frame::Frame * frame) {
 }
 
 bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
-  bool need = frame->GetMapPointCount() > 20 && kf_counter >= 4;// && m.size() > 40;
+  bool need = kf_counter >= 4;// && m.size() > 40;
   if (need)
     kf_counter = 0;
 
@@ -185,6 +239,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
+    std::cout << "Position after linking " << frame->GetPosition() << std::endl;
 
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
     initial_key_frame->SetInitial(true);
@@ -199,13 +254,35 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->ListMapPoints(map_points);
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
+    std::cout << "Position after linking BA " << current_key_frame->GetPosition() << std::endl;
+    std::vector<precision_t> depths;
+    for (auto mp: map_points) {
+      current_map->AddMapPoint(mp);
+      depths.push_back(mp->GetPosition().z());
+    }
+
+    auto pose = current_key_frame->GetPosition();
+    pose.T /= depths[depths.size() / 2];
+    current_key_frame->SetPosition(pose);
+    frame->SetPosition(pose);
+
+    std::sort(depths.begin(), depths.end());
+    for (auto mp: map_points) {
+      TPoint3D pose = mp->GetPosition();
+      pose /= depths[depths.size() / 2];
+      mp->min_invariance_distance_ /= depths[depths.size() / 2];
+      mp->max_invariance_distance_ /= depths[depths.size() / 2];
+      mp->SetPosition(pose);
+      mp->Refresh(frame->GetFeatureExtractor());
+    }
 
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
 
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=initial_key_frame});
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
+
 
     // TODO: remove the following line in multithreading
     (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
@@ -226,7 +303,7 @@ TrackingResult Tracker::TrackInNotInitializedState(frame::Frame * frame) {
 //  frame->SetInitial(true);
   state_ = FIRST_IMAGE;
   last_frame_ = frame;
-  return TrackingResult::OK;
+  return TrackingResult::NEED_MORE_IMAGES;
 }
 
 TrackingResult Tracker::Track(frame::Frame * frame) {

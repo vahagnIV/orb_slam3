@@ -7,6 +7,7 @@
 #include "frame/key_frame.h"
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"
+#include <map/atlas.h>
 
 namespace orb_slam3 {
 
@@ -48,8 +49,9 @@ void LocalMapper::Stop() {
 }
 
 void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
+//  recently_added_map_points_.clear();
   size_t erased = recently_added_map_points_.size();
-  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end(); ) {
+  for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end();) {
     map::MapPoint * mp = *mp_it;
     if (mp->IsBad()) {
       mp_it = recently_added_map_points_.erase(mp_it);
@@ -57,10 +59,10 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
       mp->SetBad();
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2
-        && mp->GetObservationCount() < keyframe->GetSensorConstants()->max_mp_disappearance_count) {
+        && mp->GetObservationCount() < keyframe->GetSensorConstants()->min_mp_disappearance_count) {
       mp->SetBad();
       mp_it = recently_added_map_points_.erase(mp_it);
-    } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2) {
+    } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 3) {
       mp_it = recently_added_map_points_.erase(mp_it);
     } else {
       --erased;
@@ -97,8 +99,14 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   logging::RetrieveLogger()->debug("LM: covisible frame count: {}", covisible_frames.size());
 
   for (auto neighbour_keyframe: covisible_frames) {
-    key_frame->CreateNewMapPoints(neighbour_keyframe);
+    frame::KeyFrame::MapPointSet new_map_points;
+    key_frame->CreateNewMapPoints(neighbour_keyframe, new_map_points);
+    recently_added_map_points_.insert(new_map_points.begin(), new_map_points.end());
   }
+  frame::KeyFrame::MapPointSet map_points;
+  key_frame->ListMapPoints(map_points);
+  for (auto mp: map_points)
+    atlas_->GetCurrentMap()->AddMapPoint(mp);
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {
@@ -108,10 +116,10 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
-  if (fixed_keyframes.empty())
+  if (fixed_keyframes.size() < 2)
     return;
   optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
-  for(auto & kf: local_keyframes)
+  for (auto & kf: local_keyframes)
     kf->GetCovisibilityGraph().Update();
 
 }
@@ -155,7 +163,7 @@ void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_k
 }
 
 bool LocalMapper::CheckNewKeyFrames() const {
-  bool new_keyframes =  GetUpdateQueue().size_approx() > 0;
+  bool new_keyframes = GetUpdateQueue().size_approx() > 0;
   return new_keyframes;
 }
 
@@ -166,9 +174,63 @@ void LocalMapper::RunIteration() {
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);
     if (!CheckNewKeyFrames()) {
+      FuseMapPoints(message.frame);
       Optimize(message.frame);
+      KeyFrameCulling(message.frame);
     }
 //    NotifyObservers(message.frame);
+  }
+}
+
+void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out) {
+  std::unordered_set<frame::KeyFrame *> covisibles =
+      frame->GetCovisibilityGraph().GetCovisibleKeyFrames(frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
+  for (auto kf: covisibles) {
+    std::unordered_set<frame::KeyFrame *> second_covisibles = kf->GetCovisibilityGraph().GetCovisibleKeyFrames(20);
+    for (auto second_frame: second_covisibles) {
+      if (frame != second_frame && covisibles.find(kf) != covisibles.end())
+        out.insert(second_frame);
+    }
+  }
+}
+
+void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
+  std::unordered_set<frame::KeyFrame *> second_neighbours;
+  ListCovisiblesOfCovisibles(frame, second_neighbours);
+  std::unordered_set<map::MapPoint *> map_points;
+  frame->ListMapPoints(map_points);
+  for (auto kf: second_neighbours) {
+    kf->FuseMapPoints(map_points);
+  }
+  frame::KeyFrame::MapPointSet mps;
+  frame->ListMapPoints(mps);
+  for (auto mp:mps) {
+    if (!mp->IsBad())
+      mp->Refresh(frame->GetFeatureExtractor());
+  }
+  frame->GetCovisibilityGraph().Update();
+}
+
+void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
+  auto local_keyframes = keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  for (auto kf: local_keyframes) {
+    if (kf->IsInitial())
+      continue;
+    frame::KeyFrame::MapPointSet map_points;
+    kf->ListMapPoints(map_points);
+    int mobs = 0;
+    for (auto mp: map_points)
+      if (mp->GetObservationCount() >= 3)
+        ++mobs;
+    if (mobs > map_points.size() * 0.9) {
+      for (auto mp: map_points)
+        mp->EraseObservation(kf);
+      kf->SetBad();
+    }
+    for (auto mp : map_points) {
+      if (!mp->IsBad())
+        mp->Refresh(kf->GetFeatureExtractor());
+    }
   }
 
 }

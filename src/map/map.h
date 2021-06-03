@@ -17,12 +17,13 @@ class Map {
  public:
   void AddKeyFrame(frame::KeyFrame * frame);
   void SetInitialKeyFrame(frame::KeyFrame * frame);
-
+  void AddMapPoint(MapPoint * map_point);
+  std::unordered_set<MapPoint *> GetAllMapPoints();
+  std::unordered_set<frame::KeyFrame *> GetAllKeyFrames();
  private:
   std::unordered_set<frame::KeyFrame *> key_frames_;
   frame::KeyFrame * initial_keyframe_;
-
-
+  std::unordered_set<MapPoint *> map_points_;
 
 };
 }
