@@ -34,7 +34,7 @@ MapPoint::~MapPoint() {
 
 void MapPoint::SetReplaced(map::MapPoint * replaced) {
   auto ob = Observations();
-  for(auto & obs: ob){
+  for (auto & obs: ob) {
     obs.first->ReplaceMapPoint(replaced, obs.second);
   }
   SetBad();
@@ -52,16 +52,14 @@ void MapPoint::AddObservation(const frame::Observation & observation) {
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
   //std::unique_lock<std::mutex> lock(feature_mutex_); TODO
   auto it = observations_.find(frame);
+  assert(it != observations_.end());
   observations_.erase(it);
-  if (observations_.size() < 2) {
-    SetBad();
-  }
 }
 
 void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
-  while (! observations_.empty()) {
+  while (!observations_.empty()) {
     observations_.begin()->first->EraseMapPoint(this);
   }
 }

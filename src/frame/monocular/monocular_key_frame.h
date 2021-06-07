@@ -35,15 +35,17 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void FuseMapPoints(MapPointSet & map_points) override;
-  void EraseMapPoint(map::MapPoint *) override;
+  void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
 
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
   void EraseMapPoint(size_t feature_id) override;
   void SetBad() override;
-
  private:
+
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<VisibleMapPoint> & out_visibles);
+  void EraseMapPointImpl(const map::MapPoint *, bool check_bad);
+  void EraseMapPointImpl(size_t feature_id, bool check_bad) ;
 
  private:
   static bool BaseLineIsEnough(const MapPointSet & others_map_points,

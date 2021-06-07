@@ -49,6 +49,7 @@ class Observation {
    * @return
    */
   map::MapPoint * GetMapPoint() { return map_point_; }
+  const map::MapPoint * GetMapPoint() const { return map_point_; }
   void SetMapPoint(map::MapPoint * map_point) { map_point_ = map_point; }
 
   /*!
