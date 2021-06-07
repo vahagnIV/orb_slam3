@@ -223,8 +223,6 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       if (mp->GetObservationCount() >= 3)
         ++mobs;
     if (mobs > map_points.size() * 0.9) {
-      for (auto mp: map_points)
-        mp->EraseObservation(kf);
       kf->SetBad();
     }
     for (auto mp : map_points) {

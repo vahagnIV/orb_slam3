@@ -43,8 +43,6 @@ BaseMonocular::MonocularMapPoints BaseMonocular::GetMapPoints() const {
 }
 
 void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
-//  if(MapPointExists(map_point))
-//    return;
   assert(!MapPointExists(map_point));
   map_points_[feature_id] = map_point;
 }
@@ -56,8 +54,9 @@ void BaseMonocular::EraseMapPoint(size_t feature_id) {
 
 bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
   for (auto mp: map_points_) {
-    if (mp.second == map_point)
+    if (mp.second == map_point) {
       return true;
+    }
   }
   return false;
 }

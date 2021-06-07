@@ -35,7 +35,9 @@ class KeyFrame : public BaseFrame {
   bool IsInitial() const { return is_initial_; }
   void SetInitial(bool initial) { is_initial_ = initial; }
   bool IsBad() const { return bad_flag_; }
-  void SetBad() { bad_flag_ = true; }
+  virtual void SetBad() {
+    bad_flag_ = true;
+  }
   void SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
     pose_gba_.R = R;
     pose_gba_.T = T;
@@ -45,7 +47,7 @@ class KeyFrame : public BaseFrame {
   }
   virtual void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) = 0;
   virtual void FuseMapPoints(MapPointSet & map_points) = 0;
-  virtual void EraseMapPoint(Observation & obs) = 0;
+  virtual void EraseMapPoint(map::MapPoint *) = 0;
   virtual void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) = 0;
 
  protected:

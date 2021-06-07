@@ -187,8 +187,6 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
                                        min_invariance_distance);
 //    std::cout << map_point->GetPosition() << std::endl;
 
-    map_point->AddObservation(Observation(map_point, this, match.first));
-    map_point->AddObservation(Observation(map_point, other, match.second));
     AddMapPoint(map_point, match.first);
     other_frame->AddMapPoint(map_point, match.second);
 
@@ -225,7 +223,6 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
     if (it == local_map_points.end()) {
       if(match.first->IsInKeyFrame(this))
         continue;
-      match.first->AddObservation(Observation(match.first, this, match.second));
       AddMapPoint(match.first, match.second);
     } else {
       if (it->second == match.first)
@@ -233,8 +230,9 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
       if (match.first->GetObservationCount() > it->second->GetObservationCount()) {
         it->second->SetReplaced(match.first);
         this->map_points_[match.second] = match.first;
-      } else
+      } else {
         match.first->SetReplaced(it->second);
+      }
     }
   }
 }
@@ -259,22 +257,49 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
   for (auto mp: map_points) {
-    if (local_map_points.find(mp) == local_map_points.end()
-        && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy, 0))
-      out_visibles.push_back(visible_map_point);
+    if (! mp->IsInKeyFrame(this)) {
+      if (local_map_points.find(mp) == local_map_points.end()
+          && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy, 0))
+        out_visibles.push_back(visible_map_point);
+    }
   }
 }
 
-void MonocularKeyFrame::EraseMapPoint(Observation & obs) {
-  map_points_.erase(obs.GetFeatutreIds()[0]);
+void MonocularKeyFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
+  if (map_point->IsInKeyFrame(this)) {
+    EraseMapPoint(map_point);
+  }
+  BaseMonocular::AddMapPoint(map_point, feature_id);
+  map_point->AddObservation(Observation(map_point, this, feature_id));
+}
+
+void MonocularKeyFrame::EraseMapPoint(map::MapPoint * map_point) {
+  assert(nullptr != map_point);
+  map::MapPoint::MapType observations = map_point->Observations();
+  auto f = observations.find(this);
+  assert(f != observations.end());
+  EraseMapPoint(f->second.GetFeatureId());
+}
+
+void MonocularKeyFrame::EraseMapPoint(size_t feature_id) {
+  MonocularMapPoints::const_iterator f = this->map_points_.find(feature_id); /// TODO
+  assert(f != this->map_points_.end());
+  f->second->EraseObservation(this);
+  BaseMonocular::EraseMapPoint(feature_id);
 }
 
 void MonocularKeyFrame::ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) {
-  size_t feature_id = observation.GetFeatutreIds()[0];
   assert(observation.GetKeyFrame() == this);
-//  assert(map_points_.find(feature_id) != map_points_.end());
-  map_points_[feature_id] = map_point;
-  map_point->AddObservation(Observation(map_point, this, feature_id));
+  assert(map_points_.find(observation.GetFeatureId()) != map_points_.end());
+  AddMapPoint(map_point, observation.GetFeatureId());
+}
+
+void MonocularKeyFrame::SetBad() {
+  for (auto mp: map_points_) {
+    mp.second->EraseObservation(this);
+  }
+  map_points_.clear();
+  KeyFrame::SetBad();
 }
 
 }

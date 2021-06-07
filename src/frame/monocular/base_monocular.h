@@ -35,12 +35,15 @@ namespace monocular {
 
 class BaseMonocular {
 
+  /// Special member functions
  public:
   typedef std::map<size_t, map::MapPoint *> MonocularMapPoints;
   explicit BaseMonocular(const camera::MonocularCamera * camera);
 
   BaseMonocular(const BaseMonocular & other);
   virtual ~BaseMonocular() = default;
+
+  /// Public Functions
  public:
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const;
   MonocularMapPoints GetMapPoints() const;
@@ -48,9 +51,12 @@ class BaseMonocular {
   const features::Features & GetFeatures() const { return features_; }
   const camera::MonocularCamera * GetCamera() const { return camera_; }
   void ComputeBow() { features_.ComputeBow(); }
-  void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
-  void EraseMapPoint(size_t feature_id);
   bool MapPointExists(const map::MapPoint * map_point) const;
+
+ public:
+  virtual void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
+  virtual void EraseMapPoint(size_t feature_id);
+
  protected:
   bool IsVisible(map::MapPoint * map_point,
                  VisibleMapPoint & out_map_point,
@@ -60,8 +66,12 @@ class BaseMonocular {
                  const geometry::Pose & pose,
                  const geometry::Pose & inverse_position,
                  const features::IFeatureExtractor * feature_extractor) const;
+
+ protected:
   MonocularMapPoints map_points_;
   features::Features features_;
+
+  /// Private member variables
  private:
   const camera::MonocularCamera * camera_;
   mutable std::mutex map_point_mutex_;

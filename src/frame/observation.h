@@ -57,7 +57,10 @@ class Observation {
    * @param out_descriptor_ptr The vector to which the descriptors will be appended
    */
   virtual void AppendDescriptorsToList(std::vector<features::DescriptorType> & out_descriptor_ptr) const;
-  const std::vector<std::size_t> GetFeatutreIds() const;
+  const std::vector<std::size_t> GetFeatureIds() const;
+  size_t GetFeatureId() const;
+  size_t GetLeftFeatureId() const;
+  size_t GetRightFeatureId() const;
 
   /*!
    * Creates a robust kernel for optimization
@@ -67,6 +70,8 @@ class Observation {
 
  protected:
   bool IsMonocular() const;
+
+ protected:
   map::MapPoint * map_point_;
   KeyFrame * key_frame_;
   const std::vector<std::size_t> feature_ids_;
