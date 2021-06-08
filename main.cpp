@@ -76,8 +76,8 @@ void FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(
   intrinsics.push_back(256.8974428996504);
 
   distortion_coeffs.push_back(0.0034823894022493434);
-  distortion_coeffs.push_back(-0.0020532361418706202);
   distortion_coeffs.push_back(0.0007150348452162257);
+  distortion_coeffs.push_back(-0.0020532361418706202);
   distortion_coeffs.push_back(0.00020293673591811182);
   distortion_coeffs.push_back(0.);
 }

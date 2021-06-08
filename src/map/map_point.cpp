@@ -34,10 +34,10 @@ MapPoint::~MapPoint() {
 
 void MapPoint::SetReplaced(map::MapPoint * replaced) {
   auto ob = Observations();
-  SetBad();
-  for(auto & obs: ob){
+  for (auto & obs: ob) {
     obs.first->ReplaceMapPoint(replaced, obs.second);
   }
+  SetBad();
   replaced_map_point_ = replaced;
 }
 
@@ -47,27 +47,21 @@ map::MapPoint * MapPoint::GetReplaced() {
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
   observations_.emplace(observation.GetKeyFrame(), observation);
-//  observations_.insert(std::make_pair(observation.GetKeyFrame(), observation));
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
-  std::unique_lock<std::mutex> lock(feature_mutex_);
+  //std::unique_lock<std::mutex> lock(feature_mutex_); TODO
   auto it = observations_.find(frame);
-  frame->EraseMapPoint(it->second);
+  assert(it != observations_.end());
   observations_.erase(it);
-  if (observations_.size() < 2) {
-    SetBad();
-  }
 }
 
 void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
-  for(auto & obs: observations_){
-    obs.first->EraseMapPoint(obs.second);
+  while (!observations_.empty()) {
+    observations_.begin()->first->EraseMapPoint(this);
   }
-  observations_.clear();
-
 }
 
 void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
@@ -120,18 +114,18 @@ void MapPoint::SetPosition(const TPoint3D & position) {
   position_ = position;
 }
 
-const MapPoint::MapType MapPoint::Observations() const {
-  std::unique_lock<std::mutex> lock(feature_mutex_);
+const MapPoint::MapType MapPoint::Observations() const { /// TODO change prototype
+//  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_;
 }
 
 size_t MapPoint::GetObservationCount() const {
-  std::unique_lock<std::mutex> lock(feature_mutex_);
+//  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.size();
 }
 
 bool MapPoint::IsInKeyFrame(frame::KeyFrame * keyframe) {
-  std::unique_lock<std::mutex> lock(feature_mutex_);
+//  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.find(keyframe) != observations_.end();
 }
 

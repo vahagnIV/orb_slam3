@@ -40,6 +40,7 @@ bool TriangulationValidator::Validate(size_t to_id, size_t from_id) const {
 }
 
 bool TriangulationValidator::EpipolarDistanceIsEnough(size_t to_id) const {
+  return true;
   const HomogenousPoint & kp_to = features_to_->undistorted_and_unprojected_keypoints[to_id];
   precision_t delta_x = kp_to.x() - epipole_.x();
   precision_t delta_y = kp_to.y() - epipole_.y();

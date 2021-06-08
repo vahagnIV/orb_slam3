@@ -116,7 +116,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
-  if (fixed_keyframes.size() < 2)
+  if (fixed_keyframes.empty())
     return;
   optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
   for (auto & kf: local_keyframes)
@@ -223,8 +223,6 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       if (mp->GetObservationCount() >= 3)
         ++mobs;
     if (mobs > map_points.size() * 0.9) {
-      for (auto mp: map_points)
-        mp->EraseObservation(kf);
       kf->SetBad();
     }
     for (auto mp : map_points) {

@@ -13,32 +13,46 @@ namespace monocular {
 class MonocularFrame;
 
 class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
+
   friend class MonocularFrame;
+
+  /// Special member functions
  private:
   explicit MonocularKeyFrame(MonocularFrame * frame);
+
  public:
   ~MonocularKeyFrame() override = default;
+
+ public:
   bool IsVisible(map::MapPoint * map_point,
                  VisibleMapPoint & out_map_point,
                  precision_t radius_multiplier,
                  unsigned int window_size) const ;
- public:
+
   void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
   void ComputeBow() override;
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void FuseMapPoints(MapPointSet & map_points) override;
-  void EraseMapPoint(Observation & obs) override;
+  void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
+
+  void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
+  void EraseMapPoint(size_t feature_id) override;
+  void SetBad() override;
+ private:
+
+  void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<VisibleMapPoint> & out_visibles);
+  void EraseMapPointImpl(const map::MapPoint *, bool check_bad);
+  void EraseMapPointImpl(size_t feature_id, bool check_bad) ;
+
  private:
   static bool BaseLineIsEnough(const MapPointSet & others_map_points,
                                const geometry::Pose & local_pose,
                                const geometry::Pose & others_pose);
   static precision_t ComputeBaseline(const geometry::Pose & local_pose, const geometry::Pose & others_pose);
   static precision_t ComputeSceneMedianDepth(const MapPointSet & map_points, unsigned q, const geometry::Pose & pose);
- private:
-  void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<VisibleMapPoint> & out_visibles);
 
 };
 

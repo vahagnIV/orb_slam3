@@ -24,7 +24,7 @@ BaseMonocular::BaseMonocular(const BaseMonocular & other)
       map_point_mutex_() {}
 
 void BaseMonocular::ListMapPoints(unordered_set<map::MapPoint *> & out_map_points) const {
-  std::unique_lock<std::mutex> lock(map_point_mutex_);
+//  std::unique_lock<std::mutex> lock(map_point_mutex_);
   for (auto mp_id: map_points_) {
     if (!mp_id.second->IsBad()) {
       out_map_points.insert(mp_id.second);
@@ -33,7 +33,7 @@ void BaseMonocular::ListMapPoints(unordered_set<map::MapPoint *> & out_map_point
 }
 
 BaseMonocular::MonocularMapPoints BaseMonocular::GetMapPoints() const {
-  std::unique_lock<std::mutex> lock(map_point_mutex_);
+//  std::unique_lock<std::mutex> lock(map_point_mutex_);
   std::map<size_t, map::MapPoint *> result;
   std::copy_if(map_points_.begin(),
                map_points_.end(),
@@ -43,8 +43,6 @@ BaseMonocular::MonocularMapPoints BaseMonocular::GetMapPoints() const {
 }
 
 void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
-//  if(MapPointExists(map_point))
-//    return;
   assert(!MapPointExists(map_point));
   map_points_[feature_id] = map_point;
 }
@@ -56,8 +54,9 @@ void BaseMonocular::EraseMapPoint(size_t feature_id) {
 
 bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
   for (auto mp: map_points_) {
-    if (mp.second == map_point)
+    if (mp.second == map_point) {
       return true;
+    }
   }
   return false;
 }
@@ -73,6 +72,10 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
 
   out_map_point.map_point = map_point;
   HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
+
+  if(map_point_in_local_cf.z() < 0)
+    return false;
+
   precision_t distance = map_point_in_local_cf.norm();
 
   if (distance < map_point->GetMinInvarianceDistance()
@@ -80,7 +83,7 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
     return false;
   }
 
-  this->GetCamera()->ProjectPoint(map_point_in_local_cf, out_map_point.position);
+  this->GetCamera()->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
   if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }

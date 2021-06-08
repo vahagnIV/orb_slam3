@@ -101,11 +101,13 @@ void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
   }
 
   for (auto to_delete: observations_to_delete) {
-    to_delete.first->EraseObservation(to_delete.second);
+    if(!to_delete.first->IsBad())
+      to_delete.second->EraseMapPoint(to_delete.first);
   }
 
   for (auto mp_vertex: mp_map) {
-    mp_vertex.first->SetPosition(mp_vertex.second->estimate());
+    if(!mp_vertex.first->IsBad())
+      mp_vertex.first->SetPosition(mp_vertex.second->estimate());
   }
   for (auto frame_vertex: frame_map) {
     if (!frame_vertex.second->fixed())

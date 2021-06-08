@@ -53,7 +53,23 @@ void Observation::AppendDescriptorsToList(vector<features::DescriptorType> & out
 
 }
 
-const std::vector<std::size_t> Observation::GetFeatutreIds() const {
+size_t Observation::GetFeatureId() const {
+  assert(IsMonocular());
+  return feature_ids_[0];
+}
+
+size_t Observation::GetLeftFeatureId() const {
+  assert(! IsMonocular());
+  return feature_ids_[1];
+}
+
+size_t Observation::GetRightFeatureId() const {
+  assert(! IsMonocular());
+  return feature_ids_[0];
+}
+
+const std::vector<std::size_t>
+Observation::GetFeatureIds() const {
   return feature_ids_;
 }
 
