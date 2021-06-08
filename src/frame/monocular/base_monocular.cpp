@@ -72,6 +72,10 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
 
   out_map_point.map_point = map_point;
   HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
+
+  if(map_point_in_local_cf.z() < 0)
+    return false;
+
   precision_t distance = map_point_in_local_cf.norm();
 
   if (distance < map_point->GetMinInvarianceDistance()
