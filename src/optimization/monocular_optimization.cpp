@@ -64,8 +64,8 @@ void OptimizePose(MonocularFrame * frame) {
     dynamic_cast<vertices::FrameVertex *>(optimizer.vertex(frame_vertex->id()))->setEstimate(pose.GetQuaternion());
     optimizer.initializeOptimization(0);
     optimizer.optimize(10);
-    auto edges = optimizer.edges();
-    for (auto edge_base: edges) {
+
+    for (auto edge_base: optimizer.edges()) {
       auto edge = dynamic_cast<edges::SE3ProjectXYZPoseOnly *>(edge_base);
       if (1 == edge->level()) { // If  the edge was not included in the optimization
         edge->computeError();

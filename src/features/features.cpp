@@ -39,7 +39,7 @@ void Features::ListFeaturesInArea(const TPoint2D & point,
 
       for (size_t j = 0; j < cell.size(); j++) {
 //      for (size_t j = 0; j < keypoints.size(); j++) {
-        const KeyPoint & candidate_keypoint = undistorted_keypoints[cell[j]];
+        const KeyPoint & candidate_keypoint = keypoints[cell[j]].pt;
 //        const KeyPoint & candidate_keypoint = undistorted_keypoints[j];
         const int & level = keypoints[cell[j]].level;
 //        const int & level = keypoints[j].level;
@@ -63,9 +63,9 @@ void Features::ListFeaturesInArea(const TPoint2D & point,
 }
 
 void Features::AssignFeaturesToGrid() {
-  for (size_t i = 0; i < undistorted_keypoints.size(); i++) {
+  for (size_t i = 0; i < keypoints.size(); i++) {
     size_t pos_X, pos_Y;
-    if (PosInGrid(undistorted_keypoints[i], pos_X, pos_Y)) {
+    if (PosInGrid(keypoints[i].pt, pos_X, pos_Y)) {
       grid[pos_X][pos_Y].push_back(i);
     }
   }

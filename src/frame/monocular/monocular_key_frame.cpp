@@ -283,7 +283,7 @@ void MonocularKeyFrame::EraseMapPointImpl(size_t feature_id, bool check_bad) {
   auto m_it = this->map_points_.find(feature_id); /// TODO
   assert(m_it != this->map_points_.end());
   m_it->second->EraseObservation(this);
-  if (check_bad && m_it->second->GetObservationCount() < 2) {
+  if (check_bad && m_it->second->GetObservationCount() == 1) {
     m_it->second->SetBad();
   }
   BaseMonocular::EraseMapPoint(feature_id);
@@ -310,8 +310,14 @@ void MonocularKeyFrame::ReplaceMapPoint(map::MapPoint * map_point, const Observa
 }
 
 void MonocularKeyFrame::SetBad() {
-  while(!map_points_.empty())
-    EraseMapPoint(map_points_.begin()->second);
+  while(!map_points_.empty()) {
+    auto mp_it = map_points_.begin();
+    // TODO: investigate why this works
+    if(mp_it->second->IsBad())
+      map_points_.erase(mp_it);
+    else
+      EraseMapPoint(mp_it->second);
+  }
   KeyFrame::SetBad();
 }
 
