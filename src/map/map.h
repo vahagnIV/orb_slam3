@@ -21,6 +21,7 @@ class Map {
   void AddMapPoint(MapPoint * map_point);
   std::unordered_set<MapPoint *> GetAllMapPoints() const;
   std::unordered_set<frame::KeyFrame *> GetAllKeyFrames() const;
+  size_t GetSize() const { return key_frames_.size(); }
  private:
   std::unordered_set<frame::KeyFrame *> key_frames_;
   frame::KeyFrame * initial_keyframe_;

@@ -8,6 +8,8 @@
 #include <map/map_point.h>
 #include <frame/map_point_visibility_params.h>
 #include <features/ifeature_extractor.h>
+#include <features/matching/iterators/bow_to_iterator.h>
+#include <features/matching/second_nearest_neighbor_matcher.hpp>
 
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
 
@@ -114,6 +116,34 @@ void BaseMonocular::SerializeToStream(ostream & stream) const {
   size_t camera = (size_t) camera_;
   WRITE_TO_STREAM(camera, stream);
   stream << features_;
+}
+
+void BaseMonocular::SearchByBow(BaseMonocular * other, unordered_map<std::size_t, std::size_t> out_map_point_matches,
+                                const features::IFeatureExtractor * feature_extractor,
+                                bool self_keypoint_exists, bool reference_kf_keypoint_exists) const{
+  typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;
+  BOW_MATCHER bow_matcher(0.75, 50);
+  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
+                                                            &features_.bow_container.feature_vector,
+                                                            &other->features_.bow_container.feature_vector,
+                                                            &features_,
+                                                            &other->features_,
+                                                            &map_points_,
+                                                            &other->map_points_,
+                                                            self_keypoint_exists,
+                                                            reference_kf_keypoint_exists);
+
+  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
+                                                          &features_.bow_container.feature_vector,
+                                                          &other->features_.bow_container.feature_vector,
+                                                          &features_,
+                                                          &other->features_,
+                                                          &map_points_,
+                                                          &other->map_points_,
+                                                          self_keypoint_exists,
+                                                          reference_kf_keypoint_exists);
+
+  bow_matcher.MatchWithIterators(bow_it_begin, bow_it_end, feature_extractor, out_map_point_matches);
 }
 
 }

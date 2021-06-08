@@ -25,6 +25,7 @@ class LocalMapper : public PositionObserver,
   void MapPointCulling(frame::KeyFrame * keyframe);
   void KeyFrameCulling(frame::KeyFrame * keyframe);
   void RunIteration();
+  bool AcceptKeyFrames() { return accept_key_frames_; };
  private:
   void Run();
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
@@ -43,6 +44,7 @@ class LocalMapper : public PositionObserver,
   map::Atlas * atlas_;
   std::atomic_bool cancelled_;
   std::thread * thread_;
+  bool accept_key_frames_;
 };
 
 }
