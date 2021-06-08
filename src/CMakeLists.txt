@@ -101,7 +101,7 @@ add_library(orbslam SHARED
         features/matching/imatcher.h
         features/matching/second_nearest_neighbor_matcher.hpp
         features/match.h
-        frame/iframe_database.h
+        frame/key_frame_database.h
         features/bow_vocabulary.h
         features/bow_container.h
         features/matching/iterators/bow_to_iterator.h

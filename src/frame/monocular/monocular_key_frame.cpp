@@ -42,6 +42,15 @@ void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) c
   BaseMonocular::ListMapPoints(out_map_points);
 }
 
+precision_t MonocularKeyFrame::GetSimilarityScore(BaseFrame * other) const {
+  if (other->Type() != MONOCULAR) {
+    return 0;
+  }
+  return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
+                            dynamic_cast<BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
+}
+
+
 TVector3D MonocularKeyFrame::GetNormal(const TPoint3D & point) const {
   TPoint3D normal = GetInversePosition().T - point;
   normal.normalize();

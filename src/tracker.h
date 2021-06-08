@@ -37,7 +37,6 @@ class Tracker : public Observer<frame::KeyFrame *>,
    * @return Tracking result
    */
   TrackingResult Track(frame::Frame * frame);
-
   /*!
    * Destructor
    */
@@ -69,7 +68,7 @@ class Tracker : public Observer<frame::KeyFrame *>,
   frame::KeyFrame * last_key_frame_;
   frame::KeyFrame * reference_keyframe_;
   State state_;
-
+  size_t last_relocalization_frame_id_ = 0;                                       
 };
 
 }

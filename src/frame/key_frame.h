@@ -50,6 +50,11 @@ class KeyFrame : public BaseFrame {
   virtual void EraseMapPoint(const map::MapPoint *) = 0;
   virtual void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) = 0;
 
+ public:
+  size_t reloc_query_frame_id;
+  size_t common_words_count;
+  size_t reloc_score;
+
  protected:
   CovisibilityGraphNode covisibility_graph_;
   bool is_initial_;
@@ -58,6 +63,7 @@ class KeyFrame : public BaseFrame {
   // Container for saving the position after gba for LC
   geometry::Pose pose_gba_;
   KeyFrame * kf_gba_;
+
 
 };
 

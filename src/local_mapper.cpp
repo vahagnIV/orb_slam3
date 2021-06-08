@@ -19,6 +19,7 @@ LocalMapper::~LocalMapper() {
 
 void LocalMapper::Run() {
   while (!cancelled_) {
+  accept_key_frames_ = false;
     UpdateMessage message;
     GetUpdateQueue().wait_dequeue(message);
     switch (message.type) {
@@ -30,6 +31,7 @@ void LocalMapper::Run() {
       }
     }
   }
+  accept_key_frames_ = true;
 }
 
 void LocalMapper::Start() {
