@@ -257,6 +257,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
   for (auto mp: map_points) {
+    if (mp->IsBad()) continue;
     if (! mp->IsInKeyFrame(this)) {
       if (local_map_points.find(mp) == local_map_points.end()
           && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy, 0))
@@ -266,6 +267,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
 }
 
 void MonocularKeyFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
+  assert(! map_point->IsBad());
   BaseMonocular::AddMapPoint(map_point, feature_id);
   map_point->AddObservation(Observation(map_point, this, feature_id));
 }
@@ -276,11 +278,10 @@ void MonocularKeyFrame::EraseMapPointImpl(const map::MapPoint * map_point, bool 
   auto f = observations.find(this);
   assert(f != observations.end());
   EraseMapPointImpl(f->second.GetFeatureId(), check_bad);
-
 }
 
 void MonocularKeyFrame::EraseMapPointImpl(size_t feature_id, bool check_bad) {
-  auto m_it = this->map_points_.find(feature_id); /// TODO
+  auto m_it = this->map_points_.find(feature_id);
   assert(m_it != this->map_points_.end());
   m_it->second->EraseObservation(this);
   if (check_bad && m_it->second->GetObservationCount() == 1) {
@@ -289,7 +290,7 @@ void MonocularKeyFrame::EraseMapPointImpl(size_t feature_id, bool check_bad) {
   BaseMonocular::EraseMapPoint(feature_id);
 }
 
-void MonocularKeyFrame::EraseMapPoint( const map::MapPoint * map_point) {
+void MonocularKeyFrame::EraseMapPoint(const map::MapPoint * map_point) {
   EraseMapPointImpl(map_point, true);
 }
 
@@ -298,9 +299,9 @@ void MonocularKeyFrame::EraseMapPoint(size_t feature_id) {
 }
 
 void MonocularKeyFrame::ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) {
+
   assert(observation.GetKeyFrame() == this);
   assert(map_points_.find(observation.GetFeatureId()) != map_points_.end());
-
 
   EraseMapPointImpl(observation.GetMapPoint(), false);
   if (map_point->IsInKeyFrame(this)) {
@@ -312,11 +313,8 @@ void MonocularKeyFrame::ReplaceMapPoint(map::MapPoint * map_point, const Observa
 void MonocularKeyFrame::SetBad() {
   while(!map_points_.empty()) {
     auto mp_it = map_points_.begin();
-    // TODO: investigate why this works
-    if(mp_it->second->IsBad())
-      map_points_.erase(mp_it);
-    else
-      EraseMapPoint(mp_it->second);
+    assert(! mp_it->second->IsBad());
+    EraseMapPoint(mp_it->second);
   }
   KeyFrame::SetBad();
 }

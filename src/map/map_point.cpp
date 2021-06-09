@@ -46,6 +46,7 @@ map::MapPoint * MapPoint::GetReplaced() {
 }
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
+  assert(! IsBad());
   observations_.emplace(observation.GetKeyFrame(), observation);
 }
 
