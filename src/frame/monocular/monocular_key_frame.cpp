@@ -138,6 +138,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
                                                           false);
   geometry::Pose relative_pose;
   geometry::utils::ComputeRelativeTransformation(GetPosition(), other_frame->GetPosition(), relative_pose);
+//  geometry::utils::ComputeRelativeTransformation(other_frame->GetPosition(), GetPosition(), relative_pose);
 
   features::matching::validators::TriangulationValidator
       validator(&features_, &other_frame->features_, &relative_pose, feature_extractor_, GetCamera()->FxInv());

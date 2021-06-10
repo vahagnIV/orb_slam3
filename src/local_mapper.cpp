@@ -172,7 +172,7 @@ void LocalMapper::RunIteration() {
   while (GetUpdateQueue().try_dequeue(message)) {
     ProcessNewKeyFrame(message.frame);
     MapPointCulling(message.frame);
-//    CreateNewMapPoints(message.frame);
+    CreateNewMapPoints(message.frame);
     if (!CheckNewKeyFrames()) {
       FuseMapPoints(message.frame);
       Optimize(message.frame);
