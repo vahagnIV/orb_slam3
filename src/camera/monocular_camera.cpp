@@ -45,12 +45,13 @@ bool MonocularCamera::DistortPoint(const TPoint2D & undistorted, TPoint2D & dist
   TPoint3D unprojected, distorted_3d;
   UnprojectPoint(undistorted, unprojected);
 
-  if (distortion_model_ && !distortion_model_->DistortPoint(unprojected, distorted_3d))
-    return false;
-  else {
+  if (!distortion_model_) {
     distorted = undistorted;
     return true;
   }
+  if (!distortion_model_->DistortPoint(unprojected, distorted_3d))
+    return false;
+
   ProjectPoint(distorted_3d, distorted);
   return true;
 }
