@@ -50,8 +50,7 @@ class RigidObject {
   void SetPosition(const TMatrix33 & R, const TPoint3D & T) {
     pose_.R = R;
     pose_.T = T;
-    inverse_pose_.R = pose_.R.transpose();
-    inverse_pose_.T = -inverse_pose_.R * pose_.T;
+    inverse_pose_ = pose_.GetInversePose();
   }
   geometry::Pose pose_;
   geometry::Pose inverse_pose_;

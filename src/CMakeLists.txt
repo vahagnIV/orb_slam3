@@ -41,6 +41,7 @@ add_library(orbslam SHARED
         features/orb_feature_extractor.cpp
         features/features.cpp
         features/bow_container.cpp
+        features/key_point.cpp
         features/matching/iterators/projection_search_iterator.cpp
         features/matching/iterators/projection_search_pointee.cpp
         features/matching/iterators/bow_to_iterator.cpp

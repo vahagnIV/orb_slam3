@@ -19,7 +19,7 @@
 #include <geometry/utils.h>
 #include <geometry/essential_matrix_estimator.h>
 #include <logging.h>
-
+#include <boost/filesystem.hpp>
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -206,13 +206,14 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", i);
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
-    MF * frame = new MF(eigen_image, std::chrono::system_clock::now(), image_path, feature_extractor, camera, &voc, &constants);
+    MF * frame =
+        new MF(eigen_image, std::chrono::system_clock::now(), image_path, feature_extractor, camera, &voc, &constants);
 
     auto result = tracker.Track(frame);
     if (orb_slam3::TrackingResult::OK == result)
       feature_extractor = _feature_extractor;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    if(orb_slam3::TrackingResult::TRACKING_FAILED == result)
+    if (orb_slam3::TrackingResult::TRACKING_FAILED == result)
       exit(1);
     //std::cout << i << std::endl;
     if (cv::waitKey(10) == 27) break;
@@ -224,7 +225,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                      const std::vector<std::string> & filenames,
                      const orb_slam3::frame::SensorConstants * sensor_constants,
                      const std::vector<std::chrono::system_clock::time_point> & timestamps) {
-
+  const boost::filesystem::path dumb_dir("/data/slam_test");
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
   orb_slam3::Tracker tracker(atlas);
   orb_slam3::LocalMapper local_mapper(atlas);
@@ -242,14 +243,21 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::IFeatureExtractor * fe = feature_extractor;
   for (size_t i = 0; i < filenames.size(); ++i) {
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
-    orb_slam3::logging::RetrieveLogger()->info( "{}. processing frame {}", i, filenames[i]);
+    orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, &voc, sensor_constants);
     auto result = tracker.Track(frame);
-    if (orb_slam3::TrackingResult::OK == result)
+    if (orb_slam3::TrackingResult::OK == result) {
       fe = _feature_extractor;
-    if(orb_slam3::TrackingResult::TRACKING_FAILED == result)
+
+      std::string image_name = boost::filesystem::path(filenames[i]).filename().string();
+      std::string out_filename = (dumb_dir / image_name).string();
+      std::ofstream map_stream(out_filename, std::ios::binary);
+      map_stream << atlas->GetCurrentMap();
+    }
+
+    if (orb_slam3::TrackingResult::TRACKING_FAILED == result)
       exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 //    cv::imshow("im", image);

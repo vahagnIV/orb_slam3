@@ -27,6 +27,7 @@ typedef Eigen::Matrix<uint8_t, 1, 32, Eigen::RowMajor> DescriptorType;
 
 class Features {
  public:
+  friend std::ostream & operator<<(std::ostream & stream, const Features & frame);
   Features(const camera::MonocularCamera * camera);
 
   DescriptorSet descriptors;
@@ -36,7 +37,7 @@ class Features {
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
   BowContainer bow_container;
 
-  void SetVocabulary(const BowVocabulary *vocabulary);
+  void SetVocabulary(const BowVocabulary * vocabulary);
   void ComputeBow();
   size_t Size() const { return keypoints.size(); }
   void ListFeaturesInArea(const TPoint2D & point,

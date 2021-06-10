@@ -28,7 +28,9 @@ class MonocularFrame : public Frame, public BaseMonocular {
   KeyFrame * CreateKeyFrame() override;
   bool Link(Frame * other) override;
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
-//  bool EstimatePositionByProjectingMapPoints(const list<VisibleMapPoint> & filtered_map_points) override;
+ protected:
+  void SerializeToStream(ostream & stream) const override;
+ public:
   bool EstimatePositionByProjectingMapPoints(Frame * frame, list<VisibleMapPoint> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;

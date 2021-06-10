@@ -9,6 +9,8 @@
 #include <frame/visible_map_point.h>
 #include <features/ifeature_extractor.h>
 
+#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
+
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
@@ -106,6 +108,12 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
   }
 
   return true;
+}
+
+void BaseMonocular::SerializeToStream(ostream & stream) const {
+  size_t camera = (size_t) camera_;
+  WRITE_TO_STREAM(camera, stream);
+  stream << features_;
 }
 
 }

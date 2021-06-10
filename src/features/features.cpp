@@ -4,7 +4,7 @@
 
 // == orb-slam3 ===
 #include "features.h"
-
+#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
 namespace orb_slam3 {
 namespace features {
 
@@ -123,6 +123,25 @@ void Features::ComputeBow() {
                                           (void *) descriptors.row(i).data()));
   }
   bow_container.ComputeBow(current_descriptors);
+}
+
+std::ostream & operator<<(ostream & stream, const Features & features) {
+  size_t size = features.Size();
+  WRITE_TO_STREAM(size, stream);
+  stream.write((char *) features.descriptors.data(),
+               32 * features.descriptors.rows() * sizeof(decltype(features.descriptors)::Scalar));
+
+
+  for (auto & kp: features.keypoints) {
+    stream << kp;
+  }
+  for (auto ukp:features.undistorted_keypoints) {
+    stream.write((char *) ukp.data(), ukp.rows() * sizeof(decltype(ukp)::Scalar));
+  }
+  for (auto uukp:features.undistorted_and_unprojected_keypoints) {
+    stream.write((char *) uukp.data(), uukp.rows() * sizeof(decltype(uukp)::Scalar));
+  }
+  return stream;
 }
 
 }

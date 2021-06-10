@@ -16,7 +16,7 @@
 
 namespace orb_slam3 {
 
-namespace map{
+namespace map {
 class MapPoint;
 }
 
@@ -24,6 +24,16 @@ namespace frame {
 
 class BaseFrame : public geometry::RigidObject {
  public:
+  friend std::ostream & operator<<(std::ostream & stream, const BaseFrame * frame){
+    frame->SerializeToStream(stream);
+    stream << frame->GetPosition();
+    stream << frame->GetInversePosition();
+    size_t size = frame->filename_.length();
+    stream.write((char *)&size, sizeof(size));
+    stream.write(frame->filename_.data(), size);
+    return stream;
+  }
+
   BaseFrame(TimePoint time_point,
             const std::string & filename,
             const features::IFeatureExtractor * feature_extractor,
@@ -45,13 +55,14 @@ class BaseFrame : public geometry::RigidObject {
   virtual FrameType Type() const = 0;
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
   virtual const SensorConstants * GetSensorConstants() const { return sensor_constants_; }
-
   size_t Id() const { return id_; }
 
   TimePoint GetTimeCreated() const { return time_point_; }
   const features::IFeatureExtractor * GetFeatureExtractor() const { return feature_extractor_; }
   const std::string & GetFilename() const { return filename_; }
   const features::BowVocabulary * GetVocabulary() const { return vocabulary_; }
+ protected:
+  virtual void SerializeToStream(std::ostream & stream) const = 0;
 
  protected:
   const TimePoint time_point_;

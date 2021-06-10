@@ -39,14 +39,18 @@ bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint 
 }
 
 bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const {
-//  cv::Mat point(1, 1, CV_64FC2), undistorted_point;
-//  point.at<cv::Point2d>(0) = cv::Point2d(distorted.x(), distorted.y());
+//  std::vector<cv::Point2d> point(1), undistorted_point;
+//  point[0] = cv::Point2d(distorted.x(), distorted.y());
 //
+//  cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
+//  cv::Mat K = R.clone();
 //  cv::fisheye::undistortPoints(point,
 //                               undistorted_point,
-//                               cv::Mat::eye(3, 3, CV_64F),
-//                               cv::Mat(1, 4, CV_64F, (void *) (estimate_ + 4)));
-//  undistorted << undistorted_point.at<cv::Point2d>(0).x, undistorted_point.at<cv::Point2d>(0).y, 1;
+//                               K,
+//                               cv::Mat(1, 4, CV_64F, (void *) (estimate_->data() + 4)),
+//                               R,
+//                               K);
+//  undistorted << undistorted_point[0].x, undistorted_point[0].y, 1;
 //  return true;
 
   double theta_d = std::sqrt(distorted.x() * distorted.x() + distorted.y() * distorted.y());
@@ -74,7 +78,7 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
     }
   }
   if (!converged) {
-    undistorted = distorted;
+    undistorted << -10000, -10000, 1;
     return false;
   }
 
@@ -88,7 +92,7 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
     undistorted.z() = 1;
     return true;
   }
-  undistorted = distorted;
+  undistorted << -10000, -10000, 1;
   return false;
 }
 

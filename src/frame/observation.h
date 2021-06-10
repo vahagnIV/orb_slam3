@@ -62,6 +62,7 @@ class Observation {
   size_t GetFeatureId() const;
   size_t GetLeftFeatureId() const;
   size_t GetRightFeatureId() const;
+  friend std::ostream & operator << (std::ostream & stream, const Observation & map_point);
 
   /*!
    * Creates a robust kernel for optimization

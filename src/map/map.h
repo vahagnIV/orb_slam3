@@ -15,6 +15,7 @@ namespace orb_slam3 {
 namespace map {
 class Map {
  public:
+  friend std::ostream & operator << (std::ostream & stream, const Map * map_point);
   void AddKeyFrame(frame::KeyFrame * frame);
   void SetInitialKeyFrame(frame::KeyFrame * frame);
   void AddMapPoint(MapPoint * map_point);

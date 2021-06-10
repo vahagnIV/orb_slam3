@@ -66,7 +66,7 @@ class BaseMonocular {
                  const geometry::Pose & pose,
                  const geometry::Pose & inverse_position,
                  const features::IFeatureExtractor * feature_extractor) const;
-
+ void SerializeToStream(std::ostream & stream) const;
  protected:
   MonocularMapPoints map_points_;
   features::Features features_;

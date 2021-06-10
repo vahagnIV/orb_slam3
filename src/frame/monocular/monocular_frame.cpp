@@ -344,6 +344,10 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<V
   return false;
 }
 
+void MonocularFrame::SerializeToStream(ostream & stream) const {
+  throw std::runtime_error("Not implemented");
+}
+
 }
 }
 }

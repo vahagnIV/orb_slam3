@@ -31,8 +31,14 @@ struct Pose {
   }
 
   friend std::ostream & operator<<(std::ostream & stream, const Pose & p) {
-    stream << p.R << std::endl << p.T << std::endl;
+    stream.write((char *)p.R.data(), p.R.size() * sizeof(decltype(p.R)::Scalar));
+    stream.write((char *)p.T.data(), p.T.size() * sizeof(decltype(p.T)::Scalar));
+//    stream << p.R << std::endl << p.T << std::endl;
     return stream;
+  }
+
+  void print() const {
+    std::cout << R << std::endl << T << std::endl;
   }
 
   TMatrix33 R;
