@@ -3,7 +3,7 @@
 //
 
 #include "local_mapper.h"
-#include "frame/visible_map_point.h"
+#include "frame/map_point_visibility_params.h"
 #include "frame/key_frame.h"
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"
@@ -116,7 +116,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
-  if (fixed_keyframes.empty())
+  if (fixed_keyframes.size() < 2 && fixed_keyframes.size() == local_keyframes.size())
     return;
   optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
   for (auto & kf: local_keyframes)
@@ -144,6 +144,7 @@ void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_k
   if (number_of_fixed < 2) {
     frame::KeyFrame * earliest_keyframe = nullptr, * second_eraliset_keyframe = nullptr;
     for (auto frame: local_keyframes) {
+      if (frame->IsInitial()) continue;
       if (nullptr == earliest_keyframe || frame->Id() < earliest_keyframe->Id())
         earliest_keyframe = frame;
       else if (nullptr == second_eraliset_keyframe || frame->Id() < second_eraliset_keyframe->Id())

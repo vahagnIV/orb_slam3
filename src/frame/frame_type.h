@@ -8,7 +8,7 @@ namespace orb_slam3 {
 namespace frame {
 
 enum FrameType {
-  MONOCULAR
+  MONOCULAR = 0
 };
 
 }

@@ -10,7 +10,7 @@
 #include "vector_from_iterator.h"
 #include "../../../geometry/pose.h"
 #include "../../../camera/monocular_camera.h"
-#include "../../../frame/visible_map_point.h"
+#include "../../../frame/map_point_visibility_params.h"
 #include "../../../frame/covisibility_graph_node.h"
 
 namespace orb_slam3 {
@@ -31,11 +31,11 @@ class ProjectionSearchPointee {
   iterator begin() { return begin_iterator_; }
   iterator end() { return end_iterator_; }
   const DescriptorType GetDescriptor() const;
-  void SetVisibileMapPoint(const frame::VisibleMapPoint & visible_map_point);
+  void SetVisibileMapPoint(const frame::MapPointVisibilityParams & visible_map_point);
  protected:
   void InitializeIterators();
  private:
-  frame::VisibleMapPoint map_point_;
+  frame::MapPointVisibilityParams map_point_;
   const Features * from_features_;
 
   iterator end_iterator_;

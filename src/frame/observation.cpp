@@ -6,6 +6,8 @@
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include "monocular/monocular_key_frame.h"
 
+#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
+
 namespace orb_slam3 {
 namespace frame {
 
@@ -61,6 +63,23 @@ size_t Observation::GetFeatureId() const {
 size_t Observation::GetLeftFeatureId() const {
   assert(! IsMonocular());
   return feature_ids_[1];
+}
+std::ostream & operator<<(ostream & stream, const Observation & observation) {
+  size_t frame_id = observation.GetKeyFrame()->Id();
+  size_t mem_address = (size_t )observation.GetMapPoint();
+  WRITE_TO_STREAM(mem_address, stream);
+  WRITE_TO_STREAM(frame_id, stream);
+
+  int type = 0;
+  if(observation.IsMonocular()) {
+    type = MONOCULAR;
+  } else
+    throw std::runtime_error("Only monocular observation serialization is implemented");
+  WRITE_TO_STREAM(type, stream);
+
+  for(size_t feature_id: observation.feature_ids_)
+    WRITE_TO_STREAM(feature_id, stream);
+  return stream;
 }
 
 size_t Observation::GetRightFeatureId() const {

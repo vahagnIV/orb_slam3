@@ -29,7 +29,7 @@ class MapPoint;
 }
 
 namespace frame {
-class VisibleMapPoint;
+class MapPointVisibilityParams;
 
 namespace monocular {
 
@@ -59,14 +59,14 @@ class BaseMonocular {
 
  protected:
   bool IsVisible(map::MapPoint * map_point,
-                 VisibleMapPoint & out_map_point,
+                 MapPointVisibilityParams & out_map_point,
                  precision_t radius_multiplier,
                  unsigned int window_size,
                  int level ,
                  const geometry::Pose & pose,
                  const geometry::Pose & inverse_position,
                  const features::IFeatureExtractor * feature_extractor) const;
-
+ void SerializeToStream(std::ostream & stream) const;
  protected:
   MonocularMapPoints map_points_;
   features::Features features_;

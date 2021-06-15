@@ -26,8 +26,8 @@ TEST_F(FishEyeTests, DistorAndUndistortCompensate){
   camera->SetCy(256.8974428996504);
   auto distortion_model = camera->CreateDistortionModel<camera::FishEye >();
   distortion_model->SetK1(0.0034823894022493434);
-  distortion_model->SetK2(-0.0020532361418706202);
-  distortion_model->SetK3(0.0007150348452162257);
+  distortion_model->SetK2(0.0007150348452162257);
+  distortion_model->SetK3(-0.0020532361418706202);
   distortion_model->SetK4(0.00020293673591811182);
 
 
@@ -56,7 +56,7 @@ TEST_F(FishEyeTests, DistorAndUndistortCompensate){
   cv_distorted[0].y = (cv_distorted[0].y - camera->Cy()) * camera->FyInv();
 //  cv_distorted[0].x = cv_distorted[0].x * camera->Fx() + camera->Cx();
 //  cv_distorted[0].y = cv_distorted[0].y * camera->Fy() + camera->Cy();
-  TPoint2D origin{45,45};
+  TPoint2D origin{200,200};
   TPoint2D undistorted_origin;
   TPoint2D distorted_origin;
   camera->UndistortPoint(origin, undistorted_origin);

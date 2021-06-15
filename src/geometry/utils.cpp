@@ -20,7 +20,7 @@ void ComputeRelativeTransformation(const Pose & pose_to,
                                    const Pose & pose_from,
                                    Pose & out_pose) {
   out_pose.R = pose_to.R * pose_from.R.transpose();
-  out_pose.T = -out_pose.R * pose_from.R.transpose() * pose_from.T + pose_to.T;
+  out_pose.T = -out_pose.R * pose_from.T + pose_to.T;
 }
 
 /*
@@ -59,12 +59,14 @@ bool Triangulate(const Pose & pose,
   Eigen::Matrix<precision_t, 4, 4, Eigen::RowMajor> A;
   assert(point_from.z() == 1);
   assert(point_to.z() == 1);
-  A << 0, -1, point_from[1], 0,
-      -1, 0, point_from[0], 0,
-      point_to[1] * pose.R(2, 0) - pose.R(1, 0), point_to[1] * pose.R(2, 1) - pose.R(1, 1), point_to[1] * pose.R(2, 2)
-      - pose.R(1, 2), point_to[1] * pose.T[2] - pose.T[1],
-      point_to[0] * pose.R(2, 0) - pose.R(0, 0), point_to[0] * pose.R(2, 1) - pose.R(0, 1), point_to[0] * pose.R(2, 2)
-      - pose.R(0, 2), point_to[0] * pose.T[2] - pose.T[0];
+  A << -1, 0, point_from.x(), 0,
+      0, -1, point_from.y(), 0,
+      point_to.x() * pose.R(2, 0) - pose.R(0, 0), point_to.x() * pose.R(2, 1) - pose.R(0, 1),
+      point_to.x() * pose.R(2, 2)
+          - pose.R(0, 2), point_to.x() * pose.T.z() - pose.T.x(),
+      point_to.y() * pose.R(2, 0) - pose.R(1, 0), point_to.y() * pose.R(2, 1) - pose.R(1, 1),
+      point_to.y() * pose.R(2, 2)
+          - pose.R(1, 2), point_to.y() * pose.T.z() - pose.T.y();
 
   Eigen::JacobiSVD<decltype(A)> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
   precision_t l_inv = 1 / svd.matrixV()(3, 3);

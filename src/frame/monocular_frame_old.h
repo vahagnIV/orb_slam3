@@ -10,7 +10,7 @@
 
 // == orb-slam3 ===
 #include "frame_base.h"
-#include "visible_map_point.h"
+#include "map_point_visibility_params.h"
 #include "../camera/monocular_camera.h"
 #include "../features/bow_vocabulary.h"
 #include "../optimization/edges/se3_project_xyz_pose.h"

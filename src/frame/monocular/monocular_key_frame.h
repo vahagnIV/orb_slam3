@@ -25,7 +25,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
 
  public:
   bool IsVisible(map::MapPoint * map_point,
-                 VisibleMapPoint & out_map_point,
+                 MapPointVisibilityParams & out_map_point,
                  precision_t radius_multiplier,
                  unsigned int window_size) const ;
 
@@ -37,13 +37,15 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void FuseMapPoints(MapPointSet & map_points) override;
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
-
+ protected:
+  void SerializeToStream(ostream & stream) const override;
+ public:
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
   void EraseMapPoint(size_t feature_id) override;
   void SetBad() override;
  private:
 
-  void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<VisibleMapPoint> & out_visibles);
+  void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);
   void EraseMapPointImpl(const map::MapPoint *, bool check_bad);
   void EraseMapPointImpl(size_t feature_id, bool check_bad) ;
 

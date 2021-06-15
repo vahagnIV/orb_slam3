@@ -8,6 +8,7 @@ namespace orb_slam3 {
 namespace features {
 
 struct KeyPoint {
+  friend std::ostream & operator<<(std::ostream & stream, const KeyPoint & frame);
   KeyPoint() = default;
   KeyPoint(TPoint2D point, unsigned level = 0, precision_t angle = 0, precision_t size = 0)
       : pt(point), angle(angle), size(size), level(level) {}

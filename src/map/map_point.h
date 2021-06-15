@@ -25,6 +25,7 @@ namespace map {
 class MapPoint {
  public:
   typedef std::unordered_map<frame::KeyFrame *, frame::Observation> MapType;
+  friend std::ostream & operator << (std::ostream & stream, const MapPoint * map_point);
   MapPoint(TPoint3D point, size_t first_observed_frame_id, precision_t max_invariance_distance, precision_t min_invariance_distance);
 
   /*!
@@ -70,6 +71,8 @@ class MapPoint {
   map::MapPoint * GetReplaced();
 
   void UpdateNormalAndDepth();
+
+
  private:
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
  private:

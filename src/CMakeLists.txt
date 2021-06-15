@@ -41,6 +41,7 @@ add_library(orbslam SHARED
         features/orb_feature_extractor.cpp
         features/features.cpp
         features/bow_container.cpp
+        features/key_point.cpp
         features/matching/iterators/projection_search_iterator.cpp
         features/matching/iterators/projection_search_pointee.cpp
         features/matching/iterators/bow_to_iterator.cpp
@@ -88,7 +89,7 @@ add_library(orbslam SHARED
 
         frame/frame_type.h
         frame/covisibility_graph_node.h
-        frame/visible_map_point.h
+        frame/map_point_visibility_params.h
         frame/observation.h
 
         features/key_point.h

@@ -13,7 +13,7 @@ class MapPoint;
 }
 namespace frame {
 
-struct VisibleMapPoint {
+struct MapPointVisibilityParams {
   map::MapPoint * map_point;
   precision_t window_size;
   TPoint2D position;

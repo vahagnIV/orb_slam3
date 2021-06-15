@@ -14,7 +14,7 @@ ProjectionSearchPointee::ProjectionSearchPointee(const Features * from_features,
       from_map_points_(from_map_points) {
 }
 
-void ProjectionSearchPointee::SetVisibileMapPoint(const frame::VisibleMapPoint & visible_map_point) {
+void ProjectionSearchPointee::SetVisibileMapPoint(const frame::MapPointVisibilityParams & visible_map_point) {
   map_point_ = visible_map_point;
   InitializeIterators();
 }

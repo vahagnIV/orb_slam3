@@ -127,7 +127,7 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
 }
 
 bool MonocularFrame::IsVisible(map::MapPoint * map_point,
-                               VisibleMapPoint & out_map_point,
+                               MapPointVisibilityParams & out_map_point,
                                precision_t radius_multiplier,
                                unsigned int window_size) const {
   return BaseMonocular::IsVisible(map_point,
@@ -244,10 +244,10 @@ void MonocularFrame::OptimizePose() {
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
-                                            std::list<VisibleMapPoint> & out_filetered_map_points,
+                                            std::list<MapPointVisibilityParams> & out_filetered_map_points,
                                             precision_t radius_multiplier,
                                             unsigned int window_size) const {
-  VisibleMapPoint map_point;
+  MapPointVisibilityParams map_point;
   for (auto mp: map_points) {
     if (IsVisible(mp, map_point, radius_multiplier, window_size))
       out_filetered_map_points.push_back(map_point);
@@ -255,7 +255,7 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
 
 }
 
-void MonocularFrame::SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points,
+void MonocularFrame::SearchInVisiblePoints(const list<MapPointVisibilityParams> & filtered_map_points,
                                            precision_t matcher_snn_threshold) {
   auto map_points = GetMapPoints();
   features::matching::iterators::ProjectionSearchIterator begin
@@ -280,7 +280,7 @@ void MonocularFrame::SearchInVisiblePoints(const list<VisibleMapPoint> & filtere
   }
 }
 
-void MonocularFrame::SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points) {
+void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) {
   ComputeBow();
   SearchInVisiblePoints(filtered_map_points, 0.8);
 }
@@ -293,13 +293,13 @@ void MonocularFrame::UpdateFromReferenceKeyFrame() {
 }
 
 void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
-                                         std::list<VisibleMapPoint> & out_visibles,
+                                         std::list<MapPointVisibilityParams> & out_visibles,
                                          precision_t radius_multiplier) {
   geometry::Pose pose = GetPosition();
   geometry::Pose inverse_pose = GetInversePosition();
   auto mps = last_frame->GetMapPoints();
-  VisibleMapPoint vmp;
-  std::list<VisibleMapPoint> visibles;
+  MapPointVisibilityParams vmp;
+  std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
     if (BaseMonocular::IsVisible(mp.second,
                                  vmp,
@@ -324,7 +324,7 @@ BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() {
   return result;
 }
 
-bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<VisibleMapPoint> & out_visibles) {
+bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<MapPointVisibilityParams> & out_visibles) {
 
   auto last_frame = dynamic_cast<MonocularFrame *>(frame);
   precision_t radiuses[] = {15, 30};
@@ -342,6 +342,10 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<V
   }
   map_points_.clear();
   return false;
+}
+
+void MonocularFrame::SerializeToStream(ostream & stream) const {
+  throw std::runtime_error("Not implemented");
 }
 
 }

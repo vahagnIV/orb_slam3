@@ -45,9 +45,9 @@ void EssentialEstimatorTests::GenerateRandomKeyPoints(vector<features::KeyPoint>
   transformation.T = TVector3D{0.6, 1.2, 0.7};
   TMatrix33 E2 = GetEssentialMatrixFromPose(transformation);
   E2 = camera->K().inverse().transpose() * E2 * camera->K().inverse();
-  std::cout << "E1" << E1 / E1.norm() << std::endl;
-  std::cout << "E2" << E2 / E2.norm() << std::endl;
-  std::cout << " =========== " << std::endl;
+//  std::cout << "E1" << E1 / E1.norm() << std::endl;
+//  std::cout << "E2" << E2 / E2.norm() << std::endl;
+//  std::cout << " =========== " << std::endl;
 
   while (count--) {
     out_keyoints.emplace_back(GenerateRandom2DPoint(camera->ImageBoundMinX(),

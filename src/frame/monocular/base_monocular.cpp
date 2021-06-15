@@ -6,8 +6,10 @@
 
 #include <camera/monocular_camera.h>
 #include <map/map_point.h>
-#include <frame/visible_map_point.h>
+#include <frame/map_point_visibility_params.h>
 #include <features/ifeature_extractor.h>
+
+#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
 
 namespace orb_slam3 {
 namespace frame {
@@ -62,7 +64,7 @@ bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
 }
 
 bool BaseMonocular::IsVisible(map::MapPoint * map_point,
-                              VisibleMapPoint & out_map_point,
+                              MapPointVisibilityParams & out_map_point,
                               precision_t radius_multiplier,
                               unsigned int window_size,
                               int level,
@@ -106,6 +108,12 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
   }
 
   return true;
+}
+
+void BaseMonocular::SerializeToStream(ostream & stream) const {
+  size_t camera = (size_t) camera_;
+  WRITE_TO_STREAM(camera, stream);
+  stream << features_;
 }
 
 }
