@@ -59,7 +59,7 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   return max_covisible_key_frame;
 }
 
-bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::VisibleMapPoint> & out_visibles) {
+bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::MapPointVisibilityParams> & out_visibles) {
   if (!velocity_is_valid_)
     return false;
 //  std::unordered_set<map::MapPoint *> all_candidate_map_points;
@@ -82,7 +82,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   assert(OK == state_);
   ++kf_counter;
 
-  std::list<frame::VisibleMapPoint> frame_visibles;
+  std::list<frame::MapPointVisibilityParams> frame_visibles;
   bool tracked = (TrackWithMotionModel(frame, frame_visibles) || TrackWithReferenceKeyFrame(frame));
 //  bool tracked =TrackWithReferenceKeyFrame(frame);
 
@@ -119,7 +119,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     }
   }
 
-  std::list<frame::VisibleMapPoint> visible_map_points;
+  std::list<frame::MapPointVisibilityParams> visible_map_points;
   frame->FilterVisibleMapPoints(local_map_points_except_current,
                                 visible_map_points,
                                 frame->GetSensorConstants()->projection_search_radius_multiplier);

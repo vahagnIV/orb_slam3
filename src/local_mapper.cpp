@@ -3,7 +3,7 @@
 //
 
 #include "local_mapper.h"
-#include "frame/visible_map_point.h"
+#include "frame/map_point_visibility_params.h"
 #include "frame/key_frame.h"
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"

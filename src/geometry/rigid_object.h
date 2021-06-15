@@ -20,6 +20,8 @@ namespace geometry {
 class RigidObject {
  public:
   virtual ~RigidObject() = default;
+ public:
+  // Setters
   void SetPosition(const geometry::Pose & pose) {
     SetPosition(pose.R, pose.T);
   }
@@ -36,13 +38,18 @@ class RigidObject {
     SetPosition(R, T);
   }
 
+ public:
+  // Getters
   const geometry::Pose & GetPosition() const { return pose_; }
+
   geometry::Pose GetPositionWithLock() const {
     std::unique_lock<std::mutex> lock(position_mutex_);
     return pose_;
   }
+
   const geometry::Pose & GetInversePosition() const { return inverse_pose_; }
-  geometry::Pose GetIncersePositionWithLock() const {
+
+  geometry::Pose GetInversePositionWithLock() const {
     std::unique_lock<std::mutex> lock(position_mutex_);
     return inverse_pose_;
   }
@@ -52,8 +59,11 @@ class RigidObject {
     pose_.T = T;
     inverse_pose_ = pose_.GetInversePose();
   }
+
+ private:
   geometry::Pose pose_;
   geometry::Pose inverse_pose_;
+
   mutable std::mutex position_mutex_;
 };
 

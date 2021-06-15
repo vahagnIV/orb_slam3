@@ -207,7 +207,7 @@ void MonocularKeyFrame::ComputeBow() {
 }
 
 void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
-  std::list<VisibleMapPoint> visibles;
+  std::list<MapPointVisibilityParams> visibles;
   FilterVisibleMapPoints(map_points, visibles);
   typedef features::matching::iterators::ProjectionSearchIterator IteratorType;
   IteratorType begin(visibles.begin(), visibles.end(), &features_, nullptr);
@@ -239,7 +239,7 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
 }
 
 bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
-                                  VisibleMapPoint & out_map_point,
+                                  MapPointVisibilityParams & out_map_point,
                                   precision_t radius_multiplier,
                                   unsigned int window_size) const {
   return BaseMonocular::IsVisible(map_point,
@@ -253,8 +253,8 @@ bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
 }
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
-                                               list<VisibleMapPoint> & out_visibles) {
-  VisibleMapPoint visible_map_point;
+                                               list<MapPointVisibilityParams> & out_visibles) {
+  MapPointVisibilityParams visible_map_point;
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
   for (auto mp: map_points) {

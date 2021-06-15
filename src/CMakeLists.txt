@@ -89,7 +89,7 @@ add_library(orbslam SHARED
 
         frame/frame_type.h
         frame/covisibility_graph_node.h
-        frame/visible_map_point.h
+        frame/map_point_visibility_params.h
         frame/observation.h
 
         features/key_point.h

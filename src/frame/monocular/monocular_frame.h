@@ -31,19 +31,19 @@ class MonocularFrame : public Frame, public BaseMonocular {
  protected:
   void SerializeToStream(ostream & stream) const override;
  public:
-  bool EstimatePositionByProjectingMapPoints(Frame * frame, list<VisibleMapPoint> & out_visibles) override;
+  bool EstimatePositionByProjectingMapPoints(Frame * frame, list<MapPointVisibilityParams> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   void ComputeBow() override;
   void OptimizePose() override;
   bool IsVisible(map::MapPoint * map_point,
-                 VisibleMapPoint & out_map_point,
+                 MapPointVisibilityParams & out_map_point,
                  precision_t radius_multiplier,
                  unsigned int window_size) const ;
   void FilterVisibleMapPoints(const unordered_set<map::MapPoint *> & map_points,
-                              list<VisibleMapPoint> & out_filetered_map_points,
+                              list<MapPointVisibilityParams> & out_filetered_map_points,
                               precision_t radius_multiplier,
                               unsigned int window_size) const override;
-  void SearchInVisiblePoints(const list<VisibleMapPoint> & filtered_map_points) override;
+  void SearchInVisiblePoints(const list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;
   BaseMonocular::MonocularMapPoints GetBadMapPoints();
@@ -57,10 +57,10 @@ class MonocularFrame : public Frame, public BaseMonocular {
                                      std::unordered_map<std::size_t, std::size_t> & out_matches,
                                      bool self_keypoint_exists,
                                      bool reference_kf_keypoint_exists) const;
-  void FilterFromLastFrame(MonocularFrame * last_frame, std::list<VisibleMapPoint> & out_visibles,
+  void FilterFromLastFrame(MonocularFrame * last_frame, std::list<MapPointVisibilityParams> & out_visibles,
                            precision_t radius_multiplier);
 
-  void SearchInVisiblePoints(const std::list<VisibleMapPoint> & filtered_map_points, precision_t matcher_snn_threshold);
+  void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points, precision_t matcher_snn_threshold);
  public:
   // MonocularFame
  private:

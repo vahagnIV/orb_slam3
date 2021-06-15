@@ -6,7 +6,7 @@
 
 #include <camera/monocular_camera.h>
 #include <map/map_point.h>
-#include <frame/visible_map_point.h>
+#include <frame/map_point_visibility_params.h>
 #include <features/ifeature_extractor.h>
 
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
@@ -64,7 +64,7 @@ bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
 }
 
 bool BaseMonocular::IsVisible(map::MapPoint * map_point,
-                              VisibleMapPoint & out_map_point,
+                              MapPointVisibilityParams & out_map_point,
                               precision_t radius_multiplier,
                               unsigned int window_size,
                               int level,

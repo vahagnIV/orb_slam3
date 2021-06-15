@@ -12,7 +12,7 @@
 #include <features/ifeature_extractor.h>
 #include <geometry/rigid_object.h>
 #include "sensor_constants.h"
-#include "visible_map_point.h"
+#include "map_point_visibility_params.h"
 
 namespace orb_slam3 {
 

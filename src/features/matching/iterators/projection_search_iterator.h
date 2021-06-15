@@ -10,7 +10,7 @@
 
 // === orb_slam3 ===
 #include "projection_search_pointee.h"
-#include "../../../frame/visible_map_point.h"
+#include "../../../frame/map_point_visibility_params.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -21,8 +21,8 @@ class ProjectionSearchIterator {
  public:
   typedef ProjectionSearchPointee::id_type id_type;
   typedef ProjectionSearchPointee value_type;
-  ProjectionSearchIterator(std::list<frame::VisibleMapPoint>::const_iterator begin,
-                           std::list<frame::VisibleMapPoint>::const_iterator end,
+  ProjectionSearchIterator(std::list<frame::MapPointVisibilityParams>::const_iterator begin,
+                           std::list<frame::MapPointVisibilityParams>::const_iterator end,
                            const Features * from_features,
                            const std::map<std::size_t, map::MapPoint *> * from_map_points);
 
@@ -39,8 +39,8 @@ class ProjectionSearchIterator {
     return a.it_ != b.it_;
   }
  private:
-  std::list<frame::VisibleMapPoint>::const_iterator it_;
-  std::list<frame::VisibleMapPoint>::const_iterator end_;
+  std::list<frame::MapPointVisibilityParams>::const_iterator it_;
+  std::list<frame::MapPointVisibilityParams>::const_iterator end_;
   ProjectionSearchPointee pointee_;
 
 };

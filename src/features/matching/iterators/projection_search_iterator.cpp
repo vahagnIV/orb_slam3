@@ -9,8 +9,8 @@ namespace features {
 namespace matching {
 namespace iterators {
 
-ProjectionSearchIterator::ProjectionSearchIterator(std::list<frame::VisibleMapPoint>::const_iterator begin,
-                                                   std::list<frame::VisibleMapPoint>::const_iterator end,
+ProjectionSearchIterator::ProjectionSearchIterator(std::list<frame::MapPointVisibilityParams>::const_iterator begin,
+                                                   std::list<frame::MapPointVisibilityParams>::const_iterator end,
                                                    const Features * from_features,
                                                    const std::map<std::size_t, map::MapPoint *> * from_map_points)
     : it_(begin),

@@ -50,7 +50,7 @@ class Tracker : public Observer<frame::KeyFrame *>,
   TrackingResult TrackInNotInitializedState(frame::Frame * frame);
   void PredictAndSetNewFramePosition(frame::Frame * frame) const;
   void ComputeVelocity(const geometry::RigidObject * frame2, const geometry::RigidObject * frame1);
-  bool TrackWithMotionModel(frame::Frame * frame, std::list<frame::VisibleMapPoint> & out_visibles);
+  bool TrackWithMotionModel(frame::Frame * frame, std::list<frame::MapPointVisibilityParams> & out_visibles);
   bool TrackWithReferenceKeyFrame(frame::Frame * frame);
   void ReplaceLastFrame(frame::Frame * frame);
   bool NeedNewKeyFrame(frame::Frame * frame);
