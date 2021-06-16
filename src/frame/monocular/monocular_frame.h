@@ -47,7 +47,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;
-  void SearchWordSharingKeyFrames(const std::vector<list<KeyFrame*>> & inverted_file,
+  void SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame*>> & inverted_file,
                                   list<KeyFrame *> & out_word_sharing_key_frames) override;
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
 

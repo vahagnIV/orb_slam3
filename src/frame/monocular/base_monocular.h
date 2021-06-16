@@ -13,7 +13,6 @@
 // === orb_slam3 ===
 #include <features/features.h>
 #include <geometry/pose.h>
-#include <frame/base_frame.h>
 
 namespace orb_slam3 {
 
