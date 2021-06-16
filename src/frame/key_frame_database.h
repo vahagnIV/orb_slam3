@@ -20,21 +20,21 @@ class KeyFrameDatabase {
   // Loop and Merge Detection
   void DetectCandidates(FrameBase * frame,
                         float minScore,
-                        vector<FrameBase *> & out_loop_candidates,
-                        vector<FrameBase *> & out_merge_candidates);
+                        std::unordered_set<FrameBase *> & out_loop_candidates,
+                        std::unordered_set<FrameBase *> & out_merge_candidates);
   void DetectBestCandidates(FrameBase * frame,
-                            vector<FrameBase *> & out_loop_candidates,
-                            vector<FrameBase *> & out_merge_candidates,
+                            std::unordered_set<FrameBase *> & out_loop_candidates,
+                            std::unordered_set<FrameBase *> & out_merge_candidates,
                             int nMinWords);
   void DetectNBestCandidates(FrameBase * frame,
-                             vector<FrameBase *> & out_loop_candidates,
-                             vector<FrameBase *> & out_merge_candidates,
+                             std::unordered_set<FrameBase *> & out_loop_candidates,
+                             std::unordered_set<FrameBase *> & out_merge_candidates,
                              int count);
 
   // Relocalization
   std::vector<KeyFrame *> DetectRelocalizationCandidates(Frame * F, map::Map * map);
  private:
-  std::vector<list<KeyFrame *> > inverted_file;
+  std::vector<std::unordered_set<KeyFrame *> > inverted_file;
   const ORBVocabulary * vocabulary;
 };
 

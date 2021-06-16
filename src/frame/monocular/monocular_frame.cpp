@@ -16,7 +16,6 @@
 #include "monocular_key_frame.h"
 
 #include <debug/debug_utils.h>
-#include <map/atlas.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -356,7 +355,7 @@ void MonocularFrame::SerializeToStream(ostream & stream) const {
   throw std::runtime_error("Not implemented");
 }
 
-void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<list<KeyFrame *>> & inverted_file,
+void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame *>> & inverted_file,
                                                 list<KeyFrame *> & out_word_sharing_key_frames) {
   // Search all keyframes that share a word with current frame
 
@@ -364,9 +363,9 @@ void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<list<KeyFrame 
            vend = features_.bow_container.bow_vector.end();
        vit != vend;
        vit++) {
-    list<KeyFrame *> key_frames = inverted_file[vit->first];
+    std::unordered_set<KeyFrame *> key_frames = inverted_file[vit->first];
 
-    for (list<KeyFrame *>::iterator kf_it = key_frames.begin(),
+    for (std::unordered_set<KeyFrame *>::iterator kf_it = key_frames.begin(),
              lend = key_frames.end(); kf_it != lend; kf_it++) {
       KeyFrame * key_frame = *kf_it;
       if (key_frame->reloc_query_frame_id != Id()) {
@@ -382,16 +381,16 @@ void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<list<KeyFrame 
 
 /*bool MonocularFrame::Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Map * map) {
   ComputeBow();
-  vector<frame::KeyFrame *>
+  std::vector<frame::KeyFrame *>
       candidate_key_frames = key_frame_database->DetectRelocalizationCandidates(this, map);
   if (candidate_key_frames.empty()) {
     return false;
   }
   size_t number_of_candidate_key_frames = candidate_key_frames.size();
 
-  unordered_map<size_t, size_t> out_map_point_matches;
+  std::unordered_map<size_t, size_t> out_map_point_matches;
 
-  vector<bool> vbDiscarded;
+  std::vector<bool> vbDiscarded;
   vbDiscarded.resize(number_of_candidate_key_frames);
 
   int nCandidates = 0;
@@ -403,11 +402,9 @@ void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<list<KeyFrame 
     SearchByBow(base_mono_key_frame, out_map_point_matches, GetFeatureExtractor(),
                 false, true);
 
-    vector<MLPnPsolver *> vpMLPnPsolvers;
+    std::vector<MLPnPsolver *> vpMLPnPsolvers;
     vpMLPnPsolvers.resize(number_of_candidate_key_frames);
   }
-
-
 
 
   //TODO: implement

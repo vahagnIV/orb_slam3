@@ -48,7 +48,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;
   BaseMonocular::MonocularMapPoints GetBadMapPoints();
-  void SearchWordSharingKeyFrames(const std::vector<list<KeyFrame*>> & inverted_file,
+  void SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame*>> & inverted_file,
                                   list<KeyFrame *> & out_word_sharing_key_frames) override;
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
