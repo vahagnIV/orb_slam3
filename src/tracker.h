@@ -54,6 +54,10 @@ class Tracker : public Observer<frame::KeyFrame *>,
   bool TrackWithReferenceKeyFrame(frame::Frame * frame);
   void ReplaceLastFrame(frame::Frame * frame);
   bool NeedNewKeyFrame(frame::Frame * frame);
+  void DrawForDebug(const frame::Frame * frame,
+                  const std::list<frame::MapPointVisibilityParams> &,
+                  const std::list<frame::MapPointVisibilityParams> &,
+                  const frame::Frame::MapPointSet &) const;
  private:
   static frame::KeyFrame * ListLocalKeyFrames(frame::Frame * current_frame,
                                               std::unordered_set<frame::KeyFrame *> & out_local_keyframes);

@@ -37,10 +37,10 @@ cv::Mat DrawMatches(const std::string & filename_to,
 
 char DrawCommonMapPoints(const std::string & filename1,
                                   const std::string & filename2,
-                                  frame::monocular::BaseMonocular * frame1,
-                                  frame::monocular::BaseMonocular * frame2);
+                                  const frame::monocular::BaseMonocular * frame1,
+                                  const frame::monocular::BaseMonocular * frame2);
 
-cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame);
+cv::Mat DrawMapPoints(const string & filename, const frame::monocular::BaseMonocular * frame);
 
 }
 }

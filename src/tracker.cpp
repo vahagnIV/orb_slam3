@@ -135,9 +135,35 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->OptimizePose();
 //  if(frame->GetMapPointCount() < 30)
 //    return TrackingResult::TRACKING_FAILED;
-  // =======================debug ======================
+
+  DrawForDebug(frame, frame_visibles, visible_map_points, local_map_points_except_current);
+
+  frame::Frame::MapPointSet map_points;
+  frame->ListMapPoints(map_points);
+  for (auto map_point: map_points)
+    map_point->IncreaseFound();
+
+  //TODO: Add keyframe if necessary
+  if (NeedNewKeyFrame(frame)) {
+    auto keyframe = frame->CreateKeyFrame();
+    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
+
+    // TODO: remove the following line
+  }
+  (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+//  ComputeVelocity(frame, last_frame_);
+  ReplaceLastFrame(frame);
+  return TrackingResult::OK;
+}
+
+void Tracker::DrawForDebug(const frame::Frame * frame,
+                          const std::list<frame::MapPointVisibilityParams> & frame_visibles,
+                          const std::list<frame::MapPointVisibilityParams> & visible_map_points,
+                          const frame::Frame::MapPointSet & local_map_points_except_current) const 
+{
   cv::Mat image = cv::imread(frame->GetFilename());
-  auto fr = dynamic_cast<frame::monocular::MonocularFrame *> (frame);
+  auto fr = dynamic_cast<const frame::monocular::MonocularFrame *> (frame);
 
   if (mode & 1) {
     for (auto vmp: frame_visibles) {
@@ -172,8 +198,8 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (mode & 8) {
     key = debug::DrawCommonMapPoints(fr->GetFilename(),
                                      last_frame_->GetFilename(),
-                                     dynamic_cast<frame::monocular::MonocularFrame *>(fr),
-                                     dynamic_cast<frame::monocular::MonocularFrame *>(last_frame_));
+                                     dynamic_cast<const frame::monocular::MonocularFrame *>(fr),
+                                     dynamic_cast<const frame::monocular::MonocularFrame *>(last_frame_));
   }
 
   std::cout << "Frame Position after SLMP " << std::endl;
@@ -198,26 +224,6 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   for (auto mp: atlas_->GetCurrentMap()->GetAllMapPoints()) {
     ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
   }
-
-  //=====================================================
-
-  frame::Frame::MapPointSet map_points;
-  frame->ListMapPoints(map_points);
-  for (auto map_point: map_points)
-    map_point->IncreaseFound();
-
-  //TODO: Add keyframe if necessary
-  if (NeedNewKeyFrame(frame)) {
-    auto keyframe = frame->CreateKeyFrame();
-    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
-
-    // TODO: remove the following line
-  }
-  (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
-//  ComputeVelocity(frame, last_frame_);
-  ReplaceLastFrame(frame);
-  return TrackingResult::OK;
 }
 
 void Tracker::ReplaceLastFrame(frame::Frame * frame) {

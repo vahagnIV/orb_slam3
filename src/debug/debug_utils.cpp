@@ -87,8 +87,8 @@ cv::Mat DrawMatches(const string & filename_to,
 
 char DrawCommonMapPoints(const string & filename1,
                          const string & filename2,
-                         frame::monocular::BaseMonocular * frame1,
-                         frame::monocular::BaseMonocular * frame2) {
+                         const frame::monocular::BaseMonocular * frame1,
+                         const frame::monocular::BaseMonocular * frame2) {
   cv::Mat frame1_image = cv::imread(filename1, cv::IMREAD_COLOR);
   cv::Mat frame2_image = cv::imread(filename2, cv::IMREAD_COLOR);
   cv::Mat image(frame1_image.rows, frame1_image.cols + frame2_image.cols, CV_8UC3);
@@ -118,9 +118,9 @@ char DrawCommonMapPoints(const string & filename1,
     TPoint2D projected1, projected2;
 
     TPoint3D transfored1 =
-        dynamic_cast<geometry::RigidObject *>(frame1)->GetPosition().Transform(mp_id.second->GetPosition()),
+        dynamic_cast<const geometry::RigidObject *>(frame1)->GetPosition().Transform(mp_id.second->GetPosition()),
         transformed2 =
-        dynamic_cast<geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
+        dynamic_cast<const geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
     frame1->GetCamera()->ProjectAndDistort(transfored1, projected1);
     frame1->GetCamera()->ProjectAndDistort(transformed2, projected2);
 
