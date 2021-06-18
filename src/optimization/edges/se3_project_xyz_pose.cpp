@@ -33,8 +33,6 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-  BaseFixedSizedEdge::linearizeOplus();
-  return;
   computeError();
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
