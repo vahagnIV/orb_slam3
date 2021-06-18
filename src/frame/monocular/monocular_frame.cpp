@@ -314,7 +314,7 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   }
 }
 
-BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() {
+BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() const {
 
   BaseMonocular::MonocularMapPoints result;
   for (auto mp: map_points_)

@@ -17,7 +17,7 @@ void Map::AddMapPoint(MapPoint * map_point) {
   map_points_.insert(map_point);
 }
 
-std::unordered_set<MapPoint *> Map::GetAllMapPoints() {
+std::unordered_set<MapPoint *> Map::GetAllMapPoints() const {
   std::unordered_set<MapPoint *> result;
   for (auto mp: map_points_)
     if (!mp->IsBad())
@@ -30,7 +30,7 @@ void Map::SetInitialKeyFrame(frame::KeyFrame * frame) {
   key_frames_.insert(frame);
 }
 
-std::unordered_set<frame::KeyFrame *> Map::GetAllKeyFrames() {
+std::unordered_set<frame::KeyFrame *> Map::GetAllKeyFrames() const {
   std::unordered_set<frame::KeyFrame *> result;
   for (auto kf: key_frames_)
     if (!kf->IsBad())

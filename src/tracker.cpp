@@ -73,9 +73,6 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
-int time_to_wait = 0;
-int mode = 7;
-
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   last_frame_->UpdateFromReferenceKeyFrame();
 
@@ -135,71 +132,8 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->OptimizePose();
 //  if(frame->GetMapPointCount() < 30)
 //    return TrackingResult::TRACKING_FAILED;
-  // =======================debug ======================
-  cv::Mat image = cv::imread(frame->GetFilename());
-  auto fr = dynamic_cast<frame::monocular::MonocularFrame *> (frame);
 
-  if (mode & 1) {
-    for (auto vmp: frame_visibles) {
-      TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
-      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
-    }
-    for (auto vmp: visible_map_points) {
-      TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
-      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
-    }
-  }
-
-  if (mode & 2) {
-    for (auto mp: fr->GetMapPoints()) {
-      TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
-      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 5, cv::Scalar(0, 255, 0));
-    }
-  }
-
-  if (mode & 4) {
-    for (auto mp: fr->GetBadMapPoints()) {
-      TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
-      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 2, cv::Scalar(0, 0, 255));
-    }
-  }
-
-  char key = ']';
-  if (mode & 8) {
-    key = debug::DrawCommonMapPoints(fr->GetFilename(),
-                                     last_frame_->GetFilename(),
-                                     dynamic_cast<frame::monocular::MonocularFrame *>(fr),
-                                     dynamic_cast<frame::monocular::MonocularFrame *>(last_frame_));
-  }
-
-  std::cout << "Frame Position after SLMP " << std::endl;
-  frame->GetPosition().print();
-  logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
-  cv::imshow("After SLMP", image);
-
-  key = cv::waitKey(time_to_wait);
-  switch (key) {
-    case 'c':time_to_wait = (int)!time_to_wait;
-      break;
-    case 'm':mode ^= 1;
-      break;
-    case 'v':mode ^= 2;
-      break;
-    case 'b':mode ^= 8;
-      break;
-
-  }
-
-  std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
-  for (auto mp: atlas_->GetCurrentMap()->GetAllMapPoints()) {
-    ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
-  }
-
-  //=====================================================
+  debug::DisplayTrackingInfo(frame, last_frame_, atlas_->GetCurrentMap(), frame_visibles, visible_map_points, local_map_points_except_current);
 
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);

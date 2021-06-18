@@ -3,7 +3,10 @@
 //
 
 #include "debug_utils.h"
+#include "logging.h"
+#include <map/map.h>
 #include <map/map_point.h>
+
 
 namespace orb_slam3 {
 namespace debug {
@@ -87,8 +90,8 @@ cv::Mat DrawMatches(const string & filename_to,
 
 char DrawCommonMapPoints(const string & filename1,
                          const string & filename2,
-                         frame::monocular::BaseMonocular * frame1,
-                         frame::monocular::BaseMonocular * frame2) {
+                         const frame::monocular::BaseMonocular * frame1,
+                         const frame::monocular::BaseMonocular * frame2) {
   cv::Mat frame1_image = cv::imread(filename1, cv::IMREAD_COLOR);
   cv::Mat frame2_image = cv::imread(filename2, cv::IMREAD_COLOR);
   cv::Mat image(frame1_image.rows, frame1_image.cols + frame2_image.cols, CV_8UC3);
@@ -118,9 +121,9 @@ char DrawCommonMapPoints(const string & filename1,
     TPoint2D projected1, projected2;
 
     TPoint3D transfored1 =
-        dynamic_cast<geometry::RigidObject *>(frame1)->GetPosition().Transform(mp_id.second->GetPosition()),
+        dynamic_cast<const geometry::RigidObject *>(frame1)->GetPosition().Transform(mp_id.second->GetPosition()),
         transformed2 =
-        dynamic_cast<geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
+        dynamic_cast<const geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
     frame1->GetCamera()->ProjectAndDistort(transfored1, projected1);
     frame1->GetCamera()->ProjectAndDistort(transformed2, projected2);
 
@@ -147,6 +150,84 @@ cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular *
     cv::circle(image, pt, 4, cv::Scalar(0, 255, 0));
   }
   return image;
+}
+
+
+void DisplayTrackingInfo(const frame::Frame * frame,
+                          const frame::Frame * last_frame,
+                          const map::Map * current_map,
+                          const std::list<frame::MapPointVisibilityParams> & frame_visibles,
+                          const std::list<frame::MapPointVisibilityParams> & visible_map_points,
+                          const frame::Frame::MapPointSet & local_map_points_except_current)
+{
+
+  static int time_to_wait = 0;
+  static int mode = 7;
+
+  cv::Mat image = cv::imread(frame->GetFilename());
+  typedef frame::monocular::MonocularFrame M;
+  const M * fr = dynamic_cast<const M *> (frame);
+  assert(0 != fr);
+
+  if (mode & 1) {
+    for (auto vmp: frame_visibles) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
+    }
+    for (auto vmp: visible_map_points) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
+    }
+  }
+
+  if (mode & 2) {
+    for (auto mp: fr->GetMapPoints()) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 5, cv::Scalar(0, 255, 0));
+    }
+  }
+
+  if (mode & 4) {
+    for (auto mp: fr->GetBadMapPoints()) {
+      TPoint2D pt;
+      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      cv::circle(image, cv::Point2f(pt.x(), pt.y()), 2, cv::Scalar(0, 0, 255));
+    }
+  }
+
+  char key = ']';
+  if (mode & 8) {
+    key = debug::DrawCommonMapPoints(fr->GetFilename(),
+                                     last_frame->GetFilename(),
+                                     dynamic_cast<const M *>(fr),
+                                     dynamic_cast<const M *>(last_frame));
+  }
+
+  std::cout << "Frame Position after SLMP " << std::endl;
+  frame->GetPosition().print();
+  logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
+  cv::imshow("After SLMP", image);
+
+  key = cv::waitKey(time_to_wait);
+  switch (key) {
+    case 'c':time_to_wait = (int)!time_to_wait;
+      break;
+    case 'm':mode ^= 1;
+      break;
+    case 'v':mode ^= 2;
+      break;
+    case 'b':mode ^= 8;
+      break;
+
+  }
+
+  std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
+  for (auto mp: current_map->GetAllMapPoints()) {
+    ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
+  }
 }
 
 }
