@@ -11,6 +11,11 @@
 #include <frame/monocular/monocular_frame.h>
 
 namespace orb_slam3 {
+
+namespace map {
+  class Map;
+}
+
 namespace debug {
 
 void ToOpenCvMatches(const std::unordered_map<size_t, size_t> & matches, std::vector<cv::DMatch> & out_matches);
@@ -39,6 +44,13 @@ char DrawCommonMapPoints(const std::string & filename1,
                                   const std::string & filename2,
                                   const frame::monocular::BaseMonocular * frame1,
                                   const frame::monocular::BaseMonocular * frame2);
+
+void DisplayTrackingInfo(const frame::Frame * frame,
+                              const frame::Frame * last_frame,
+                              const map::Map * current_map,
+                              const std::list<frame::MapPointVisibilityParams> &,
+                              const std::list<frame::MapPointVisibilityParams> &,
+                              const frame::Frame::MapPointSet &);
 
 cv::Mat DrawMapPoints(const string & filename, const frame::monocular::BaseMonocular * frame);
 
