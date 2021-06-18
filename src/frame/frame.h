@@ -44,7 +44,7 @@ class Frame : public BaseFrame {
   virtual void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) = 0;
   virtual void UpdateFromReferenceKeyFrame() = 0;
   virtual void SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame*>> & inverted_file,
-                                          std::list<KeyFrame *> & out_word_sharing_key_frames) = 0;
+                                          std::unordered_map<KeyFrame *, size_t> & out_word_sharing_key_frames) = 0;
  private:
   static size_t next_id_;
 

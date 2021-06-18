@@ -32,10 +32,24 @@ class KeyFrameDatabase {
                              int count);
 
   // Relocalization
-  std::vector<KeyFrame *> DetectRelocalizationCandidates(Frame * F, map::Map * map);
+  std::unordered_set<KeyFrame *> DetectRelocalizationCandidates(Frame * F, map::Map * map);
+
+  //Helper member functions//
  private:
-  std::vector<std::unordered_set<KeyFrame *> > inverted_file;
-  const ORBVocabulary * vocabulary;
+  static void FilterRelocalizationCandidatesByWordSharingAcceptableScore(const Frame * frame,
+                                                                         const std::unordered_map<KeyFrame *,
+                                                                                                  std::size_t> & word_sharing_key_frames,
+                                                                         std::unordered_map<KeyFrame *,
+                                                                                            precision_t> & out_key_frame_reloc_scores);
+  static void FilterRelocalizationCandidatesByCovisibility(const std::unordered_map<KeyFrame *,
+                                                                                    precision_t> & key_frame_reloc_scores,
+                                                           const std::unordered_map<KeyFrame *,
+                                                                                    std::size_t> & word_sharing_key_frames,
+                                                           std::unordered_set<KeyFrame *> & out_relocalization_candidates);
+
+ private:
+  std::vector<std::unordered_set<KeyFrame *> > inverted_file_;
+  const ORBVocabulary * vocabulary_;
 };
 
 }

@@ -356,7 +356,7 @@ void MonocularFrame::SerializeToStream(ostream & stream) const {
 }
 
 void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame *>> & inverted_file,
-                                                list<KeyFrame *> & out_word_sharing_key_frames) {
+                                                std::unordered_map<KeyFrame *, size_t> & out_word_sharing_key_frames) {
   // Search all keyframes that share a word with current frame
 
   for (DBoW2::BowVector::const_iterator vit = features_.bow_container.bow_vector.begin(),
@@ -365,16 +365,8 @@ void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered
        vit++) {
     std::unordered_set<KeyFrame *> key_frames = inverted_file[vit->first];
 
-    for (std::unordered_set<KeyFrame *>::iterator kf_it = key_frames.begin(),
-             lend = key_frames.end(); kf_it != lend; kf_it++) {
-      KeyFrame * key_frame = *kf_it;
-      if (key_frame->reloc_query_frame_id != Id()) {
-        key_frame->common_words_count = 0;
-        key_frame->reloc_query_frame_id = Id();
-        out_word_sharing_key_frames.push_back(key_frame);
-      } else {
-        key_frame->common_words_count++;
-      }
+    for (auto key_frame : key_frames) {
+      out_word_sharing_key_frames[key_frame]++;
     }
   }
 }
