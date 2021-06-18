@@ -41,8 +41,8 @@ bool SE3ProjectXYZPoseOnly::IsDepthPositive() {
 }
 
 void SE3ProjectXYZPoseOnly::linearizeOplus() {
-  BaseFixedSizedEdge::linearizeOplus();
-  return;
+//  BaseFixedSizedEdge::linearizeOplus();
+//  return;
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   g2o::Vector3 pt_camera_system = pose->estimate().map(point_);
   const double & x = pt_camera_system[0];
