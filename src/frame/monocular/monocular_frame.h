@@ -33,7 +33,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
  public:
   bool EstimatePositionByProjectingMapPoints(Frame * frame, list<MapPointVisibilityParams> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  precision_t GetSimilarityScore(BaseFrame * other) const override;
+  precision_t GetSimilarityScore(const BaseFrame * other) const override;
   void ComputeBow() override;
   void OptimizePose() override;
   bool IsVisible(map::MapPoint * map_point,

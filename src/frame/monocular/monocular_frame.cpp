@@ -155,12 +155,12 @@ void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) cons
   BaseMonocular::ListMapPoints(out_map_points);
 }
 
-precision_t MonocularFrame::GetSimilarityScore(BaseFrame * other) const {
+precision_t MonocularFrame::GetSimilarityScore(const BaseFrame * other) const {
   if (other->Type() != MONOCULAR) {
     return 0;
   }
   return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
-                            dynamic_cast<BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
+                            dynamic_cast<const BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
 }
 
 bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
@@ -356,7 +356,7 @@ void MonocularFrame::SerializeToStream(ostream & stream) const {
 }
 
 void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame *>> & inverted_file,
-                                                std::unordered_map<KeyFrame *, size_t> & out_word_sharing_key_frames) {
+                                                WordSharingKeyFrameMap & out_word_sharing_key_frames) {
   // Search all keyframes that share a word with current frame
 
   for (DBoW2::BowVector::const_iterator vit = features_.bow_container.bow_vector.begin(),

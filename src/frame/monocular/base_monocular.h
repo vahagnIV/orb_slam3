@@ -52,7 +52,7 @@ class BaseMonocular {
   const camera::MonocularCamera * GetCamera() const { return camera_; }
   void ComputeBow() { features_.ComputeBow(); }
   bool MapPointExists(const map::MapPoint * map_point) const;
-  void SearchByBow(BaseMonocular * other, unordered_map<std::size_t, std::size_t> out_map_point_matches,
+  void SearchByBow(const BaseMonocular * other, unordered_map<std::size_t, std::size_t> out_map_point_matches,
                    const features::IFeatureExtractor * feature_extractor,
                    bool self_keypoint_exists,
                    bool reference_kf_keypoint_exists) const;

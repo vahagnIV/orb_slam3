@@ -34,7 +34,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  precision_t GetSimilarityScore(BaseFrame * other) const override;
+  precision_t GetSimilarityScore(const BaseFrame * other) const override;
   void FuseMapPoints(MapPointSet & map_points) override;
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;

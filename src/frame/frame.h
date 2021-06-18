@@ -16,6 +16,7 @@ namespace frame {
 class KeyFrame;
 
 class Frame : public BaseFrame {
+
  public:
   Frame(TimePoint & time_point,
         const std::string & filename,
@@ -28,6 +29,7 @@ class Frame : public BaseFrame {
 
   virtual ~Frame() = default;
  public:
+  typedef std::unordered_map<KeyFrame *, size_t> WordSharingKeyFrameMap;
   virtual bool IsValid() const = 0;
   virtual bool Link(Frame * other) = 0;
   virtual bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) = 0;
@@ -44,7 +46,7 @@ class Frame : public BaseFrame {
   virtual void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) = 0;
   virtual void UpdateFromReferenceKeyFrame() = 0;
   virtual void SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame*>> & inverted_file,
-                                          std::unordered_map<KeyFrame *, size_t> & out_word_sharing_key_frames) = 0;
+                                          WordSharingKeyFrameMap & out_word_sharing_key_frames) = 0;
  private:
   static size_t next_id_;
 

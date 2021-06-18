@@ -118,7 +118,7 @@ void BaseMonocular::SerializeToStream(ostream & stream) const {
   stream << features_;
 }
 
-void BaseMonocular::SearchByBow(BaseMonocular * other, std::unordered_map<std::size_t, std::size_t> out_map_point_matches,
+void BaseMonocular::SearchByBow(const BaseMonocular * other, std::unordered_map<std::size_t, std::size_t> out_map_point_matches,
                                 const features::IFeatureExtractor * feature_extractor,
                                 bool self_keypoint_exists, bool reference_kf_keypoint_exists) const{
   typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;

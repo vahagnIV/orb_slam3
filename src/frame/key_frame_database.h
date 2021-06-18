@@ -18,15 +18,15 @@ class KeyFrameDatabase {
 
  public:
   // Loop and Merge Detection
-  void DetectCandidates(FrameBase * frame,
+  void DetectCandidates(const FrameBase * frame,
                         float minScore,
                         std::unordered_set<FrameBase *> & out_loop_candidates,
                         std::unordered_set<FrameBase *> & out_merge_candidates);
-  void DetectBestCandidates(FrameBase * frame,
+  void DetectBestCandidates(const FrameBase * frame,
                             std::unordered_set<FrameBase *> & out_loop_candidates,
                             std::unordered_set<FrameBase *> & out_merge_candidates,
                             int nMinWords);
-  void DetectNBestCandidates(FrameBase * frame,
+  void DetectNBestCandidates(const FrameBase * frame,
                              std::unordered_set<FrameBase *> & out_loop_candidates,
                              std::unordered_set<FrameBase *> & out_merge_candidates,
                              int count);

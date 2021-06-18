@@ -15,7 +15,7 @@ KeyFrameDatabase::KeyFrameDatabase(const ORBVocabulary & voc) : vocabulary_(&voc
 }
 
 std::unordered_set<KeyFrame *> KeyFrameDatabase::DetectRelocalizationCandidates(Frame * frame, map::Map * map) {
-  std::unordered_map<KeyFrame *, std::size_t> word_sharing_key_frames;
+  Frame::WordSharingKeyFrameMap word_sharing_key_frames;
   frame->SearchWordSharingKeyFrames(inverted_file_, word_sharing_key_frames);
   if (word_sharing_key_frames.empty())
     return std::unordered_set<KeyFrame *>();
