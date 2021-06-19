@@ -32,6 +32,7 @@ add_library(orbslam SHARED
         frame/covisibility_graph_node.cpp
         frame/observation.cpp
         frame/frame.cpp
+        frame/key_frame_database.cpp
 
         camera/monocular_camera.cpp
         camera/kannala_brandt_5.cpp
@@ -101,7 +102,6 @@ add_library(orbslam SHARED
         features/matching/imatcher.h
         features/matching/second_nearest_neighbor_matcher.hpp
         features/match.h
-        frame/iframe_database.h
         features/bow_vocabulary.h
         features/bow_container.h
         features/matching/iterators/bow_to_iterator.h

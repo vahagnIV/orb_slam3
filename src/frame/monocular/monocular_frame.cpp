@@ -66,11 +66,10 @@ bool MonocularFrame::Link(Frame * other) {
                                     other->Id());
     return false;
   }
-  for(auto it = matches.begin(); it!=matches.end();){
-    if(points.find(it->first) == points.end()){
+  for (auto it = matches.begin(); it != matches.end();) {
+    if (points.find(it->first) == points.end()) {
       it = matches.erase(it);
-    }
-    else
+    } else
       ++it;
   }
   cv::imshow("Linking",
@@ -154,6 +153,14 @@ KeyFrame * MonocularFrame::CreateKeyFrame() {
 
 void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
   BaseMonocular::ListMapPoints(out_map_points);
+}
+
+precision_t MonocularFrame::GetSimilarityScore(const BaseFrame * other) const {
+  if (other->Type() != MONOCULAR) {
+    return 0;
+  }
+  return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
+                            dynamic_cast<const BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
 }
 
 bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
@@ -347,6 +354,54 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<M
 void MonocularFrame::SerializeToStream(ostream & stream) const {
   throw std::runtime_error("Not implemented");
 }
+
+void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame *>> & inverted_file,
+                                                WordSharingKeyFrameMap & out_word_sharing_key_frames) {
+  // Search all keyframes that share a word with current frame
+
+  for (DBoW2::BowVector::const_iterator vit = features_.bow_container.bow_vector.begin(),
+           vend = features_.bow_container.bow_vector.end();
+       vit != vend;
+       vit++) {
+    std::unordered_set<KeyFrame *> key_frames = inverted_file[vit->first];
+
+    for (auto key_frame : key_frames) {
+      out_word_sharing_key_frames[key_frame]++;
+    }
+  }
+}
+
+/*bool MonocularFrame::Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Map * map) {
+  ComputeBow();
+  std::vector<frame::KeyFrame *>
+      candidate_key_frames = key_frame_database->DetectRelocalizationCandidates(this, map);
+  if (candidate_key_frames.empty()) {
+    return false;
+  }
+  size_t number_of_candidate_key_frames = candidate_key_frames.size();
+
+  std::unordered_map<size_t, size_t> out_map_point_matches;
+
+  std::vector<bool> vbDiscarded;
+  vbDiscarded.resize(number_of_candidate_key_frames);
+
+  int nCandidates = 0;
+
+  for (int i = 0; i < number_of_candidate_key_frames; ++i) {
+    frame::KeyFrame * candidate_key_frame = candidate_key_frames[i];
+    assert(candidate_key_frame->Type() == MONOCULAR);
+    auto base_mono_key_frame = dynamic_cast<BaseMonocular *>(candidate_key_frame);
+    SearchByBow(base_mono_key_frame, out_map_point_matches, GetFeatureExtractor(),
+                false, true);
+
+    std::vector<MLPnPsolver *> vpMLPnPsolvers;
+    vpMLPnPsolvers.resize(number_of_candidate_key_frames);
+  }
+
+
+  //TODO: implement
+  return false;
+}*/
 
 }
 }

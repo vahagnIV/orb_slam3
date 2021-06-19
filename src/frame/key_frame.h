@@ -59,6 +59,7 @@ class KeyFrame : public BaseFrame {
   geometry::Pose pose_gba_;
   KeyFrame * kf_gba_;
 
+
 };
 
 }

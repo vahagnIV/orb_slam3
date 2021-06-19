@@ -4,7 +4,8 @@
 
 #ifndef ORB_SLAM3_INCLUDE_ORB_VOCABULARY_H_
 #define ORB_SLAM3_INCLUDE_ORB_VOCABULARY_H_
-#include <DBoW2/DBoW2.h>
+#include "DBoW2/TemplatedVocabulary.h"
+#include "DBoW2/FORB.h"
 
 namespace orb_slam3{
 

@@ -83,8 +83,8 @@ void OptimizePose(MonocularFrame * frame) {
         edge->setRobustKernel(nullptr);
     }
 
-    std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
-    std::cout << "VERTEX POSE " << i << frame_vertex->estimate() << std::endl;
+   // std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
+    //std::cout << "VERTEX POSE " << i << frame_vertex->estimate() << std::endl;
 
   }
 
