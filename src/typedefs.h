@@ -33,10 +33,12 @@ typedef Eigen::Matrix<precision_t, 3, 1> HomogenousPoint;
 
 typedef Eigen::Matrix<precision_t, 2, 1> TPoint2D;
 
+typedef Eigen::Matrix<precision_t, 4, 1> TVector4D;
 typedef Eigen::Matrix<precision_t, 3, 1> TVector3D;
 typedef Eigen::Matrix<precision_t, 2, 1> T2DVector;
 
 typedef Eigen::Matrix<precision_t, 3, 3> TMatrix33;
+typedef Eigen::Matrix<precision_t, 4, 4> TMatrix44;
 
 typedef std::chrono::system_clock::time_point TimePoint;
 }

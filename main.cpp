@@ -331,6 +331,9 @@ void initialize() {
 }
 
 int main(int argc, char * argv[]) {
+  orb_slam3::TPoint3D a {1,1,1}, b{2,2,3};
+  std::cout << a * b.transpose() << std::endl;
+  return 0;
 
   initialize();
   nlohmann::json config;

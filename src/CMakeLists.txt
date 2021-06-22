@@ -6,8 +6,8 @@ find_package(OpenMP)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ")
 
 if (OPENMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -58,6 +58,8 @@ add_library(orbslam SHARED
         geometry/essential_matrix_estimator.cpp
         geometry/transformation_estimator_base.cpp
         geometry/utils.cpp
+        geometry/pose.cpp
+        geometry/sim3_solver.cpp
 
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp
