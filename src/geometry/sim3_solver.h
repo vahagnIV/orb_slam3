@@ -22,7 +22,13 @@ class Sim3Solver {
                                   const TPoint3D & centroid1,
                                   const TPoint3D & centroid2,
                                   std::vector<std::pair<TPoint3D, TPoint3D>> & out_relative_coords) ;
-  static TMatrix33 ComputeM(std::vector<std::pair<TPoint3D, TPoint3D>> & relative_coords) ;
+  static TMatrix33 ComputeM(const std::vector<std::pair<TPoint3D, TPoint3D>> & relative_coords) ;
+  static TMatrix33 ComputeRotation(const std::vector<std::pair<TPoint3D, TPoint3D>> & relative_coords);
+  static precision_t ComputeScale(const std::vector<std::pair<TPoint3D, TPoint3D>> & relative_coords, const TMatrix33 & R);
+  static TVector3D ComputeTranslation(const TMatrix33 & R,
+                                      const TVector3D & centroid1,
+                                      const TVector3D & centroid2,
+                                      precision_t s);
 
 };
 

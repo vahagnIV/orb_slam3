@@ -10,20 +10,23 @@ namespace test {
 
 TEST_F(Sim3SolverTests, TransformationCorrectlyRecovered) {
   geometry::Pose gt_pose;
-  gt_pose.R = GetRotationMatrixRollPitchYaw(0.07, 0.1, 0.05);
+  gt_pose.R = GetRotationMatrixRollPitchYaw(0.2, 0.1, 0.05);
   gt_pose.T = TVector3D{1.7, 2.6, 1.5};
-  gt_pose.s = 0.175;
+  gt_pose.s = 1.75;
 
-  geometry::Sim3Solver system_under_test;
   std::vector<std::pair<TPoint3D, TPoint3D>> matches(20);
   for (int i = 0; i < 20; ++i) {
     matches[i].second = GenerateRandomHomogenousPoint(5, 10) * DoubleRand(0.5, 6);
     matches[i].first = gt_pose.Transform(matches[i].second);
   }
 
+  geometry::Sim3Solver system_under_test;
   geometry::Pose res = system_under_test.ComputeSim3(matches);
+  res.print();
 
   ASSERT_LE((res.R - gt_pose.R).norm(), 1e-7);
+  ASSERT_DOUBLE_EQ(gt_pose.s, res.s);
+  ASSERT_LE((res.T - gt_pose.T).norm(), 1e-7);
 
 }
 
