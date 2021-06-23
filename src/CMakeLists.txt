@@ -58,6 +58,8 @@ add_library(orbslam SHARED
         geometry/essential_matrix_estimator.cpp
         geometry/transformation_estimator_base.cpp
         geometry/utils.cpp
+        geometry/pose.cpp
+        geometry/sim3_solver.cpp
 
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp

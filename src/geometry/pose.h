@@ -22,26 +22,17 @@ struct Pose {
     return Quaternion(R, T);
   }
 
-  TVector3D Transform(const TPoint3D & point) const {
-    return R * point + T;
-  }
+  TVector3D Transform(const TPoint3D & point) const;
 
-  Pose GetInversePose() const {
-    return Pose{.R = R.transpose(), .T = -R.transpose() * T};
-  }
+  Pose GetInversePose() const;
 
-  friend std::ostream & operator<<(std::ostream & stream, const Pose & p) {
-    stream.write((char *) p.R.data(), p.R.size() * sizeof(decltype(p.R)::Scalar));
-    stream.write((char *) p.T.data(), p.T.size() * sizeof(decltype(p.T)::Scalar));
-    return stream;
-  }
+  friend std::ostream & operator<<(std::ostream & stream, const Pose & p);
 
-  void print() const {
-    std::cout << R << std::endl << T << std::endl;
-  }
+  void print() const;
 
   TMatrix33 R;
   TVector3D T;
+  precision_t s = 1;
 };
 
 }

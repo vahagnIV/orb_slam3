@@ -34,6 +34,7 @@ set(ALL_TEST_SOURCE_FILES
         geometry/general_geometry_tests.h
         geometry/utils_tests.h
         geometry/utils_tests.cpp
+        geometry/sim3_solver_tests.cpp
         test_utils.cpp
         test_utils.h)
 add_executable(orb_slam_unit_tests ${ALL_TEST_SOURCE_FILES})
