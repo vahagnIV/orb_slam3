@@ -8,13 +8,24 @@
 #include "typedefs.h"
 #include "pose.h"
 namespace orb_slam3 {
+namespace camera{
+class MonocularCamera;
+}
+
 namespace geometry {
 
 class Sim3Solver {
  public:
   Sim3Solver(){};
 
-  Pose ComputeSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches) const;
+  static Pose EstimateSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,
+                    const std::vector<std::pair<TPoint2D, TPoint2D>> & projections,
+                    const camera::MonocularCamera * camera1,
+                    const camera::MonocularCamera * camera2,
+                    const std::vector<std::pair<precision_t, precision_t>> & errors,
+                    size_t ransac_iteration_count);
+
+  static Pose ComputeSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches) ;
  private:
   static void ComputeCentroids(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,
                         TPoint3D & out_centroid1, TPoint3D & out_centroid2) ;

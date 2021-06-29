@@ -20,8 +20,7 @@ TEST_F(Sim3SolverTests, TransformationCorrectlyRecovered) {
     matches[i].first = gt_pose.Transform(matches[i].second);
   }
 
-  geometry::Sim3Solver system_under_test;
-  geometry::Pose res = system_under_test.ComputeSim3(matches);
+  geometry::Pose res = geometry::Sim3Solver::ComputeSim3(matches);
   res.print();
 
   ASSERT_LE((res.R - gt_pose.R).norm(), 1e-7);

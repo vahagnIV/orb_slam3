@@ -7,7 +7,16 @@
 namespace orb_slam3 {
 namespace geometry {
 
-Pose Sim3Solver::ComputeSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches) const {
+Pose Sim3Solver::EstimateSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,
+                              const std::vector<std::pair<TPoint2D, TPoint2D>> & projections,
+                              const camera::MonocularCamera * camera1,
+                              const camera::MonocularCamera * camera2,
+                              const std::vector<std::pair<precision_t, precision_t>> & errors,
+                              size_t ransac_iteration_count) {
+  return Pose();
+}
+
+Pose Sim3Solver::ComputeSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches)  {
   TPoint3D centroid1, centroid2;
   ComputeCentroids(matches, centroid1, centroid2);
   std::vector<std::pair<TPoint3D, TPoint3D>> relative_matches;
