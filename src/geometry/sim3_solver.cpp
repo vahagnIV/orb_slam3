@@ -43,9 +43,11 @@ void Sim3Solver::ComputeCentroids(const std::vector<std::pair<TPoint3D, TPoint3D
                                   TPoint3D & out_centroid1,
                                   TPoint3D & out_centroid2,
                                   const std::vector<size_t> & slice_indices) {
+
   out_centroid1.setZero();
   out_centroid2.setZero();
   for (size_t index: slice_indices) {
+    assert(index < matches.size());
     const auto & match = matches[index];
     out_centroid1 += match.first;
     out_centroid2 += match.second;
@@ -62,6 +64,7 @@ void Sim3Solver::ComputeRelativeCoordinates(const std::vector<std::pair<TPoint3D
                                             const std::vector<size_t> & slice_indices) {
   out_relative_coords.reserve(matches.size());
   for (size_t index: slice_indices) {
+    assert(index < matches.size());
     const auto & match = matches[index];
     out_relative_coords.emplace_back(match.first - centroid1, match.second - centroid2);
   }
