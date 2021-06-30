@@ -15,13 +15,15 @@ TEST_F(Sim3SolverTests, TransformationCorrectlyRecovered) {
   gt_pose.s = 1.75;
 
   std::vector<std::pair<TPoint3D, TPoint3D>> matches(20);
+  std::vector<size_t> slice_indices;
   for (int i = 0; i < 20; ++i) {
     matches[i].second = GenerateRandomHomogenousPoint(5, 10) * DoubleRand(0.5, 6);
     matches[i].first = gt_pose.Transform(matches[i].second);
-  }
 
-  geometry::Pose res = geometry::Sim3Solver::ComputeSim3(matches);
-  res.print();
+  }
+  slice_indices = {1, 5, 9, 12, 19};
+
+  geometry::Pose res = geometry::Sim3Solver::ComputeSim3(matches, slice_indices);
 
   ASSERT_LE((res.R - gt_pose.R).norm(), 1e-7);
   ASSERT_DOUBLE_EQ(gt_pose.s, res.s);
