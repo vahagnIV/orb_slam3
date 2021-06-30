@@ -9,10 +9,6 @@
 #include "typedefs.h"
 #include "pose.h"
 namespace orb_slam3 {
-namespace camera{
-class MonocularCamera;
-}
-
 namespace geometry {
 
 class Sim3Solver {

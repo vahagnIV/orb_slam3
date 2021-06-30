@@ -10,6 +10,11 @@
 #include "random_subset_generator.h"
 
 namespace orb_slam3 {
+
+namespace camera{
+class MonocularCamera;
+}
+
 namespace geometry {
 
 class RANSACSim3Solver {
