@@ -9,25 +9,6 @@ namespace orb_slam3 {
 namespace geometry {
 namespace utils {
 
-bool GenerateRandomSubset(size_t min, size_t max, size_t count, std::vector<size_t> & out_result) {
-  if(max - min < count)
-    return true;
-//  std::random_device rand_dev_;
-//  std::mt19937 generator(rand_dev_());
-//  std::uniform_int_distribution<size_t> distr(min, max - 1);
-//  std::unordered_set<size_t> chosen;
-//  out_result.reserve(count);
-//  while (chosen.size() < count)
-//    chosen.insert(distr(generator));
-
-  std::unordered_set<size_t> chosen;
-  out_result.reserve(count);
-  while (chosen.size() < count) {
-    chosen.insert(rand() % (max));
-  }
-  std::copy(chosen.begin(), chosen.end(), std::back_inserter(out_result));
-}
-
 TMatrix33 SkewSymmetricMatrix(const TVector3D & vector) {
   TMatrix33 result;
   result << 0, -vector[2], vector[1],

@@ -13,18 +13,6 @@ namespace geometry {
 namespace utils {
 
 /*!
- *
- * @param min
- * @param max
- * @param count
- * @param out_result
- */
-bool GenerateRandomSubset(size_t min,
-                          size_t max,
-                          size_t count,
-                          std::vector<size_t> & out_result);
-
-/*!
  * Creates skew-symmetric matrix from a vector by contracting it with Levi-Civita symbol
  * @param vector the input vecot
  * @return The skew-symmetric matrix
