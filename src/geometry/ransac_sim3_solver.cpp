@@ -26,6 +26,8 @@ RANSACSim3Solver::RANSACSim3Solver(const std::vector<std::pair<TPoint3D, TPoint3
                                                                subset_generator_(MIN_NUMBER_OF_MATCHES_DEFAULT,
                                                                                  0,
                                                                                  matches.size()) {
+  if (matches.size() != projections.size() || errors.size() != matches.size())
+    throw std::runtime_error("RANSACSim3Solver: Assertion failed matches.size() == projections.size() == errors.size()");
 
 }
 
