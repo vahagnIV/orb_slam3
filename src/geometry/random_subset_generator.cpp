@@ -3,6 +3,7 @@
 //
 
 #include "random_subset_generator.h"
+#include <cassert>
 
 namespace orb_slam3 {
 namespace geometry {
@@ -11,6 +12,11 @@ RandomSubsetGenerator::RandomSubsetGenerator(size_t count, size_t min, size_t ma
                                                                                      rand_dev_(),
                                                                                      generator_(rand_dev_()),
                                                                                      allowed_indices_(max - min) {
+  if(max - min < count )  {
+    allowed_indices_.clear();
+    count_ = 0;
+    return;
+  }
   std::iota(allowed_indices_.begin(), allowed_indices_.end(), min);
 }
 
