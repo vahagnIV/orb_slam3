@@ -3,6 +3,7 @@
 //
 
 #include "utils.h"
+#include <unordered_set>
 
 namespace orb_slam3 {
 namespace geometry {

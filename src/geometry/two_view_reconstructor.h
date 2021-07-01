@@ -9,10 +9,8 @@
 #include <memory>
 
 // == orb-slam3 ===
-#include "../camera/monocular_camera.h"
 #include "essential_matrix_estimator.h"
 #include "homography_matrix_estimator.h"
-#include "../features/match.h"
 
 namespace orb_slam3 {
 namespace geometry {
@@ -28,12 +26,6 @@ class TwoViewReconstructor {
                    Pose & out_pose,
                    std::unordered_map<std::size_t, TPoint3D> & out_points) const;
  private:
-
-  static void GenerateRandomSubset(size_t min,
-                            size_t max,
-                            size_t count,
-                            std::vector<size_t> & out_result) ;
-
   static void GenerateRandomSubsets(size_t min,
                              size_t max,
                              size_t count,

@@ -9,7 +9,8 @@
 
 // == orb-slam3 ===
 #include "two_view_reconstructor.h"
-#include "../features/match.h"
+#include "utils.h"
+#include "random_subset_generator.h"
 
 namespace orb_slam3 {
 namespace geometry {
@@ -28,6 +29,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                        std::unordered_map<std::size_t, TPoint3D> & out_points) const {
 
   std::vector<std::vector<size_t>> random_match_subset_idx;
+  // TODO: check count consistency
   GenerateRandomSubsets(0, matches.size(), 12, number_of_ransac_iterations_, matches, random_match_subset_idx);
 
   precision_t h_score;
@@ -77,42 +79,22 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
                                                  const std::unordered_map<std::size_t, std::size_t> & matches,
                                                  std::vector<std::vector<size_t>> & out_result) {
 
-  typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
-
   out_result.resize(subset_count);
+  RandomSubsetGenerator generator(count, min, max);
   while (subset_count--) {
-    GenerateRandomSubset(min, max, count, out_result[subset_count]);
+//    if(!utils::GenerateRandomSubset(min, max, count, out_result[subset_count]))
+//      return;
+    generator.Generate(out_result[subset_count]);
     std::sort(out_result[subset_count].begin(), out_result[subset_count].end());
-    I b = matches.begin();
+    auto b = matches.begin();
     size_t prev = 0;
-    for (unsigned j = 0; j < out_result[subset_count].size(); ++j) {
-      assert(matches.size() > out_result[subset_count][j]);
-      std::advance(b, out_result[subset_count][j] - prev);
-      prev = out_result[subset_count][j];
-      out_result[subset_count][j] = b->first;
+    for (size_t & j : out_result[subset_count]) {
+      assert(matches.size() > j);
+      std::advance(b, j - prev);
+      prev = j;
+      j = b->first;
     }
   }
-}
-
-void TwoViewReconstructor::GenerateRandomSubset(const size_t min,
-                                                const size_t max,
-                                                const size_t count,
-                                                std::vector<size_t> & out_result) {
-  assert(max - min >= count);
-//  std::random_device rand_dev;
-//  std::mt19937 generator(rand_dev());
-//  std::uniform_int_distribution<size_t> distr(min, max - 1);
-//  std::unordered_set<size_t> chosen;
-//  out_result.reserve(count);
-//  while (chosen.size() < count)
-//    chosen.insert(distr(generator));
-
-  std::unordered_set<size_t> chosen;
-  out_result.reserve(count);
-  while (chosen.size() < count) {
-    chosen.insert(rand() % (max));
-  }
-  std::copy(chosen.begin(), chosen.end(), std::back_inserter(out_result));
 }
 
 }

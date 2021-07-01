@@ -32,7 +32,6 @@ struct Pose {
 
   TMatrix33 R;
   TVector3D T;
-  precision_t s = 1;
 };
 
 }
