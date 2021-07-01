@@ -18,12 +18,11 @@ void Pose::print() const {
 }
 
 TVector3D Pose::Transform(const TPoint3D & point) const {
-  return s * (R * point) + T;
+  return R * point + T;
 }
 
 Pose Pose::GetInversePose() const {
-  precision_t s_inv = 1 / s;
-  return Pose{.R = R.transpose(), .T = -R.transpose() * T * s_inv, .s = s_inv};
+  return Pose{.R = R.transpose(), .T = -R.transpose() * T };
 }
 
 }

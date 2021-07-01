@@ -26,13 +26,13 @@ class RANSACSim3Solver {
                    const std::vector<std::pair<precision_t, precision_t>> * errors,
                    size_t ransac_iteration_count,
                    size_t min_inliers_count = 15);
-  bool operator()(Pose & out_pose);
+  bool operator()(Sim3Transformation & out_pose);
  private:
   /*!
    * Checks the rigidity constraint
    * @return number of inliers
    */
-  size_t CheckPose(const Pose & pose);
+  size_t CheckPose(const Sim3Transformation & pose);
  private:
   static const size_t MIN_NUMBER_OF_MATCHES_DEFAULT;
   const std::vector<std::pair<TPoint3D, TPoint3D>> & matches_;

@@ -63,6 +63,7 @@ add_library(orbslam SHARED
         geometry/sim3_solver.cpp
         geometry/ransac_sim3_solver.cpp
         geometry/random_subset_generator.cpp
+        geometry/sim3_transformation.cpp
 
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp

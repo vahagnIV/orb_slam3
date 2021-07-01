@@ -7,7 +7,8 @@
 
 #include <unordered_set>
 #include "typedefs.h"
-#include "pose.h"
+#include "sim3_transformation.h"
+
 namespace orb_slam3 {
 namespace geometry {
 
@@ -15,7 +16,7 @@ class Sim3Solver {
  public:
   Sim3Solver(){};
 
-  static Pose ComputeSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,
+  static Sim3Transformation ComputeSim3(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,
                           const std::vector<size_t> & slice_indices);
  private:
   static void ComputeCentroids(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,

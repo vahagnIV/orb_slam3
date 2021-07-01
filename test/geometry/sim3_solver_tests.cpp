@@ -9,7 +9,7 @@ namespace orb_slam3 {
 namespace test {
 
 TEST_F(Sim3SolverTests, TransformationCorrectlyRecovered) {
-  geometry::Pose gt_pose;
+  geometry::Sim3Transformation gt_pose;
   gt_pose.R = GetRotationMatrixRollPitchYaw(0.2, 0.1, 0.05);
   gt_pose.T = TVector3D{1.7, 2.6, 1.5};
   gt_pose.s = 1.75;
@@ -23,7 +23,7 @@ TEST_F(Sim3SolverTests, TransformationCorrectlyRecovered) {
   }
   slice_indices = {1, 5, 9, 12, 19};
 
-  geometry::Pose res = geometry::Sim3Solver::ComputeSim3(matches, slice_indices);
+  geometry::Sim3Transformation res = geometry::Sim3Solver::ComputeSim3(matches, slice_indices);
 
   ASSERT_LE((res.R - gt_pose.R).norm(), 1e-7);
   ASSERT_DOUBLE_EQ(gt_pose.s, res.s);

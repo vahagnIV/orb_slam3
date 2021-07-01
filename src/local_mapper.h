@@ -12,6 +12,7 @@
 #include "position_observer.h"
 #include "observable.h"
 #include "map/atlas.h"
+
 namespace orb_slam3 {
 
 class LocalMapper : public PositionObserver,

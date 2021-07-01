@@ -31,7 +31,7 @@ RANSACSim3Solver::RANSACSim3Solver(const std::vector<std::pair<TPoint3D, TPoint3
 
 }
 
-bool RANSACSim3Solver::operator()(Pose & out_pose) {
+bool RANSACSim3Solver::operator()(Sim3Transformation & out_pose) {
   for (size_t i = 0; i < ransac_iteration_count_; ++i) {
     std::vector<size_t> slice;
     subset_generator_.Generate(slice);
@@ -42,7 +42,7 @@ bool RANSACSim3Solver::operator()(Pose & out_pose) {
   return false;
 }
 
-size_t RANSACSim3Solver::CheckPose(const Pose & pose) {
+size_t RANSACSim3Solver::CheckPose(const Sim3Transformation & pose) {
   size_t number_of_inliers = 0;
   assert(matches_.size() == projections_.size() && matches_.size() == errors_.size());
   for (size_t i = 0; i < matches_.size(); ++i) {
