@@ -19,11 +19,11 @@ namespace geometry {
 
 class RANSACSim3Solver {
  public:
-  RANSACSim3Solver(const std::vector<std::pair<TPoint3D, TPoint3D>> & matches,
-                   const std::vector<std::pair<TPoint2D, TPoint2D>> & projections,
+  RANSACSim3Solver(const std::vector<std::pair<TPoint3D, TPoint3D>> * matches,
+                   const std::vector<std::pair<TPoint2D, TPoint2D>> * projections,
                    const camera::MonocularCamera * camera1,
                    const camera::MonocularCamera * camera2,
-                   const std::vector<std::pair<precision_t, precision_t>> & errors,
+                   const std::vector<std::pair<precision_t, precision_t>> * errors,
                    size_t ransac_iteration_count,
                    size_t min_inliers_count = 15);
   bool operator()(Pose & out_pose);
