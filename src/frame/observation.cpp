@@ -29,7 +29,7 @@ optimization::edges::BABinaryEdge * Observation::CreateBinaryEdge() const {
     auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetCamera(),
                                                            constants::MONO_CHI2);
     const size_t & feature_id = feature_ids_[0];
-    auto & kp = monocular_key_frame->GetFeatures().keypoints[feature_id];
+    auto & kp = monocular_key_frame->GetFeatureHandler()->GetFeatures().keypoints[feature_id];
     edge->setMeasurement(kp.pt);
     precision_t
         information_coefficient =
@@ -49,7 +49,7 @@ optimization::edges::BAUnaryEdge * Observation::CreateEdge() const {
 void Observation::AppendDescriptorsToList(vector<features::DescriptorType> & out_descriptor_ptr) const {
   if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
-    out_descriptor_ptr.push_back(monocular_key_frame->GetFeatures().descriptors.row(feature_ids_[0]));
+    out_descriptor_ptr.push_back(monocular_key_frame->GetFeatureHandler()->GetFeatures().descriptors.row(feature_ids_[0]));
   } else
     throw std::runtime_error("Stereo is not yet implemented");
 

@@ -26,7 +26,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
-  int Extract(const TImageGray8U & image, Features & out_features) override;
+  int Extract(const TImageGray8U & image, Features & out_features) const override;
   precision_t GetAcceptableSquareError(unsigned int level) const override;
   void ComputeInvariantDistances(const TPoint3D & point,
                                  const KeyPoint & key_point,
@@ -55,8 +55,8 @@ class ORBFeatureExtractor : public IFeatureExtractor {
 
  private:
   void AllocatePyramid();
-  void BuildImagePyramid(cv::Mat & image);
-  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint>> & out_all_keypoints);
+  void BuildImagePyramid(cv::Mat & image) const;
+  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint>> & out_all_keypoints) const;
   void DistributeOctTree(const std::vector<cv::KeyPoint> & vToDistributeKeys,
                          const int & minX,
                          const int & maxX,
@@ -92,7 +92,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   std::vector<precision_t> level_sigma2_;
   std::vector<precision_t> inv_level_sigma2_;
 
-  std::vector<cv::Mat> image_pyramid_;
+  mutable std::vector<cv::Mat> image_pyramid_;
   // std::vector<TImageGray> image_pyramid_;
   std::vector<int> features_per_level_;
 

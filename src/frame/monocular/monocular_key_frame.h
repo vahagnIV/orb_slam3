@@ -30,7 +30,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                  unsigned int window_size) const ;
 
   void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
-  void ComputeBow() override;
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;

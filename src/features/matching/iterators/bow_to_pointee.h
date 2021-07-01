@@ -20,18 +20,12 @@ class BowToPointee {
  public:
   typedef size_t id_type;
   typedef VectorFromIterator<unsigned> iterator;
-  BowToPointee(const DBoW2::FeatureVector * feature_vector_to,
-               const DBoW2::FeatureVector * feature_vector_from,
+  BowToPointee(const DBoW2::FeatureVector * feature_vector_from,
                const features::Features * features_to,
-               const features::Features * features_from,
-               const std::map<std::size_t, map::MapPoint *> * map_points = nullptr,
-               bool map_points_exist = false) :
+               const features::Features * features_from) :
       features_to_(features_to),
       features_from_(features_from),
-      feature_vector_to_(feature_vector_to),
-      feature_vector_from_(feature_vector_from),
-      from_map_points_(map_points),
-      map_points_exist_(map_points_exist) {}
+      feature_vector_from_(feature_vector_from){}
 
   id_type GetId() const { return id_; }
   iterator begin() { return begin_iterator_; }
@@ -41,30 +35,26 @@ class BowToPointee {
   }
 
   void SetBowId(size_t bow_id) {
-    bow_id_ = bow_id;
     begin_iterator_ = iterator(feature_vector_from_->at(bow_id).begin(),
                                feature_vector_from_->at(bow_id).end(),
-                               &features_from_->descriptors, from_map_points_, map_points_exist_);
+                               &features_from_->descriptors);
 
     end_iterator_ = iterator(feature_vector_from_->at(bow_id).end(),
                              feature_vector_from_->at(bow_id).end(),
-                             &features_from_->descriptors, from_map_points_, map_points_exist_);
+                             &features_from_->descriptors);
   }
 
   void SetId(id_type id) {
     id_ = id;
   }
+
  private:
   size_t id_;
-  size_t bow_id_;
   const features::Features * features_to_;
   const features::Features * features_from_;
-  const DBoW2::FeatureVector * feature_vector_to_;
   const DBoW2::FeatureVector * feature_vector_from_;
   iterator begin_iterator_;
   iterator end_iterator_;
-  const std::map<std::size_t, map::MapPoint *> * from_map_points_;
-  bool map_points_exist_;
 
 };
 

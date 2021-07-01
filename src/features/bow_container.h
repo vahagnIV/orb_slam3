@@ -16,35 +16,11 @@ namespace orb_slam3 {
 namespace features {
 
 struct BowContainer {
-  BowContainer();
+//  BowContainer();
   DBoW2::FeatureVector feature_vector;
   DBoW2::BowVector bow_vector;
   const BowVocabulary *vocabulary;
   void ComputeBow(const std::vector<cv::Mat> &descriptors);
-  class iterator {
-    friend class BowContainer;
-   public:
-    iterator &operator++();
-    iterator operator++(int);
-    bool operator==(const iterator &other) const;
-    bool operator!=(const iterator &other) const;
-    const std::vector<unsigned> &ToIdx();
-    const std::vector<unsigned> &FromIdx();
-   private:
-    iterator(const DBoW2::FeatureVector &first, const DBoW2::FeatureVector &second);
-    void AdvanceEquilize();
-    void SetToEnd();
-
-   private:
-    const DBoW2::FeatureVector *to_feature_vec_ptr_;
-    const DBoW2::FeatureVector *from_feature_vec_ptr_;
-    DBoW2::FeatureVector::const_iterator to_it;
-    DBoW2::FeatureVector::const_iterator from_it;
-  };
-  iterator Begin(const BowContainer & other) const;
-  iterator End() const;
- private:
-  iterator end_iterator_;
 
 };
 

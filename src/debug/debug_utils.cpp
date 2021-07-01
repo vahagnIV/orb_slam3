@@ -92,7 +92,7 @@ char DrawCommonMapPoints(const string & filename1,
                          const string & filename2,
                          const frame::monocular::BaseMonocular * frame1,
                          const frame::monocular::BaseMonocular * frame2) {
-  cv::Mat frame1_image = cv::imread(filename1, cv::IMREAD_COLOR);
+  /*cv::Mat frame1_image = cv::imread(filename1, cv::IMREAD_COLOR);
   cv::Mat frame2_image = cv::imread(filename2, cv::IMREAD_COLOR);
   cv::Mat image(frame1_image.rows, frame1_image.cols + frame2_image.cols, CV_8UC3);
   frame1_image.copyTo(image.rowRange(0, image.rows).colRange(0, frame1_image.cols));
@@ -139,17 +139,17 @@ char DrawCommonMapPoints(const string & filename1,
       return key;
     std::cout << key << std::endl;
   }
-  return '[';
+  return '[';*/
 }
 
 cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame) {
-  cv::Mat image = cv::imread(filename);
+  /*cv::Mat image = cv::imread(filename);
   for (auto mp_id: frame->GetMapPoints()) {
     auto kp = frame->GetFeatures().keypoints[mp_id.first];
     cv::Point2f pt(kp.X(), kp.Y());
     cv::circle(image, pt, 4, cv::Scalar(0, 255, 0));
   }
-  return image;
+  return image;*/
 }
 
 

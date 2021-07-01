@@ -24,25 +24,15 @@ class BowToIterator {
       const DBoW2::FeatureVector * feature_vector_to,
       const DBoW2::FeatureVector * feature_vector_from,
       const features::Features * features_to,
-      const features::Features * features_from,
-      const std::map<std::size_t, map::MapPoint *> * map_points_to = nullptr,
-      const std::map<std::size_t, map::MapPoint *> * map_points_from = nullptr,
-      bool to_map_points_exist = false,
-      bool from_map_points_exist = false) :
-      bow_it_to_(begin),
-      bow_end_to_(feature_vector_to->end()),
-      bow_it_from_(feature_vector_from->begin()),
-      bow_end_from_(feature_vector_from->end()),
-      feature_vector_to_(feature_vector_to),
-      feature_vector_from_(feature_vector_from),
-      pointee_(feature_vector_to,
-               feature_vector_from,
-               features_to,
-               features_from,
-               map_points_from,
-               from_map_points_exist),
-      map_points_to_(map_points_to),
-      to_map_points_exist_(to_map_points_exist) {
+      const features::Features * features_from) : bow_it_to_(begin),
+                                                  bow_end_to_(feature_vector_to->end()),
+                                                  bow_it_from_(feature_vector_from->begin()),
+                                                  bow_end_from_(feature_vector_from->end()),
+                                                  feature_vector_to_(feature_vector_to),
+                                                  feature_vector_from_(feature_vector_from),
+                                                  pointee_(feature_vector_from,
+                                                           features_to,
+                                                           features_from) {
     AdvanceUntilSameNode();
   }
 
@@ -52,25 +42,23 @@ class BowToIterator {
   BowToPointee * operator->() { return &pointee_; }
   BowToIterator & operator++();
 
-  // TODO: implement correctly
   friend bool operator==(const BowToIterator & a, const BowToIterator & b) {
     if ((a.bow_it_to_ == a.bow_end_to_ || a.bow_it_from_ == a.bow_end_from_)
-            && (b.bow_it_to_ == b.bow_end_to_ || b.bow_it_from_ == b.bow_end_from_))
+        && (b.bow_it_to_ == b.bow_end_to_ || b.bow_it_from_ == b.bow_end_from_))
       return true;
     if ((a.bow_it_to_ == a.bow_end_to_ || a.bow_it_from_ == a.bow_end_from_)
-            || (b.bow_it_to_ == b.bow_end_to_ || b.bow_it_from_ == b.bow_end_from_)) {
+        || (b.bow_it_to_ == b.bow_end_to_ || b.bow_it_from_ == b.bow_end_from_)) {
       return false;
     }
     return a.bow_it_to_ == b.bow_it_to_
-              && a.bow_end_from_ == b.bow_it_from_
-              && a.it_ == b.it_;
+        && a.bow_end_from_ == b.bow_it_from_
+        && a.it_ == b.it_;
   }
   friend bool operator!=(const BowToIterator & a, const BowToIterator & b) {
     return !(a == b);
   }
  private:
   void AdvanceUntilSameNode();
-  void AdvanceUntilValidIterator();
  private:
 
   DBoW2::FeatureVector::const_iterator bow_it_to_;
@@ -85,10 +73,6 @@ class BowToIterator {
   const DBoW2::FeatureVector * feature_vector_to_;
   const DBoW2::FeatureVector * feature_vector_from_;
   BowToPointee pointee_;
-
-  const std::map<std::size_t, map::MapPoint *> * map_points_to_;
-  bool to_map_points_exist_;
-
 };
 
 }

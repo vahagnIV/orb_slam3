@@ -18,12 +18,10 @@ namespace frame {
 namespace monocular {
 
 BaseMonocular::BaseMonocular(const camera::MonocularCamera * camera)
-    : features_(camera),
-      camera_(camera) {}
+    : camera_(camera) {}
 
 BaseMonocular::BaseMonocular(const BaseMonocular & other)
     : map_points_(other.map_points_),
-      features_(other.features_),
       camera_(other.camera_),
       map_point_mutex_() {}
 
@@ -77,7 +75,7 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
   out_map_point.map_point = map_point;
   HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
 
-  if(map_point_in_local_cf.z() < 0)
+  if (map_point_in_local_cf.z() < 0)
     return false;
 
   precision_t distance = map_point_in_local_cf.norm();
@@ -115,35 +113,6 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
 void BaseMonocular::SerializeToStream(ostream & stream) const {
   size_t camera = (size_t) camera_;
   WRITE_TO_STREAM(camera, stream);
-  stream << features_;
-}
-
-void BaseMonocular::SearchByBow(const BaseMonocular * other, std::unordered_map<std::size_t, std::size_t> out_map_point_matches,
-                                const features::IFeatureExtractor * feature_extractor,
-                                bool self_keypoint_exists, bool reference_kf_keypoint_exists) const{
-  typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;
-  BOW_MATCHER bow_matcher(0.75, 50);
-  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
-                                                            &features_.bow_container.feature_vector,
-                                                            &other->features_.bow_container.feature_vector,
-                                                            &features_,
-                                                            &other->features_,
-                                                            &map_points_,
-                                                            &other->map_points_,
-                                                            self_keypoint_exists,
-                                                            reference_kf_keypoint_exists);
-
-  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
-                                                          &features_.bow_container.feature_vector,
-                                                          &other->features_.bow_container.feature_vector,
-                                                          &features_,
-                                                          &other->features_,
-                                                          &map_points_,
-                                                          &other->map_points_,
-                                                          self_keypoint_exists,
-                                                          reference_kf_keypoint_exists);
-
-  bow_matcher.MatchWithIterators(bow_it_begin, bow_it_end, feature_extractor, out_map_point_matches);
 }
 
 }

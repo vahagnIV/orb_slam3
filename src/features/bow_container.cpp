@@ -4,13 +4,12 @@
 #include "bow_container.h"
 namespace orb_slam3 {
 namespace features {
-
-BowContainer::BowContainer() : end_iterator_(this->feature_vector, this->feature_vector) {
-  end_iterator_.to_it = this->feature_vector.end();
-}
-
 void BowContainer::ComputeBow(const vector<cv::Mat> &descriptors) {
   vocabulary->transform(descriptors, bow_vector, feature_vector, 4);
+}
+/*
+BowContainer::BowContainer() : end_iterator_(this->feature_vector, this->feature_vector) {
+  end_iterator_.to_it = this->feature_vector.end();
 }
 
 BowContainer::iterator::iterator(const DBoW2::FeatureVector &first, const DBoW2::FeatureVector &second)
@@ -81,7 +80,7 @@ BowContainer::iterator BowContainer::Begin(const BowContainer &other) const {
 
 BowContainer::iterator BowContainer::End() const {
   return end_iterator_;
-}
+}*/
 
 }
 }

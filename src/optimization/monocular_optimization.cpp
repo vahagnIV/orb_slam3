@@ -31,7 +31,7 @@ void OptimizePose(MonocularFrame * frame) {
   frame_vertex->setFixed(false);
   optimizer.addVertex(frame_vertex);
 
-  const auto & features = frame->GetFeatures();
+  const auto & features = frame->GetFeatureHandler()->GetFeatures();
 
   for (auto mp_id: map_points) {
     map::MapPoint * map_point = mp_id.second;

@@ -20,6 +20,7 @@
 #include <geometry/essential_matrix_estimator.h>
 #include <logging.h>
 #include <boost/filesystem.hpp>
+#include <features/factories/dbo_w2_handler_factory.h>
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -163,6 +164,7 @@ CreateMonocularCamera(
 
 void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
                         orb_slam3::camera::MonocularCamera * camera) {
+  orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
   orb_slam3::frame::SensorConstants constants;
   constants.min_mp_disappearance_count = 2;
   constants.number_of_keyframe_to_search_lm = 20;
@@ -182,6 +184,8 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
       camera->Width(), camera->Height(),
       NFEATURES2, SCALE_FACTOR, LEVELS,
       INIT_THRESHOLD, MIN_THRESHOLD);
+
+
 
   cv::VideoCapture cap;
   cap.set(cv::CAP_PROP_AUTOFOCUS, 0);
@@ -207,7 +211,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame =
-        new MF(eigen_image, std::chrono::system_clock::now(), image_path, feature_extractor, camera, &voc, &constants);
+        new MF(eigen_image, std::chrono::system_clock::now(), image_path, feature_extractor, camera, &constants, &handler_factory);
 
     auto result = tracker.Track(frame);
     if (orb_slam3::TrackingResult::OK == result)
@@ -225,6 +229,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                      const std::vector<std::string> & filenames,
                      const orb_slam3::frame::SensorConstants * sensor_constants,
                      const std::vector<std::chrono::system_clock::time_point> & timestamps) {
+  orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
   const boost::filesystem::path dumb_dir("/data/slam_test");
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
   orb_slam3::Tracker tracker(atlas);
@@ -246,7 +251,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
-    MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, &voc, sensor_constants);
+    MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, sensor_constants, &handler_factory);
     auto result = tracker.Track(frame);
     if (orb_slam3::TrackingResult::OK == result) {
       fe = _feature_extractor;

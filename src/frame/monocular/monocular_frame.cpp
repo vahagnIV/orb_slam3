@@ -26,19 +26,23 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                const string & filename,
                                const features::IFeatureExtractor * feature_extractor,
                                const camera::MonocularCamera * camera,
-                               const features::BowVocabulary * vocabulary,
-                               const SensorConstants * sensor_constants) : Frame(time_point,
-                                                                                 filename,
-                                                                                 feature_extractor,
-                                                                                 vocabulary,
-                                                                                 sensor_constants),
-                                                                           BaseMonocular(camera),
-                                                                           reference_keyframe_(nullptr) {
-  const_cast<features::IFeatureExtractor *>(feature_extractor)->Extract(image, features_);
-  features_.UndistortKeyPoints();
-  features_.AssignFeaturesToGrid();
-  features_.SetVocabulary(vocabulary);
-  features_.ComputeBow();
+                               const SensorConstants * sensor_constants,
+                               const features::HandlerFactory * handler_factory) : Frame(time_point,
+                                                                                         filename,
+                                                                                         sensor_constants),
+                                                                                   BaseMonocular(camera),
+                                                                                   reference_keyframe_(nullptr) {
+  features::Features features(camera->Width(), camera->Height());
+  feature_extractor->Extract(image, features);
+
+  features.undistorted_keypoints.resize(features.Size());
+  features.undistorted_and_unprojected_keypoints.resize(features.Size());
+  for (size_t i = 0; i < features.Size(); ++i) {
+    camera->UndistortPoint(features.keypoints[i].pt, features.undistorted_keypoints[i]);
+    camera->UnprojectAndUndistort(features.keypoints[i].pt, features.undistorted_and_unprojected_keypoints[i]);
+  }
+
+  feature_handler_ = handler_factory->CreateFeatureHandler(features, feature_extractor);
 }
 
 bool MonocularFrame::Link(Frame * other) {
@@ -55,8 +59,8 @@ bool MonocularFrame::Link(Frame * other) {
   geometry::TwoViewReconstructor reconstructor(200, GetCamera()->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   geometry::Pose pose;
-  if (!reconstructor.Reconstruct(GetFeatures().undistorted_and_unprojected_keypoints,
-                                 from_frame->GetFeatures().undistorted_and_unprojected_keypoints,
+  if (!reconstructor.Reconstruct(feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints,
+                                 from_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints,
                                  matches,
                                  pose,
                                  points)) {
@@ -73,7 +77,11 @@ bool MonocularFrame::Link(Frame * other) {
       ++it;
   }
   cv::imshow("Linking",
-             debug::DrawMatches(GetFilename(), other->GetFilename(), matches, features_, from_frame->features_));
+             debug::DrawMatches(GetFilename(),
+                                other->GetFilename(),
+                                matches,
+                                feature_handler_->GetFeatures(),
+                                from_frame->feature_handler_->GetFeatures()));
   cv::waitKey();
 
   this->SetPosition(pose);
@@ -92,9 +100,6 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
     return false;
   }
   auto reference_kf = dynamic_cast<const MonocularKeyFrame *>(reference_keyframe);
-
-  // Ensure bows are computed
-  ComputeBow();
 
   std::unordered_map<std::size_t, std::size_t> matches;
   ComputeMatchesFromReferenceKF(reference_kf, matches, false, true);
@@ -119,8 +124,8 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   cv::imshow("TWRKF", debug::DrawMatches(GetFilename(),
                                          reference_keyframe->GetFilename(),
                                          matches,
-                                         features_,
-                                         reference_kf->GetFeatures()));
+                                         feature_handler_->GetFeatures(),
+                                         reference_kf->feature_handler_->GetFeatures()));
 
   return matches.size() >= 10;
 }
@@ -136,7 +141,7 @@ bool MonocularFrame::IsVisible(map::MapPoint * map_point,
                                   -1,
                                   this->GetPosition(),
                                   this->GetInversePosition(),
-                                  feature_extractor_);
+                                  feature_handler_->GetFeatureExtractor());
 }
 
 size_t MonocularFrame::GetMapPointCount() const {
@@ -156,24 +161,30 @@ void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) cons
 }
 
 precision_t MonocularFrame::GetSimilarityScore(const BaseFrame * other) const {
-  if (other->Type() != MONOCULAR) {
-    return 0;
-  }
-  return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
-                            dynamic_cast<const BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
+//  if (other->Type() != MONOCULAR) {
+//    return 0;
+//  }
+//  return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
+//                            dynamic_cast<const BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
+  return 0;
 }
 
 bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
                                               unordered_map<size_t, size_t> & out_matches) const {
   features::matching::SNNMatcher<features::matching::iterators::AreaToIterator> matcher(0.9, 50);
-  features::matching::iterators::AreaToIterator begin(0, &GetFeatures(), &from_frame->GetFeatures(), 100);
   features::matching::iterators::AreaToIterator
-      end(GetFeatures().Size(), &GetFeatures(), &from_frame->GetFeatures(), 100);
+      begin(0, &feature_handler_->GetFeatures(), &from_frame->feature_handler_->GetFeatures(), 100);
+  features::matching::iterators::AreaToIterator
+      end(feature_handler_->GetFeatures().Size(),
+          &feature_handler_->GetFeatures(),
+          &from_frame->feature_handler_->GetFeatures(),
+          100);
 
-  matcher.MatchWithIterators(begin, end, feature_extractor_, out_matches);
+  matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), out_matches);
   logging::RetrieveLogger()->debug("Orientation validator discarded {} matches",
                                    features::matching::OrientationValidator
-                                       (GetFeatures().keypoints, from_frame->GetFeatures().keypoints).Validate(
+                                       (feature_handler_->GetFeatures().keypoints,
+                                        from_frame->feature_handler_->GetFeatures().keypoints).Validate(
                                        out_matches));
 
   logging::RetrieveLogger()->debug("Link: SNN Matcher returned {} matches between frames {} and {}.",
@@ -195,10 +206,10 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 //    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
 
     precision_t max_invariance_distance, min_invariance_distance;
-    feature_extractor_->ComputeInvariantDistances(GetPosition().Transform(point.second),
-                                                  GetFeatures().keypoints[point.first],
-                                                  max_invariance_distance,
-                                                  min_invariance_distance);
+    feature_handler_->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
+                                                                       feature_handler_->GetFeatures().keypoints[point.first],
+                                                                       max_invariance_distance,
+                                                                       min_invariance_distance);
     auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance);
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
@@ -210,7 +221,7 @@ void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * ref
                                                    std::unordered_map<std::size_t, std::size_t> & out_matches,
                                                    bool self_keypoint_exists,
                                                    bool reference_kf_keypoint_exists) const {
-  typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;
+  /*typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;
   BOW_MATCHER bow_matcher(0.7, 50);
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
                                                             &features_.bow_container.feature_vector,
@@ -234,16 +245,12 @@ void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * ref
 
   bow_matcher.MatchWithIterators(bow_it_begin, bow_it_end, feature_extractor_, out_matches);
   features::matching::OrientationValidator
-      (features_.keypoints, reference_kf->features_.keypoints).Validate(out_matches);
+      (features_.keypoints, reference_kf->features_.keypoints).Validate(out_matches);*/
 
 }
 
 bool MonocularFrame::IsValid() const {
-  return GetFeatures().Size() > 0;
-}
-
-void MonocularFrame::ComputeBow() {
-  BaseMonocular::ComputeBow();
+  return feature_handler_->GetFeatures().Size() > 0;
 }
 
 void MonocularFrame::OptimizePose() {
@@ -268,19 +275,19 @@ void MonocularFrame::SearchInVisiblePoints(const list<MapPointVisibilityParams> 
   features::matching::iterators::ProjectionSearchIterator begin
       (filtered_map_points.begin(),
        filtered_map_points.end(),
-       &features_,
+       &feature_handler_->GetFeatures(),
        &map_points);
 
   features::matching::iterators::ProjectionSearchIterator end
       (filtered_map_points.end(),
        filtered_map_points.end(),
-       &features_,
+       &feature_handler_->GetFeatures(),
        &map_points);
 
   typedef features::matching::SNNMatcher<features::matching::iterators::ProjectionSearchIterator> Matcher;
   Matcher matcher(matcher_snn_threshold, constants::MONO_TWMM_THRESHOLD_HIGH);
   Matcher::MatchMapType matches;
-  matcher.MatchWithIterators(begin, end, feature_extractor_, matches);
+  matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), matches);
   logging::RetrieveLogger()->debug("SLMM: SNN matcher found {} matches", matches.size());
   for (auto & match: matches) {
     AddMapPoint(match.first, match.second);
@@ -288,7 +295,6 @@ void MonocularFrame::SearchInVisiblePoints(const list<MapPointVisibilityParams> 
 }
 
 void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) {
-  ComputeBow();
   SearchInVisiblePoints(filtered_map_points, 0.8);
 }
 
@@ -312,10 +318,10 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
                                  vmp,
                                  radius_multiplier,
                                  0,
-                                 last_frame->features_.keypoints[mp.first].level,
+                                 last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
                                  pose,
                                  inverse_pose,
-                                 feature_extractor_)) {
+                                 feature_handler_->GetFeatureExtractor())) {
       out_visibles.push_back(vmp);
     }
   }
@@ -331,7 +337,8 @@ BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() const {
   return result;
 }
 
-bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame, list<MapPointVisibilityParams> & out_visibles) {
+bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
+                                                           list<MapPointVisibilityParams> & out_visibles) {
 
   auto last_frame = dynamic_cast<MonocularFrame *>(frame);
   precision_t radiuses[] = {15, 30};
@@ -359,16 +366,12 @@ void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered
                                                 WordSharingKeyFrameMap & out_word_sharing_key_frames) {
   // Search all keyframes that share a word with current frame
 
-  for (DBoW2::BowVector::const_iterator vit = features_.bow_container.bow_vector.begin(),
-           vend = features_.bow_container.bow_vector.end();
-       vit != vend;
-       vit++) {
-    std::unordered_set<KeyFrame *> key_frames = inverted_file[vit->first];
-
+  /*for (auto word : features_.bow_container.bow_vector) {
+    std::unordered_set<KeyFrame *> key_frames = inverted_file[word.first];
     for (auto key_frame : key_frames) {
       out_word_sharing_key_frames[key_frame]++;
     }
-  }
+  }*/
 }
 
 /*bool MonocularFrame::Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Map * map) {

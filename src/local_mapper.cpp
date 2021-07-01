@@ -77,7 +77,6 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   frame::KeyFrame::MapPointSet map_points;
-  keyframe->ComputeBow();
   keyframe->ListMapPoints(map_points);
   for (auto mp: map_points) {
     if (mp->IsBad())

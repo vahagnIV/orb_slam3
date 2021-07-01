@@ -48,15 +48,8 @@ class BaseMonocular {
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const;
   MonocularMapPoints GetMapPoints() const;
 
-  const features::Features & GetFeatures() const { return features_; }
   const camera::MonocularCamera * GetCamera() const { return camera_; }
-  void ComputeBow() { features_.ComputeBow(); }
   bool MapPointExists(const map::MapPoint * map_point) const;
-  void SearchByBow(const BaseMonocular * other, unordered_map<std::size_t, std::size_t> out_map_point_matches,
-                   const features::IFeatureExtractor * feature_extractor,
-                   bool self_keypoint_exists,
-                   bool reference_kf_keypoint_exists) const;
-
  public:
   virtual void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
   virtual void EraseMapPoint(size_t feature_id);
@@ -70,10 +63,10 @@ class BaseMonocular {
                  const geometry::Pose & pose,
                  const geometry::Pose & inverse_position,
                  const features::IFeatureExtractor * feature_extractor) const;
+
  void SerializeToStream(std::ostream & stream) const;
  protected:
   MonocularMapPoints map_points_;
-  features::Features features_;
 
   /// Private member variables
  private:

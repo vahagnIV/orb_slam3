@@ -26,7 +26,7 @@ class IFeatureExtractor {
    * @return The number of extracted keypoints on success, -1 on fail.
    */
   virtual int Extract(const TImageGray8U & image,
-                      Features & out_features) = 0;
+                      Features & out_features) const = 0;
 
   virtual precision_t GetAcceptableSquareError(unsigned level) const = 0;
 

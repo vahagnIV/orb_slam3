@@ -28,17 +28,15 @@ typedef Eigen::Matrix<uint8_t, 1, 32, Eigen::RowMajor> DescriptorType;
 class Features {
  public:
   friend std::ostream & operator<<(std::ostream & stream, const Features & frame);
-  Features(const camera::MonocularCamera * camera);
+  Features(precision_t width, precision_t height);
 
   DescriptorSet descriptors;
   std::vector<KeyPoint> keypoints;
   std::vector<HomogenousPoint> undistorted_and_unprojected_keypoints;
   std::vector<TPoint2D> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
-  BowContainer bow_container;
 
   void SetVocabulary(const BowVocabulary * vocabulary);
-  void ComputeBow();
   size_t Size() const { return keypoints.size(); }
   void ListFeaturesInArea(const TPoint2D & point,
                           const size_t & window_size,
@@ -48,16 +46,17 @@ class Features {
 
   void AssignFeaturesToGrid();
 
-  void UndistortKeyPoints();
+//  void UndistortKeyPoints();
  private:
   bool PosInGrid(const TPoint2D & kp,
                  size_t & posX,
                  size_t & posY) const;
 
  private:
-  const camera::MonocularCamera * camera_;
   const precision_t grid_element_width_inv_;
   const precision_t grid_element_height_inv_;
+  precision_t width_;
+  precision_t height_;
 };
 
 }

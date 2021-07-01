@@ -7,6 +7,7 @@
 #include <frame/frame.h>
 #include "base_monocular.h"
 #include "monocular_key_frame.h"
+#include <features/factories/handler_factory.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -19,8 +20,8 @@ class MonocularFrame : public Frame, public BaseMonocular {
                  const string & filename,
                  const features::IFeatureExtractor * feature_extractor,
                  const camera::MonocularCamera * camera,
-                 const features::BowVocabulary * vocabulary,
-                 const SensorConstants * sensor_constants);
+                 const SensorConstants * sensor_constants,
+                 const features::HandlerFactory * handler_factory);
  public:
   // Frame
   FrameType Type() const override;
@@ -34,7 +35,6 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool EstimatePositionByProjectingMapPoints(Frame * frame, list<MapPointVisibilityParams> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   precision_t GetSimilarityScore(const BaseFrame * other) const override;
-  void ComputeBow() override;
   void OptimizePose() override;
   bool IsVisible(map::MapPoint * map_point,
                  MapPointVisibilityParams & out_map_point,
