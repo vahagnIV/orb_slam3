@@ -10,9 +10,9 @@
 
 // === orb_slam3 ===
 #include "imatch_validator.h"
-#include "src/features/features.h"
-#include "src/features/ifeature_extractor.h"
-#include "src/geometry/pose.h"
+#include <features/features.h>
+#include <features/ifeature_extractor.h>
+#include <geometry/pose.h>
 
 namespace orb_slam3 {
 namespace features {

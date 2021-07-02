@@ -6,7 +6,7 @@
 #include "monocular_frame.h"
 #include <map/map_point.h>
 #include <logging.h>
-#include <src/features/handlers/DBoW2/bow_to_iterator.h>
+#include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/iterators/projection_search_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 #include <features/matching/validators/triangulation_validator.h>

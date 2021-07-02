@@ -8,7 +8,7 @@
 #include <map/map_point.h>
 #include <frame/map_point_visibility_params.h>
 #include <features/ifeature_extractor.h>
-#include <src/features/handlers/DBoW2/bow_to_iterator.h>
+#include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));

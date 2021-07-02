@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_SRC_FEATURES_FACTORIES_HANDLER_FACTORY_H_
 #define ORB_SLAM3_SRC_FEATURES_FACTORIES_HANDLER_FACTORY_H_
 #include <features/handlers/base_feature_handler.h>
-#include <frame/ikey_frame_database.h>
+#include <src/frame/keyframe_database/ikey_frame_database.h>
 
 namespace orb_slam3 {
 namespace features {

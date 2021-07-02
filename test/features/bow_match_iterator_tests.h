@@ -6,7 +6,7 @@
 #define ORB_SLAM3_TEST_FEATURES_BOW_MATCH_ITERATOR_TESTS_H_
 
 #include <gtest/gtest.h>
-#include <src/features/handlers/DBoW2/bow_to_iterator.h>
+#include <features/handlers/DBoW2/bow_to_iterator.h>
 namespace orb_slam3 {
 namespace test {
 
