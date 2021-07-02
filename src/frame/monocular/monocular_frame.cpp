@@ -7,12 +7,12 @@
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 #include <features/matching/iterators/area_to_iterator.h>
 #include <features/matching/iterators/projection_search_iterator.h>
-#include <features/matching/orientation_validator.h>
+#include <features/matching/validators/orientation_validator.h>
 #include <features/ifeature_extractor.h>
 #include <map/map_point.h>
 #include <geometry/two_view_reconstructor.h>
 #include <optimization/monocular_optimization.h>
-#include <features/matching/iterators/bow_to_iterator.h>
+#include <src/features/handlers/DBoW2/bow_to_iterator.h>
 #include "monocular_key_frame.h"
 
 #include <debug/debug_utils.h>
@@ -34,6 +34,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                                                                    reference_keyframe_(nullptr) {
   features::Features features(camera->Width(), camera->Height());
   feature_extractor->Extract(image, features);
+  features.AssignFeaturesToGrid();
 
   features.undistorted_keypoints.resize(features.Size());
   features.undistorted_and_unprojected_keypoints.resize(features.Size());
@@ -102,7 +103,7 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   auto reference_kf = dynamic_cast<const MonocularKeyFrame *>(reference_keyframe);
 
   std::unordered_map<std::size_t, std::size_t> matches;
-  ComputeMatchesFromReferenceKF(reference_kf, matches, false, true);
+  ComputeMatchesFromReferenceKF(reference_kf, matches);
 
   logging::RetrieveLogger()->info("TWRKF: SNNMatcher returned {} matches for frames {} and {}",
                                   matches.size(),
@@ -218,9 +219,16 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 }
 
 void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * reference_kf,
-                                                   std::unordered_map<std::size_t, std::size_t> & out_matches,
-                                                   bool self_keypoint_exists,
-                                                   bool reference_kf_keypoint_exists) const {
+                                                   std::unordered_map<std::size_t, std::size_t> & out_matches) const {
+  feature_handler_->FastMatch(reference_kf->GetFeatureHandler(), out_matches, features::MatchingSeverity::MIDDLE);
+
+  auto match_it = out_matches.begin();
+  while (match_it != out_matches.end()) {
+    if (reference_kf->map_points_.find(match_it->second) == reference_kf->map_points_.end())
+      match_it = out_matches.erase(match_it);
+    else
+      ++match_it;
+  }
   /*typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;
   BOW_MATCHER bow_matcher(0.7, 50);
   features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),

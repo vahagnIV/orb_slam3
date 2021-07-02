@@ -53,10 +53,11 @@ class Features {
                  size_t & posY) const;
 
  private:
+   precision_t width_;
+  precision_t height_;
   const precision_t grid_element_width_inv_;
   const precision_t grid_element_height_inv_;
-  precision_t width_;
-  precision_t height_;
+
 };
 
 }

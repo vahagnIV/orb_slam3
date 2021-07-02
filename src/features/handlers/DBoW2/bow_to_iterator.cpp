@@ -6,7 +6,7 @@
 
 namespace orb_slam3 {
 namespace features {
-namespace matching {
+namespace handlers {
 namespace iterators {
 
 BowToIterator & BowToIterator::operator++() {

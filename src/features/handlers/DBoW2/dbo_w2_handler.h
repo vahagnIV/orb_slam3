@@ -15,9 +15,15 @@ class DBoW2Handler : public BaseFeatureHandler {
  public:
   DBoW2Handler(Features && features, const IFeatureExtractor * feature_extractor, const BowVocabulary * vocabulary)
       : BaseFeatureHandler(std::move(features), feature_extractor), vocabulary_(vocabulary) {}
-  void FastMatch(const BaseFeatureHandler & other, FastMatches & out_matches) override;
+
+  void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
+                 FastMatches & out_matches,
+                 MatchingSeverity severity) const override;
+
   void Precompute();
  public:
+  const DBoW2::FeatureVector & GetFeatureVector() const;
+  const DBoW2::BowVector & GetBowVector() const;
  private:
   DBoW2::FeatureVector feature_vector_;
   DBoW2::BowVector bow_vector_;

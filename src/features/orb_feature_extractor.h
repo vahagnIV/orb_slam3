@@ -38,6 +38,8 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   const precision_t GetScaleFactor() override {
     return scale_factor_;
   }
+  precision_t GetHighThreshold() const override;
+  precision_t GetLowThreshold() const override;
 
  private:
   class ExtractorNode {

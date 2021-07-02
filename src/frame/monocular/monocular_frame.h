@@ -57,10 +57,8 @@ class MonocularFrame : public Frame, public BaseMonocular {
                                       const std::unordered_map<size_t, TPoint3D> & points,
                                       MonocularFrame * from_frame,
                                       MapPointSet & out_map_points);
-  void ComputeMatchesFromReferenceKF(const orb_slam3::frame::monocular::MonocularKeyFrame * reference_kf,
-                                     std::unordered_map<std::size_t, std::size_t> & out_matches,
-                                     bool self_keypoint_exists,
-                                     bool reference_kf_keypoint_exists) const;
+  void ComputeMatchesFromReferenceKF(const MonocularKeyFrame * reference_kf,
+                                     std::unordered_map<std::size_t, std::size_t> & out_matches) const;
   void FilterFromLastFrame(MonocularFrame * last_frame, std::list<MapPointVisibilityParams> & out_visibles,
                            precision_t radius_multiplier);
 

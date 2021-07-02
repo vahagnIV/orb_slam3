@@ -13,6 +13,12 @@ namespace features {
 
 typedef std::unordered_map<std::size_t, std::size_t> FastMatches;
 
+enum MatchingSeverity {
+  WEAK,
+  MIDDLE,
+  STRONG
+};
+
 namespace handlers {
 class BaseFeatureHandler {
  public:
@@ -24,7 +30,9 @@ class BaseFeatureHandler {
   const Features & GetFeatures() const { return features_; }
   const IFeatureExtractor * GetFeatureExtractor() const { return feature_extractor_; }
  public:
-  virtual void FastMatch(const BaseFeatureHandler & other, FastMatches & out_matches) = 0;
+  virtual void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
+                         FastMatches & out_matches,
+                         MatchingSeverity severity) const = 0;
 
  private:
   const Features features_;

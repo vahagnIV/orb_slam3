@@ -7,19 +7,19 @@
 #include <cstddef>
 
 // === orb_slam3 ===
-#include "../../features.h"
+#include "src/features/features.h"
 #include <DBoW2/FeatureVector.h>
-#include "vector_from_iterator.h"
+#include "src/features/matching/iterators/vector_from_iterator.h"
 
 namespace orb_slam3 {
 namespace features {
-namespace matching {
+namespace handlers {
 namespace iterators {
 
 class BowToPointee {
  public:
   typedef size_t id_type;
-  typedef VectorFromIterator<unsigned> iterator;
+  typedef matching::iterators::VectorFromIterator<unsigned> iterator;
   BowToPointee(const DBoW2::FeatureVector * feature_vector_from,
                const features::Features * features_to,
                const features::Features * features_from) :

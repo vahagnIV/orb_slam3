@@ -91,9 +91,9 @@ bool Features::PosInGrid(const TPoint2D & kp,
   y = std::min(y, height_);
 
   posX = std::min(constants::FRAME_GRID_COLS - 1,
-                  static_cast<size_t>(x  * grid_element_width_inv_));
+                  static_cast<size_t>(x * grid_element_width_inv_));
   posY = std::min(constants::FRAME_GRID_ROWS - 1,
-                  static_cast<size_t>(y  * grid_element_height_inv_));
+                  static_cast<size_t>(y * grid_element_height_inv_));
 
   return true;
 }

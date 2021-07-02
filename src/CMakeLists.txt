@@ -46,8 +46,8 @@ add_library(orbslam SHARED
         features/key_point.cpp
         features/matching/iterators/projection_search_iterator.cpp
         features/matching/iterators/projection_search_pointee.cpp
-        features/matching/iterators/bow_to_iterator.cpp
-        features/matching/orientation_validator.cpp
+        features/handlers/DBoW2/bow_to_iterator.cpp
+        features/matching/validators/orientation_validator.cpp
         features/matching/validators/triangulation_validator.cpp
         features/handlers/DBoW2/dbo_w2_handler.cpp
         features/factories/dbo_w2_handler_factory.cpp
@@ -112,9 +112,9 @@ add_library(orbslam SHARED
         features/match.h
         features/bow_vocabulary.h
         features/bow_container.h
-        features/matching/iterators/bow_to_iterator.h
-        features/matching/iterators/bow_to_pointee.h
-        features/matching/orientation_validator.h
+        features/handlers/DBoW2/bow_to_iterator.h
+        features/handlers/DBoW2/bow_to_pointee.h
+        features/matching/validators/orientation_validator.h
         features/matching/iterators/vector_from_iterator.h
         features/matching/iterators/area_to_pointee.h
         features/matching/iterators/vector_from_pointee.h

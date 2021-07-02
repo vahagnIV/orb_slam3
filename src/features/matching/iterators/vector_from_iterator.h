@@ -25,16 +25,18 @@ class VectorFromIterator {
   VectorFromIterator() : pointee_(nullptr, 0) {}
   VectorFromIterator(typename std::vector<IdType>::const_iterator begin,
                      typename std::vector<IdType>::const_iterator end,
-                     const DescriptorSet *descriptors) : pointee_(descriptors, *begin),
-                                                      it_(begin),
-                                                      end_(end) {
+                     const DescriptorSet * descriptors) : pointee_(descriptors, *begin),
+                                                          it_(begin),
+                                                          end_(end) {
   }
   const VectorFromPointee & operator*() const { return pointee_; }
   VectorFromPointee & operator*() { return pointee_; }
-  const VectorFromPointee *operator->() const { return &pointee_; }
-  VectorFromPointee *operator->() { return &pointee_; }
+  const VectorFromPointee * operator->() const { return &pointee_; }
+  VectorFromPointee * operator->() { return &pointee_; }
   VectorFromIterator & operator++() {
     ++it_;
+    if (it_ != end_)
+      pointee_.SetId(*it_);
     return *this;
   }
   friend bool operator==(const VectorFromIterator & a, const VectorFromIterator & b) { return a.it_ == b.it_; }

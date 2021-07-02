@@ -13,7 +13,7 @@
 
 namespace orb_slam3 {
 namespace features {
-namespace matching {
+namespace handlers {
 namespace iterators {
 
 class BowToIterator {
