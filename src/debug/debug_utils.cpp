@@ -140,7 +140,7 @@ char DrawCommonMapPoints(const std::string & filename1,
     std::cout << key << std::endl;
   }
   return '[';*/
-  return '['
+  return '[';
 }
 
 cv::Mat DrawMapPoints(const std::string & filename, frame::monocular::BaseMonocular * frame) {
