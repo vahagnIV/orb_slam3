@@ -77,7 +77,6 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   frame::KeyFrame::MapPointSet map_points;
-  keyframe->ComputeBow();
   keyframe->ListMapPoints(map_points);
   for (auto mp: map_points) {
     if (mp->IsBad())
@@ -126,9 +125,9 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 
 }
 
-void LocalMapper::FilterFixedKeyFames(unordered_set<frame::KeyFrame *> & local_keyframes,
+void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
                                       frame::KeyFrame::MapPointSet & local_map_points,
-                                      unordered_set<frame::KeyFrame *> & out_fixed) {
+                                      std::unordered_set<frame::KeyFrame *> & out_fixed) {
   size_t number_of_fixed = 0;
   for (auto keyframe: local_keyframes) {
     if (keyframe->IsInitial())

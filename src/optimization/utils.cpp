@@ -43,10 +43,10 @@ size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_fr
   return max_id;
 }
 
-void FillMpVertices(const unordered_set<map::MapPoint *> & map_points,
+void FillMpVertices(const std::unordered_set<map::MapPoint *> & map_points,
                     g2o::SparseOptimizer & inout_optimizer,
                     const std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> & frame_map,
-                    unordered_map<map::MapPoint *, vertices::MapPointVertex *> & out_mp_map,
+                    std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> & out_mp_map,
                     bool robust,
                     size_t & inout_id) {
   for (auto map_point: map_points) {

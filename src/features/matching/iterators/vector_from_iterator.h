@@ -25,42 +25,26 @@ class VectorFromIterator {
   VectorFromIterator() : pointee_(nullptr, 0) {}
   VectorFromIterator(typename std::vector<IdType>::const_iterator begin,
                      typename std::vector<IdType>::const_iterator end,
-                     const DescriptorSet *descriptors,
-                     const std::map<std::size_t, map::MapPoint *> *map_points = nullptr,
-                     bool map_point_exists = false) : pointee_(descriptors, *begin),
-                                                      it_(begin),
-                                                      end_(end),
-                                                      map_points_(map_points),
-                                                      map_point_exists_(map_point_exists) {
-    AdvanceUntilMapPointConditionSatisfied();
+                     const DescriptorSet * descriptors) : pointee_(descriptors, *begin),
+                                                          it_(begin),
+                                                          end_(end) {
   }
   const VectorFromPointee & operator*() const { return pointee_; }
   VectorFromPointee & operator*() { return pointee_; }
-  const VectorFromPointee *operator->() const { return &pointee_; }
-  VectorFromPointee *operator->() { return &pointee_; }
+  const VectorFromPointee * operator->() const { return &pointee_; }
+  VectorFromPointee * operator->() { return &pointee_; }
   VectorFromIterator & operator++() {
     ++it_;
-
-    // If require_exists is true, we should skip all
-    // ids that do not correspond to a map point.
-    AdvanceUntilMapPointConditionSatisfied();
+    if (it_ != end_)
+      pointee_.SetId(*it_);
     return *this;
   }
   friend bool operator==(const VectorFromIterator & a, const VectorFromIterator & b) { return a.it_ == b.it_; }
   friend bool operator!=(const VectorFromIterator & a, const VectorFromIterator & b) { return a.it_ != b.it_; }
  private:
-  void AdvanceUntilMapPointConditionSatisfied() {
-    while (map_points_ && it_ != end_
-        && (map_point_exists_ ^ (map_points_->find(*it_) != map_points_->end() && !map_points_->find(*it_)->second->IsBad() )))
-      ++it_;
-    if (it_ != end_)
-      pointee_.SetId(*it_);
-  }
   VectorFromPointee pointee_;
   typename std::vector<IdType>::const_iterator it_;
   typename std::vector<IdType>::const_iterator end_;
-  const std::map<std::size_t, map::MapPoint *> *map_points_;
-  bool map_point_exists_;
 };
 }
 }

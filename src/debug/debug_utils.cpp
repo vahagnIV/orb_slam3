@@ -11,7 +11,7 @@
 namespace orb_slam3 {
 namespace debug {
 
-void ToOpenCvMatches(const unordered_map<size_t, size_t> & matches, vector<cv::DMatch> & out_matches) {
+void ToOpenCvMatches(const std::unordered_map<size_t, size_t> & matches, std::vector<cv::DMatch> & out_matches) {
   out_matches.clear();
   std::transform(matches.begin(),
                  matches.end(),
@@ -23,7 +23,7 @@ void ToOpenCvMatches(const unordered_map<size_t, size_t> & matches, vector<cv::D
 
 }
 
-void ToOpenCvMatches(const vector<features::Match> & matches, vector<cv::DMatch> & out_matches) {
+void ToOpenCvMatches(const std::vector<features::Match> & matches, std::vector<cv::DMatch> & out_matches) {
   out_matches.clear();
   std::transform(matches.begin(),
                  matches.end(),
@@ -34,7 +34,7 @@ void ToOpenCvMatches(const vector<features::Match> & matches, vector<cv::DMatch>
                  });
 }
 
-void ToOpenCvKeyPoints(const vector<features::KeyPoint> & keypoints, vector<cv::KeyPoint> & out_key_points) {
+void ToOpenCvKeyPoints(const std::vector<features::KeyPoint> & keypoints, std::vector<cv::KeyPoint> & out_key_points) {
   out_key_points.clear();
   std::transform(keypoints.begin(),
                  keypoints.end(),
@@ -43,9 +43,9 @@ void ToOpenCvKeyPoints(const vector<features::KeyPoint> & keypoints, vector<cv::
 
 }
 
-cv::Mat DrawMatches(const string & filename_to,
-                    const string & filename_from,
-                    const unordered_map<size_t, size_t> & matches,
+cv::Mat DrawMatches(const std::string & filename_to,
+                    const std::string & filename_from,
+                    const std::unordered_map<size_t, size_t> & matches,
                     const features::Features & features_to,
                     const features::Features & features_from) {
 
@@ -58,9 +58,9 @@ cv::Mat DrawMatches(const string & filename_to,
                      features_from);
 }
 
-cv::Mat DrawMatches(const string & filename_to,
-                    const string & filename_from,
-                    const vector<features::Match> & matches,
+cv::Mat DrawMatches(const std::string & filename_to,
+                    const std::string & filename_from,
+                    const std::vector<features::Match> & matches,
                     const features::Features & features_to,
                     const features::Features & features_from) {
   std::vector<cv::DMatch> cv_matches;
@@ -72,9 +72,9 @@ cv::Mat DrawMatches(const string & filename_to,
                      features_from);
 }
 
-cv::Mat DrawMatches(const string & filename_to,
-                    const string & filename_from,
-                    const vector<cv::DMatch> & matches,
+cv::Mat DrawMatches(const std::string & filename_to,
+                    const std::string & filename_from,
+                    const std::vector<cv::DMatch> & matches,
                     const features::Features & features_to,
                     const features::Features & features_from) {
 
@@ -88,11 +88,11 @@ cv::Mat DrawMatches(const string & filename_to,
   return result;
 }
 
-char DrawCommonMapPoints(const string & filename1,
-                         const string & filename2,
+char DrawCommonMapPoints(const std::string & filename1,
+                         const std::string & filename2,
                          const frame::monocular::BaseMonocular * frame1,
                          const frame::monocular::BaseMonocular * frame2) {
-  cv::Mat frame1_image = cv::imread(filename1, cv::IMREAD_COLOR);
+  /*cv::Mat frame1_image = cv::imread(filename1, cv::IMREAD_COLOR);
   cv::Mat frame2_image = cv::imread(filename2, cv::IMREAD_COLOR);
   cv::Mat image(frame1_image.rows, frame1_image.cols + frame2_image.cols, CV_8UC3);
   frame1_image.copyTo(image.rowRange(0, image.rows).colRange(0, frame1_image.cols));
@@ -139,17 +139,19 @@ char DrawCommonMapPoints(const string & filename1,
       return key;
     std::cout << key << std::endl;
   }
+  return '[';*/
   return '[';
 }
 
-cv::Mat DrawMapPoints(const string & filename, frame::monocular::BaseMonocular * frame) {
-  cv::Mat image = cv::imread(filename);
+cv::Mat DrawMapPoints(const std::string & filename, frame::monocular::BaseMonocular * frame) {
+  /*cv::Mat image = cv::imread(filename);
   for (auto mp_id: frame->GetMapPoints()) {
     auto kp = frame->GetFeatures().keypoints[mp_id.first];
     cv::Point2f pt(kp.X(), kp.Y());
     cv::circle(image, pt, 4, cv::Scalar(0, 255, 0));
   }
-  return image;
+  return image;*/
+  return cv::Mat();
 }
 
 

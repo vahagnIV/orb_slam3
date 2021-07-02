@@ -15,7 +15,7 @@ TEST_F(FeatureTests, ListFeaturesInAreaReturnsCorrectIndices){
   camera->SetCy(240);
   camera->ComputeImageBounds();
 
-  features::Features system_under_test(camera);
+  features::Features system_under_test(640,480);
   system_under_test.keypoints.emplace_back(TPoint2D{120, 62}, 0);
   system_under_test.keypoints.emplace_back(TPoint2D{20, 42}, 1);
   system_under_test.keypoints.emplace_back(TPoint2D{57, 259}, 0);
@@ -27,7 +27,13 @@ TEST_F(FeatureTests, ListFeaturesInAreaReturnsCorrectIndices){
   system_under_test.keypoints.emplace_back(TPoint2D{510, 79}, 1);
   system_under_test.keypoints.emplace_back(TPoint2D{604, 21}, 0);
   system_under_test.keypoints.emplace_back(TPoint2D{632, 262}, 0);
-  system_under_test.UndistortKeyPoints();
+
+  system_under_test.undistorted_keypoints.resize(system_under_test.Size());
+  system_under_test.undistorted_and_unprojected_keypoints.resize(system_under_test.Size());
+  for (size_t i = 0; i < system_under_test.Size(); ++i) {
+    camera->UndistortPoint(system_under_test.keypoints[i].pt, system_under_test.undistorted_keypoints[i]);
+    camera->UnprojectAndUndistort(system_under_test.keypoints[i].pt, system_under_test.undistorted_and_unprojected_keypoints[i]);
+  }
 
   system_under_test.AssignFeaturesToGrid();
   std::vector<std::size_t> result;

@@ -6,14 +6,12 @@
 
 namespace orb_slam3 {
 namespace features {
-namespace matching {
+namespace handlers {
 namespace iterators {
 
 BowToIterator & BowToIterator::operator++() {
   assert(it_ != end_it_);
   ++it_;
-  AdvanceUntilValidIterator();
-
   if (it_ != end_it_) {
     pointee_.SetId(*it_);
     return *this;
@@ -26,21 +24,11 @@ BowToIterator & BowToIterator::operator++() {
   return *this;
 }
 
-void BowToIterator::AdvanceUntilValidIterator() {
-  // If to_map_points_exist_ is true, we should skip all
-  // ids that do not correspond to a map point.
-  while (it_ != end_it_ && map_points_to_
-      && (to_map_points_exist_
-          ^ (map_points_to_->find(*it_) != map_points_to_->end() && !map_points_to_->find(*it_)->second->IsBad())))
-    ++it_;
-}
-
 void BowToIterator::AdvanceUntilSameNode() {
   while (bow_it_to_ != bow_end_to_ && bow_it_from_ != bow_end_from_) {
     if (bow_it_to_->first == bow_it_from_->first) {
       it_ = bow_it_to_->second.begin();
       end_it_ = bow_it_to_->second.end();
-      AdvanceUntilValidIterator();
       if (it_ == end_it_) {
         ++bow_it_to_;
         ++bow_it_from_;

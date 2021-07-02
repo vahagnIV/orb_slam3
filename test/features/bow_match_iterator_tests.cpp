@@ -31,8 +31,9 @@ void BowMatchIteratorTests::GenerateRandomFeatureVector(DBoW2::FeatureVector & o
 TEST_F(BowMatchIteratorTests, GenericCase) {
   const size_t TO_COUNT = 200;
   const size_t FROM_COUNT = 150;
-  features::Features features_to(CreateSampleCamera());
-  features::Features features_from(CreateSampleCamera());
+  auto camera = CreateSampleCamera();
+  features::Features features_to(camera->Width(), camera->Height());
+  features::Features features_from(camera->Width(), camera->Height());
   features_to.descriptors.resize(TO_COUNT, 32);
   features_from.descriptors.resize(FROM_COUNT, 32);
 
@@ -41,14 +42,14 @@ TEST_F(BowMatchIteratorTests, GenericCase) {
   GenerateRandomFeatureVector(feature_vector_to, TO_COUNT);
   DBoW2::FeatureVector feature_vector_from;
   GenerateRandomFeatureVector(feature_vector_from, FROM_COUNT);
-  features::matching::iterators::BowToIterator
+  features::handlers::iterators::BowToIterator
       system_under_test
       (feature_vector_to.begin(),
        &feature_vector_to,
        &feature_vector_from,
        &features_to,
        &features_from);
-  features::matching::iterators::BowToIterator
+  features::handlers::iterators::BowToIterator
       system_under_test_end
       (feature_vector_to.end(),
        &feature_vector_to,
@@ -60,8 +61,6 @@ TEST_F(BowMatchIteratorTests, GenericCase) {
   for(auto x = system_under_test; x!= system_under_test_end; ++x){
     for(auto y: *x){
       ++count;
-      if(count == 38535)
-        int q=7;
     }
   }
   ASSERT_GT(count, 0);

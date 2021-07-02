@@ -130,7 +130,7 @@ bool MapPoint::IsInKeyFrame(frame::KeyFrame * keyframe) {
   return observations_.find(keyframe) != observations_.end();
 }
 
-std::ostream & operator<<(ostream & stream, const MapPoint * map_point) {
+std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point) {
   size_t mem_address = (size_t )map_point;
   WRITE_TO_STREAM(mem_address, stream);
   unsigned count = map_point->observations_.size();

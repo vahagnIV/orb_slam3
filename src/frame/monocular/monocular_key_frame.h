@@ -30,7 +30,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                  unsigned int window_size) const ;
 
   void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
-  void ComputeBow() override;
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
@@ -39,7 +38,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
  protected:
-  void SerializeToStream(ostream & stream) const override;
+  void SerializeToStream(std::ostream & stream) const override;
  public:
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
   void EraseMapPoint(size_t feature_id) override;

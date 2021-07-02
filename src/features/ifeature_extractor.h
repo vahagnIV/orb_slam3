@@ -26,7 +26,7 @@ class IFeatureExtractor {
    * @return The number of extracted keypoints on success, -1 on fail.
    */
   virtual int Extract(const TImageGray8U & image,
-                      Features & out_features) = 0;
+                      Features & out_features) const = 0;
 
   virtual precision_t GetAcceptableSquareError(unsigned level) const = 0;
 
@@ -40,8 +40,8 @@ class IFeatureExtractor {
   virtual unsigned ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const = 0;
   virtual const std::vector<precision_t> & GetScaleFactors() const = 0;
 
-  virtual const precision_t GetScaleFactor()  = 0;
-
+  virtual precision_t GetHighThreshold() const = 0;
+  virtual precision_t GetLowThreshold() const = 0;
 
   /*!
    * Virtual destructor

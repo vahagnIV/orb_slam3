@@ -16,7 +16,7 @@ const size_t NUMBER_OF_KEYPOINTS = 200;
 const unsigned APPROX_NUMBER_OF_MATCHES = 150;
 
 EssentialEstimatorTests::EssentialEstimatorTests()
-    : camera_(CreateSampleCamera()), from_features_(camera_), to_features_(camera_) {
+    : camera_(CreateSampleCamera()), from_features_(camera_->Width(), camera_->Height()), to_features_(camera_->Width(), camera_->Height()) {
   GenerateRandomKeyPoints(from_features_.keypoints, ground_truth_points_, NUMBER_OF_KEYPOINTS, camera_);
   transformation_.R = GetRotationMatrixRollPitchYaw(M_PI / 180 * 10, M_PI / 180 * 4, M_PI / 180 * 5);
   transformation_.T = TVector3D{0.7, 1.2, 0.7};
@@ -25,12 +25,25 @@ EssentialEstimatorTests::EssentialEstimatorTests()
     camera_->ProjectAndDistort(transformation_.Transform(ground_truth_points_[i]), to_point);
     to_features_.keypoints.emplace_back(to_point);
   }
-  from_features_.UndistortKeyPoints();
-  to_features_.UndistortKeyPoints();
+
+  from_features_.undistorted_keypoints.resize(from_features_.Size());
+  from_features_.undistorted_and_unprojected_keypoints.resize(from_features_.Size());
+  for (size_t i = 0; i < from_features_.Size(); ++i) {
+    camera_->UndistortPoint(from_features_.keypoints[i].pt, from_features_.undistorted_keypoints[i]);
+    camera_->UnprojectAndUndistort(from_features_.keypoints[i].pt, from_features_.undistorted_and_unprojected_keypoints[i]);
+  }
+
+  to_features_.undistorted_keypoints.resize(to_features_.Size());
+  to_features_.undistorted_and_unprojected_keypoints.resize(to_features_.Size());
+  for (size_t i = 0; i < to_features_.Size(); ++i) {
+    camera_->UndistortPoint(to_features_.keypoints[i].pt, to_features_.undistorted_keypoints[i]);
+    camera_->UnprojectAndUndistort(to_features_.keypoints[i].pt, to_features_.undistorted_and_unprojected_keypoints[i]);
+  }
+
   ground_truth_E_ = GetEssentialMatrixFromPose(transformation_);
 }
 
-void EssentialEstimatorTests::GenerateRandomKeyPoints(vector<features::KeyPoint> & out_keyoints,
+void EssentialEstimatorTests::GenerateRandomKeyPoints(std::vector<features::KeyPoint> & out_keyoints,
                                                       std::vector<TPoint3D> & out_ground_truth_points,
                                                       size_t count,
                                                       const camera::MonocularCamera * camera) {
@@ -75,12 +88,24 @@ TPoint2D EssentialEstimatorTests::GenerateGaussianNoise(precision_t sigma) {
 
 TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
   precision_t sigma = 0.5;
+
+  from_features_.undistorted_keypoints.resize(from_features_.Size());
+  from_features_.undistorted_and_unprojected_keypoints.resize(from_features_.Size());
   for (size_t i = 0; i < to_features_.Size(); ++i) {
     to_features_.keypoints[i].pt += GenerateGaussianNoise(sigma);
     from_features_.keypoints[i].pt += GenerateGaussianNoise(sigma);
   }
-  to_features_.UndistortKeyPoints();
-  from_features_.UndistortKeyPoints();
+  for (size_t i = 0; i < from_features_.Size(); ++i) {
+    camera_->UndistortPoint(from_features_.keypoints[i].pt, from_features_.undistorted_keypoints[i]);
+    camera_->UnprojectAndUndistort(from_features_.keypoints[i].pt, from_features_.undistorted_and_unprojected_keypoints[i]);
+  }
+
+  to_features_.undistorted_keypoints.resize(to_features_.Size());
+  to_features_.undistorted_and_unprojected_keypoints.resize(to_features_.Size());
+  for (size_t i = 0; i < to_features_.Size(); ++i) {
+    camera_->UndistortPoint(to_features_.keypoints[i].pt, to_features_.undistorted_keypoints[i]);
+    camera_->UnprojectAndUndistort(to_features_.keypoints[i].pt, to_features_.undistorted_and_unprojected_keypoints[i]);
+  }
 
   std::unordered_map<std::size_t, std::size_t> matches;
   for (size_t i = 0, j = 0; i < to_features_.Size(); ++i) {

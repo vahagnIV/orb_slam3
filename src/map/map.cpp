@@ -38,7 +38,7 @@ std::unordered_set<frame::KeyFrame *> Map::GetAllKeyFrames() const {
   return result;
 }
 
-std::ostream & operator<<(ostream & stream, const Map * map) {
+std::ostream & operator<<(std::ostream & stream, const Map * map) {
   size_t kf_count = map->key_frames_.size();
   WRITE_TO_STREAM(kf_count, stream);
   for (auto kf: map->key_frames_)

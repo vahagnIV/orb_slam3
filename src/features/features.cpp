@@ -8,12 +8,12 @@
 namespace orb_slam3 {
 namespace features {
 
-Features::Features(const camera::MonocularCamera * camera)
-    : camera_(camera),
+Features::Features(precision_t width, precision_t height)
+    : width_(width), height_(height),
       grid_element_width_inv_(static_cast<precision_t >(constants::FRAME_GRID_COLS)
-                                  / (camera->ImageBoundMaxX() - camera->ImageBoundMinX())),
+                                  / width),
       grid_element_height_inv_(static_cast<precision_t >(constants::FRAME_GRID_ROWS)
-                                   / (camera->ImageBoundMaxY() - camera->ImageBoundMinY())) {
+                                   / height) {
 }
 
 void Features::ListFeaturesInArea(const TPoint2D & point,
@@ -85,52 +85,24 @@ bool Features::PosInGrid(const TPoint2D & kp,
   posY = 0;
   return true;
 
-  precision_t x = std::max(kp.x(), camera_->ImageBoundMinX());
-  x = std::min(x, camera_->ImageBoundMaxX());
-  precision_t y = std::max(kp.y(), camera_->ImageBoundMinY());
-  y = std::min(y, camera_->ImageBoundMaxY());
+  precision_t x = std::max(kp.x(), 0.);
+  x = std::min(x, width_);
+  precision_t y = std::max(kp.y(), 0.);
+  y = std::min(y, height_);
 
   posX = std::min(constants::FRAME_GRID_COLS - 1,
-                  static_cast<size_t>((x - camera_->ImageBoundMinX()) * grid_element_width_inv_));
+                  static_cast<size_t>(x * grid_element_width_inv_));
   posY = std::min(constants::FRAME_GRID_ROWS - 1,
-                  static_cast<size_t>((y - camera_->ImageBoundMinY()) * grid_element_height_inv_));
+                  static_cast<size_t>(y * grid_element_height_inv_));
 
   return true;
 }
 
-void Features::UndistortKeyPoints() {
-  undistorted_and_unprojected_keypoints.resize(keypoints.size());
-  undistorted_keypoints.resize(keypoints.size());
-  for (size_t i = 0; i < undistorted_and_unprojected_keypoints.size(); ++i) {
-    camera_->UndistortPoint(keypoints[i].pt, undistorted_keypoints[i]);
-    camera_->UnprojectPoint(undistorted_keypoints[i], undistorted_and_unprojected_keypoints[i]);
-  }
-}
-
-void Features::SetVocabulary(const BowVocabulary * vocabulary) {
-  bow_container.vocabulary = vocabulary;
-}
-
-void Features::ComputeBow() {
-  if (!bow_container.feature_vector.empty() && !bow_container.bow_vector.empty())
-    return;
-  std::vector<cv::Mat> current_descriptors;
-  current_descriptors.reserve(descriptors.rows());
-  for (int i = 0; i < descriptors.rows(); ++i) {
-    current_descriptors.push_back(cv::Mat(1,
-                                          descriptors.cols(),
-                                          cv::DataType<decltype(descriptors)::Scalar>::type,
-                                          (void *) descriptors.row(i).data()));
-  }
-  bow_container.ComputeBow(current_descriptors);
-}
-
-std::ostream & operator<<(ostream & stream, const Features & features) {
+std::ostream & operator<<(std::ostream & stream, const Features & features) {
   size_t size = features.Size();
   WRITE_TO_STREAM(size, stream);
   stream.write((char *) features.descriptors.data(),
                32 * features.descriptors.rows() * sizeof(decltype(features.descriptors)::Scalar));
-
 
   for (auto & kp: features.keypoints) {
     stream << kp;

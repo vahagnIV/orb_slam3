@@ -17,10 +17,9 @@ class KeyFrame : public BaseFrame {
  public:
   KeyFrame(TimePoint time_point,
            const std::string & filename,
-           const features::IFeatureExtractor * feature_extractor,
-           const features::BowVocabulary * vocabulary,
            const SensorConstants * sensor_constants,
-           size_t id) : BaseFrame(time_point, filename, feature_extractor, vocabulary, sensor_constants, id),
+           size_t id,
+           std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler) : BaseFrame(time_point, filename,sensor_constants, id, feature_handler),
                         covisibility_graph_(this),
                         is_initial_(false),
                         bad_flag_(false),

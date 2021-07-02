@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_VALIDATORS_ORIENTATION_VALIDATOR_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_VALIDATORS_ORIENTATION_VALIDATOR_H_
 
-#include "../features.h"
+#include <features/features.h>
 
 namespace orb_slam3 {
 namespace features {

@@ -28,8 +28,8 @@ void ProjectionSearchPointee::InitializeIterators() {
                                      from_indices_);
 
   begin_iterator_ =
-      iterator(from_indices_.begin(), from_indices_.end(), &(from_features_->descriptors), from_map_points_);
-  end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), &(from_features_->descriptors), from_map_points_);
+      iterator(from_indices_.begin(), from_indices_.end(), &(from_features_->descriptors));
+  end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), &(from_features_->descriptors));
 }
 
 const DescriptorType ProjectionSearchPointee::GetDescriptor() const {

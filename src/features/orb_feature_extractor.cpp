@@ -58,6 +58,14 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
   AllocatePyramid();
 }
 
+precision_t ORBFeatureExtractor::GetHighThreshold() const {
+  return 100;
+}
+
+precision_t ORBFeatureExtractor::GetLowThreshold() const {
+  return 50;
+}
+
 unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const {
   assert(d1.cols() == d2.cols());
   const auto * pa = reinterpret_cast<const uint32_t * const>(d1.data());
@@ -180,7 +188,7 @@ void ORBFeatureExtractor::IC_Angle(const cv::Mat & image, features::KeyPoint & p
 }
 
 void ORBFeatureExtractor::ComputeKeyPointsOctTree(
-    std::vector<std::vector<features::KeyPoint> > & out_all_keypoints) {
+    std::vector<std::vector<features::KeyPoint> > & out_all_keypoints) const {
   out_all_keypoints.resize(scale_factors_.size());
 
   const float W = 30;
@@ -462,7 +470,7 @@ void ORBFeatureExtractor::DistributeOctTree(
   }
 }
 
-void ORBFeatureExtractor::BuildImagePyramid(cv::Mat & image) {
+void ORBFeatureExtractor::BuildImagePyramid(cv::Mat & image) const {
   for (size_t level = 0; level < scale_factors_.size(); ++level) {
     float scale = inv_scale_factors_[level];
     cv::Size sz(cvRound((float) image.cols * scale),
@@ -489,7 +497,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat & image) {
 }
 
 int ORBFeatureExtractor::Extract(const TImageGray8U & img,
-                                 Features & out_features) {
+                                 Features & out_features) const {
   cv::Mat image(img.rows(), img.cols(), CV_8U, (void *) img.data());
   // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
   if (image.empty()) return -1;
