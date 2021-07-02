@@ -229,32 +229,6 @@ void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * ref
     else
       ++match_it;
   }
-  /*typedef features::matching::SNNMatcher<features::matching::iterators::BowToIterator> BOW_MATCHER;
-  BOW_MATCHER bow_matcher(0.7, 50);
-  features::matching::iterators::BowToIterator bow_it_begin(features_.bow_container.feature_vector.begin(),
-                                                            &features_.bow_container.feature_vector,
-                                                            &reference_kf->features_.bow_container.feature_vector,
-                                                            &features_,
-                                                            &reference_kf->features_,
-                                                            &map_points_,
-                                                            &reference_kf->map_points_,
-                                                            self_keypoint_exists,
-                                                            reference_kf_keypoint_exists);
-
-  features::matching::iterators::BowToIterator bow_it_end(features_.bow_container.feature_vector.end(),
-                                                          &features_.bow_container.feature_vector,
-                                                          &reference_kf->features_.bow_container.feature_vector,
-                                                          &features_,
-                                                          &reference_kf->features_,
-                                                          &map_points_,
-                                                          &reference_kf->map_points_,
-                                                          self_keypoint_exists,
-                                                          reference_kf_keypoint_exists);
-
-  bow_matcher.MatchWithIterators(bow_it_begin, bow_it_end, feature_extractor_, out_matches);
-  features::matching::OrientationValidator
-      (features_.keypoints, reference_kf->features_.keypoints).Validate(out_matches);*/
-
 }
 
 bool MonocularFrame::IsValid() const {
