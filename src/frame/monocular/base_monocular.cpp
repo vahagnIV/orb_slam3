@@ -25,7 +25,7 @@ BaseMonocular::BaseMonocular(const BaseMonocular & other)
       camera_(other.camera_),
       map_point_mutex_() {}
 
-void BaseMonocular::ListMapPoints(unordered_set<map::MapPoint *> & out_map_points) const {
+void BaseMonocular::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
 //  std::unique_lock<std::mutex> lock(map_point_mutex_);
   for (auto mp_id: map_points_) {
     if (!mp_id.second->IsBad()) {
@@ -110,7 +110,7 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
   return true;
 }
 
-void BaseMonocular::SerializeToStream(ostream & stream) const {
+void BaseMonocular::SerializeToStream(std::ostream & stream) const {
   size_t camera = (size_t) camera_;
   WRITE_TO_STREAM(camera, stream);
 }

@@ -233,7 +233,7 @@ bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
 }
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
-                                               list<MapPointVisibilityParams> & out_visibles) {
+                                               std::list<MapPointVisibilityParams> & out_visibles) {
   MapPointVisibilityParams visible_map_point;
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
@@ -299,7 +299,7 @@ void MonocularKeyFrame::SetBad() {
   }
   KeyFrame::SetBad();
 }
-void MonocularKeyFrame::SerializeToStream(ostream & stream) const {
+void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
   WRITE_TO_STREAM(id_, stream);
   WRITE_TO_STREAM(bad_flag_, stream);
   BaseMonocular::SerializeToStream(stream);

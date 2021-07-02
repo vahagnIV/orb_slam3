@@ -23,7 +23,7 @@ namespace monocular {
 
 MonocularFrame::MonocularFrame(const TImageGray8U & image,
                                TimePoint time_point,
-                               const string & filename,
+                               const std::string & filename,
                                const features::IFeatureExtractor * feature_extractor,
                                const camera::MonocularCamera * camera,
                                const SensorConstants * sensor_constants,
@@ -171,7 +171,7 @@ precision_t MonocularFrame::GetSimilarityScore(const BaseFrame * other) const {
 }
 
 bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
-                                              unordered_map<size_t, size_t> & out_matches) const {
+                                              std::unordered_map<size_t, size_t> & out_matches) const {
   features::matching::SNNMatcher<features::matching::iterators::AreaToIterator> matcher(0.9, 50);
   features::matching::iterators::AreaToIterator
       begin(0, &feature_handler_->GetFeatures(), &from_frame->feature_handler_->GetFeatures(), 100);
@@ -277,7 +277,7 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
 
 }
 
-void MonocularFrame::SearchInVisiblePoints(const list<MapPointVisibilityParams> & filtered_map_points,
+void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points,
                                            precision_t matcher_snn_threshold) {
   auto map_points = GetMapPoints();
   features::matching::iterators::ProjectionSearchIterator begin
@@ -346,7 +346,7 @@ BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() const {
 }
 
 bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
-                                                           list<MapPointVisibilityParams> & out_visibles) {
+                                                           std::list<MapPointVisibilityParams> & out_visibles) {
 
   auto last_frame = dynamic_cast<MonocularFrame *>(frame);
   precision_t radiuses[] = {15, 30};
@@ -366,7 +366,7 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
   return false;
 }
 
-void MonocularFrame::SerializeToStream(ostream & stream) const {
+void MonocularFrame::SerializeToStream(std::ostream & stream) const {
   throw std::runtime_error("Not implemented");
 }
 

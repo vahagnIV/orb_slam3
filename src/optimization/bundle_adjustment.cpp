@@ -56,8 +56,8 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   }
 }
 
-void LocalBundleAdjustment(unordered_set<frame::KeyFrame *> & keyframes,
-                           unordered_set<frame::KeyFrame *> & fixed_keyframes,
+void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
+                           std::unordered_set<frame::KeyFrame *> & fixed_keyframes,
                            frame::BaseFrame::MapPointSet & local_map_points,
                            bool * stop_flag) {
   g2o::SparseOptimizer optimizer;

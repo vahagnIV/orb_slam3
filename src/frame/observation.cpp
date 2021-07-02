@@ -46,7 +46,7 @@ optimization::edges::BAUnaryEdge * Observation::CreateEdge() const {
   return nullptr;
 }
 
-void Observation::AppendDescriptorsToList(vector<features::DescriptorType> & out_descriptor_ptr) const {
+void Observation::AppendDescriptorsToList(std::vector<features::DescriptorType> & out_descriptor_ptr) const {
   if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
     out_descriptor_ptr.push_back(monocular_key_frame->GetFeatureHandler()->GetFeatures().descriptors.row(feature_ids_[0]));
@@ -64,7 +64,7 @@ size_t Observation::GetLeftFeatureId() const {
   assert(! IsMonocular());
   return feature_ids_[1];
 }
-std::ostream & operator<<(ostream & stream, const Observation & observation) {
+std::ostream & operator<<(std::ostream & stream, const Observation & observation) {
   size_t frame_id = observation.GetKeyFrame()->Id();
   size_t mem_address = (size_t )observation.GetMapPoint();
   WRITE_TO_STREAM(mem_address, stream);

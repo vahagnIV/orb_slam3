@@ -32,7 +32,7 @@ Tracker::~Tracker() {
 }
 
 frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
-                                              unordered_set<frame::KeyFrame *> & out_local_keyframes) {
+                                              std::unordered_set<frame::KeyFrame *> & out_local_keyframes) {
   out_local_keyframes.clear();
   std::unordered_set<map::MapPoint *> frame_map_points;
   current_frame->ListMapPoints(frame_map_points);

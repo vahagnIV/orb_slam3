@@ -52,7 +52,7 @@ void DisplayTrackingInfo(const frame::Frame * frame,
                               const std::list<frame::MapPointVisibilityParams> &,
                               const frame::Frame::MapPointSet &);
 
-cv::Mat DrawMapPoints(const string & filename, const frame::monocular::BaseMonocular * frame);
+cv::Mat DrawMapPoints(const std::string & filename, const frame::monocular::BaseMonocular * frame);
 
 }
 }

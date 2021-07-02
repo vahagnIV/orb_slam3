@@ -98,7 +98,7 @@ bool Features::PosInGrid(const TPoint2D & kp,
   return true;
 }
 
-std::ostream & operator<<(ostream & stream, const Features & features) {
+std::ostream & operator<<(std::ostream & stream, const Features & features) {
   size_t size = features.Size();
   WRITE_TO_STREAM(size, stream);
   stream.write((char *) features.descriptors.data(),

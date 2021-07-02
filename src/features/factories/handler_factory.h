@@ -12,7 +12,7 @@ namespace features {
 
 class HandlerFactory {
  public:
-  virtual shared_ptr<const handlers::BaseFeatureHandler> CreateFeatureHandler(Features & features,
+  virtual std::shared_ptr<const handlers::BaseFeatureHandler> CreateFeatureHandler(Features & features,
                                                                               const features::IFeatureExtractor * feature_extractor) const = 0;
   virtual frame::IKeyFrameDatabase * CreateKeyFrameDatabase() const = 0;
 

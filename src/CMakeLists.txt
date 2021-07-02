@@ -42,7 +42,6 @@ add_library(orbslam SHARED
 
         features/orb_feature_extractor.cpp
         features/features.cpp
-        features/bow_container.cpp
         features/key_point.cpp
         features/matching/iterators/projection_search_iterator.cpp
         features/matching/iterators/projection_search_pointee.cpp
@@ -111,7 +110,6 @@ add_library(orbslam SHARED
         features/matching/second_nearest_neighbor_matcher.hpp
         features/match.h
         features/bow_vocabulary.h
-        features/bow_container.h
         features/handlers/DBoW2/bow_to_iterator.h
         features/handlers/DBoW2/bow_to_pointee.h
         features/matching/validators/orientation_validator.h

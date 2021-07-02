@@ -7,6 +7,7 @@
 // === stl ===
 #include <unordered_map>
 #include <mutex>
+#include <atomic>
 
 // === orb-slam3 ===
 #include <typedefs.h>
@@ -76,7 +77,7 @@ class MapPoint {
  private:
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
  private:
-  static atomic_uint64_t counter_;
+  static std::atomic_uint64_t counter_;
   // Position in the world coordinate system
   TPoint3D position_;
   MapType observations_;

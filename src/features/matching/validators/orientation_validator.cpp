@@ -8,7 +8,7 @@ namespace features {
 namespace matching {
 
 const int OrientationValidator::HISTO_LENGTH = 30;
-OrientationValidator::OrientationValidator(const vector<KeyPoint> & kp_to, const vector<KeyPoint> & kp_from) : kp_to_(
+OrientationValidator::OrientationValidator(const std::vector<KeyPoint> & kp_to, const std::vector<KeyPoint> & kp_from) : kp_to_(
     &kp_to), kp_from_(&kp_from) {
 
 }

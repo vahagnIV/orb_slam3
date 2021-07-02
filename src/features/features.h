@@ -12,11 +12,10 @@
 #include <Eigen/Eigen>
 
 // == orb-slam3 ===
-#include "../typedefs.h"
-#include "../constants.h"
-#include "../camera/monocular_camera.h"
+#include "typedefs.h"
+#include "constants.h"
+#include <camera/monocular_camera.h>
 #include "key_point.h"
-#include "bow_container.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -36,7 +35,6 @@ class Features {
   std::vector<TPoint2D> undistorted_keypoints;
   std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
 
-  void SetVocabulary(const BowVocabulary * vocabulary);
   size_t Size() const { return keypoints.size(); }
   void ListFeaturesInArea(const TPoint2D & point,
                           const size_t & window_size,

@@ -17,7 +17,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
  public:
   MonocularFrame(const TImageGray8U & image,
                  TimePoint time_point,
-                 const string & filename,
+                 const std::string & filename,
                  const features::IFeatureExtractor * feature_extractor,
                  const camera::MonocularCamera * camera,
                  const SensorConstants * sensor_constants,
@@ -30,9 +30,9 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool Link(Frame * other) override;
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
  protected:
-  void SerializeToStream(ostream & stream) const override;
+  void SerializeToStream(std::ostream & stream) const override;
  public:
-  bool EstimatePositionByProjectingMapPoints(Frame * frame, list<MapPointVisibilityParams> & out_visibles) override;
+  bool EstimatePositionByProjectingMapPoints(Frame * frame, std::list<MapPointVisibilityParams> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   precision_t GetSimilarityScore(const BaseFrame * other) const override;
   void OptimizePose() override;
@@ -40,11 +40,11 @@ class MonocularFrame : public Frame, public BaseMonocular {
                  MapPointVisibilityParams & out_map_point,
                  precision_t radius_multiplier,
                  unsigned int window_size) const ;
-  void FilterVisibleMapPoints(const unordered_set<map::MapPoint *> & map_points,
-                              list<MapPointVisibilityParams> & out_filetered_map_points,
+  void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> & map_points,
+                              std::list<MapPointVisibilityParams> & out_filetered_map_points,
                               precision_t radius_multiplier,
                               unsigned int window_size) const override;
-  void SearchInVisiblePoints(const list<MapPointVisibilityParams> & filtered_map_points) override;
+  void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;
   void SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame*>> & inverted_file,
