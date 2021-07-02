@@ -9,6 +9,8 @@ namespace orb_slam3 {
 namespace frame {
 
 class IKeyFrameDatabase {
+ public:
+  virtual ~IKeyFrameDatabase() = default;
 
 };
 

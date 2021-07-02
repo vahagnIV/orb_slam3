@@ -25,6 +25,7 @@ class BaseFeatureHandler {
   BaseFeatureHandler(Features && features, const IFeatureExtractor * feature_extractor)
       : features_(features),
         feature_extractor_(feature_extractor) {}
+  virtual ~BaseFeatureHandler() = default;
 
  public:
   const Features & GetFeatures() const { return features_; }
