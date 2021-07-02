@@ -34,6 +34,7 @@ add_library(orbslam SHARED
         frame/observation.cpp
         frame/frame.cpp
         frame/key_frame_database.cpp
+        frame/database/DBoW2/dbo_w2_database.cpp
 
         camera/monocular_camera.cpp
         camera/kannala_brandt_5.cpp

@@ -31,6 +31,9 @@ class KeyFrame : public BaseFrame {
   CovisibilityGraphNode & GetCovisibilityGraph() {
     return covisibility_graph_;
   }
+  const CovisibilityGraphNode & GetCovisibilityGraph() const {
+    return covisibility_graph_;
+  }
   bool IsInitial() const { return is_initial_; }
   void SetInitial(bool initial) { is_initial_ = initial; }
   bool IsBad() const { return bad_flag_; }

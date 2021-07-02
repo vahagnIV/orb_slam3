@@ -8,9 +8,6 @@
 #include <frame/map_point_visibility_params.h>
 
 namespace orb_slam3 {
-namespace map {
-class MapPoint;
-}
 
 namespace frame {
 class KeyFrame;
