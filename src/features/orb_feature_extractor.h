@@ -35,9 +35,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   unsigned int PredictScale(precision_t distance, precision_t max_distance) const override;
   unsigned int ComputeDistance(const DescriptorType & d1, const DescriptorType & d2) const override;
   const std::vector<precision_t> & GetScaleFactors() const override { return scale_factors_; }
-  const precision_t GetScaleFactor() override {
-    return scale_factor_;
-  }
+
   precision_t GetHighThreshold() const override;
   precision_t GetLowThreshold() const override;
 
