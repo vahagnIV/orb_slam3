@@ -8,6 +8,13 @@
 #include <frame/database/ikey_frame_database.h>
 
 namespace orb_slam3 {
+
+namespace features {
+namespace handlers {
+class DBoW2Handler;
+}
+}
+
 namespace frame {
 
 class DBoW2Database : public IKeyFrameDatabase {
@@ -17,8 +24,11 @@ class DBoW2Database : public IKeyFrameDatabase {
                              std::unordered_set<KeyFrame *> & out_loop_candidates,
                              std::unordered_set<KeyFrame *> & out_merge_candidates,
                              int count) const override;
- public:
+ private:
+  typedef std::unordered_map<KeyFrame *, size_t> WordSharingKeyFrameMap;
 
+  void SearchWordSharingKeyFrames(const features::handlers::DBoW2Handler * handler,
+                                  WordSharingKeyFrameMap & out_word_sharing_key_frames);
  private:
   std::vector<std::list<KeyFrame *> > inverted_file_;
 
