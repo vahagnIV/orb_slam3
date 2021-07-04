@@ -27,8 +27,10 @@ class DBoW2Database : public IKeyFrameDatabase {
  private:
   typedef std::unordered_map<KeyFrame *, size_t> WordSharingKeyFrameMap;
 
-  void SearchWordSharingKeyFrames(const features::handlers::DBoW2Handler * handler,
-                                  WordSharingKeyFrameMap & out_word_sharing_key_frames);
+  void SearchWordSharingKeyFrames(const KeyFrame * keyframe,
+                                  const features::handlers::DBoW2Handler * handler,
+                                  DBoW2Database::WordSharingKeyFrameMap & out_word_sharing_key_frames) const;
+  size_t FindMaxSharingWord(const WordSharingKeyFrameMap & word_sharing_key_frames) const;
  private:
   std::vector<std::list<KeyFrame *> > inverted_file_;
 

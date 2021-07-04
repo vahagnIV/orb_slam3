@@ -23,25 +23,36 @@ void DBoW2Database::DetectNBestCandidates(const frame::KeyFrame * keyframe,
 
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
+  WordSharingKeyFrameMap word_sharing_key_frames;
+  SearchWordSharingKeyFrames(keyframe, feature_handler, word_sharing_key_frames);
+  if (word_sharing_key_frames.empty()) return;
+  size_t max_sharing_words = FindMaxSharingWord(word_sharing_key_frames);
+  size_t min_common_words = 0.8 * max_sharing_words;
+
+}
+
+void DBoW2Database::SearchWordSharingKeyFrames(const KeyFrame * keyframe,
+                                               const features::handlers::DBoW2Handler * handler,
+                                               DBoW2Database::WordSharingKeyFrameMap & out_word_sharing_key_frames) const {
+  out_word_sharing_key_frames.clear();
   auto neighbours = keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
-  for (auto wit: feature_handler->GetFeatureVector()) {
+  for (auto wit: handler->GetFeatureVector()) {
     assert(wit.first < inverted_file_.size());
     for (auto kf: inverted_file_[wit.first]) {
       if (neighbours.find(kf) != neighbours.end())
         continue;
+      ++out_word_sharing_key_frames[kf];
     }
   }
-
 }
 
-void DBoW2Database::SearchWordSharingKeyFrames(const features::handlers::DBoW2Handler * handler,
-                                               DBoW2Database::WordSharingKeyFrameMap & out_word_sharing_key_frames) {
-  for (auto word : handler->GetBowVector()) {
-    std::list<KeyFrame *> key_frames = inverted_file_[word.first];
-    for (auto key_frame : key_frames) {
-      out_word_sharing_key_frames[key_frame]++;
-    }
+size_t DBoW2Database::FindMaxSharingWord(const DBoW2Database::WordSharingKeyFrameMap & word_sharing_key_frames) const {
+  size_t max = 0;
+  for (const auto & wit: word_sharing_key_frames) {
+    if (max < wit.second)
+      max = wit.second;
   }
+  return max;
 }
 
 }
