@@ -15,7 +15,7 @@ KeyFrameDatabase::KeyFrameDatabase(const ORBVocabulary & voc) : vocabulary_(&voc
 }
 
 std::unordered_set<KeyFrame *> KeyFrameDatabase::DetectRelocalizationCandidates(Frame * frame, map::Map * map) {
-  Frame::WordSharingKeyFrameMap word_sharing_key_frames;
+  /*Frame::WordSharingKeyFrameMap word_sharing_key_frames;
   frame->SearchWordSharingKeyFrames(inverted_file_, word_sharing_key_frames);
   if (word_sharing_key_frames.empty())
     return std::unordered_set<KeyFrame *>();
@@ -31,7 +31,7 @@ std::unordered_set<KeyFrame *> KeyFrameDatabase::DetectRelocalizationCandidates(
   FilterRelocalizationCandidatesByCovisibility(key_frame_reloc_scores,
                                                word_sharing_key_frames,
                                                relocalization_candidates);
-  return relocalization_candidates;
+  return relocalization_candidates;*/
 }
 
 void KeyFrameDatabase::FilterRelocalizationCandidatesByWordSharingAcceptableScore(const Frame * frame,

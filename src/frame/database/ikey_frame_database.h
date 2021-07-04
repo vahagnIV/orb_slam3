@@ -12,11 +12,14 @@ namespace frame {
 
 class IKeyFrameDatabase {
  public:
+  typedef std::unordered_set<KeyFrame *> KeyFrameSet;
   virtual void Append(KeyFrame * keyframe) = 0;
-  virtual void DetectNBestCandidates(const frame::KeyFrame * frame,
-                                     std::unordered_set<KeyFrame *> & out_loop_candidates,
-                                     std::unordered_set<KeyFrame *> & out_merge_candidates,
-                                     int count) const = 0;
+  virtual void DetectNBestCandidates(const BaseFrame * frame,
+                                     KeyFrameSet & out_loop_candidates,
+                                     KeyFrameSet & out_merge_candidates,
+                                     size_t count) const = 0;
+  virtual void DetectRelocCandidates(const BaseFrame * keyframe,
+                                     KeyFrameSet & out_reloc_candidates) const = 0;
   virtual ~IKeyFrameDatabase() = default;
 
 };

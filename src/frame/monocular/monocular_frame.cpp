@@ -344,18 +344,6 @@ void MonocularFrame::SerializeToStream(std::ostream & stream) const {
   throw std::runtime_error("Not implemented");
 }
 
-void MonocularFrame::SearchWordSharingKeyFrames(const std::vector<std::unordered_set<KeyFrame *>> & inverted_file,
-                                                WordSharingKeyFrameMap & out_word_sharing_key_frames) {
-  // Search all keyframes that share a word with current frame
-
-  /*for (auto word : features_.bow_container.bow_vector) {
-    std::unordered_set<KeyFrame *> key_frames = inverted_file[word.first];
-    for (auto key_frame : key_frames) {
-      out_word_sharing_key_frames[key_frame]++;
-    }
-  }*/
-}
-
 /*bool MonocularFrame::Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Map * map) {
   ComputeBow();
   std::vector<frame::KeyFrame *>
