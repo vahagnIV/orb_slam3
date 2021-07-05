@@ -20,15 +20,16 @@ namespace frame {
 class DBoW2Database : public IKeyFrameDatabase {
  public:
   void Append(KeyFrame * keyframe) override;
-  void DetectNBestCandidates(const frame::KeyFrame * frame,
-                             std::unordered_set<KeyFrame *> & out_loop_candidates,
-                             std::unordered_set<KeyFrame *> & out_merge_candidates,
-                             int count) const override;
+  void DetectNBestCandidates(const BaseFrame * keyframe,
+                             KeyFrameSet & out_loop_candidates,
+                             KeyFrameSet & out_merge_candidates,
+                             size_t count) const override;
+  void DetectRelocCandidates(const BaseFrame * keyframe, KeyFrameSet & out_reloc_candidates) const override;
  private:
   typedef std::unordered_map<KeyFrame *, size_t> WordSharingKeyFrameMap;
   typedef std::unordered_map<KeyFrame *, precision_t> ScoreKeyFrameMap;
 
-  void SearchWordSharingKeyFrames(const KeyFrame * keyframe,
+  void SearchWordSharingKeyFrames(const BaseFrame * keyframe,
                                   const features::handlers::DBoW2Handler * handler,
                                   DBoW2Database::WordSharingKeyFrameMap & out_word_sharing_key_frames) const;
   static size_t FindMaxSharingWord(const WordSharingKeyFrameMap & word_sharing_key_frames);
@@ -38,8 +39,9 @@ class DBoW2Database : public IKeyFrameDatabase {
   static void FilterCandidatesByCovisibility(const map::Map * current_map,
                                              const ScoreKeyFrameMap & key_frame_reloc_scores,
                                              const WordSharingKeyFrameMap & word_sharing_key_frames,
-                                             std::unordered_set<KeyFrame *> & out_loop_candidates,
-                                             std::unordered_set<KeyFrame *> & out_merge_candidates);
+                                             KeyFrameSet & out_loop_candidates,
+                                             KeyFrameSet & out_merge_candidates,
+                                             size_t count);
  private:
   std::vector<std::list<KeyFrame *> > inverted_file_;
 

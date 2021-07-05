@@ -16,10 +16,10 @@ void DBoW2Database::Append(KeyFrame * keyframe) {
   }
 }
 
-void DBoW2Database::DetectNBestCandidates(const frame::KeyFrame * keyframe,
-                                          unordered_set<KeyFrame *> & out_loop_candidates,
-                                          unordered_set<KeyFrame *> & out_merge_candidates,
-                                          int count) const {
+void DBoW2Database::DetectNBestCandidates(const BaseFrame * keyframe,
+                                          KeyFrameSet & out_loop_candidates,
+                                          KeyFrameSet & out_merge_candidates,
+                                          size_t count) const {
 
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
@@ -32,15 +32,23 @@ void DBoW2Database::DetectNBestCandidates(const frame::KeyFrame * keyframe,
                                  score_key_frame_map,
                                  word_sharing_key_frames,
                                  out_loop_candidates,
-                                 out_merge_candidates);
+                                 out_merge_candidates, count);
 
 }
 
-void DBoW2Database::SearchWordSharingKeyFrames(const KeyFrame * keyframe,
+void DBoW2Database::SearchWordSharingKeyFrames(const BaseFrame * keyframe,
                                                const features::handlers::DBoW2Handler * handler,
                                                WordSharingKeyFrameMap & out_word_sharing_key_frames) const {
   out_word_sharing_key_frames.clear();
-  auto neighbours = keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  KeyFrameSet neighbours;
+
+  {
+    // TODO: find a better way
+    auto kf = dynamic_cast<const KeyFrame *> (keyframe);
+    if (nullptr != keyframe)
+      neighbours = kf->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  }
+
   for (const auto & wit: handler->GetFeatureVector()) {
     assert(wit.first < inverted_file_.size());
     for (auto kf: inverted_file_[wit.first]) {
@@ -82,8 +90,9 @@ void DBoW2Database::FilterCandidatesByWordSharingAcceptableScore(const features:
 void DBoW2Database::FilterCandidatesByCovisibility(const map::Map * current_map,
                                                    const ScoreKeyFrameMap & key_frame_reloc_scores,
                                                    const WordSharingKeyFrameMap & word_sharing_key_frames,
-                                                   std::unordered_set<KeyFrame *> & out_loop_candidates,
-                                                   std::unordered_set<KeyFrame *> & out_merge_candidates) {
+                                                   KeyFrameSet & out_loop_candidates,
+                                                   KeyFrameSet & out_merge_candidates,
+                                                   size_t count) {
   std::unordered_map<KeyFrame *, precision_t> acc_score_and_matches;
   precision_t best_acc_score = 0;
   // Lets now accumulate score by covisibility
@@ -117,12 +126,18 @@ void DBoW2Database::FilterCandidatesByCovisibility(const map::Map * current_map,
     const precision_t & score = acc_score_and_match_pair.second;
     if (score > min_acceptable_score) {
       KeyFrame * match_key_frame = acc_score_and_match_pair.first;
-      if (match_key_frame->GetMap() == current_map)
+      if (match_key_frame->GetMap() == current_map && out_loop_candidates.size() < count)
         out_loop_candidates.insert(match_key_frame);
-      else
+      else if (out_merge_candidates.size() < count)
         out_merge_candidates.insert(match_key_frame);
     }
   }
+}
+
+void DBoW2Database::DetectRelocCandidates(const BaseFrame * keyframe,
+                                          IKeyFrameDatabase::KeyFrameSet & out_reloc_candidates) const {
+  KeyFrameSet tmp;
+  DetectNBestCandidates(keyframe, out_reloc_candidates, tmp, std::numeric_limits<std::size_t>::max());
 }
 
 }
