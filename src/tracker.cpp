@@ -276,6 +276,7 @@ TrackingResult Tracker::TrackInNotInitializedState(frame::Frame * frame) {
   assert(NOT_INITIALIZED == state_);
   assert(frame->IsValid());
   frame->SetIdentity();
+
 //  frame->SetInitial(true);
   state_ = FIRST_IMAGE;
   last_frame_ = frame;
@@ -287,6 +288,7 @@ TrackingResult Tracker::Track(frame::Frame * frame) {
   if (!frame->IsValid()) {
     return TrackingResult::INVALID_FRAME;
   }
+  frame->SetMap(atlas_->GetCurrentMap());
   TrackingResult res = TrackingResult::OK;
   switch (state_) {
     case NOT_INITIALIZED: {

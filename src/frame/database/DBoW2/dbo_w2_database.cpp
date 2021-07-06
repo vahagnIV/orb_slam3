@@ -1,0 +1,144 @@
+//
+// Created by vahagn on 02.07.21.
+//
+
+#include "dbo_w2_database.h"
+#include <features/handlers/DBoW2/dbo_w2_handler.h>
+
+namespace orb_slam3 {
+namespace frame {
+
+void DBoW2Database::Append(KeyFrame * keyframe) {
+  auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
+  assert(nullptr != feature_handler);
+  for (auto wid: feature_handler->GetFeatureVector()) {
+    inverted_file_[wid.first].push_back(keyframe);
+  }
+}
+
+void DBoW2Database::DetectNBestCandidates(const BaseFrame * keyframe,
+                                          KeyFrameSet & out_loop_candidates,
+                                          KeyFrameSet & out_merge_candidates,
+                                          size_t count) const {
+
+  auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
+  assert(nullptr != feature_handler);
+  WordSharingKeyFrameMap word_sharing_key_frames;
+  SearchWordSharingKeyFrames(keyframe, feature_handler, word_sharing_key_frames);
+  if (word_sharing_key_frames.empty()) return;
+  ScoreKeyFrameMap score_key_frame_map;
+  FilterCandidatesByWordSharingAcceptableScore(feature_handler, word_sharing_key_frames, score_key_frame_map);
+  FilterCandidatesByCovisibility(keyframe->GetMap(),
+                                 score_key_frame_map,
+                                 word_sharing_key_frames,
+                                 out_loop_candidates,
+                                 out_merge_candidates, count);
+
+}
+
+void DBoW2Database::SearchWordSharingKeyFrames(const BaseFrame * keyframe,
+                                               const features::handlers::DBoW2Handler * handler,
+                                               WordSharingKeyFrameMap & out_word_sharing_key_frames) const {
+  out_word_sharing_key_frames.clear();
+  KeyFrameSet neighbours;
+
+  {
+    // TODO: find a better way
+    auto kf = dynamic_cast<const KeyFrame *> (keyframe);
+    if (nullptr != keyframe)
+      neighbours = kf->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  }
+
+  for (const auto & wit: handler->GetFeatureVector()) {
+    assert(wit.first < inverted_file_.size());
+    for (auto kf: inverted_file_[wit.first]) {
+      if (neighbours.find(kf) != neighbours.end())
+        continue;
+      ++out_word_sharing_key_frames[kf];
+    }
+  }
+}
+
+size_t DBoW2Database::FindMaxSharingWord(const WordSharingKeyFrameMap & word_sharing_key_frames) {
+  size_t max = 0;
+  for (const auto & wit: word_sharing_key_frames) {
+    if (max < wit.second)
+      max = wit.second;
+  }
+  return max;
+}
+
+void DBoW2Database::FilterCandidatesByWordSharingAcceptableScore(const features::handlers::DBoW2Handler * handler,
+                                                                 const WordSharingKeyFrameMap & word_sharing_key_frames,
+                                                                 ScoreKeyFrameMap & out_key_frame_reloc_scores) {
+  size_t max_sharing_words = FindMaxSharingWord(word_sharing_key_frames);
+  size_t min_common_words = 0.8 * max_sharing_words;
+  for (auto word_sharing_key_frame_pair: word_sharing_key_frames) {
+    KeyFrame * word_sharing_key_frame = word_sharing_key_frame_pair.first;
+    if (word_sharing_key_frame_pair.second > min_common_words) {
+      const auto
+          kf_handler = dynamic_cast<const features::handlers::DBoW2Handler * >(word_sharing_key_frame_pair.first);
+      assert(nullptr != kf_handler);
+      assert(handler->GetVocabulary() == kf_handler->GetVocabulary());
+      precision_t word_sharing_key_frame_voc_score =
+          handler->GetVocabulary()->score(handler->GetBowVector(), kf_handler->GetBowVector());
+      out_key_frame_reloc_scores[word_sharing_key_frame] = word_sharing_key_frame_voc_score;
+    }
+  }
+}
+
+void DBoW2Database::FilterCandidatesByCovisibility(const map::Map * current_map,
+                                                   const ScoreKeyFrameMap & key_frame_reloc_scores,
+                                                   const WordSharingKeyFrameMap & word_sharing_key_frames,
+                                                   KeyFrameSet & out_loop_candidates,
+                                                   KeyFrameSet & out_merge_candidates,
+                                                   size_t count) {
+  std::unordered_map<KeyFrame *, precision_t> acc_score_and_matches;
+  precision_t best_acc_score = 0;
+  // Lets now accumulate score by covisibility
+  for (auto key_frame_similarity_score : key_frame_reloc_scores) {
+    KeyFrame * match_key_frame = key_frame_similarity_score.first;
+    std::unordered_set<KeyFrame *>
+        top_covisible_neighbour_key_frames = match_key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
+    precision_t best_score = key_frame_similarity_score.second;
+    precision_t acc_score = best_score;
+    KeyFrame * best_key_frame = match_key_frame;
+    for (auto covisible_neighbour_key_frame : top_covisible_neighbour_key_frames) {
+      if (word_sharing_key_frames.find(covisible_neighbour_key_frame) == word_sharing_key_frames.end()) {
+        continue;
+      }
+      auto key_frame_reloc_score = key_frame_reloc_scores.find(covisible_neighbour_key_frame);
+      if (key_frame_reloc_score != key_frame_reloc_scores.end()) {
+        acc_score += key_frame_reloc_score->second;
+        if (key_frame_reloc_score->second > best_score) {
+          best_key_frame = covisible_neighbour_key_frame;
+          best_score = key_frame_reloc_score->second;
+        }
+      }
+    }
+    acc_score_and_matches[best_key_frame] = acc_score;
+    if (acc_score > best_acc_score)
+      best_acc_score = acc_score;
+  }
+  // Return all those keyframes with a score higher than 0.75*bestScore
+  precision_t min_acceptable_score = 0.75 * best_acc_score;
+  for (auto acc_score_and_match_pair : acc_score_and_matches) {
+    const precision_t & score = acc_score_and_match_pair.second;
+    if (score > min_acceptable_score) {
+      KeyFrame * match_key_frame = acc_score_and_match_pair.first;
+      if (match_key_frame->GetMap() == current_map && out_loop_candidates.size() < count)
+        out_loop_candidates.insert(match_key_frame);
+      else if (out_merge_candidates.size() < count)
+        out_merge_candidates.insert(match_key_frame);
+    }
+  }
+}
+
+void DBoW2Database::DetectRelocCandidates(const BaseFrame * keyframe,
+                                          IKeyFrameDatabase::KeyFrameSet & out_reloc_candidates) const {
+  KeyFrameSet tmp;
+  DetectNBestCandidates(keyframe, out_reloc_candidates, tmp, std::numeric_limits<std::size_t>::max());
+}
+
+}
+}

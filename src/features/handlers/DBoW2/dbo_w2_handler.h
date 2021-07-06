@@ -8,7 +8,6 @@
 #include <features/handlers/base_feature_handler.h>
 #include <features/bow_vocabulary.h>
 
-
 namespace orb_slam3 {
 namespace features {
 namespace handlers {
@@ -26,6 +25,7 @@ class DBoW2Handler : public BaseFeatureHandler {
  public:
   const DBoW2::FeatureVector & GetFeatureVector() const;
   const DBoW2::BowVector & GetBowVector() const;
+  const BowVocabulary * GetVocabulary() const { return vocabulary_; }
  private:
   DBoW2::FeatureVector feature_vector_;
   DBoW2::BowVector bow_vector_;

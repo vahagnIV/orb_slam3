@@ -18,6 +18,7 @@ namespace orb_slam3 {
 
 namespace map {
 class MapPoint;
+class Map;
 }
 
 namespace frame {
@@ -43,7 +44,8 @@ class BaseFrame : public geometry::RigidObject {
       filename_(filename),
       sensor_constants_(sensor_constants),
       id_(id),
-      feature_handler_(feature_handler) {}
+      feature_handler_(feature_handler),
+      map_(nullptr) {}
   ~BaseFrame() override = default;
 
  public:
@@ -60,6 +62,10 @@ class BaseFrame : public geometry::RigidObject {
   const features::IFeatureExtractor * GetFeatureExtractor() const { return feature_handler_->GetFeatureExtractor(); }
   const std::string & GetFilename() const { return filename_; }
   const std::shared_ptr<const features::handlers::BaseFeatureHandler> & GetFeatureHandler() const { return feature_handler_; }
+
+  void SetMap(map::Map * map) { map_ = map; }
+  const map::Map * GetMap() const { return map_; }
+  map::Map * GetMap() { return map_; }
  protected:
   virtual void SerializeToStream(std::ostream & stream) const = 0;
 
@@ -69,6 +75,7 @@ class BaseFrame : public geometry::RigidObject {
   const SensorConstants * sensor_constants_;
   size_t id_;
   std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler_;
+  map::Map * map_;
 };
 
 }
