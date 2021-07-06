@@ -13,7 +13,8 @@ namespace handlers {
 
 void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
                              FastMatches & out_matches,
-                             MatchingSeverity severity) const {
+                             MatchingSeverity severity,
+                             bool check_orientation) const {
 
   typedef features::matching::SNNMatcher<features::handlers::iterators::BowToIterator> BOW_MATCHER;
 
@@ -22,23 +23,18 @@ void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> & o
 
   unsigned threshold;
   precision_t ratio;
-  bool validate_orientation;
   switch (severity) {
     case STRONG:threshold = GetFeatureExtractor()->GetLowThreshold();
       ratio = 0.6;
-      validate_orientation = true;
       break;
     case MIDDLE:threshold = GetFeatureExtractor()->GetLowThreshold();
       ratio = 0.7;
-      validate_orientation = true;
       break;
     case WEAK:threshold = GetFeatureExtractor()->GetHighThreshold();
-      ratio = 0.8;
-      validate_orientation = false;
+      ratio = 0.9;
       break;
       default:
         assert(false);
-        validate_orientation = false;
         threshold = 0;
         ratio = 1;
   }
@@ -58,7 +54,7 @@ void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> & o
 
   bow_matcher.MatchWithIterators(bow_it_begin, bow_it_end, GetFeatureExtractor(), out_matches);
 
-  if (validate_orientation) {
+  if (check_orientation) {
     features::matching::OrientationValidator
         (GetFeatures().keypoints, from_handler->GetFeatures().keypoints).Validate(out_matches);
   }

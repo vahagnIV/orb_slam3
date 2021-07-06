@@ -26,7 +26,7 @@ add_library(orbslam SHARED
         logging.cpp
 
 #        frame/frame_base.cpp
-#        frame/monocular_frame_old.cpp
+        frame/key_frame.cpp
         frame/monocular/base_monocular.cpp
         frame/monocular/monocular_frame.cpp
         frame/monocular/monocular_key_frame.cpp

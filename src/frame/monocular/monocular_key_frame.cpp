@@ -124,7 +124,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
   }
 
   features::FastMatches matches;
-  feature_handler_->FastMatch(other_frame->GetFeatureHandler(), matches, features::MatchingSeverity::STRONG);
+  feature_handler_->FastMatch(other_frame->GetFeatureHandler(), matches, features::MatchingSeverity::STRONG, true);
 
   geometry::Pose relative_pose;
   geometry::utils::ComputeRelativeTransformation(GetPosition(), other_frame->GetPosition(), relative_pose);
@@ -170,7 +170,8 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
     auto map_point = new map::MapPoint(other_frame->GetInversePosition().Transform(triangulated),
                                        Id(),
                                        max_invariance_distance,
-                                       min_invariance_distance);
+                                       min_invariance_distance,
+                                       GetMap());
 //    std::cout << map_point->GetPosition() << std::endl;
 
     AddMapPoint(map_point, match.first);
@@ -184,7 +185,6 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
                                    newly_created_mps,
                                    other_frame->Id(),
                                    Id());
-
 
 }
 

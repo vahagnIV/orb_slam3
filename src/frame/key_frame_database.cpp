@@ -32,6 +32,7 @@ std::unordered_set<KeyFrame *> KeyFrameDatabase::DetectRelocalizationCandidates(
                                                word_sharing_key_frames,
                                                relocalization_candidates);
   return relocalization_candidates;*/
+  return std::unordered_set<KeyFrame *> ();
 }
 
 void KeyFrameDatabase::FilterRelocalizationCandidatesByWordSharingAcceptableScore(const Frame * frame,

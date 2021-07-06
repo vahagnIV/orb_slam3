@@ -19,7 +19,8 @@ class DBoW2Handler : public BaseFeatureHandler {
 
   void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
                  FastMatches & out_matches,
-                 MatchingSeverity severity) const override;
+                 MatchingSeverity severity,
+                 bool check_orientation) const override;
 
   void Precompute();
  public:

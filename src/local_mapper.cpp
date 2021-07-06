@@ -106,8 +106,6 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   }
   frame::KeyFrame::MapPointSet map_points;
   key_frame->ListMapPoints(map_points);
-  for (auto mp: map_points)
-    atlas_->GetCurrentMap()->AddMapPoint(mp);
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {

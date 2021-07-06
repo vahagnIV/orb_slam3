@@ -23,7 +23,7 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas)
     : atlas_(atlas),
       velocity_is_valid_(false),
       last_frame_(nullptr),
-      state_(NOT_INITIALIZED){
+      state_(NOT_INITIALIZED) {
   kf_counter = 1000;
 }
 
@@ -137,7 +137,12 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 //  if(frame->GetMapPointCount() < 30)
 //    return TrackingResult::TRACKING_FAILED;
 
-  debug::DisplayTrackingInfo(frame, last_frame_, atlas_->GetCurrentMap(), frame_visibles, visible_map_points, local_map_points_except_current);
+  debug::DisplayTrackingInfo(frame,
+                             last_frame_,
+                             atlas_->GetCurrentMap(),
+                             frame_visibles,
+                             visible_map_points,
+                             local_map_points_except_current);
 
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
@@ -148,7 +153,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
     last_key_frame_ = keyframe;
-    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
+//    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
 
     // TODO: remove the following line
@@ -183,19 +188,21 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   std::unordered_set<map::MapPoint *> ref_kf_all_tracked_map_points;
   reference_keyframe_->ListMapPoints(ref_kf_all_tracked_map_points);
   std::unordered_set<map::MapPoint *> filtered_tracked_map_points;
-  for(auto tracked_map_point : ref_kf_all_tracked_map_points) {
+  for (auto tracked_map_point : ref_kf_all_tracked_map_points) {
     if (tracked_map_point->GetObservationCount() >= min_observation_count) {
       filtered_tracked_map_points.insert(tracked_map_point);
     }
   }
   bool few_tracked_points =
-      tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
-  if (!few_tracked_points || (!more_than_max_frames_passed && !(more_than_min_frames_passed && local_mapper_accepts_key_frame))) {
+      tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio
+          && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
+  if (!few_tracked_points
+      || (!more_than_max_frames_passed && !(more_than_min_frames_passed && local_mapper_accepts_key_frame))) {
     std::cout << "NeedNewKeyFrame = false1" << std::endl;
     return false;
   }
   std::cout << "NeedNewKeyFrame = " << local_mapper_accepts_key_frame << std::endl;
-   return local_mapper_accepts_key_frame;
+  return local_mapper_accepts_key_frame;
   /*std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
   bool need = kf_counter >= 4;// && m.size() > 40;
@@ -221,7 +228,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     last_key_frame_ = current_key_frame;
 
     current_map->SetInitialKeyFrame(initial_key_frame);
-    current_map->AddKeyFrame(current_key_frame);
+//    current_map->AddKeyFrame(current_key_frame);
 
     std::unordered_set<frame::KeyFrame *> key_frames{initial_key_frame, current_key_frame};
     std::unordered_set<map::MapPoint *> map_points;
@@ -233,7 +240,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
     std::vector<precision_t> depths;
     for (auto mp: map_points) {
-      current_map->AddMapPoint(mp);
+//      current_map->AddMapPoint(mp);
       depths.push_back(mp->GetPosition().z());
     }
 
@@ -246,8 +253,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     for (auto mp: map_points) {
       TPoint3D pose = mp->GetPosition();
       pose /= depths[depths.size() / 2];
-      mp->min_invariance_distance_ /= depths[depths.size() / 2];
-      mp->max_invariance_distance_ /= depths[depths.size() / 2];
+      mp->SetMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
+      mp->SetMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
       mp->SetPosition(pose);
       mp->Refresh(frame->GetFeatureExtractor());
     }

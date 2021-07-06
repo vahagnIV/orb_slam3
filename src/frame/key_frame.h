@@ -19,11 +19,7 @@ class KeyFrame : public BaseFrame {
            const std::string & filename,
            const SensorConstants * sensor_constants,
            size_t id,
-           std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler) : BaseFrame(time_point, filename,sensor_constants, id, feature_handler),
-                        covisibility_graph_(this),
-                        is_initial_(false),
-                        bad_flag_(false),
-                        kf_gba_(nullptr) {}
+           std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler);
 
   virtual ~KeyFrame() = default;
  public:
@@ -37,16 +33,9 @@ class KeyFrame : public BaseFrame {
   bool IsInitial() const { return is_initial_; }
   void SetInitial(bool initial) { is_initial_ = initial; }
   bool IsBad() const { return bad_flag_; }
-  virtual void SetBad() {
-    bad_flag_ = true;
-  }
-  void SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
-    pose_gba_.R = R;
-    pose_gba_.T = T;
-  }
-  void SetKeyFrameGBA(KeyFrame * keyframe) {
-    kf_gba_ = keyframe;
-  }
+  virtual void SetBad();
+  void SetPoseGBA(const TMatrix33 & R, const TVector3D & T);
+  void SetKeyFrameGBA(KeyFrame * keyframe) { kf_gba_ = keyframe; }
   virtual void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) = 0;
   virtual void FuseMapPoints(MapPointSet & map_points) = 0;
   virtual void EraseMapPoint(const map::MapPoint *) = 0;
@@ -60,7 +49,6 @@ class KeyFrame : public BaseFrame {
   // Container for saving the position after gba for LC
   geometry::Pose pose_gba_;
   KeyFrame * kf_gba_;
-
 
 };
 

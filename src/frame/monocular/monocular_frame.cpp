@@ -14,7 +14,7 @@
 #include <optimization/monocular_optimization.h>
 #include <src/features/handlers/DBoW2/bow_to_iterator.h>
 #include "monocular_key_frame.h"
-
+#include <map/map.h>
 #include <debug/debug_utils.h>
 
 namespace orb_slam3 {
@@ -154,7 +154,9 @@ FrameType MonocularFrame::Type() const {
 }
 
 KeyFrame * MonocularFrame::CreateKeyFrame() {
-  return reference_keyframe_ = new MonocularKeyFrame(this);
+  auto kf = reference_keyframe_ = new MonocularKeyFrame(this);
+  map_->AddKeyFrame(kf);
+  return kf;
 }
 
 void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
@@ -211,7 +213,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                                        feature_handler_->GetFeatures().keypoints[point.first],
                                                                        max_invariance_distance,
                                                                        min_invariance_distance);
-    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance);
+    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance, GetMap());
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
@@ -220,7 +222,10 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 
 void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * reference_kf,
                                                    std::unordered_map<std::size_t, std::size_t> & out_matches) const {
-  feature_handler_->FastMatch(reference_kf->GetFeatureHandler(), out_matches, features::MatchingSeverity::MIDDLE);
+  feature_handler_->FastMatch(reference_kf->GetFeatureHandler(),
+                              out_matches,
+                              features::MatchingSeverity::MIDDLE,
+                              true);
 
   auto match_it = out_matches.begin();
   while (match_it != out_matches.end()) {

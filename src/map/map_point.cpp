@@ -5,6 +5,7 @@
 // == orb-slam3 ===
 #include "map_point.h"
 #include <frame/key_frame.h>
+#include <map/map.h>
 
 #include <utility>
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
@@ -16,15 +17,18 @@ std::atomic_uint64_t MapPoint::counter_(0);
 MapPoint::MapPoint(TPoint3D point,
                    size_t first_observed_frame_id,
                    precision_t max_invariance_distance,
-                   precision_t min_invariance_distance)
+                   precision_t min_invariance_distance,
+                   Map * map)
     : position_(std::move(point)),
       max_invariance_distance_(max_invariance_distance),
       min_invariance_distance_(min_invariance_distance),
       visible_(1),
       found_(1),
+      map_(map),
       bad_flag_(false),
       first_observed_frame_id_(first_observed_frame_id),
-      replaced_map_point_(nullptr) {
+      replaced_map_point_(nullptr){
+  map_->AddMapPoint(this);
   ++counter_;
 }
 
@@ -63,6 +67,7 @@ void MapPoint::SetBad() {
   while (!observations_.empty()) {
     observations_.begin()->first->EraseMapPoint(this);
   }
+  map_->EraseMapPoint(this);
 }
 
 void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
