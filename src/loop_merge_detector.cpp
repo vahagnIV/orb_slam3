@@ -26,21 +26,25 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
   frame::IKeyFrameDatabase::KeyFrameSet merge_candidates, loop_candidates;
   key_frame_database_->DetectNBestCandidates(key_frame, loop_candidates, merge_candidates, 3);
 
-
+  frame::KeyFrame * best_local_kf = nullptr;
+  size_t best_match_count = 0;
   if (!loop_candidates.empty()) {
     auto covisible_kfs = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(5);
     covisible_kfs.insert(key_frame);
-    for(auto neighbour: covisible_kfs) {
-      const auto& handler = neighbour->GetFeatureHandler();
-      for (const auto & loop_candidate: loop_candidates) {
-        if (loop_candidate->IsBad())
-          continue;
+    for (const auto & loop_candidate: loop_candidates) {
+      if (loop_candidate->IsBad()) {
+        continue;
+      }
+      const auto & candidate_handler = loop_candidate->GetFeatureHandler();
+      std::unordered_map<frame::KeyFrame *, features::FastMatches> neighbour_matches;
+      for (auto neighbour: covisible_kfs) {
 
-        features::FastMatches matches;
-        handler->FastMatch(loop_candidate->GetFeatureHandler(),
-                           matches,
-                           features::MatchingSeverity::WEAK,
-                           true);
+        const auto & neighbour_handler = neighbour->GetFeatureHandler();
+
+        candidate_handler->FastMatch(neighbour_handler,
+                                     neighbour_matches[neighbour],
+                                     features::MatchingSeverity::WEAK,
+                                     true);
       }
     }
   }
