@@ -24,6 +24,9 @@ class LoopMergeDetector : public PositionObserver {
  private:
   DetectionResult DetectLoopOrMerge(frame::KeyFrame * key_frame) const;
   frame::IKeyFrameDatabase * key_frame_database_;
+ private:
+  typedef std::unordered_set<frame::KeyFrame *> KeyFrameSet;
+  static bool Intersect(const KeyFrameSet & bow_candidate_neighbours, const KeyFrameSet & key_frame_neighbours);
 
 };
 
