@@ -7,6 +7,7 @@
 #include "base_frame.h"
 #include <features/features.h>
 #include <frame/covisibility_graph_node.h>
+#include <geometry/sim3_transformation.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -40,6 +41,12 @@ class KeyFrame : public BaseFrame {
   virtual void FuseMapPoints(MapPointSet & map_points) = 0;
   virtual void EraseMapPoint(const map::MapPoint *) = 0;
   virtual void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) = 0;
+  typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
+  virtual bool FindSim3Transformation(const MapPointMatches & map_point_matches,
+                                      const KeyFrame * other,
+                                      geometry::Sim3Transformation & out_transormation) const = 0;
+  virtual void FindMatchingMapPoints(const KeyFrame * other,
+                                                MapPointMatches & out_matches) const = 0;
 
  protected:
   CovisibilityGraphNode covisibility_graph_;

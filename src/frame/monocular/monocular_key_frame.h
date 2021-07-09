@@ -43,6 +43,11 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
   void EraseMapPoint(size_t feature_id) override;
   void SetBad() override;
+  void FindMatchingMapPoints(const KeyFrame *  other,
+                             MapPointMatches & out_matches) const override;
+  bool FindSim3Transformation(const MapPointMatches & map_point_matches,
+                              const KeyFrame * loop_candidate,
+                              geometry::Sim3Transformation & out_transormation) const override;
  private:
 
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);

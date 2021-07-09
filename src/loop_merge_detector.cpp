@@ -4,6 +4,7 @@
 
 #include "loop_merge_detector.h"
 #include <map/map.h>
+#include <geometry/ransac_sim3_solver.h>
 namespace orb_slam3 {
 
 LoopMergeDetector::LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database) :
@@ -31,40 +32,54 @@ bool LoopMergeDetector::Intersect(const KeyFrameSet & bow_candidate_neighbours,
   }
 }
 
+void LoopMergeDetector::FindMapPointMatches(const frame::KeyFrame * current_key_frame,
+                                            const LoopMergeDetector::KeyFrameSet & loop_neighbours,
+                                            MapPointMatches & out_matches) {
+  std::unordered_set<map::MapPoint *> loop_map_points;
+  std::unordered_set<map::MapPoint *> kf_map_points;
+
+  for (const auto & loop_candidate: loop_neighbours) {
+    MapPointMatches matches;
+    current_key_frame->FindMatchingMapPoints(loop_candidate, matches);
+    for (const auto & match: matches) {
+      if (loop_map_points.find(match.second) == loop_map_points.end()
+          && kf_map_points.find(match.first) == kf_map_points.end()) {
+        loop_map_points.insert(match.second);
+        kf_map_points.insert(match.first);
+        out_matches.emplace_back(match);
+      }
+    }
+  }
+}
+
 LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::KeyFrame * key_frame) const {
+
   frame::IKeyFrameDatabase::KeyFrameSet merge_candidates, loop_candidates;
   key_frame_database_->DetectNBestCandidates(key_frame, loop_candidates, merge_candidates, 3);
   const auto & kf_handler = key_frame->GetFeatureHandler();
   auto key_frame_neighbours = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames();
+
   if (!loop_candidates.empty()) {
 
-    for (const auto & bow_candidate: loop_candidates) {
-      if (bow_candidate->IsBad()) continue;
+    for (const auto & loop_candidate: loop_candidates) {
+      if (loop_candidate->IsBad()) continue;
 
-
-      auto bow_candidate_neighbours = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(5);
-      bow_candidate_neighbours.insert(key_frame);
+      auto loop_candidate_neighbours = loop_candidate->GetCovisibilityGraph().GetCovisibleKeyFrames(5);
+      loop_candidate_neighbours.insert(loop_candidate);
 
       // Proximity check
-      if (Intersect(bow_candidate_neighbours, key_frame_neighbours)) continue;
+      if (Intersect(loop_candidate_neighbours, key_frame_neighbours)) continue;
+      MapPointMatches matches;
+      FindMapPointMatches(key_frame, loop_candidate_neighbours, matches);
+      if (matches.size() < 20)
+        continue;
 
-      std::unordered_map<frame::KeyFrame *, features::FastMatches> neighbour_matches;
+      geometry::Sim3Transformation transformation;
+      if (key_frame->FindSim3Transformation(matches, loop_candidate, transformation)) {
 
-      for (auto bow_candidate_neighbour: bow_candidate_neighbours) {
-        const auto & neighbour_handler = bow_candidate_neighbour->GetFeatureHandler();
-        kf_handler->FastMatch(neighbour_handler,
-                              neighbour_matches[bow_candidate_neighbour],
-                              features::MatchingSeverity::WEAK,
-                              true);
       }
 
-      std::unordered_set<map::MapPoint *> matched_map_points;
-
     }
-  }
-
-  if (!merge_candidates.empty()) {
-
   }
 
   return LoopMergeDetector::MergeDetected;

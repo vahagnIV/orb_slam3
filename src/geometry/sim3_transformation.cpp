@@ -30,5 +30,9 @@ std::ostream & operator<<(std::ostream & stream, const Sim3Transformation & p) {
   return stream;
 }
 
+Sim3Transformation Sim3Transformation::operator*(const Sim3Transformation & other) const {
+  return Sim3Transformation{.R = R * other.R, .T = s * R * other.T + T, .s = s * other.s};
+}
+
 }
 }

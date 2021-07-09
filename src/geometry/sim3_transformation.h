@@ -14,6 +14,8 @@ struct Sim3Transformation {
 
   Sim3Transformation GetInversePose() const;
 
+  Sim3Transformation operator*(const Sim3Transformation & other) const;
+
   friend std::ostream & operator<<(std::ostream & stream, const Sim3Transformation & p);
 
   void print() const;

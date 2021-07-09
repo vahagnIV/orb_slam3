@@ -11,6 +11,7 @@
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 #include <features/matching/validators/triangulation_validator.h>
 #include <geometry/utils.h>
+#include <geometry/ransac_sim3_solver.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -301,10 +302,66 @@ void MonocularKeyFrame::SetBad() {
   }
   KeyFrame::SetBad();
 }
+
 void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
   WRITE_TO_STREAM(id_, stream);
   WRITE_TO_STREAM(bad_flag_, stream);
   BaseMonocular::SerializeToStream(stream);
+}
+
+void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
+                                              MapPointMatches & out_matches) const {
+
+  features::FastMatches matches;
+  feature_handler_->FastMatch(dynamic_cast<const MonocularKeyFrame *>(other)->GetFeatureHandler(),
+                              matches,
+                              features::MatchingSeverity::WEAK,
+                              true);
+
+  for (const auto & match: matches) {
+    map::MapPoint * local_map_point = map_points_.find(match.first)->second;
+    map::MapPoint * kf_map_point =
+        dynamic_cast<const MonocularKeyFrame *>(other)->map_points_.find(match.second)->second;
+    if (local_map_point && !local_map_point->IsBad()
+        && kf_map_point && !kf_map_point->IsBad())
+      out_matches.emplace_back(local_map_point, kf_map_point);
+  }
+
+}
+
+bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches & map_point_matches,
+                                               const KeyFrame * loop_candidate,
+                                               geometry::Sim3Transformation & out_transormation) const {
+  std::vector<std::pair<TPoint3D, TPoint3D>> matched_points(map_point_matches.size());
+  std::vector<std::pair<TPoint2D, TPoint2D>> matched_point_projections(map_point_matches.size());
+  std::transform(map_point_matches.begin(),
+                 map_point_matches.end(),
+                 matched_points.begin(),
+                 [](const std::pair<map::MapPoint *, map::MapPoint *> & pair) {
+                   return std::pair<TPoint3D, TPoint3D>(pair.first->GetPosition(), pair.second->GetPosition());
+                 });
+  const geometry::Pose kf_pose = GetPosition();
+  const camera::MonocularCamera * local_camera = GetCamera();
+  const camera::MonocularCamera
+      * loop_candidate_camera = dynamic_cast<const MonocularKeyFrame *>(loop_candidate)->GetCamera();
+
+  const geometry::Pose loop_candidate_pose = loop_candidate->GetPosition();
+  std::transform(matched_points.begin(),
+                 matched_points.end(),
+                 matched_point_projections.begin(),
+                 [&kf_pose, & loop_candidate_pose, & local_camera, &loop_candidate_camera]
+                     (const std::pair<TPoint3D, TPoint3D> & match) {
+                   TPoint2D local_projection, loop_candidate_projection;
+                   local_camera->ProjectAndDistort(kf_pose.Transform(match.first), local_projection);
+                   loop_candidate_camera->ProjectAndDistort(loop_candidate_pose.Transform(match.second),
+                                                            loop_candidate_projection);
+                   return std::pair<TPoint2D, TPoint2D>(local_projection, loop_candidate_projection);
+                 });
+
+  std::vector<std::pair<precision_t, precision_t>> errors;
+  geometry::RANSACSim3Solver
+      solver(&matched_points, &matched_point_projections, local_camera, loop_candidate_camera, &errors, 300);
+  return solver(out_transormation);
 }
 
 }
