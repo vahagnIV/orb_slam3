@@ -30,6 +30,7 @@ bool LoopMergeDetector::Intersect(const KeyFrameSet & bow_candidate_neighbours,
       return true;
     }
   }
+  return false;
 }
 
 void LoopMergeDetector::FindMapPointMatches(const frame::KeyFrame * current_key_frame,
@@ -56,7 +57,6 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
 
   frame::IKeyFrameDatabase::KeyFrameSet merge_candidates, loop_candidates;
   key_frame_database_->DetectNBestCandidates(key_frame, loop_candidates, merge_candidates, 3);
-  const auto & kf_handler = key_frame->GetFeatureHandler();
   auto key_frame_neighbours = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames();
 
   if (!loop_candidates.empty()) {
@@ -76,6 +76,11 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
 
       geometry::Sim3Transformation transformation;
       if (key_frame->FindSim3Transformation(matches, loop_candidate, transformation)) {
+        frame::KeyFrame::MapPointSet map_points;
+        for (const auto & loop_neighbour: loop_candidate_neighbours) {
+          loop_neighbour->ListMapPoints(map_points);
+        }
+//        key_frame->FilterVisibleMapPoints(map_points, transformation, )
 
       }
 

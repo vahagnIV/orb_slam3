@@ -64,6 +64,8 @@ bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
 }
 
 bool BaseMonocular::IsVisible(map::MapPoint * map_point,
+                              const TPoint3D & mp_local_coords,
+                              precision_t scale,
                               MapPointVisibilityParams & out_map_point,
                               precision_t radius_multiplier,
                               unsigned int window_size,
@@ -73,19 +75,18 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
                               const features::IFeatureExtractor * feature_extractor) const {
 
   out_map_point.map_point = map_point;
-  HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
 
-  if (map_point_in_local_cf.z() < 0)
+  if (mp_local_coords.z() < 0)
     return false;
 
-  precision_t distance = map_point_in_local_cf.norm();
+  precision_t distance = mp_local_coords.norm();
 
-  if (distance < map_point->GetMinInvarianceDistance()
-      || distance > map_point->GetMaxInvarianceDistance()) {
+  if (distance < scale * map_point->GetMinInvarianceDistance()
+      || distance > scale * map_point->GetMaxInvarianceDistance()) {
     return false;
   }
 
-  this->GetCamera()->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
+  this->GetCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
   if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }

@@ -136,6 +136,8 @@ bool MonocularFrame::IsVisible(map::MapPoint * map_point,
                                precision_t radius_multiplier,
                                unsigned int window_size) const {
   return BaseMonocular::IsVisible(map_point,
+                                  GetPosition().Transform(map_point->GetPosition()),
+                                  1,
                                   out_map_point,
                                   radius_multiplier,
                                   window_size,
@@ -302,6 +304,8 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
     if (BaseMonocular::IsVisible(mp.second,
+                                 pose.Transform(mp.second->GetPosition()),
+                                 1.,
                                  vmp,
                                  radius_multiplier,
                                  0,

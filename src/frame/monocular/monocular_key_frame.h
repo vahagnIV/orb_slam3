@@ -48,6 +48,10 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   bool FindSim3Transformation(const MapPointMatches & map_point_matches,
                               const KeyFrame * loop_candidate,
                               geometry::Sim3Transformation & out_transormation) const override;
+  void FilterVisibleMapPoints(const MapPointSet & map_points,
+                              const geometry::Sim3Transformation & transformation,
+                              std::vector<MapPointVisibilityParams> & out_visibles,
+                              precision_t radius_multiplier) const override;
  private:
 
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);

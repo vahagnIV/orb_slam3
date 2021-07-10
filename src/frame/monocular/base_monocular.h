@@ -56,10 +56,12 @@ class BaseMonocular {
 
  protected:
   bool IsVisible(map::MapPoint * map_point,
+                 const TPoint3D & mp_local_coords,
+                 precision_t scale,
                  MapPointVisibilityParams & out_map_point,
                  precision_t radius_multiplier,
                  unsigned int window_size,
-                 int level ,
+                 int level,
                  const geometry::Pose & pose,
                  const geometry::Pose & inverse_position,
                  const features::IFeatureExtractor * feature_extractor) const;

@@ -226,6 +226,8 @@ bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
                                   precision_t radius_multiplier,
                                   unsigned int window_size) const {
   return BaseMonocular::IsVisible(map_point,
+                                  GetPosition().Transform(map_point->GetPosition()),
+                                  1,
                                   out_map_point,
                                   radius_multiplier,
                                   window_size,
@@ -362,6 +364,29 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
   geometry::RANSACSim3Solver
       solver(&matched_points, &matched_point_projections, local_camera, loop_candidate_camera, &errors, 300);
   return solver(out_transormation);
+}
+
+void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
+                                               const geometry::Sim3Transformation & transformation,
+                                               std::vector<MapPointVisibilityParams> & out_visibles,
+                                               precision_t radius_multiplier) const {
+  MapPointVisibilityParams tmp;
+  for (const auto & mp: map_points) {
+    if (mp->IsBad())
+      continue;
+
+    if (BaseMonocular::IsVisible(mp,
+                                 transformation.Transform(mp->GetPosition()),
+                                 transformation.s,
+                                 tmp,
+                                 radius_multiplier,
+                                 0,
+                                 -1,
+                                 this->GetPosition(),
+                                 this->GetInversePosition(),
+                                 feature_handler_->GetFeatureExtractor()))
+      out_visibles.push_back(tmp);
+  }
 }
 
 }
