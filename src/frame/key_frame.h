@@ -50,7 +50,7 @@ class KeyFrame : public BaseFrame {
 
   virtual void FilterVisibleMapPoints(const MapPointSet & map_points,
                                       const geometry::Sim3Transformation & transformation,
-                                      std::vector<MapPointVisibilityParams> & out_visibles,
+                                      std::list<MapPointVisibilityParams> & out_visibles,
                                       precision_t radius_multiplier) const = 0;
 
  protected:

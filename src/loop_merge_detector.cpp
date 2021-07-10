@@ -80,7 +80,10 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
         for (const auto & loop_neighbour: loop_candidate_neighbours) {
           loop_neighbour->ListMapPoints(map_points);
         }
-//        key_frame->FilterVisibleMapPoints(map_points, transformation, )
+        std::list<frame::MapPointVisibilityParams> visible_map_points;
+        key_frame->FilterVisibleMapPoints(map_points, transformation, visible_map_points, 8);
+        if(visible_map_points.size() < 50)
+          continue;
 
       }
 

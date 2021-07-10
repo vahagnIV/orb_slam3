@@ -368,7 +368,7 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
                                                const geometry::Sim3Transformation & transformation,
-                                               std::vector<MapPointVisibilityParams> & out_visibles,
+                                               std::list<MapPointVisibilityParams> & out_visibles,
                                                precision_t radius_multiplier) const {
   MapPointVisibilityParams tmp;
   for (const auto & mp: map_points) {
