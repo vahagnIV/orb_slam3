@@ -12,19 +12,19 @@
 #include "position_observer.h"
 #include "observable.h"
 #include "map/atlas.h"
+#include <frame/database/ikey_frame_database.h>
 
 namespace orb_slam3 {
 
 class LocalMapper : public PositionObserver,
-                    public Observable<frame::KeyFrame *> {
+                    public Observable<UpdateMessage> {
  public:
-  explicit LocalMapper(map::Atlas * atlas);
+  explicit LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database);
   ~LocalMapper() override;
  public:
   void Start();
   void Stop();
   void MapPointCulling(frame::KeyFrame * keyframe);
-  void KeyFrameCulling(frame::KeyFrame * keyframe);
   void RunIteration();
   bool AcceptKeyFrames() { return accept_key_frames_; };
  private:
@@ -33,6 +33,7 @@ class LocalMapper : public PositionObserver,
   bool CheckNewKeyFrames() const;
   void CreateNewMapPoints(frame::KeyFrame * key_frame);
  private:
+  void KeyFrameCulling(frame::KeyFrame * keyframe);
   static void FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
                                   frame::KeyFrame::MapPointSet & local_map_points,
                                   std::unordered_set<frame::KeyFrame *> & out_fixed);
@@ -43,9 +44,10 @@ class LocalMapper : public PositionObserver,
  private:
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas * atlas_;
-  std::atomic_bool cancelled_;
+  std::atomic_bool cancelled_{};
   std::thread * thread_;
-  bool accept_key_frames_;
+  bool accept_key_frames_{};
+  frame::IKeyFrameDatabase * key_frame_database_;
 };
 
 }

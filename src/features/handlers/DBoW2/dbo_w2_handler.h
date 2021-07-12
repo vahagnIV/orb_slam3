@@ -27,10 +27,12 @@ class DBoW2Handler : public BaseFeatureHandler {
   const DBoW2::FeatureVector & GetFeatureVector() const;
   const DBoW2::BowVector & GetBowVector() const;
   const BowVocabulary * GetVocabulary() const { return vocabulary_; }
+  const std::map<unsigned, std::size_t> & GetWordFrequencies() const { return word_frequencies_; }
  private:
   DBoW2::FeatureVector feature_vector_;
   DBoW2::BowVector bow_vector_;
   const BowVocabulary * vocabulary_;
+  std::map<unsigned, std::size_t> word_frequencies_;
 
 };
 

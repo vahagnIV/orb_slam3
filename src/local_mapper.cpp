@@ -9,9 +9,16 @@
 #include "optimization/bundle_adjustment.h"
 #include <map/atlas.h>
 
+// TODO: remove this in multithreading
+#include <loop_merge_detector.h>
+
 namespace orb_slam3 {
 
-LocalMapper::LocalMapper(map::Atlas * atlas) : PositionObserver(), atlas_(atlas), thread_(nullptr) {}
+LocalMapper::LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database)
+    : PositionObserver(),
+    atlas_(atlas),
+    thread_(nullptr),
+    key_frame_database_(key_frame_database) {}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -19,7 +26,7 @@ LocalMapper::~LocalMapper() {
 
 void LocalMapper::Run() {
   while (!cancelled_) {
-  accept_key_frames_ = false;
+    accept_key_frames_ = false;
     UpdateMessage message;
     GetUpdateQueue().wait_dequeue(message);
     switch (message.type) {
@@ -55,9 +62,8 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
   size_t erased = recently_added_map_points_.size();
   for (auto mp_it = recently_added_map_points_.begin(); mp_it != recently_added_map_points_.end();) {
     map::MapPoint * mp = *mp_it;
-    if (mp->IsBad()) {
-      mp_it = recently_added_map_points_.erase(mp_it);
-    } else if (static_cast<precision_t>(mp->GetFound()) / mp->GetVisible() < 0.25) {
+    if (mp->IsBad()) { mp_it = recently_added_map_points_.erase(mp_it); }
+    else if (static_cast<precision_t>(mp->GetFound()) / mp->GetVisible() < 0.25) {
       mp->SetBad();
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2
@@ -173,11 +179,16 @@ void LocalMapper::RunIteration() {
     ProcessNewKeyFrame(message.frame);
     MapPointCulling(message.frame);
     CreateNewMapPoints(message.frame);
+
     if (!CheckNewKeyFrames()) {
       FuseMapPoints(message.frame);
       Optimize(message.frame);
       KeyFrameCulling(message.frame);
     }
+    if (!message.frame->IsBad())
+      NotifyObservers(message);
+    //TODO: Remove this line in multithreading
+    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
 //    NotifyObservers(message.frame);
   }
 }
@@ -223,6 +234,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       if (mp->GetObservationCount() >= 3)
         ++mobs;
     if (mobs > map_points.size() * 0.9) {
+      key_frame_database_->Erase(kf);
       kf->SetBad();
     }
     for (auto mp : map_points) {

@@ -315,17 +315,23 @@ void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
                                               MapPointMatches & out_matches) const {
 
   features::FastMatches matches;
-  feature_handler_->FastMatch(dynamic_cast<const MonocularKeyFrame *>(other)->GetFeatureHandler(),
+  auto mono_other = dynamic_cast<const MonocularKeyFrame *>(other);
+  assert(nullptr != mono_other);
+  feature_handler_->FastMatch(mono_other->GetFeatureHandler(),
                               matches,
                               features::MatchingSeverity::WEAK,
                               true);
 
   for (const auto & match: matches) {
-    map::MapPoint * local_map_point = map_points_.find(match.first)->second;
-    map::MapPoint * kf_map_point =
-        dynamic_cast<const MonocularKeyFrame *>(other)->map_points_.find(match.second)->second;
-    if (local_map_point && !local_map_point->IsBad()
-        && kf_map_point && !kf_map_point->IsBad())
+
+    auto local_mp_it = map_points_.find(match.first);
+    if (local_mp_it == map_points_.end()) continue;
+    map::MapPoint * local_map_point = local_mp_it->second;
+
+    auto kf_map_point_it = mono_other->map_points_.find(match.second);
+    if (kf_map_point_it == mono_other->map_points_.end()) continue;
+    map::MapPoint * kf_map_point = kf_map_point_it->second;
+    if (!local_map_point->IsBad() && !kf_map_point->IsBad())
       out_matches.emplace_back(local_map_point, kf_map_point);
   }
 
@@ -344,8 +350,10 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
                  });
   const geometry::Pose kf_pose = GetPosition();
   const camera::MonocularCamera * local_camera = GetCamera();
+  auto mono_loop_cand = dynamic_cast<const MonocularKeyFrame *>(loop_candidate);
+  assert(nullptr != mono_loop_cand);
   const camera::MonocularCamera
-      * loop_candidate_camera = dynamic_cast<const MonocularKeyFrame *>(loop_candidate)->GetCamera();
+      * loop_candidate_camera = mono_loop_cand->GetCamera();
 
   const geometry::Pose loop_candidate_pose = loop_candidate->GetPosition();
   std::transform(matched_points.begin(),
@@ -361,9 +369,37 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
                  });
 
   std::vector<std::pair<precision_t, precision_t>> errors;
+  for (const auto & mps: map_point_matches) {
+    const auto & local_mp = mps.first;
+    const auto & remote_mp = mps.second;
+
+    precision_t error1, error2;
+
+    error1 = GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(GetMapPointLevel(local_mp));
+    error2 =
+        loop_candidate->GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(mono_loop_cand->GetMapPointLevel(
+            remote_mp));
+    errors.emplace_back(error1, error2);
+  }
   geometry::RANSACSim3Solver
       solver(&matched_points, &matched_point_projections, local_camera, loop_candidate_camera, &errors, 300);
   return solver(out_transormation);
+}
+
+int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
+  auto obs = map_point->Observations();
+  const auto mp_obs = obs.find(const_cast<MonocularKeyFrame * const>(this));
+  auto handler = GetFeatureHandler();
+  if (mp_obs != map_point->Observations().end()) {
+    const auto & features = handler->GetFeatures();
+    size_t feature_id = mp_obs->second.GetFeatureId();
+    std::cout << features.keypoints.size() << std::endl;
+    std::cout << feature_id << std::endl;
+    return features.keypoints[feature_id].level;
+  } else
+    return
+        handler->GetFeatureExtractor()->PredictScale(GetPosition().Transform(map_point->GetPosition()).norm(),
+                                                     map_point->GetMaxInvarianceDistance() / 1.2);
 }
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,

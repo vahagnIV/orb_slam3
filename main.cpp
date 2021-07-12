@@ -21,6 +21,7 @@
 #include <logging.h>
 #include <boost/filesystem.hpp>
 #include <features/factories/dbo_w2_handler_factory.h>
+#include <loop_merge_detector.h>
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -171,7 +172,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
 
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
   orb_slam3::Tracker tracker(atlas);
-  orb_slam3::LocalMapper local_mapper(atlas);
+  orb_slam3::LocalMapper local_mapper(atlas, nullptr);// TODO fix
   tracker.AddObserver(&local_mapper);
   //local_mapper.AddObserver(&tracker);
   //local_mapper.Start();
@@ -232,9 +233,12 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
   const boost::filesystem::path dumb_dir("/data/slam_test");
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
+  auto kf_database = handler_factory.CreateKeyFrameDatabase();
   orb_slam3::Tracker tracker(atlas);
-  orb_slam3::LocalMapper local_mapper(atlas);
+  orb_slam3::LocalMapper local_mapper(atlas, kf_database);
   tracker.AddObserver(&local_mapper);
+  orb_slam3::LoopMergeDetector lp_detector(kf_database);
+  local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
   //local_mapper.Start();
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(

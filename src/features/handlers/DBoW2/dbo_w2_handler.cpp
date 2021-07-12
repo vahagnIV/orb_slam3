@@ -76,6 +76,9 @@ void DBoW2Handler::Precompute() {
   }
 
   vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);
+  for(const auto & bow: bow_vector_){
+    ++word_frequencies_[bow.first];
+  }
 }
 
 const DBoW2::FeatureVector & DBoW2Handler::GetFeatureVector() const {

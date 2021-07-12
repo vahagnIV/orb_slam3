@@ -6,7 +6,7 @@
 #define ORB_SLAM3_SRC_FRAME_DATABASE_DBOW2_D_BO_W_2_DATABASE_H_
 
 #include <frame/database/ikey_frame_database.h>
-
+#include <features/bow_vocabulary.h>
 namespace orb_slam3 {
 
 namespace features {
@@ -19,12 +19,15 @@ namespace frame {
 
 class DBoW2Database : public IKeyFrameDatabase {
  public:
+  DBoW2Database(const features::BowVocabulary * vocabulary);
+ public:
   void Append(KeyFrame * keyframe) override;
   void DetectNBestCandidates(const BaseFrame * keyframe,
                              KeyFrameSet & out_loop_candidates,
                              KeyFrameSet & out_merge_candidates,
                              size_t count) const override;
   void DetectRelocCandidates(const BaseFrame * keyframe, KeyFrameSet & out_reloc_candidates) const override;
+  void Erase(KeyFrame * key_frame) override;
  private:
   typedef std::unordered_map<KeyFrame *, size_t> WordSharingKeyFrameMap;
   typedef std::unordered_map<KeyFrame *, precision_t> ScoreKeyFrameMap;
@@ -43,7 +46,7 @@ class DBoW2Database : public IKeyFrameDatabase {
                                              KeyFrameSet & out_merge_candidates,
                                              size_t count);
  private:
-  std::vector<std::list<KeyFrame *> > inverted_file_;
+  std::vector<std::map<KeyFrame *, std::size_t> > inverted_file_;
 
 };
 

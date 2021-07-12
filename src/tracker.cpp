@@ -78,6 +78,18 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 }
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
+
+  if (frame->Id() == 50) {
+    atlas_->CreateNewMap();
+    state_ = FIRST_IMAGE;
+    frame->SetMap(atlas_->GetCurrentMap());
+    ReplaceLastFrame(frame);
+    this->last_key_frame_ = nullptr;
+    this->reference_keyframe_ = nullptr;
+    this->velocity_is_valid_ = false;
+    return TrackingResult::OK;
+  }
+
   last_frame_->UpdateFromReferenceKeyFrame();
 
   assert(OK == state_);
@@ -136,7 +148,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->OptimizePose();
 //  if(frame->GetMapPointCount() < 30)
 //    return TrackingResult::TRACKING_FAILED;
-
+  frame->SetMap(atlas_->GetCurrentMap());
   debug::DisplayTrackingInfo(frame,
                              last_frame_,
                              atlas_->GetCurrentMap(),
@@ -216,7 +228,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
   assert(FIRST_IMAGE == state_);
   assert(frame->IsValid());
-
+  frame->SetMap(atlas_->GetCurrentMap());
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
     std::cout << "Position after linking " << std::endl;
@@ -239,10 +251,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->GetPosition().print();
 
     std::vector<precision_t> depths;
-    for (auto mp: map_points) {
-//      current_map->AddMapPoint(mp);
-      depths.push_back(mp->GetPosition().z());
-    }
+    for (auto mp: map_points) depths.push_back(mp->GetPosition().z());
 
     auto pose = current_key_frame->GetPosition();
     pose.T /= depths[depths.size() / 2];
@@ -283,6 +292,7 @@ TrackingResult Tracker::TrackInNotInitializedState(frame::Frame * frame) {
   assert(NOT_INITIALIZED == state_);
   assert(frame->IsValid());
   frame->SetIdentity();
+  frame->SetMap(atlas_->GetCurrentMap());
 
 //  frame->SetInitial(true);
   state_ = FIRST_IMAGE;
@@ -295,7 +305,7 @@ TrackingResult Tracker::Track(frame::Frame * frame) {
   if (!frame->IsValid()) {
     return TrackingResult::INVALID_FRAME;
   }
-  frame->SetMap(atlas_->GetCurrentMap());
+
   TrackingResult res = TrackingResult::OK;
   switch (state_) {
     case NOT_INITIALIZED: {

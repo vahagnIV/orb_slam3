@@ -12,13 +12,14 @@ LoopMergeDetector::LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_databa
 }
 
 void LoopMergeDetector::RunIteration() {
-  UpdateMessage message;
+  UpdateMessage message{};
   while (GetUpdateQueue().try_dequeue(message)) {
     auto map = message.frame->GetMap();
     if (map->GetAllKeyFrames().size() < 12) {
       key_frame_database_->Append(message.frame);
       return;
     }
+    auto detection_result = DetectLoopOrMerge(message.frame);
 
   }
 }
@@ -59,6 +60,8 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
   key_frame_database_->DetectNBestCandidates(key_frame, loop_candidates, merge_candidates, 3);
   auto key_frame_neighbours = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames();
 
+  // TODO: remove the following line
+  loop_candidates = merge_candidates;
   if (!loop_candidates.empty()) {
 
     for (const auto & loop_candidate: loop_candidates) {
