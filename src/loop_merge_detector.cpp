@@ -5,6 +5,9 @@
 #include "loop_merge_detector.h"
 #include <map/map.h>
 #include <geometry/ransac_sim3_solver.h>
+
+//TODO: remove in production
+#include <debug/debug_utils.h>
 namespace orb_slam3 {
 
 LoopMergeDetector::LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database) :
@@ -15,7 +18,7 @@ void LoopMergeDetector::RunIteration() {
   UpdateMessage message{};
   while (GetUpdateQueue().try_dequeue(message)) {
     auto map = message.frame->GetMap();
-    if (map->GetAllKeyFrames().size() < 12) {
+    if (map->GetAllKeyFrames().size() < 7) {
       key_frame_database_->Append(message.frame);
       return;
     }
@@ -74,6 +77,12 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
       if (Intersect(loop_candidate_neighbours, key_frame_neighbours)) continue;
       MapPointMatches matches;
       FindMapPointMatches(key_frame, loop_candidate_neighbours, matches);
+      /*cv::Mat result = debug::DrawMapPointMatches(dynamic_cast<frame::monocular::MonocularKeyFrame *>(key_frame),
+                                                  dynamic_cast<frame::monocular::MonocularKeyFrame *>(loop_candidate),
+                                                  matches);
+      cv::imshow("Matched mps", result);
+      cv::waitKey();*/
+
       if (matches.size() < 20)
         continue;
 
@@ -84,9 +93,15 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
           loop_neighbour->ListMapPoints(map_points);
         }
         std::list<frame::MapPointVisibilityParams> visible_map_points;
-        key_frame->FilterVisibleMapPoints(map_points, transformation, visible_map_points, 8);
-        if(visible_map_points.size() < 50)
+        const auto & pose = loop_candidate->GetPosition();
+        key_frame->FilterVisibleMapPoints(map_points, transformation, pose, visible_map_points, 8);
+        if (visible_map_points.size() < 50)
           continue;
+        geometry::Sim3Transformation
+            btrans = key_frame->GetPosition().GetInversePose() * transformation * loop_candidate->GetPosition();
+        key_frame->AdjustSim3Transformation(visible_map_points, btrans);
+
+        std::cout << "asd" << std::endl;
 
       }
 

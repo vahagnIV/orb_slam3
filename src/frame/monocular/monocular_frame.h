@@ -36,14 +36,9 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void ListMapPoints(MapPointSet & out_map_points) const override;
   precision_t GetSimilarityScore(const BaseFrame * other) const override;
   void OptimizePose() override;
-  bool IsVisible(map::MapPoint * map_point,
-                 MapPointVisibilityParams & out_map_point,
-                 precision_t radius_multiplier,
-                 unsigned int window_size) const ;
   void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> & map_points,
                               std::list<MapPointVisibilityParams> & out_filetered_map_points,
-                              precision_t radius_multiplier,
-                              unsigned int window_size) const override;
+                              precision_t radius_multiplier) const override;
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;

@@ -44,6 +44,7 @@ bool RANSACSim3Solver::operator()(Sim3Transformation & out_pose) {
 
 size_t RANSACSim3Solver::CheckPose(const Sim3Transformation & pose) {
   size_t number_of_inliers = 0;
+  Sim3Transformation inverse_pose = pose.GetInversePose();
   assert(matches_.size() == projections_.size() && matches_.size() == errors_.size());
   for (size_t i = 0; i < matches_.size(); ++i) {
 
@@ -51,9 +52,12 @@ size_t RANSACSim3Solver::CheckPose(const Sim3Transformation & pose) {
     const auto & projection = projections_[i];
     const auto & error = errors_[i];
 
+    TPoint3D local_pt1 = pose.Transform(match.second);
+    TPoint3D local_pt2 = inverse_pose.Transform(match.first);
+
     TPoint2D proj1, proj2;
-    camera1_->ProjectAndDistort(match.first, proj1);
-    camera2_->ProjectAndDistort(match.second, proj2);
+    camera1_->ProjectAndDistort(local_pt1, proj1);
+    camera2_->ProjectAndDistort(local_pt2, proj2);
 
     if ((proj1 - projection.first).squaredNorm() < error.first
         && (proj2 - projection.second).squaredNorm() < error.second)

@@ -34,8 +34,7 @@ class Frame : public BaseFrame {
   virtual size_t GetMapPointCount() const = 0;
   virtual void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> & map_points,
                                       std::list<MapPointVisibilityParams> & out_filtered_map_points,
-                                      precision_t radius_multiplier = 1,
-                                      unsigned fixed_window_size = 0) const = 0;
+                                      precision_t radius_multiplier = 1) const = 0;
 
   virtual void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) = 0;
   virtual void UpdateFromReferenceKeyFrame() = 0;

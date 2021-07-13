@@ -23,8 +23,7 @@ class ProjectionSearchIterator {
   typedef ProjectionSearchPointee value_type;
   ProjectionSearchIterator(std::list<frame::MapPointVisibilityParams>::const_iterator begin,
                            std::list<frame::MapPointVisibilityParams>::const_iterator end,
-                           const Features * from_features,
-                           const std::map<std::size_t, map::MapPoint *> * from_map_points);
+                           const Features * from_features);
 
   const ProjectionSearchPointee & operator*() const { return pointee_; }
   ProjectionSearchPointee & operator*() { return pointee_; }

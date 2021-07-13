@@ -49,9 +49,13 @@ class KeyFrame : public BaseFrame {
                                      MapPointMatches & out_matches) const = 0;
 
   virtual void FilterVisibleMapPoints(const MapPointSet & map_points,
-                                      const geometry::Sim3Transformation & transformation,
+                                      const geometry::Sim3Transformation & relative_transformation,
+                                      const geometry::Pose & mp_local_transformation,
                                       std::list<MapPointVisibilityParams> & out_visibles,
                                       precision_t radius_multiplier) const = 0;
+
+  virtual size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                          geometry::Sim3Transformation & in_out_transformation) const = 0;
 
  protected:
   CovisibilityGraphNode covisibility_graph_;

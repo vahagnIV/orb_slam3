@@ -6,6 +6,7 @@
 #define ORB_SLAM3_SRC_GEOMETRY_SIM3_TRANSFORMATION_H_
 
 #include "typedefs.h"
+#include "pose.h"
 namespace orb_slam3 {
 namespace geometry {
 struct Sim3Transformation {
@@ -15,6 +16,8 @@ struct Sim3Transformation {
   Sim3Transformation GetInversePose() const;
 
   Sim3Transformation operator*(const Sim3Transformation & other) const;
+  Sim3Transformation operator*(const Pose & se3_other) const;
+  friend Sim3Transformation operator*(const Pose & se3_other, Sim3Transformation & self) ;
 
   friend std::ostream & operator<<(std::ostream & stream, const Sim3Transformation & p);
 

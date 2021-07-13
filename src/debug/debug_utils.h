@@ -13,7 +13,7 @@
 namespace orb_slam3 {
 
 namespace map {
-  class Map;
+class Map;
 }
 
 namespace debug {
@@ -41,18 +41,27 @@ cv::Mat DrawMatches(const std::string & filename_to,
                     const features::Features & features_from);
 
 char DrawCommonMapPoints(const std::string & filename1,
-                                  const std::string & filename2,
-                                  const frame::monocular::BaseMonocular * frame1,
-                                  const frame::monocular::BaseMonocular * frame2);
+                         const std::string & filename2,
+                         const frame::monocular::BaseMonocular * frame1,
+                         const frame::monocular::BaseMonocular * frame2);
 
 void DisplayTrackingInfo(const frame::Frame * frame,
-                              const frame::Frame * last_frame,
-                              const map::Map * current_map,
-                              const std::list<frame::MapPointVisibilityParams> &,
-                              const std::list<frame::MapPointVisibilityParams> &,
-                              const frame::Frame::MapPointSet &);
+                         const frame::Frame * last_frame,
+                         const map::Map * current_map,
+                         const std::list<frame::MapPointVisibilityParams> &,
+                         const std::list<frame::MapPointVisibilityParams> &,
+                         const frame::Frame::MapPointSet &);
 
 cv::Mat DrawMapPoints(const std::string & filename, const frame::monocular::BaseMonocular * frame);
+
+cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
+                            const frame::monocular::MonocularKeyFrame * frame2,
+                            const std::vector<std::pair<map::MapPoint *, map::MapPoint *>> & matches);
+
+void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
+                          const std::vector<std::pair<map::MapPoint *, map::MapPoint *>> matches,
+                          std::vector<cv::KeyPoint> & out_key_points,
+                          bool first);
 
 }
 }

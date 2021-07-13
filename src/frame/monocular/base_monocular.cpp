@@ -68,7 +68,6 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
                               precision_t scale,
                               MapPointVisibilityParams & out_map_point,
                               precision_t radius_multiplier,
-                              unsigned int window_size,
                               int level,
                               const geometry::Pose & pose,
                               const geometry::Pose & inverse_position,
@@ -101,12 +100,52 @@ bool BaseMonocular::IsVisible(map::MapPoint * map_point,
 
   out_map_point.level =
       level > 0 ? level : feature_extractor->PredictScale(distance, map_point->GetMaxInvarianceDistance() / 1.2);
-  if (window_size) {
-    out_map_point.window_size = window_size;
-  } else {
-    precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
-    out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
+
+  precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
+  out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
+
+  return true;
+}
+
+bool BaseMonocular::PointVisible(const TPoint3D & mp_local_coords,
+                                 const TPoint3D & mp_world_coords,
+                                 precision_t min_allowed_distance,
+                                 precision_t max_allowed_distance,
+                                 const TVector3D & normal,
+                                 const TVector3D & local_position,
+                                 precision_t radius_multiplier,
+                                 int level,
+                                 MapPointVisibilityParams & out_map_point,
+                                 const features::IFeatureExtractor * feature_extractor) const {
+  out_map_point.mp_world_pos = mp_world_coords;
+
+  if (mp_local_coords.z() < 0)
+    return false;
+
+  precision_t distance = mp_local_coords.norm();
+
+  if (distance < min_allowed_distance
+      || distance > max_allowed_distance) {
+    return false;
   }
+
+  this->GetCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
+  if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
+    return false;
+  }
+
+  TVector3D relative_frame_map_point = local_position - mp_world_coords;
+
+  precision_t track_view_cos = relative_frame_map_point.dot(normal) / relative_frame_map_point.norm();
+  if (track_view_cos < 0.5) {
+    return false;
+  }
+
+  out_map_point.level =
+      level > 0 ? level : feature_extractor->PredictScale(distance, max_allowed_distance / 1.2);
+
+  precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
+  out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
 
   return true;
 }

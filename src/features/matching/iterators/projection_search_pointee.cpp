@@ -8,10 +8,8 @@ namespace orb_slam3 {
 namespace features {
 namespace matching {
 namespace iterators {
-ProjectionSearchPointee::ProjectionSearchPointee(const Features * from_features,
-                                                 const std::map<std::size_t, map::MapPoint *> * from_map_points)
-    : from_features_(from_features),
-      from_map_points_(from_map_points) {
+ProjectionSearchPointee::ProjectionSearchPointee(const Features * from_features)
+    : from_features_(from_features) {
 }
 
 void ProjectionSearchPointee::SetVisibileMapPoint(const frame::MapPointVisibilityParams & visible_map_point) {

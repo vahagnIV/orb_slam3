@@ -81,6 +81,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   if (frame->Id() == 50) {
     atlas_->CreateNewMap();
+    frame->SetIdentity();
     state_ = FIRST_IMAGE;
     frame->SetMap(atlas_->GetCurrentMap());
     ReplaceLastFrame(frame);

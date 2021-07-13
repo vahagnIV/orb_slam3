@@ -7,7 +7,6 @@
 #include <map/map.h>
 #include <map/map_point.h>
 
-
 namespace orb_slam3 {
 namespace debug {
 
@@ -154,14 +153,12 @@ cv::Mat DrawMapPoints(const std::string & filename, frame::monocular::BaseMonocu
   return cv::Mat();
 }
 
-
 void DisplayTrackingInfo(const frame::Frame * frame,
-                          const frame::Frame * last_frame,
-                          const map::Map * current_map,
-                          const std::list<frame::MapPointVisibilityParams> & frame_visibles,
-                          const std::list<frame::MapPointVisibilityParams> & visible_map_points,
-                          const frame::Frame::MapPointSet & local_map_points_except_current)
-{
+                         const frame::Frame * last_frame,
+                         const map::Map * current_map,
+                         const std::list<frame::MapPointVisibilityParams> & frame_visibles,
+                         const std::list<frame::MapPointVisibilityParams> & visible_map_points,
+                         const frame::Frame::MapPointSet & local_map_points_except_current) {
 
   static int time_to_wait = 0;
   static int mode = 7;
@@ -215,7 +212,7 @@ void DisplayTrackingInfo(const frame::Frame * frame,
 
   key = cv::waitKey(time_to_wait);
   switch (key) {
-    case 'c':time_to_wait = (int)!time_to_wait;
+    case 'c':time_to_wait = (int) !time_to_wait;
       break;
     case 'm':mode ^= 1;
       break;
@@ -229,6 +226,51 @@ void DisplayTrackingInfo(const frame::Frame * frame,
   std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
   for (auto mp: current_map->GetAllMapPoints()) {
     ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
+  }
+}
+
+cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
+                            const frame::monocular::MonocularKeyFrame * frame2,
+                            const std::vector<std::pair<map::MapPoint *, map::MapPoint *>> & matches) {
+  std::vector<cv::KeyPoint> kps1, kps2;
+  MapPointsToKeyPoints(frame1, matches, kps1, true);
+  MapPointsToKeyPoints(frame2, matches, kps2, false);
+  std::vector<cv::DMatch> cv_matches(matches.size());
+  for (size_t i = 0; i < matches.size(); ++i) {
+    cv_matches[i].queryIdx = i;
+    cv_matches[i].trainIdx = i;
+  }
+  cv::Mat img1 = cv::imread(frame1->GetFilename());
+  cv::Mat img2 = cv::imread(frame2->GetFilename());
+  cv::Mat drawn;
+  cv::drawMatches(img1, kps1, img2, kps2, cv_matches, drawn);
+  return drawn;
+}
+
+void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
+                          const std::vector<std::pair<map::MapPoint *, map::MapPoint *>> matches,
+                          std::vector<cv::KeyPoint> & out_key_points,
+                          bool first) {
+  auto frame_mps = frame1->GetMapPoints();
+  for (auto match: matches) {
+    map::MapPoint * mp = first ? match.first : match.second;
+    auto observations = mp->Observations();
+    cv::KeyPoint key_point;
+    TPoint2D projection;
+    TPoint3D local_coords = frame1->GetPosition().Transform(mp->GetPosition());
+    frame1->GetCamera()->ProjectAndDistort(local_coords, projection);
+    key_point.pt.x = projection.x();
+    key_point.pt.y = projection.y();
+    auto mp_it = observations.find(const_cast<frame::monocular::MonocularKeyFrame *>(frame1));
+    if (mp_it != observations.end()) {
+      auto kp = frame1->GetFeatureHandler()->GetFeatures().keypoints[mp_it->second.GetFeatureId()];
+      key_point.octave = kp.level;
+      key_point.angle = kp.angle;
+    } else {
+      key_point.octave =
+          frame1->GetFeatureExtractor()->PredictScale(local_coords.norm(), mp->GetMaxInvarianceDistance() / 1.2);
+    }
+    out_key_points.push_back(key_point);
   }
 }
 

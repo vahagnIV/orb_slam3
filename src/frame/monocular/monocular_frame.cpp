@@ -131,22 +131,6 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   return matches.size() >= 10;
 }
 
-bool MonocularFrame::IsVisible(map::MapPoint * map_point,
-                               MapPointVisibilityParams & out_map_point,
-                               precision_t radius_multiplier,
-                               unsigned int window_size) const {
-  return BaseMonocular::IsVisible(map_point,
-                                  GetPosition().Transform(map_point->GetPosition()),
-                                  1,
-                                  out_map_point,
-                                  radius_multiplier,
-                                  window_size,
-                                  -1,
-                                  this->GetPosition(),
-                                  this->GetInversePosition(),
-                                  feature_handler_->GetFeatureExtractor());
-}
-
 size_t MonocularFrame::GetMapPointCount() const {
   return map_points_.size();
 }
@@ -248,30 +232,44 @@ void MonocularFrame::OptimizePose() {
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
                                             std::list<MapPointVisibilityParams> & out_filetered_map_points,
-                                            precision_t radius_multiplier,
-                                            unsigned int window_size) const {
+                                            precision_t radius_multiplier) const {
   MapPointVisibilityParams map_point;
+  geometry::Pose pose = GetPosition();
+  geometry::Pose inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
-    if (IsVisible(mp, map_point, radius_multiplier, window_size))
+    map_point.map_point = mp;
+    if(BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
+                                   mp->GetPosition(),
+                                   mp->GetMinInvarianceDistance(),
+                                   mp->GetMaxInvarianceDistance(),
+                                   mp->GetNormal(),
+                                   inverse_pose.T,
+                                   radius_multiplier,
+                                   -1,
+                                   map_point,
+                                   GetFeatureExtractor())) {
+
       out_filetered_map_points.push_back(map_point);
+    }
+    /*if (IsVisible(mp, map_point, radius_multiplier)) {
+      out_filetered_map_points.push_back(map_point);
+    }*/
   }
 
 }
 
 void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points,
                                            precision_t matcher_snn_threshold) {
-  auto map_points = GetMapPoints();
+
   features::matching::iterators::ProjectionSearchIterator begin
       (filtered_map_points.begin(),
        filtered_map_points.end(),
-       &feature_handler_->GetFeatures(),
-       &map_points);
+       &feature_handler_->GetFeatures());
 
   features::matching::iterators::ProjectionSearchIterator end
       (filtered_map_points.end(),
        filtered_map_points.end(),
-       &feature_handler_->GetFeatures(),
-       &map_points);
+       &feature_handler_->GetFeatures());
 
   typedef features::matching::SNNMatcher<features::matching::iterators::ProjectionSearchIterator> Matcher;
   Matcher matcher(matcher_snn_threshold, constants::MONO_TWMM_THRESHOLD_HIGH);
@@ -308,7 +306,6 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
                                  1.,
                                  vmp,
                                  radius_multiplier,
-                                 0,
                                  last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
                                  pose,
                                  inverse_pose,

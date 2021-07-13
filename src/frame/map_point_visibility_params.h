@@ -15,6 +15,7 @@ namespace frame {
 
 struct MapPointVisibilityParams {
   map::MapPoint * map_point;
+  TPoint3D mp_world_pos;
   precision_t window_size;
   TPoint2D position;
   int level;

@@ -24,10 +24,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   ~MonocularKeyFrame() override = default;
 
  public:
-  bool IsVisible(map::MapPoint * map_point,
-                 MapPointVisibilityParams & out_map_point,
-                 precision_t radius_multiplier,
-                 unsigned int window_size) const;
 
   void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
   TVector3D GetNormal(const TPoint3D & point) const override;
@@ -49,9 +45,12 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                               const KeyFrame * loop_candidate,
                               geometry::Sim3Transformation & out_transormation) const override;
   void FilterVisibleMapPoints(const MapPointSet & map_points,
-                              const geometry::Sim3Transformation & transformation,
+                              const geometry::Sim3Transformation & relative_transformation,
+                              const geometry::Pose & mp_local_transformation,
                               std::list<MapPointVisibilityParams> & out_visibles,
                               precision_t radius_multiplier) const override;
+  size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                  geometry::Sim3Transformation & in_out_transformation) const override;
  private:
 
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);

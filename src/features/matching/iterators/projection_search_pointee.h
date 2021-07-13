@@ -26,7 +26,7 @@ class ProjectionSearchPointee {
   typedef map::MapPoint * id_type;
   typedef VectorFromIterator<std::size_t> iterator;
 
-  ProjectionSearchPointee(const Features * from_features, const std::map<std::size_t, map::MapPoint *> * from_map_points);
+  ProjectionSearchPointee(const Features * from_features);
   id_type GetId() const { return map_point_.map_point; }
   iterator begin() { return begin_iterator_; }
   iterator end() { return end_iterator_; }
@@ -41,7 +41,6 @@ class ProjectionSearchPointee {
   iterator end_iterator_;
   iterator begin_iterator_;
   std::vector<std::size_t> from_indices_;
-  const std::map<std::size_t, map::MapPoint *> * from_map_points_;
 
 };
 

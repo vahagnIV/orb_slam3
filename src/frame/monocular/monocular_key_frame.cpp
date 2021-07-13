@@ -193,8 +193,8 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
   std::list<MapPointVisibilityParams> visibles;
   FilterVisibleMapPoints(map_points, visibles);
   typedef features::matching::iterators::ProjectionSearchIterator IteratorType;
-  IteratorType begin(visibles.begin(), visibles.end(), &feature_handler_->GetFeatures(), nullptr);
-  IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures(), nullptr);
+  IteratorType begin(visibles.begin(), visibles.end(), &feature_handler_->GetFeatures());
+  IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
   typedef features::matching::SNNMatcher<IteratorType> MatcherType;
   MatcherType::MatchMapType matches;
   MatcherType matcher(1., 50);
@@ -221,32 +221,28 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
   }
 }
 
-bool MonocularKeyFrame::IsVisible(map::MapPoint * map_point,
-                                  MapPointVisibilityParams & out_map_point,
-                                  precision_t radius_multiplier,
-                                  unsigned int window_size) const {
-  return BaseMonocular::IsVisible(map_point,
-                                  GetPosition().Transform(map_point->GetPosition()),
-                                  1,
-                                  out_map_point,
-                                  radius_multiplier,
-                                  window_size,
-                                  -1,
-                                  this->GetPosition(),
-                                  this->GetInversePosition(),
-                                  feature_handler_->GetFeatureExtractor());
-}
-
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
                                                std::list<MapPointVisibilityParams> & out_visibles) {
   MapPointVisibilityParams visible_map_point;
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
+  auto pose = GetPosition();
+  auto inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
     if (mp->IsBad()) continue;
     if (!mp->IsInKeyFrame(this)) {
-      if (local_map_points.find(mp) == local_map_points.end()
-          && IsVisible(mp, visible_map_point, GetSensorConstants()->max_allowed_discrepancy, 0))
+      visible_map_point.map_point = mp;
+      if (local_map_points.find(mp) == local_map_points.end() &&
+          BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
+                                      mp->GetPosition(),
+                                      mp->GetMinInvarianceDistance(),
+                                      mp->GetMaxInvarianceDistance(),
+                                      mp->GetNormal(),
+                                      inverse_pose.T,
+                                      GetSensorConstants()->max_allowed_discrepancy,
+                                      -1,
+                                      visible_map_point,
+                                      GetFeatureExtractor()))
         out_visibles.push_back(visible_map_point);
     }
   }
@@ -342,30 +338,34 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
                                                geometry::Sim3Transformation & out_transormation) const {
   std::vector<std::pair<TPoint3D, TPoint3D>> matched_points(map_point_matches.size());
   std::vector<std::pair<TPoint2D, TPoint2D>> matched_point_projections(map_point_matches.size());
+  auto mono_loop_cand = dynamic_cast<const MonocularKeyFrame *>(loop_candidate);
+  assert(nullptr != mono_loop_cand);
+
+  const geometry::Pose kf_pose = GetPosition();
+  const geometry::Pose loop_candidate_pose = loop_candidate->GetPosition();
+
   std::transform(map_point_matches.begin(),
                  map_point_matches.end(),
                  matched_points.begin(),
-                 [](const std::pair<map::MapPoint *, map::MapPoint *> & pair) {
-                   return std::pair<TPoint3D, TPoint3D>(pair.first->GetPosition(), pair.second->GetPosition());
+                 [&kf_pose, &loop_candidate_pose](const std::pair<map::MapPoint *, map::MapPoint *> & pair) {
+                   return std::pair<TPoint3D, TPoint3D>(kf_pose.Transform(pair.first->GetPosition()),
+                                                        loop_candidate_pose.Transform(pair.second->GetPosition()));
                  });
-  const geometry::Pose kf_pose = GetPosition();
+
   const camera::MonocularCamera * local_camera = GetCamera();
-  auto mono_loop_cand = dynamic_cast<const MonocularKeyFrame *>(loop_candidate);
-  assert(nullptr != mono_loop_cand);
   const camera::MonocularCamera
       * loop_candidate_camera = mono_loop_cand->GetCamera();
 
-  const geometry::Pose loop_candidate_pose = loop_candidate->GetPosition();
   std::transform(matched_points.begin(),
                  matched_points.end(),
                  matched_point_projections.begin(),
-                 [&kf_pose, & loop_candidate_pose, & local_camera, &loop_candidate_camera]
+                 [& local_camera, &loop_candidate_camera]
                      (const std::pair<TPoint3D, TPoint3D> & match) {
                    TPoint2D local_projection, loop_candidate_projection;
-                   local_camera->ProjectAndDistort(kf_pose.Transform(match.first), local_projection);
-                   loop_candidate_camera->ProjectAndDistort(loop_candidate_pose.Transform(match.second),
+                   local_camera->ProjectAndDistort(match.first, local_projection);
+                   loop_candidate_camera->ProjectAndDistort(match.second,
                                                             loop_candidate_projection);
-                   return std::pair<TPoint2D, TPoint2D>(local_projection, loop_candidate_projection);
+                   return std::make_pair(local_projection, loop_candidate_projection);
                  });
 
   std::vector<std::pair<precision_t, precision_t>> errors;
@@ -375,10 +375,11 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
 
     precision_t error1, error2;
 
-    error1 = GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(GetMapPointLevel(local_mp));
+    error1 = 9.210 * GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(GetMapPointLevel(local_mp));
     error2 =
-        loop_candidate->GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(mono_loop_cand->GetMapPointLevel(
-            remote_mp));
+        9.210
+            * loop_candidate->GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(mono_loop_cand->GetMapPointLevel(
+                remote_mp));
     errors.emplace_back(error1, error2);
   }
   geometry::RANSACSim3Solver
@@ -393,8 +394,6 @@ int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
   if (mp_obs != map_point->Observations().end()) {
     const auto & features = handler->GetFeatures();
     size_t feature_id = mp_obs->second.GetFeatureId();
-    std::cout << features.keypoints.size() << std::endl;
-    std::cout << feature_id << std::endl;
     return features.keypoints[feature_id].level;
   } else
     return
@@ -402,27 +401,56 @@ int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
                                                      map_point->GetMaxInvarianceDistance() / 1.2);
 }
 
-void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
-                                               const geometry::Sim3Transformation & transformation,
+void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
+                                               const geometry::Sim3Transformation & relative_transformation,
+                                               const geometry::Pose & mp_local_transformation,
                                                std::list<MapPointVisibilityParams> & out_visibles,
                                                precision_t radius_multiplier) const {
   MapPointVisibilityParams tmp;
+  geometry::Pose pose = GetPosition();
+  geometry::Pose inverse_pose = pose.GetInversePose();
+
   for (const auto & mp: map_points) {
     if (mp->IsBad())
       continue;
 
-    if (BaseMonocular::IsVisible(mp,
-                                 transformation.Transform(mp->GetPosition()),
-                                 transformation.s,
-                                 tmp,
-                                 radius_multiplier,
-                                 0,
-                                 -1,
-                                 this->GetPosition(),
-                                 this->GetInversePosition(),
-                                 feature_handler_->GetFeatureExtractor()))
-      out_visibles.push_back(tmp);
+    tmp.map_point = mp;
+    TPoint3D mp_local_in_kf = mp_local_transformation.Transform(mp->GetPosition());
+    TPoint3D mp_local_coords = relative_transformation.Transform(mp_local_in_kf);
+    TPoint3D mp_world_pos = inverse_pose.Transform(mp_local_coords);
+    TVector3D normal_w = mp->GetNormal();
+    normal_w = mp_local_transformation.Transform(normal_w);
+    normal_w = relative_transformation.Transform(normal_w);
+    normal_w = inverse_pose.Transform(normal_w);
+
+    if (BaseMonocular::PointVisible(mp_local_coords,
+                                    mp_world_pos,
+                                    relative_transformation.s * mp->GetMinInvarianceDistance(),
+                                    relative_transformation.s * mp->GetMaxInvarianceDistance(),
+                                    normal_w,
+                                    inverse_pose.T,
+                                    radius_multiplier,
+                                    -1,
+                                    tmp,
+                                    GetFeatureExtractor()));
+    out_visibles.push_back(tmp);
   }
+}
+
+size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                                   geometry::Sim3Transformation & in_out_transformation) const {
+  typedef features::matching::iterators::ProjectionSearchIterator ProjectionSearchIterator;
+  typedef features::matching::SNNMatcher<ProjectionSearchIterator> TMatcher;
+  ProjectionSearchIterator begin(visibles.begin(), visibles.end(), &feature_handler_->GetFeatures());
+  ProjectionSearchIterator end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
+  TMatcher matcher(0.9, 50);
+  TMatcher::MatchMapType matches;
+  matcher.MatchWithIterators(begin, end, GetFeatureExtractor(), matches);
+  std::cout << "Match count: " << matches.size() << std::endl;
+  if (matches.size() < 50)
+    return 0;
+
+  return 0;
 }
 
 }
