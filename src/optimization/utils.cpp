@@ -59,7 +59,7 @@ void FillMpVertices(const std::unordered_set<map::MapPoint *> & map_points,
     inout_optimizer.addVertex(mp_vertex);
     unsigned number_of_edges = 0;
     for (auto observation: map_point->Observations()) {
-      auto it = frame_map.find(observation.first);
+      auto it = frame_map.find(observation.second.GetKeyFrame());
       if (it == frame_map.end())
         continue;
 

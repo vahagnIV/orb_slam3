@@ -22,7 +22,7 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
                       bool robust) {
 
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
+  InitializeOptimizer<g2o::LinearSolverEigen>(optimizer);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
   std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;
@@ -61,7 +61,7 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
                            frame::BaseFrame::MapPointSet & local_map_points,
                            bool * stop_flag) {
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
+  InitializeOptimizer<g2o::LinearSolverEigen>(optimizer);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
   std::unordered_map<map::MapPoint *, vertices::MapPointVertex *> mp_map;

@@ -16,7 +16,11 @@ if (OPENMP_FOUND)
 endif ()
 
 #include_directories(include ${DBoW2_INCLUDE_DIRS}) #${OpenCV_INCLUDE_DIRS}
-include_directories(${CMAKE_CURRENT_LIST_DIR} g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_LIST_DIR}
+        g2o
+        ${Eigen3_INCLUDE_DIRECTORIES}
+        ${CHOLMOD_INCLUDE_DIR}
+        ${OpenCV_INCLUDE_DIRS})
 
 
 add_library(orbslam SHARED
@@ -142,6 +146,7 @@ target_link_libraries(orbslam
         g2o::solver_cholmod
         g2o::types_sba
         g2o::opengl_helper
+        g2o::types_sim3
         Eigen3::Eigen
         ${OpenCV_LIBS}
         DBoW2

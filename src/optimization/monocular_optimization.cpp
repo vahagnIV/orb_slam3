@@ -3,6 +3,8 @@
 //
 
 #include <g2o/solvers/dense/linear_solver_dense.h>
+#include <g2o/types/sim3/sim3.h>
+#include <g2o/types/sim3/types_seven_dof_expmap.h>
 
 #include "monocular_optimization.h"
 #include "utils.h"
@@ -21,7 +23,7 @@ void OptimizePose(MonocularFrame * frame) {
   BaseMonocular::MonocularMapPoints map_points = frame->GetMapPoints();
 
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer<g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
+  InitializeOptimizer<g2o::LinearSolverDense>(optimizer);
 
   geometry::Pose pose = frame->GetPosition();
 
@@ -83,7 +85,7 @@ void OptimizePose(MonocularFrame * frame) {
         edge->setRobustKernel(nullptr);
     }
 
-   // std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
+    // std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
     //std::cout << "VERTEX POSE " << i << frame_vertex->estimate() << std::endl;
 
   }
@@ -91,6 +93,75 @@ void OptimizePose(MonocularFrame * frame) {
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);
 
   frame->SetPosition(frame_vertex->estimate());
+
+}
+
+void OptimizeSim3(const MonocularKeyFrame * const to_frame,
+                  const MonocularKeyFrame * const from_frame,
+                  geometry::Sim3Transformation & in_out_transformation,
+                  const std::unordered_map<map::MapPoint *, size_t> & matches) {
+  g2o::SparseOptimizer optimizer;
+  InitializeOptimizer<g2o::LinearSolverDense, g2o::BlockSolverX>(optimizer);
+
+  int id_counter = 0;
+  g2o::Sim3 sim3(in_out_transformation.R, in_out_transformation.T, in_out_transformation.s);
+  auto transformation_vertex = new g2o::VertexSim3Expmap();
+  transformation_vertex->setEstimate(sim3);
+  transformation_vertex->setId(id_counter);
+  transformation_vertex->_focal_length1 << to_frame->GetCamera()->Fx(), to_frame->GetCamera()->Fy();
+  transformation_vertex->_focal_length2 << from_frame->GetCamera()->Fx(), from_frame->GetCamera()->Fy();
+  optimizer.addVertex(transformation_vertex);
+
+  const geometry::Pose & to_pose = to_frame->GetPosition();
+  const geometry::Pose & from_pose = from_frame->GetPosition();
+  const features::Features & to_features = to_frame->GetFeatureHandler()->GetFeatures();
+  const features::Features & from_features = from_frame->GetFeatureHandler()->GetFeatures();
+
+  auto to_map_points = to_frame->GetMapPoints();
+  std::unordered_map<size_t, map::MapPoint *> inverted_matches;
+  std::transform(matches.begin(),
+                 matches.end(),
+                 std::inserter(inverted_matches, inverted_matches.begin()),
+                 [](const std::pair<map::MapPoint *, size_t> & pair) {
+                   return std::pair<size_t, map::MapPoint *>(pair.second, pair.first);
+                 });
+  for (auto it: to_map_points) {
+    size_t feature_id = it.first;
+    map::MapPoint * to_mp = it.second;
+    if (to_mp->IsBad())
+      continue;
+
+    auto match_it = inverted_matches.find(feature_id);
+    if (match_it != inverted_matches.end()) {
+      map::MapPoint * from_mp = match_it->second;
+      if (from_mp->IsBad())
+        continue;
+
+      auto to_mp_vertex = new g2o::VertexPointXYZ();
+      to_mp_vertex->setId(++id_counter);
+      to_mp_vertex->setEstimate(to_pose.Transform(to_mp->GetPosition()));
+      to_mp_vertex->setFixed(true);
+
+      auto from_mp_vertex = new g2o::VertexPointXYZ();
+      from_mp_vertex->setId(++id_counter);
+      from_mp_vertex->setEstimate(from_pose.Transform(from_mp->GetPosition()));
+      from_mp_vertex->setFixed(true);
+      if(from_mp->IsInKeyFrame(from_frame)){
+        auto obs = from_mp->Observation(from_frame);
+      }
+
+
+      auto to_edge = new g2o::EdgeSim3ProjectXYZ();
+      to_edge->setId(++id_counter);
+      to_edge->setMeasurement(to_features.undistorted_keypoints[feature_id]);
+      to_edge->setInformation(TMatrix22::Identity()
+                                    / to_frame->GetFeatureExtractor()->GetAcceptableSquareError(to_features.keypoints[feature_id].level));
+      to_edge->setVertex(0, to_mp_vertex);
+      to_edge->setVertex(1, transformation_vertex);
+
+
+    }
+  }
 
 }
 

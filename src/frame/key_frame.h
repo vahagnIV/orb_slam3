@@ -55,6 +55,7 @@ class KeyFrame : public BaseFrame {
                                       precision_t radius_multiplier) const = 0;
 
   virtual size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                          const KeyFrame * relative_kf,
                                           geometry::Sim3Transformation & in_out_transformation) const = 0;
 
  protected:

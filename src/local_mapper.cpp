@@ -140,8 +140,8 @@ void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & lo
 
   for (auto map_point: local_map_points) {
     for (auto observation: map_point->Observations()) {
-      if (local_keyframes.find(observation.first) == local_keyframes.end())
-        out_fixed.insert(observation.first);
+      if (local_keyframes.find(observation.second.GetKeyFrame()) == local_keyframes.end())
+        out_fixed.insert(observation.second.GetKeyFrame());
     }
   }
   number_of_fixed += out_fixed.size();

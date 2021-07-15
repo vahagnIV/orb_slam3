@@ -17,10 +17,10 @@
 namespace orb_slam3 {
 namespace optimization {
 
-template<typename T>
+template<template <typename> class T, typename SolverType = g2o::BlockSolver_6_3>
 void InitializeOptimizer(g2o::SparseOptimizer & optimizer){
-  std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType>  linearSolver(new T());
-  std::unique_ptr<g2o::BlockSolver_6_3> solver_ptr(new g2o::BlockSolver_6_3(std::move(linearSolver)));
+  std::unique_ptr<typename SolverType::LinearSolverType>  linearSolver(new T<typename SolverType::PoseMatrixType>());
+  std::unique_ptr<SolverType> solver_ptr(new SolverType(std::move(linearSolver)));
   auto solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
   optimizer.setAlgorithm(solver);
   //optimizer.setVerbose(true);

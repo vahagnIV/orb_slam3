@@ -12,6 +12,7 @@
 #include <features/matching/validators/triangulation_validator.h>
 #include <geometry/utils.h>
 #include <geometry/ransac_sim3_solver.h>
+#include <optimization/monocular_optimization.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -438,6 +439,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
 }
 
 size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                                   const KeyFrame * relative_kf,
                                                    geometry::Sim3Transformation & in_out_transformation) const {
   typedef features::matching::iterators::ProjectionSearchIterator ProjectionSearchIterator;
   typedef features::matching::SNNMatcher<ProjectionSearchIterator> TMatcher;
@@ -449,6 +451,11 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   std::cout << "Match count: " << matches.size() << std::endl;
   if (matches.size() < 50)
     return 0;
+
+  auto mono_rel_kf = dynamic_cast<const MonocularKeyFrame *>(relative_kf);
+  assert(nullptr != mono_rel_kf);
+
+  optimization::OptimizeSim3(this, mono_rel_kf, in_out_transformation, matches);
 
   return 0;
 }

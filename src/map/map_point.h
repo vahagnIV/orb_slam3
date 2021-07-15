@@ -27,7 +27,7 @@ class Map;
 
 class MapPoint {
  public:
-  typedef std::unordered_map<frame::KeyFrame *, frame::Observation> MapType;
+  typedef std::unordered_map<const frame::KeyFrame *, frame::Observation> MapType;
   friend std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point);
   MapPoint(TPoint3D point,
            size_t first_observed_frame_id,
@@ -58,7 +58,8 @@ class MapPoint {
 
   precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
   precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
-  bool IsInKeyFrame(frame::KeyFrame * keyframe);
+  bool IsInKeyFrame(const frame::KeyFrame * keyframe) const ;
+  const frame::Observation & Observation(const frame::KeyFrame * key_frame) const;
 
   bool IsValid() const { return true; }
 

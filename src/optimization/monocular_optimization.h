@@ -12,6 +12,11 @@ namespace optimization {
 
 void OptimizePose(frame::monocular::MonocularFrame * frame);
 
+void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
+                  const frame::monocular::MonocularKeyFrame * const from_frame,
+                  geometry::Sim3Transformation & in_out_transformation,
+                  const std::unordered_map<map::MapPoint *, size_t> & matches);
+
 }
 }
 #endif //ORB_SLAM3_SRC_OPTIMIZATION_MONOCULAR_OPTIMIZATION_H_

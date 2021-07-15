@@ -38,7 +38,7 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   current_frame->ListMapPoints(frame_map_points);
   std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
   for (auto & map_point: frame_map_points) {
-    for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.first];
+    for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.second.GetKeyFrame()];
   }
 
   frame::KeyFrame * max_covisible_key_frame = nullptr;

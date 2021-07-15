@@ -25,7 +25,7 @@ void CovisibilityGraphNode::Update() {
     for (const auto& obs: map_point->Observations()) {
       if (obs.first == this->frame_)
         continue;
-      ++connected_frame_weights[obs.first];
+      ++connected_frame_weights[obs.second.GetKeyFrame()];
     }
   }
   std::vector<std::pair<size_t, KeyFrame *>> weight_frame_pairs;

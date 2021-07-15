@@ -97,9 +97,8 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
         key_frame->FilterVisibleMapPoints(map_points, transformation, pose, visible_map_points, 8);
         if (visible_map_points.size() < 50)
           continue;
-        geometry::Sim3Transformation
-            btrans = key_frame->GetPosition().GetInversePose() * transformation * loop_candidate->GetPosition();
-        key_frame->AdjustSim3Transformation(visible_map_points, btrans);
+
+        key_frame->AdjustSim3Transformation(visible_map_points, loop_candidate, transformation);
 
         std::cout << "asd" << std::endl;
 

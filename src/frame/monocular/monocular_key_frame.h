@@ -50,6 +50,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                               std::list<MapPointVisibilityParams> & out_visibles,
                               precision_t radius_multiplier) const override;
   size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                  const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
  private:
 

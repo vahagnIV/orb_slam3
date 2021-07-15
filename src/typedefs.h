@@ -37,6 +37,7 @@ typedef Eigen::Matrix<precision_t, 4, 1> TVector4D;
 typedef Eigen::Matrix<precision_t, 3, 1> TVector3D;
 typedef Eigen::Matrix<precision_t, 2, 1> T2DVector;
 
+typedef Eigen::Matrix<precision_t, 2, 2> TMatrix22;
 typedef Eigen::Matrix<precision_t, 3, 3> TMatrix33;
 typedef Eigen::Matrix<precision_t, 4, 4> TMatrix44;
 
