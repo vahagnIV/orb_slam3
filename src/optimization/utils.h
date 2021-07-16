@@ -38,6 +38,8 @@ void FillMpVertices( const std::unordered_set<map::MapPoint *> & map_points,
                      bool robust,
                      size_t & inout_id);
 
+g2o::VertexPointXYZ * CreateVertex(const map::MapPoint * map_point, const geometry::Pose & pose);
+
 }
 }
 #endif //ORB_SLAM3_SRC_OPTIMIZATION_UTILS_H_

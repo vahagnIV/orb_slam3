@@ -96,10 +96,11 @@ void OptimizePose(MonocularFrame * frame) {
 
 }
 
-void OptimizeSim3(const MonocularKeyFrame * const to_frame,
-                  const MonocularKeyFrame * const from_frame,
+void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
+                  const frame::monocular::MonocularKeyFrame * const from_frame,
                   geometry::Sim3Transformation & in_out_transformation,
-                  const std::unordered_map<map::MapPoint *, size_t> & matches) {
+                  const std::unordered_map<map::MapPoint *, size_t> & matches,
+                  const std::unordered_map<map::MapPoint *, int> & predicted_levels) {
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer<g2o::LinearSolverDense, g2o::BlockSolverX>(optimizer);
 
@@ -110,6 +111,8 @@ void OptimizeSim3(const MonocularKeyFrame * const to_frame,
   transformation_vertex->setId(id_counter);
   transformation_vertex->_focal_length1 << to_frame->GetCamera()->Fx(), to_frame->GetCamera()->Fy();
   transformation_vertex->_focal_length2 << from_frame->GetCamera()->Fx(), from_frame->GetCamera()->Fy();
+  transformation_vertex->_principle_point1 << to_frame->GetCamera()->Cx(), to_frame->GetCamera()->Cy();
+  transformation_vertex->_principle_point1 << from_frame->GetCamera()->Cx(), from_frame->GetCamera()->Cy();
   optimizer.addVertex(transformation_vertex);
 
   const geometry::Pose & to_pose = to_frame->GetPosition();
@@ -134,42 +137,59 @@ void OptimizeSim3(const MonocularKeyFrame * const to_frame,
     auto match_it = inverted_matches.find(feature_id);
     if (match_it != inverted_matches.end()) {
       map::MapPoint * from_mp = match_it->second;
+      assert(from_mp->GetMap() != to_mp->GetMap());
       if (from_mp->IsBad())
         continue;
 
-      auto to_mp_vertex = new g2o::VertexPointXYZ();
+      // Create vertex for the map point in "to" coordinate frame
+      auto to_mp_vertex = CreateVertex(to_mp, to_pose);
       to_mp_vertex->setId(++id_counter);
-      to_mp_vertex->setEstimate(to_pose.Transform(to_mp->GetPosition()));
       to_mp_vertex->setFixed(true);
+      optimizer.addVertex(to_mp_vertex);
 
-      auto from_mp_vertex = new g2o::VertexPointXYZ();
+      // Create vertex for the map point in "from" coordinate frame
+      auto from_mp_vertex = CreateVertex(from_mp, from_pose);
       from_mp_vertex->setId(++id_counter);
-      from_mp_vertex->setEstimate(from_pose.Transform(from_mp->GetPosition()));
       from_mp_vertex->setFixed(true);
+      optimizer.addVertex(from_mp_vertex);
+
+      auto from_to_edge = new g2o::EdgeSim3ProjectXYZ();
+      from_to_edge->setId(++id_counter);
+      from_to_edge->setMeasurement(to_features.undistorted_keypoints[feature_id]);
+      from_to_edge->setInformation(TMatrix22::Identity()
+                                  / to_frame->GetFeatureExtractor()->GetAcceptableSquareError(to_features.keypoints[feature_id].level));
+      from_to_edge->setVertex(0, from_mp_vertex);
+      from_to_edge->setVertex(1, transformation_vertex);
+      optimizer.addEdge(from_to_edge);
+
+
+      auto to_from_edge = new g2o::EdgeInverseSim3ProjectXYZ();
+      to_from_edge->setId(++id_counter);
+      int level;
+
       if (from_mp->IsInKeyFrame(from_frame)) {
         auto obs = from_mp->Observation(from_frame);
-        auto from_edge = new g2o::EdgeInverseSim3ProjectXYZ();
-        from_edge->setId(++id_counter);
-        from_edge->setMeasurement(from_features.undistorted_keypoints[obs.GetFeatureId()]);
-        from_edge->setInformation(TMatrix22::Identity()
-                                      / from_frame->GetFeatureExtractor()->GetAcceptableSquareError(from_features.keypoints[obs.GetFeatureId()].level));
-        from_edge->setVertex(0, from_mp_vertex);
-        from_edge->setVertex(1, transformation_vertex);
-        optimizer.addEdge(from_edge);
-
+        to_from_edge->setMeasurement(from_features.undistorted_keypoints[obs.GetFeatureId()]);
+        level = from_features.keypoints[obs.GetFeatureId()].level;
+      } else {
+        auto level_it = predicted_levels.find(from_mp);
+        assert(level_it != predicted_levels.end());
+        level = level_it->second;
+        TPoint2D projection;
+        from_frame->GetCamera()->ProjectPoint(from_pose.Transform(to_mp->GetPosition()), projection);
+        to_from_edge->setMeasurement(projection);
       }
-
-      auto to_edge = new g2o::EdgeSim3ProjectXYZ();
-      to_edge->setId(++id_counter);
-      to_edge->setMeasurement(to_features.undistorted_keypoints[feature_id]);
-      to_edge->setInformation(TMatrix22::Identity()
-                                  / to_frame->GetFeatureExtractor()->GetAcceptableSquareError(to_features.keypoints[feature_id].level));
-      to_edge->setVertex(0, to_mp_vertex);
-      to_edge->setVertex(1, transformation_vertex);
-      optimizer.addEdge(to_edge);
+      to_from_edge->setInformation(TMatrix22::Identity()
+                                       / from_frame->GetFeatureExtractor()->GetAcceptableSquareError(level));
+      to_from_edge->setVertex(0, to_mp_vertex);
+      to_from_edge->setVertex(1, transformation_vertex);
+      optimizer.addEdge(to_from_edge);
 
     }
   }
+  optimizer.setVerbose(true);
+  optimizer.initializeOptimization();
+  optimizer.optimize(5);
 
 }
 

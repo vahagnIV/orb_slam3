@@ -15,7 +15,10 @@ void OptimizePose(frame::monocular::MonocularFrame * frame);
 void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
                   const frame::monocular::MonocularKeyFrame * const from_frame,
                   geometry::Sim3Transformation & in_out_transformation,
-                  const std::unordered_map<map::MapPoint *, size_t> & matches);
+                  const std::unordered_map<map::MapPoint *, size_t> & matches,
+                  const std::unordered_map<map::MapPoint *, int> & predicted_levels);
+
+
 
 }
 }

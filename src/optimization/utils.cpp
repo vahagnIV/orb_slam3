@@ -81,5 +81,10 @@ void FillMpVertices(const std::unordered_set<map::MapPoint *> & map_points,
 
 }
 
+g2o::VertexPointXYZ * CreateVertex(const map::MapPoint * map_point, const geometry::Pose & pose) {
+  auto to_mp_vertex = new g2o::VertexPointXYZ();
+  to_mp_vertex->setEstimate(pose.Transform(map_point->GetPosition()));
+  return to_mp_vertex;
+}
 }
 }
