@@ -146,19 +146,27 @@ void OptimizeSim3(const MonocularKeyFrame * const to_frame,
       from_mp_vertex->setId(++id_counter);
       from_mp_vertex->setEstimate(from_pose.Transform(from_mp->GetPosition()));
       from_mp_vertex->setFixed(true);
-      if(from_mp->IsInKeyFrame(from_frame)){
+      if (from_mp->IsInKeyFrame(from_frame)) {
         auto obs = from_mp->Observation(from_frame);
-      }
+        auto from_edge = new g2o::EdgeInverseSim3ProjectXYZ();
+        from_edge->setId(++id_counter);
+        from_edge->setMeasurement(from_features.undistorted_keypoints[obs.GetFeatureId()]);
+        from_edge->setInformation(TMatrix22::Identity()
+                                      / from_frame->GetFeatureExtractor()->GetAcceptableSquareError(from_features.keypoints[obs.GetFeatureId()].level));
+        from_edge->setVertex(0, from_mp_vertex);
+        from_edge->setVertex(1, transformation_vertex);
+        optimizer.addEdge(from_edge);
 
+      }
 
       auto to_edge = new g2o::EdgeSim3ProjectXYZ();
       to_edge->setId(++id_counter);
       to_edge->setMeasurement(to_features.undistorted_keypoints[feature_id]);
       to_edge->setInformation(TMatrix22::Identity()
-                                    / to_frame->GetFeatureExtractor()->GetAcceptableSquareError(to_features.keypoints[feature_id].level));
+                                  / to_frame->GetFeatureExtractor()->GetAcceptableSquareError(to_features.keypoints[feature_id].level));
       to_edge->setVertex(0, to_mp_vertex);
       to_edge->setVertex(1, transformation_vertex);
-
+      optimizer.addEdge(to_edge);
 
     }
   }
