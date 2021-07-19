@@ -105,9 +105,9 @@ class MyInverseEdge : public g2o::EdgeInverseSim3ProjectXYZ{
     const g2o::VertexPointXYZ *v2 = static_cast<const g2o::VertexPointXYZ *>(_vertices[0]);
 
     g2o::Vector2 obs(_measurement);
-    std::cout << "Obs: " << obs << std::endl;
-    std::cout << "Projected: " << v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate()))) << std::endl;
-    std::cout << "Mp in local cf: " << v1->estimate().inverse().map(v2->estimate()) << std::endl;
+//    std::cout << "Obs: " << obs << std::endl;
+//    std::cout << "Projected: " << v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate()))) << std::endl;
+//    std::cout << "Mp in local cf: " << v1->estimate().inverse().map(v2->estimate()) << std::endl;
     _error = obs - v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate())));
 //    std::cout << _error << std::endl;
   }
@@ -132,7 +132,7 @@ void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   transformation_vertex->_focal_length1 << to_frame->GetCamera()->Fx(), to_frame->GetCamera()->Fy();
   transformation_vertex->_focal_length2 << from_frame->GetCamera()->Fx(), from_frame->GetCamera()->Fy();
   transformation_vertex->_principle_point1 << to_frame->GetCamera()->Cx(), to_frame->GetCamera()->Cy();
-  transformation_vertex->_principle_point1 << from_frame->GetCamera()->Cx(), from_frame->GetCamera()->Cy();
+  transformation_vertex->_principle_point2 << from_frame->GetCamera()->Cx(), from_frame->GetCamera()->Cy();
 
   optimizer.addVertex(transformation_vertex);
 
