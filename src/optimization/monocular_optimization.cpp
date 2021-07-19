@@ -98,21 +98,6 @@ void OptimizePose(MonocularFrame * frame) {
 
 }
 
-class MyInverseEdge : public g2o::EdgeInverseSim3ProjectXYZ{
- public:
-  void computeError() override{
-    const g2o::VertexSim3Expmap *v1 = static_cast<const g2o::VertexSim3Expmap *>(_vertices[1]);
-    const g2o::VertexPointXYZ *v2 = static_cast<const g2o::VertexPointXYZ *>(_vertices[0]);
-
-    g2o::Vector2 obs(_measurement);
-//    std::cout << "Obs: " << obs << std::endl;
-//    std::cout << "Projected: " << v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate()))) << std::endl;
-//    std::cout << "Mp in local cf: " << v1->estimate().inverse().map(v2->estimate()) << std::endl;
-    _error = obs - v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate())));
-//    std::cout << _error << std::endl;
-  }
-
-};
 void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
                   const frame::monocular::MonocularKeyFrame * const from_frame,
                   geometry::Sim3Transformation & in_out_transformation,
@@ -204,13 +189,7 @@ void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
         measurement = from_features.undistorted_keypoints[obs.GetFeatureId()];
         level = from_features.keypoints[obs.GetFeatureId()].level;
         std::cout << "Mp is in keyframe" << std::endl;
-//        TPoint3D  from_coords = sim3_transformation_inverse.Transform(to_mp_vertex->estimate());
-//        TPoint2D tfp;
-//        from_frame->GetCamera()->ProjectPoint(from_coords, tfp);
-//        std::cout << "Calculated: " << tfp << std::endl;
-//        std::cout << "Real: " << measurement << std::endl;
       } else {
-        continue;
         auto level_it = predicted_levels.find(from_mp);
         assert(level_it != predicted_levels.end());
         level = level_it->second;
@@ -224,8 +203,7 @@ void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
 
 
 
-//      auto to_from_edge = new g2o::EdgeInverseSim3ProjectXYZ();
-      auto to_from_edge = new MyInverseEdge;
+      auto to_from_edge = new g2o::EdgeInverseSim3ProjectXYZ();
       to_from_edge->setId(++id_counter);
       to_from_edge->setMeasurement(measurement);
       to_from_edge->setInformation(TMatrix22::Identity()

@@ -99,9 +99,6 @@ LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::K
           continue;
 
         key_frame->AdjustSim3Transformation(visible_map_points, loop_candidate, transformation);
-
-        std::cout << "asd" << std::endl;
-
       }
 
     }
