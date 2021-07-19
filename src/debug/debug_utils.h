@@ -58,6 +58,10 @@ cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
                             const frame::monocular::MonocularKeyFrame * frame2,
                             const std::vector<std::pair<map::MapPoint *, map::MapPoint *>> & matches);
 
+cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
+                            const frame::monocular::MonocularKeyFrame * frame2,
+                            const std::unordered_map<map::MapPoint *, size_t> & matches);
+
 void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
                           const std::vector<std::pair<map::MapPoint *, map::MapPoint *>> matches,
                           std::vector<cv::KeyPoint> & out_key_points,

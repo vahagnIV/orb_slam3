@@ -274,5 +274,46 @@ void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
   }
 }
 
+cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
+                                   const frame::monocular::MonocularKeyFrame * frame2,
+                                   const std::unordered_map<map::MapPoint *, size_t> & matches) {
+
+  std::unordered_map<size_t, map::MapPoint *> inverted_matches;
+  std::transform(matches.begin(),
+                 matches.end(),
+                 std::inserter(inverted_matches, inverted_matches.begin()),
+                 [](const std::pair<map::MapPoint *, size_t> & pair) {
+                   return std::pair<size_t, map::MapPoint *>(pair.second, pair.first);
+                 });
+
+  std::vector<cv::KeyPoint> kp1, kp2;
+  std::vector<cv::DMatch> cv_matches;
+
+  for (const auto & mp: inverted_matches) {
+    const map::MapPoint * mp2 = mp.second;
+    TPoint2D proj2, proj1;
+    if (mp2->IsInKeyFrame(frame2)) {
+      size_t feature_id = mp2->Observation(frame2).GetFeatureId();
+      proj2 = frame2->GetFeatureHandler()->GetFeatures().keypoints[feature_id].pt;
+    } else {
+      TPoint3D mp_local_cf = frame2->GetPosition().Transform(mp2->GetPosition());
+      frame2->GetCamera()->ProjectAndDistort(mp_local_cf, proj2);
+    }
+
+    size_t feature_id = mp.first;
+    proj1 = frame1->GetFeatureHandler()->GetFeatures().keypoints[feature_id].pt;
+    kp1.push_back(cv::KeyPoint(proj1.x(), proj1.y(), 2));
+    kp2.push_back(cv::KeyPoint(proj2.x(), proj2.y(), 2));
+    cv_matches.push_back(cv::DMatch(kp1.size() - 1, kp2.size() - 1, 0.5));
+  }
+
+  cv::Mat im1 = cv::imread(frame1->GetFilename());
+  cv::Mat im2 = cv::imread(frame2->GetFilename());
+  cv::Mat result;
+  cv::drawMatches(im1, kp1, im2, kp2, cv_matches, result);
+
+  return result;
+}
+
 }
 }

@@ -8,7 +8,7 @@
 namespace orb_slam3 {
 namespace geometry {
 
-const size_t RANSACSim3Solver::MIN_NUMBER_OF_MATCHES_DEFAULT = 3;
+const size_t RANSACSim3Solver::MIN_NUMBER_OF_MATCHES_DEFAULT = 10;
 
 RANSACSim3Solver::RANSACSim3Solver(const std::vector<std::pair<TPoint3D, TPoint3D>> * matches,
                                    const std::vector<std::pair<TPoint2D, TPoint2D>> * projections,
@@ -36,8 +36,11 @@ bool RANSACSim3Solver::operator()(Sim3Transformation & out_pose) {
     std::vector<size_t> slice;
     subset_generator_.Generate(slice);
     out_pose = Sim3Solver::ComputeSim3(matches_, slice);
-    if (CheckPose(out_pose) > min_inliers_count_)
+    size_t n_inliers = CheckPose(out_pose);
+    if (n_inliers > min_inliers_count_) {
+      std::cout << "Found " << n_inliers << " inliers out_of " << matches_.size() << std::endl;
       return true;
+    }
   }
   return false;
 }
