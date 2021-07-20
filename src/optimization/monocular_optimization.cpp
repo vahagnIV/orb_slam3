@@ -98,132 +98,71 @@ void OptimizePose(MonocularFrame * frame) {
 
 }
 
-void OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
-                  const frame::monocular::MonocularKeyFrame * const from_frame,
-                  geometry::Sim3Transformation & in_out_transformation,
-                  const std::unordered_map<map::MapPoint *, size_t> & matches,
-                  const std::unordered_map<map::MapPoint *, int> & predicted_levels) {
+size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
+                    const frame::monocular::MonocularKeyFrame * const from_frame,
+                    geometry::Sim3Transformation & in_out_transformation,
+                    const std::unordered_map<map::MapPoint *, size_t> & matches,
+                    const std::unordered_map<map::MapPoint *, int> & predicted_levels) {
+
+  static const precision_t threshold = 10.;
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer<g2o::LinearSolverDense, g2o::BlockSolverX>(optimizer);
 
+  int max_id = Sim3FillOptimizer(optimizer, to_frame, from_frame,
+                                 in_out_transformation,
+                                 matches,
+                                 predicted_levels);
 
+  auto trans_vertex = dynamic_cast<g2o::VertexSim3Expmap *>(optimizer.vertex(0));
+  assert(nullptr != trans_vertex);
 
-  geometry::Sim3Transformation sim3_transformation_inverse = in_out_transformation.GetInversePose();
-  int id_counter = 0;
-  g2o::Sim3 sim3(in_out_transformation.R, in_out_transformation.T, in_out_transformation.s);
-  auto transformation_vertex = new g2o::VertexSim3Expmap();
-  transformation_vertex->setEstimate(sim3);
-  transformation_vertex->setId(id_counter);
-  transformation_vertex->_focal_length1 << to_frame->GetCamera()->Fx(), to_frame->GetCamera()->Fy();
-  transformation_vertex->_focal_length2 << from_frame->GetCamera()->Fx(), from_frame->GetCamera()->Fy();
-  transformation_vertex->_principle_point1 << to_frame->GetCamera()->Cx(), to_frame->GetCamera()->Cy();
-  transformation_vertex->_principle_point2 << from_frame->GetCamera()->Cx(), from_frame->GetCamera()->Cy();
-
-  optimizer.addVertex(transformation_vertex);
-
-  const geometry::Pose & to_pose = to_frame->GetPosition();
-  const geometry::Pose & from_pose = from_frame->GetPosition();
-  const features::Features & to_features = to_frame->GetFeatureHandler()->GetFeatures();
-  const features::Features & from_features = from_frame->GetFeatureHandler()->GetFeatures();
-
-  auto to_map_points = to_frame->GetMapPoints();
-  std::unordered_map<size_t, map::MapPoint *> inverted_matches;
-  std::transform(matches.begin(),
-                 matches.end(),
-                 std::inserter(inverted_matches, inverted_matches.begin()),
-                 [](const std::pair<map::MapPoint *, size_t> & pair) {
-                   return std::pair<size_t, map::MapPoint *>(pair.second, pair.first);
-                 });
-  for (auto it: to_map_points) {
-    size_t feature_id = it.first;
-    map::MapPoint * to_mp = it.second;
-    if (to_mp->IsBad())
-      continue;
-
-    assert(to_mp->GetMap() == to_frame->GetMap());
-    auto match_it = inverted_matches.find(feature_id);
-    if (match_it != inverted_matches.end()) {
-      map::MapPoint * from_mp = match_it->second;
-      assert(from_mp->GetMap() != to_mp->GetMap());
-      assert(from_mp->GetMap() == from_frame->GetMap());
-
-      if (from_mp->IsBad())
-        continue;
-//      TPoint3D mp_to_local_frame = in_out_transformation.Transform(from_frame->GetPosition().Transform(from_mp->GetPosition()));
-//
-//
-//
-//
-//      std::cout << "Mp From ->TO " << mp_to_local_frame << std::endl;
-//      std::cout << "Mp TO " << to_frame->GetPosition().Transform(to_mp->GetPosition()) << std::endl;
-
-      // Create vertex for the map point in "from" coordinate frame
-      auto from_mp_vertex = CreateVertex(from_mp, from_pose);
-      from_mp_vertex->setId(++id_counter);
-      from_mp_vertex->setFixed(true);
-      optimizer.addVertex(from_mp_vertex);
-
-      auto from_to_edge = new g2o::EdgeSim3ProjectXYZ();
-      from_to_edge->setId(++id_counter);
-      from_to_edge->setMeasurement(to_features.undistorted_keypoints[feature_id]);
-      from_to_edge->setInformation(TMatrix22::Identity()
-                                       / to_frame->GetFeatureExtractor()->GetAcceptableSquareError(to_features.keypoints[feature_id].level));
-      from_to_edge->setVertex(0, from_mp_vertex);
-      from_to_edge->setVertex(1, transformation_vertex);
-      optimizer.addEdge(from_to_edge);
-
-
-      // Create vertex for the map point in "to" coordinate frame
-      auto to_mp_vertex = CreateVertex(to_mp, to_pose);
-      to_mp_vertex->setId(++id_counter);
-      to_mp_vertex->setFixed(true);
-      optimizer.addVertex(to_mp_vertex);
-
-
-      int level;
-
-      TPoint2D measurement;
-      if (from_mp->IsInKeyFrame(from_frame)) {
-
-        const auto& obs = from_mp->Observation(from_frame);
-        measurement = from_features.undistorted_keypoints[obs.GetFeatureId()];
-        level = from_features.keypoints[obs.GetFeatureId()].level;
-        std::cout << "Mp is in keyframe" << std::endl;
-      } else {
-        auto level_it = predicted_levels.find(from_mp);
-        assert(level_it != predicted_levels.end());
-        level = level_it->second;
-
-        TPoint3D virtual_point = sim3_transformation_inverse.Transform(to_pose.Transform(to_mp->GetPosition()));
-        if(virtual_point.z() <=0 )
-          continue;
-        from_frame->GetCamera()->ProjectPoint(virtual_point, measurement);
-        std::cout << "Mp is not in keyframe" << std::endl;
-      }
-
-
-
-      auto to_from_edge = new g2o::EdgeInverseSim3ProjectXYZ();
-      to_from_edge->setId(++id_counter);
-      to_from_edge->setMeasurement(measurement);
-      to_from_edge->setInformation(TMatrix22::Identity()
-                                       / from_frame->GetFeatureExtractor()->GetAcceptableSquareError(level));
-      to_from_edge->setVertex(0, to_mp_vertex);
-      to_from_edge->setVertex(1, transformation_vertex);
-      optimizer.addEdge(to_from_edge);
-
-    }
-  }
   in_out_transformation.print();
   optimizer.setVerbose(true);
   optimizer.initializeOptimization();
-  optimizer.optimize(50);
-  in_out_transformation.R = transformation_vertex->estimate().rotation().toRotationMatrix();
-  in_out_transformation.T = transformation_vertex->estimate().translation();
-  in_out_transformation.s = transformation_vertex->estimate().scale();
+  optimizer.optimize(5);
+
+  in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
+  in_out_transformation.T = trans_vertex->estimate().translation();
+  in_out_transformation.s = trans_vertex->estimate().scale();
+  in_out_transformation.print();
+
+  for (int i = 1; i <= max_id; ++i) {
+    auto from_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 3));
+    if (nullptr == from_mp_vertex) continue;
+    auto to_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 1));
+    assert(nullptr != to_mp_vertex);
+    // There is only one edge coming out from this vertex
+    auto from_to_edge = dynamic_cast<g2o::EdgeSim3ProjectXYZ *>(*from_mp_vertex->edges().begin());
+    assert(nullptr != from_to_edge);
+//    auto to_from_edge = dynamic_cast<g2o::EdgeInverseSim3ProjectXYZ *>(*to_mp_vertex->edges().begin());
+//    assert(nullptr != to_from_edge);
+
+    auto to_from_edge = dynamic_cast<MyInverse *>(*to_mp_vertex->edges().begin());
+    assert(nullptr != to_from_edge);
+    if (from_to_edge->chi2() > threshold || to_from_edge->chi2() > threshold) {
+      optimizer.removeEdge(from_to_edge);
+      optimizer.removeEdge(to_from_edge);
+//      optimizer.removeVertex(from_mp_vertex);
+//      optimizer.removeVertex(to_mp_vertex);
+    } else {
+      from_to_edge->setRobustKernel(nullptr);
+      to_from_edge->setRobustKernel(nullptr);
+    }
+  }
+
+  if (optimizer.edges().size() < 20)
+    return 0;
+
+  optimizer.initializeOptimization();
+  optimizer.optimize(10);
+
+  in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
+  in_out_transformation.T = trans_vertex->estimate().translation();
+  in_out_transformation.s = trans_vertex->estimate().scale();
   in_out_transformation.print();
   cv::imshow("projected matches", debug::DrawMapPointMatches(to_frame, from_frame, matches));
   cv::waitKey();
+  return optimizer.vertices().size() / 2;
 
 }
 
