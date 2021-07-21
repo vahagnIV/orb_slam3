@@ -126,44 +126,43 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
                  [](const std::pair<map::MapPoint *, size_t> & pair) {
                    return std::pair<size_t, map::MapPoint *>(pair.second, pair.first);
                  });
-  geometry::Sim3Transformation sim3_transformation_inverse = in_out_transformation.GetInversePose();
+//  geometry::Sim3Transformation sim3_transformation_inverse = in_out_transformation.GetInversePose();
 
   for (auto it: to_map_points) {
-    size_t feature_id = it.first;
+    size_t to_feature_id = it.first;
     map::MapPoint * to_mp = it.second;
     assert(nullptr != to_mp);
     if (to_mp->IsBad())
       continue;
 
-    auto match_it = inverted_matches.find(feature_id);
+    auto match_it = inverted_matches.find(to_feature_id);
     if (match_it == inverted_matches.end()) continue;
 
     map::MapPoint * from_mp = match_it->second;
     assert(nullptr != from_mp);
+
     if (from_mp->IsBad()) continue;
 
     ++id_counter;
 
     // Create vertex for the map point in "from" coordinate frame
-    auto from_mp_vertex = CreateVertex(from_mp, to_pose);
+    auto from_mp_vertex = CreateVertex(from_mp, from_pose);
     from_mp_vertex->setId(4 * id_counter - 3);
     from_mp_vertex->setFixed(true);
-    optimizer.addVertex(from_mp_vertex);
 
     auto from_to_edge = CreateEdge<g2o::EdgeSim3ProjectXYZ>(to_features,
                                                             to_frame->GetFeatureExtractor(),
-                                                            to_features.undistorted_keypoints[feature_id],
-                                                            to_features.keypoints[feature_id].level);
+                                                            to_features.undistorted_keypoints[to_feature_id],
+                                                            to_features.keypoints[to_feature_id].level);
     from_to_edge->setId(4 * id_counter - 2);
     from_to_edge->setVertex(0, from_mp_vertex);
     from_to_edge->setVertex(1, optimizer.vertex(0));
-    optimizer.addEdge(from_to_edge);
 
     // Create vertex for the map point in "to" coordinate frame
-    auto to_mp_vertex = CreateVertex(to_mp, from_pose);
+    auto to_mp_vertex = CreateVertex(to_mp, to_pose);
     to_mp_vertex->setId(4 * id_counter - 1);
     to_mp_vertex->setFixed(true);
-    optimizer.addVertex(to_mp_vertex);
+
 
     int level;
     TPoint2D measurement;
@@ -172,29 +171,29 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
       const auto & obs = from_mp->Observation(from_frame);
       measurement = from_features.undistorted_keypoints[obs.GetFeatureId()];
       level = from_features.keypoints[obs.GetFeatureId()].level;
-      std::cout << "Mp is in keyframe" << std::endl;
     } else {
-      auto level_it = predicted_levels.find(from_mp);
+      continue;
+      /*auto level_it = predicted_levels.find(from_mp);
       assert(level_it != predicted_levels.end());
       level = level_it->second;
       TPoint3D virtual_point = sim3_transformation_inverse.Transform(from_pose.Transform(to_mp->GetPosition()));
       if (virtual_point.z() <= 0)
         continue;
-      from_frame->GetCamera()->ProjectPoint(virtual_point, measurement);
+      from_frame->GetCamera()->ProjectPoint(virtual_point, measurement);*/
     }
 
-//    auto to_from_edge = CreateEdge<g2o::EdgeInverseSim3ProjectXYZ>(from_features,
-//                                                                   from_frame->GetFeatureExtractor(),
-//                                                                   measurement,
-//                                                                   level);
-    auto to_from_edge = CreateEdge<MyInverse>(from_features,
-                                              from_frame->GetFeatureExtractor(),
-                                              measurement,
-                                              level);
-
+    auto to_from_edge = CreateEdge<g2o::EdgeInverseSim3ProjectXYZ>(from_features,
+                                                                   from_frame->GetFeatureExtractor(),
+                                                                   measurement,
+                                                                   level);
     to_from_edge->setId(4 * id_counter);
     to_from_edge->setVertex(0, to_mp_vertex);
     to_from_edge->setVertex(1, optimizer.vertex(0));
+
+    optimizer.addVertex(from_mp_vertex);
+    optimizer.addEdge(from_to_edge);
+
+    optimizer.addVertex(to_mp_vertex);
     optimizer.addEdge(to_from_edge);
   }
   return id_counter;

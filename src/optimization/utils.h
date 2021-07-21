@@ -70,28 +70,6 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
                       const std::unordered_map<map::MapPoint *, size_t> & matches,
                       const std::unordered_map<map::MapPoint *, int> & predicted_levels);
 
-/**/
-class MyInverse : public g2o::BaseBinaryEdge<2, g2o::Vector2, g2o::VertexPointXYZ, g2o::VertexSim3Expmap> {
- public:
-  MyInverse() = default;
-  virtual bool read(std::istream & is) { return false; }
-  virtual bool write(std::ostream & os) const { return false; }
-
-  void computeError() override {
-    const g2o::VertexSim3Expmap * v1 = static_cast<const g2o::VertexSim3Expmap *>(_vertices[1]);
-    const g2o::VertexPointXYZ * v2 = static_cast<const g2o::VertexPointXYZ *>(_vertices[0]);
-
-    g2o::Vector2 obs(_measurement);
-    _error = obs - v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate())));
-//    std::cout << "Obs: " << obs << std::endl;
-//    std::cout << "A: " << g2o::project(v1->estimate().inverse().map(v2->estimate())) << std::endl;
-//    std::cout << "B " << v1->cam_map2(g2o::project(v1->estimate().inverse().map(v2->estimate()))) << std::endl;
-  }
-
-  // virtual void linearizeOplus();
-
-};
-
 }
 }
 #endif //ORB_SLAM3_SRC_OPTIMIZATION_UTILS_H_

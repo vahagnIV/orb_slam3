@@ -120,30 +120,30 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   optimizer.setVerbose(true);
   optimizer.initializeOptimization();
   optimizer.optimize(5);
-
   in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
   in_out_transformation.T = trans_vertex->estimate().translation();
   in_out_transformation.s = trans_vertex->estimate().scale();
   in_out_transformation.print();
 
+
+
   for (int i = 1; i <= max_id; ++i) {
     auto from_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 3));
     if (nullptr == from_mp_vertex) continue;
-    auto to_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 1));
-    assert(nullptr != to_mp_vertex);
     // There is only one edge coming out from this vertex
     auto from_to_edge = dynamic_cast<g2o::EdgeSim3ProjectXYZ *>(*from_mp_vertex->edges().begin());
     assert(nullptr != from_to_edge);
-//    auto to_from_edge = dynamic_cast<g2o::EdgeInverseSim3ProjectXYZ *>(*to_mp_vertex->edges().begin());
-//    assert(nullptr != to_from_edge);
 
-    auto to_from_edge = dynamic_cast<MyInverse *>(*to_mp_vertex->edges().begin());
+    auto to_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 1));
+    assert(nullptr != to_mp_vertex);
+    auto to_from_edge = dynamic_cast<g2o::EdgeInverseSim3ProjectXYZ *>(*to_mp_vertex->edges().begin());
     assert(nullptr != to_from_edge);
+
     if (from_to_edge->chi2() > threshold || to_from_edge->chi2() > threshold) {
       optimizer.removeEdge(from_to_edge);
+      optimizer.removeVertex(from_mp_vertex);
       optimizer.removeEdge(to_from_edge);
-//      optimizer.removeVertex(from_mp_vertex);
-//      optimizer.removeVertex(to_mp_vertex);
+      optimizer.removeVertex(to_mp_vertex);
     } else {
       from_to_edge->setRobustKernel(nullptr);
       to_from_edge->setRobustKernel(nullptr);
