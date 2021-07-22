@@ -174,7 +174,7 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
     } else {
       continue;
       /*auto level_it = predicted_levels.find(from_mp);
-      assert(level_it != predicted_levels.end());
+      assert(level_it != predicted_levels.end());k
       level = level_it->second;
       TPoint3D virtual_point = sim3_transformation_inverse.Transform(from_pose.Transform(to_mp->GetPosition()));
       if (virtual_point.z() <= 0)
