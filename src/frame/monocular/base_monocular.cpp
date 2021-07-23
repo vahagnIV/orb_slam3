@@ -63,49 +63,46 @@ bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
   return false;
 }
 
-bool BaseMonocular::IsVisible(map::MapPoint * map_point,
-                              MapPointVisibilityParams & out_map_point,
-                              precision_t radius_multiplier,
-                              unsigned int window_size,
-                              int level,
-                              const geometry::Pose & pose,
-                              const geometry::Pose & inverse_position,
-                              const features::IFeatureExtractor * feature_extractor) const {
+bool BaseMonocular::PointVisible(const TPoint3D & mp_local_coords,
+                                 const TPoint3D & mp_world_coords,
+                                 precision_t min_allowed_distance,
+                                 precision_t max_allowed_distance,
+                                 const TVector3D & normal,
+                                 const TVector3D & local_position,
+                                 precision_t radius_multiplier,
+                                 int level,
+                                 MapPointVisibilityParams & out_map_point,
+                                 const features::IFeatureExtractor * feature_extractor) const {
+  out_map_point.mp_world_pos = mp_world_coords;
 
-  out_map_point.map_point = map_point;
-  HomogenousPoint map_point_in_local_cf = pose.Transform(map_point->GetPosition());
-
-  if (map_point_in_local_cf.z() < 0)
+  if (mp_local_coords.z() < 0)
     return false;
 
-  precision_t distance = map_point_in_local_cf.norm();
+  precision_t distance = mp_local_coords.norm();
 
-  if (distance < map_point->GetMinInvarianceDistance()
-      || distance > map_point->GetMaxInvarianceDistance()) {
+  if (distance < min_allowed_distance
+      || distance > max_allowed_distance) {
     return false;
   }
 
-  this->GetCamera()->ProjectAndDistort(map_point_in_local_cf, out_map_point.position);
+  this->GetCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
   if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }
 
-  TPoint3D local_pose = inverse_position.T;
-  TVector3D relative_frame_map_point = local_pose - map_point->GetPosition();
+  TVector3D relative_frame_map_point = local_position - mp_world_coords;
 
-  precision_t track_view_cos = relative_frame_map_point.dot(map_point->GetNormal()) / relative_frame_map_point.norm();
+  precision_t track_view_cos = relative_frame_map_point.dot(normal) / relative_frame_map_point.norm();
   if (track_view_cos < 0.5) {
     return false;
   }
 
   out_map_point.level =
-      level > 0 ? level : feature_extractor->PredictScale(distance, map_point->GetMaxInvarianceDistance() / 1.2);
-  if (window_size) {
-    out_map_point.window_size = window_size;
-  } else {
-    precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
-    out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
-  }
+      level > 0 ? level : feature_extractor->PredictScale(distance, max_allowed_distance / 1.2);
+
+  precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
+  assert((size_t)out_map_point.level < feature_extractor->GetScaleFactors().size());
+  out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
 
   return true;
 }

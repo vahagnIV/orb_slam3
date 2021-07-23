@@ -6,17 +6,21 @@ find_package(OpenMP)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ")
 
 if (OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" -O3)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
 
 #include_directories(include ${DBoW2_INCLUDE_DIRS}) #${OpenCV_INCLUDE_DIRS}
-include_directories(${CMAKE_CURRENT_LIST_DIR} g2o ${Eigen3_INCLUDE_DIRECTORIES} ${CHOLMOD_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_LIST_DIR}
+        g2o
+        ${Eigen3_INCLUDE_DIRECTORIES}
+        ${CHOLMOD_INCLUDE_DIR}
+        ${OpenCV_INCLUDE_DIRS})
 
 
 add_library(orbslam SHARED
@@ -26,7 +30,7 @@ add_library(orbslam SHARED
         logging.cpp
 
 #        frame/frame_base.cpp
-#        frame/monocular_frame_old.cpp
+        frame/key_frame.cpp
         frame/monocular/base_monocular.cpp
         frame/monocular/monocular_frame.cpp
         frame/monocular/monocular_key_frame.cpp
@@ -142,6 +146,7 @@ target_link_libraries(orbslam
         g2o::solver_cholmod
         g2o::types_sba
         g2o::opengl_helper
+        g2o::types_sim3
         Eigen3::Eigen
         ${OpenCV_LIBS}
         DBoW2

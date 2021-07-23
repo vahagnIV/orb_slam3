@@ -4,6 +4,7 @@
 
 #include "dbo_w2_handler_factory.h"
 #include <features/handlers/DBoW2/dbo_w2_handler.h>
+#include <frame/database/DBoW2/dbo_w2_database.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -24,7 +25,7 @@ shared_ptr<const handlers::BaseFeatureHandler> DBoW2HandlerFactory::CreateFeatur
 }
 
 frame::IKeyFrameDatabase * DBoW2HandlerFactory::CreateKeyFrameDatabase() const {
-  return nullptr;
+  return new frame::DBoW2Database(vocabulary_);
 }
 
 }

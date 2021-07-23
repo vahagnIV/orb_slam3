@@ -16,9 +16,11 @@ namespace map {
 class Map {
  public:
   friend std::ostream & operator << (std::ostream & stream, const Map * map_point);
-  void AddKeyFrame(frame::KeyFrame * frame);
+  void AddKeyFrame(frame::KeyFrame * key_frame);
+  void EraseKeyFrame(frame::KeyFrame * key_frame);
   void SetInitialKeyFrame(frame::KeyFrame * frame);
   void AddMapPoint(MapPoint * map_point);
+  void EraseMapPoint(MapPoint * map_point);
   std::unordered_set<MapPoint *> GetAllMapPoints() const;
   std::unordered_set<frame::KeyFrame *> GetAllKeyFrames() const;
   size_t GetSize() const { return key_frames_.size(); }

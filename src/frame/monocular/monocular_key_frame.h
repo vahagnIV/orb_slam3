@@ -24,10 +24,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   ~MonocularKeyFrame() override = default;
 
  public:
-  bool IsVisible(map::MapPoint * map_point,
-                 MapPointVisibilityParams & out_map_point,
-                 precision_t radius_multiplier,
-                 unsigned int window_size) const ;
 
   void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
   TVector3D GetNormal(const TPoint3D & point) const override;
@@ -43,11 +39,25 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
   void EraseMapPoint(size_t feature_id) override;
   void SetBad() override;
+  void FindMatchingMapPoints(const KeyFrame * other,
+                             MapPointMatches & out_matches) const override;
+  bool FindSim3Transformation(const MapPointMatches & map_point_matches,
+                              const KeyFrame * loop_candidate,
+                              geometry::Sim3Transformation & out_transormation) const override;
+  void FilterVisibleMapPoints(const MapPointSet & map_points,
+                              const geometry::Sim3Transformation & relative_transformation,
+                              const geometry::Pose & mp_local_transformation,
+                              std::list<MapPointVisibilityParams> & out_visibles,
+                              precision_t radius_multiplier) const override;
+  size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
+                                  const KeyFrame * relative_kf,
+                                  geometry::Sim3Transformation & in_out_transformation) const override;
  private:
 
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);
   void EraseMapPointImpl(const map::MapPoint *, bool check_bad);
-  void EraseMapPointImpl(size_t feature_id, bool check_bad) ;
+  void EraseMapPointImpl(size_t feature_id, bool check_bad);
+  int GetMapPointLevel(const map::MapPoint * map_point) const;
 
  private:
   static bool BaseLineIsEnough(const MapPointSet & others_map_points,

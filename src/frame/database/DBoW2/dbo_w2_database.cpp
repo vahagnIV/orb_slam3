@@ -8,11 +8,16 @@
 namespace orb_slam3 {
 namespace frame {
 
+DBoW2Database::DBoW2Database(const features::BowVocabulary * vocabulary) : inverted_file_(vocabulary->size()) {
+
+}
+
 void DBoW2Database::Append(KeyFrame * keyframe) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
-  for (auto wid: feature_handler->GetFeatureVector()) {
-    inverted_file_[wid.first].push_back(keyframe);
+  for (auto wf: feature_handler->GetWordFrequencies()) {
+    assert(wf.first < inverted_file_.size());
+    inverted_file_[wf.first][keyframe] = wf.second;
   }
 }
 
@@ -45,16 +50,15 @@ void DBoW2Database::SearchWordSharingKeyFrames(const BaseFrame * keyframe,
   {
     // TODO: find a better way
     auto kf = dynamic_cast<const KeyFrame *> (keyframe);
-    if (nullptr != keyframe)
+    if (nullptr != kf)
       neighbours = kf->GetCovisibilityGraph().GetCovisibleKeyFrames();
   }
 
-  for (const auto & wit: handler->GetFeatureVector()) {
-    assert(wit.first < inverted_file_.size());
-    for (auto kf: inverted_file_[wit.first]) {
-      if (neighbours.find(kf) != neighbours.end())
-        continue;
-      ++out_word_sharing_key_frames[kf];
+  for (const auto & b: handler->GetWordFrequencies()) {
+    assert(b.first < inverted_file_.size());
+    for (auto kf_count: inverted_file_[b.first]) {
+      auto kf = kf_count.first;
+      out_word_sharing_key_frames[kf] += kf_count.second * b.second;
     }
   }
 }
@@ -77,7 +81,8 @@ void DBoW2Database::FilterCandidatesByWordSharingAcceptableScore(const features:
     KeyFrame * word_sharing_key_frame = word_sharing_key_frame_pair.first;
     if (word_sharing_key_frame_pair.second > min_common_words) {
       const auto
-          kf_handler = dynamic_cast<const features::handlers::DBoW2Handler * >(word_sharing_key_frame_pair.first);
+          kf_handler =
+          dynamic_cast<const features::handlers::DBoW2Handler * >(word_sharing_key_frame_pair.first->GetFeatureHandler().get());
       assert(nullptr != kf_handler);
       assert(handler->GetVocabulary() == kf_handler->GetVocabulary());
       precision_t word_sharing_key_frame_voc_score =
@@ -138,6 +143,15 @@ void DBoW2Database::DetectRelocCandidates(const BaseFrame * keyframe,
                                           IKeyFrameDatabase::KeyFrameSet & out_reloc_candidates) const {
   KeyFrameSet tmp;
   DetectNBestCandidates(keyframe, out_reloc_candidates, tmp, std::numeric_limits<std::size_t>::max());
+}
+
+void DBoW2Database::Erase(KeyFrame * key_frame) {
+  auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(key_frame->GetFeatureHandler().get());
+  assert(nullptr != feature_handler);
+  for (auto wid: feature_handler->GetBowVector()) {
+    assert(wid.first < inverted_file_.size());
+    inverted_file_[wid.first].erase(key_frame);
+  }
 }
 
 }

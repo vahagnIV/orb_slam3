@@ -23,11 +23,17 @@ class KeyFrame;
 
 namespace map {
 
+class Map;
+
 class MapPoint {
  public:
-  typedef std::unordered_map<frame::KeyFrame *, frame::Observation> MapType;
-  friend std::ostream & operator << (std::ostream & stream, const MapPoint * map_point);
-  MapPoint(TPoint3D point, size_t first_observed_frame_id, precision_t max_invariance_distance, precision_t min_invariance_distance);
+  typedef std::unordered_map<const frame::KeyFrame *, frame::Observation> MapType;
+  friend std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point);
+  MapPoint(TPoint3D point,
+           size_t first_observed_frame_id,
+           precision_t max_invariance_distance,
+           precision_t min_invariance_distance,
+           Map * map);
 
   /*!
    * Adds frame to the map points observations
@@ -52,7 +58,8 @@ class MapPoint {
 
   precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
   precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
-  bool IsInKeyFrame(frame::KeyFrame * keyframe);
+  bool IsInKeyFrame(const frame::KeyFrame * keyframe) const ;
+  const frame::Observation & Observation(const frame::KeyFrame * key_frame) const;
 
   bool IsValid() const { return true; }
 
@@ -64,6 +71,7 @@ class MapPoint {
   unsigned GetVisible() const { return visible_; }
   unsigned GetFound() const { return found_; }
   static size_t GetTotalMapPointCount() { return counter_; }
+  Map * GetMap() { return map_; }
   inline bool IsBad() const { return bad_flag_; }
   void SetBad();
   ~MapPoint();
@@ -72,7 +80,12 @@ class MapPoint {
   map::MapPoint * GetReplaced();
 
   void UpdateNormalAndDepth();
-
+  void SetMaxInvarianceDistance(precision_t max_invariance_distance) {
+    max_invariance_distance_ = max_invariance_distance;
+  }
+  void SetMinInvarianceDistance(precision_t min_invariance_distance) {
+    min_invariance_distance_ = min_invariance_distance;
+  }
 
  private:
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
@@ -80,15 +93,25 @@ class MapPoint {
   static std::atomic_uint64_t counter_;
   // Position in the world coordinate system
   TPoint3D position_;
+
+  // The keyframe => Observation map of observations
   MapType observations_;
+
+  // Distinctive descriptor of this map point
   features::DescriptorType descriptor_;
+
+  // The normal
   TVector3D normal_;
- public:
   precision_t max_invariance_distance_;
   precision_t min_invariance_distance_;
- private:
+
+  // Statistics on how many times the map point should have been
+  // visible and how many times it was actually found
   unsigned visible_;
   unsigned found_;
+
+  Map * map_;
+
   bool bad_flag_;
   size_t first_observed_frame_id_;
 

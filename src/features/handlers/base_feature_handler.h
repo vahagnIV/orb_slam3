@@ -33,7 +33,8 @@ class BaseFeatureHandler {
  public:
   virtual void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
                          FastMatches & out_matches,
-                         MatchingSeverity severity) const = 0;
+                         MatchingSeverity severity,
+                         bool check_orientation) const = 0;
 
  private:
   const Features features_;

@@ -23,7 +23,7 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas)
     : atlas_(atlas),
       velocity_is_valid_(false),
       last_frame_(nullptr),
-      state_(NOT_INITIALIZED){
+      state_(NOT_INITIALIZED) {
   kf_counter = 1000;
 }
 
@@ -38,7 +38,7 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   current_frame->ListMapPoints(frame_map_points);
   std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
   for (auto & map_point: frame_map_points) {
-    for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.first];
+    for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.second.GetKeyFrame()];
   }
 
   frame::KeyFrame * max_covisible_key_frame = nullptr;
@@ -78,6 +78,19 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 }
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
+
+  if (frame->Id() == 50) {
+    atlas_->CreateNewMap();
+    frame->SetIdentity();
+    state_ = FIRST_IMAGE;
+    frame->SetMap(atlas_->GetCurrentMap());
+    ReplaceLastFrame(frame);
+    this->last_key_frame_ = nullptr;
+    this->reference_keyframe_ = nullptr;
+    this->velocity_is_valid_ = false;
+    return TrackingResult::OK;
+  }
+
   last_frame_->UpdateFromReferenceKeyFrame();
 
   assert(OK == state_);
@@ -136,8 +149,13 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->OptimizePose();
 //  if(frame->GetMapPointCount() < 30)
 //    return TrackingResult::TRACKING_FAILED;
-
-  debug::DisplayTrackingInfo(frame, last_frame_, atlas_->GetCurrentMap(), frame_visibles, visible_map_points, local_map_points_except_current);
+  frame->SetMap(atlas_->GetCurrentMap());
+  debug::DisplayTrackingInfo(frame,
+                             last_frame_,
+                             atlas_->GetCurrentMap(),
+                             frame_visibles,
+                             visible_map_points,
+                             local_map_points_except_current);
 
   frame::Frame::MapPointSet map_points;
   frame->ListMapPoints(map_points);
@@ -148,7 +166,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
     last_key_frame_ = keyframe;
-    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
+//    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
     this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
 
     // TODO: remove the following line
@@ -183,19 +201,21 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   std::unordered_set<map::MapPoint *> ref_kf_all_tracked_map_points;
   reference_keyframe_->ListMapPoints(ref_kf_all_tracked_map_points);
   std::unordered_set<map::MapPoint *> filtered_tracked_map_points;
-  for(auto tracked_map_point : ref_kf_all_tracked_map_points) {
+  for (auto tracked_map_point : ref_kf_all_tracked_map_points) {
     if (tracked_map_point->GetObservationCount() >= min_observation_count) {
       filtered_tracked_map_points.insert(tracked_map_point);
     }
   }
   bool few_tracked_points =
-      tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
-  if (!few_tracked_points || (!more_than_max_frames_passed && !(more_than_min_frames_passed && local_mapper_accepts_key_frame))) {
+      tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio
+          && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
+  if (!few_tracked_points
+      || (!more_than_max_frames_passed && !(more_than_min_frames_passed && local_mapper_accepts_key_frame))) {
     std::cout << "NeedNewKeyFrame = false1" << std::endl;
     return false;
   }
   std::cout << "NeedNewKeyFrame = " << local_mapper_accepts_key_frame << std::endl;
-   return local_mapper_accepts_key_frame;
+  return local_mapper_accepts_key_frame;
   /*std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
   bool need = kf_counter >= 4;// && m.size() > 40;
@@ -209,7 +229,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
   assert(FIRST_IMAGE == state_);
   assert(frame->IsValid());
-
+  frame->SetMap(atlas_->GetCurrentMap());
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
     std::cout << "Position after linking " << std::endl;
@@ -221,7 +241,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     last_key_frame_ = current_key_frame;
 
     current_map->SetInitialKeyFrame(initial_key_frame);
-    current_map->AddKeyFrame(current_key_frame);
+//    current_map->AddKeyFrame(current_key_frame);
 
     std::unordered_set<frame::KeyFrame *> key_frames{initial_key_frame, current_key_frame};
     std::unordered_set<map::MapPoint *> map_points;
@@ -232,10 +252,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->GetPosition().print();
 
     std::vector<precision_t> depths;
-    for (auto mp: map_points) {
-      current_map->AddMapPoint(mp);
-      depths.push_back(mp->GetPosition().z());
-    }
+    for (auto mp: map_points) depths.push_back(mp->GetPosition().z());
 
     auto pose = current_key_frame->GetPosition();
     pose.T /= depths[depths.size() / 2];
@@ -246,8 +263,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     for (auto mp: map_points) {
       TPoint3D pose = mp->GetPosition();
       pose /= depths[depths.size() / 2];
-      mp->min_invariance_distance_ /= depths[depths.size() / 2];
-      mp->max_invariance_distance_ /= depths[depths.size() / 2];
+      mp->SetMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
+      mp->SetMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
       mp->SetPosition(pose);
       mp->Refresh(frame->GetFeatureExtractor());
     }
@@ -276,6 +293,7 @@ TrackingResult Tracker::TrackInNotInitializedState(frame::Frame * frame) {
   assert(NOT_INITIALIZED == state_);
   assert(frame->IsValid());
   frame->SetIdentity();
+  frame->SetMap(atlas_->GetCurrentMap());
 
 //  frame->SetInitial(true);
   state_ = FIRST_IMAGE;
@@ -288,7 +306,7 @@ TrackingResult Tracker::Track(frame::Frame * frame) {
   if (!frame->IsValid()) {
     return TrackingResult::INVALID_FRAME;
   }
-  frame->SetMap(atlas_->GetCurrentMap());
+
   TrackingResult res = TrackingResult::OK;
   switch (state_) {
     case NOT_INITIALIZED: {

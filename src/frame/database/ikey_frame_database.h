@@ -17,6 +17,7 @@ class IKeyFrameDatabase {
   typedef std::unordered_set<KeyFrame *> KeyFrameSet;
 
   virtual void Append(KeyFrame * keyframe) = 0;
+  virtual void Erase(KeyFrame * key_frame) = 0;
   virtual void DetectNBestCandidates(const BaseFrame * frame,
                                      KeyFrameSet & out_loop_candidates,
                                      KeyFrameSet & out_merge_candidates,

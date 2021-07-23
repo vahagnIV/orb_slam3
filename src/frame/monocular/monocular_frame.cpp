@@ -14,7 +14,7 @@
 #include <optimization/monocular_optimization.h>
 #include <src/features/handlers/DBoW2/bow_to_iterator.h>
 #include "monocular_key_frame.h"
-
+#include <map/map.h>
 #include <debug/debug_utils.h>
 
 namespace orb_slam3 {
@@ -131,20 +131,6 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   return matches.size() >= 10;
 }
 
-bool MonocularFrame::IsVisible(map::MapPoint * map_point,
-                               MapPointVisibilityParams & out_map_point,
-                               precision_t radius_multiplier,
-                               unsigned int window_size) const {
-  return BaseMonocular::IsVisible(map_point,
-                                  out_map_point,
-                                  radius_multiplier,
-                                  window_size,
-                                  -1,
-                                  this->GetPosition(),
-                                  this->GetInversePosition(),
-                                  feature_handler_->GetFeatureExtractor());
-}
-
 size_t MonocularFrame::GetMapPointCount() const {
   return map_points_.size();
 }
@@ -154,7 +140,9 @@ FrameType MonocularFrame::Type() const {
 }
 
 KeyFrame * MonocularFrame::CreateKeyFrame() {
-  return reference_keyframe_ = new MonocularKeyFrame(this);
+  reference_keyframe_ = new MonocularKeyFrame(this);
+  map_->AddKeyFrame(reference_keyframe_);
+  return reference_keyframe_;
 }
 
 void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
@@ -211,7 +199,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                                        feature_handler_->GetFeatures().keypoints[point.first],
                                                                        max_invariance_distance,
                                                                        min_invariance_distance);
-    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance);
+    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance, GetMap());
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
@@ -220,7 +208,10 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 
 void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * reference_kf,
                                                    std::unordered_map<std::size_t, std::size_t> & out_matches) const {
-  feature_handler_->FastMatch(reference_kf->GetFeatureHandler(), out_matches, features::MatchingSeverity::MIDDLE);
+  feature_handler_->FastMatch(reference_kf->GetFeatureHandler(),
+                              out_matches,
+                              features::MatchingSeverity::MIDDLE,
+                              true);
 
   auto match_it = out_matches.begin();
   while (match_it != out_matches.end()) {
@@ -241,30 +232,44 @@ void MonocularFrame::OptimizePose() {
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
                                             std::list<MapPointVisibilityParams> & out_filetered_map_points,
-                                            precision_t radius_multiplier,
-                                            unsigned int window_size) const {
+                                            precision_t radius_multiplier) const {
   MapPointVisibilityParams map_point;
+  geometry::Pose pose = GetPosition();
+  geometry::Pose inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
-    if (IsVisible(mp, map_point, radius_multiplier, window_size))
+    map_point.map_point = mp;
+    if (BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
+                                    mp->GetPosition(),
+                                    mp->GetMinInvarianceDistance(),
+                                    mp->GetMaxInvarianceDistance(),
+                                    mp->GetNormal(),
+                                    inverse_pose.T,
+                                    radius_multiplier,
+                                    -1,
+                                    map_point,
+                                    GetFeatureExtractor())) {
+
       out_filetered_map_points.push_back(map_point);
+    }
+    /*if (IsVisible(mp, map_point, radius_multiplier)) {
+      out_filetered_map_points.push_back(map_point);
+    }*/
   }
 
 }
 
 void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points,
                                            precision_t matcher_snn_threshold) {
-  auto map_points = GetMapPoints();
+
   features::matching::iterators::ProjectionSearchIterator begin
       (filtered_map_points.begin(),
        filtered_map_points.end(),
-       &feature_handler_->GetFeatures(),
-       &map_points);
+       &feature_handler_->GetFeatures());
 
   features::matching::iterators::ProjectionSearchIterator end
       (filtered_map_points.end(),
        filtered_map_points.end(),
-       &feature_handler_->GetFeatures(),
-       &map_points);
+       &feature_handler_->GetFeatures());
 
   typedef features::matching::SNNMatcher<features::matching::iterators::ProjectionSearchIterator> Matcher;
   Matcher matcher(matcher_snn_threshold, constants::MONO_TWMM_THRESHOLD_HIGH);
@@ -296,16 +301,21 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   MapPointVisibilityParams vmp;
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
-    if (BaseMonocular::IsVisible(mp.second,
-                                 vmp,
-                                 radius_multiplier,
-                                 0,
-                                 last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
-                                 pose,
-                                 inverse_pose,
-                                 feature_handler_->GetFeatureExtractor())) {
+    assert(mp.first < last_frame->feature_handler_->GetFeatures().keypoints.size());
+    if (BaseMonocular::PointVisible(pose.Transform(mp.second->GetPosition()),
+                                    mp.second->GetPosition(),
+                                    mp.second->GetMinInvarianceDistance(),
+                                    mp.second->GetMaxInvarianceDistance(),
+                                    mp.second->GetNormal(),
+                                    inverse_pose.T,
+                                    radius_multiplier,
+                                    last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
+                                    vmp,
+                                    GetFeatureExtractor())) {
+      vmp.map_point = mp.second;
       out_visibles.push_back(vmp);
     }
+
   }
 }
 

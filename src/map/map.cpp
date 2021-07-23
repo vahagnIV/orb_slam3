@@ -9,12 +9,20 @@
 namespace orb_slam3 {
 namespace map {
 
-void Map::AddKeyFrame(frame::KeyFrame * frame) {
-  key_frames_.insert(frame);
+void Map::AddKeyFrame(frame::KeyFrame * key_frame) {
+  key_frames_.insert(key_frame);
+}
+
+void Map::EraseKeyFrame(frame::KeyFrame * key_frame) {
+  key_frames_.erase(key_frame);
 }
 
 void Map::AddMapPoint(MapPoint * map_point) {
   map_points_.insert(map_point);
+}
+
+void Map::EraseMapPoint(MapPoint * map_point) {
+  map_points_.erase(map_point);
 }
 
 std::unordered_set<MapPoint *> Map::GetAllMapPoints() const {
@@ -49,8 +57,6 @@ std::ostream & operator<<(std::ostream & stream, const Map * map) {
 
   for (auto mp: map->map_points_)
     stream << mp;
-
-
 
   return stream;
 }

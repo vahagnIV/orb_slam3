@@ -5,6 +5,7 @@
 // == orb-slam3 ===
 #include "map_point.h"
 #include <frame/key_frame.h>
+#include <map/map.h>
 
 #include <utility>
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
@@ -16,15 +17,18 @@ std::atomic_uint64_t MapPoint::counter_(0);
 MapPoint::MapPoint(TPoint3D point,
                    size_t first_observed_frame_id,
                    precision_t max_invariance_distance,
-                   precision_t min_invariance_distance)
+                   precision_t min_invariance_distance,
+                   Map * map)
     : position_(std::move(point)),
       max_invariance_distance_(max_invariance_distance),
       min_invariance_distance_(min_invariance_distance),
       visible_(1),
       found_(1),
+      map_(map),
       bad_flag_(false),
       first_observed_frame_id_(first_observed_frame_id),
       replaced_map_point_(nullptr) {
+  map_->AddMapPoint(this);
   ++counter_;
 }
 
@@ -35,7 +39,7 @@ MapPoint::~MapPoint() {
 void MapPoint::SetReplaced(map::MapPoint * replaced) {
   auto ob = Observations();
   for (auto & obs: ob) {
-    obs.first->ReplaceMapPoint(replaced, obs.second);
+    obs.second.GetKeyFrame()->ReplaceMapPoint(replaced, obs.second);
   }
   SetBad();
   replaced_map_point_ = replaced;
@@ -46,7 +50,7 @@ map::MapPoint * MapPoint::GetReplaced() {
 }
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
-  assert(! IsBad());
+  assert(!IsBad());
   observations_.emplace(observation.GetKeyFrame(), observation);
 }
 
@@ -61,8 +65,9 @@ void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
   while (!observations_.empty()) {
-    observations_.begin()->first->EraseMapPoint(this);
+    observations_.begin()->second.GetKeyFrame()->EraseMapPoint(this);
   }
+  map_->EraseMapPoint(this);
 }
 
 void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
@@ -125,13 +130,17 @@ size_t MapPoint::GetObservationCount() const {
   return observations_.size();
 }
 
-bool MapPoint::IsInKeyFrame(frame::KeyFrame * keyframe) {
+bool MapPoint::IsInKeyFrame(const frame::KeyFrame * keyframe) const {
 //  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.find(keyframe) != observations_.end();
 }
 
+const frame::Observation & MapPoint::Observation(const frame::KeyFrame * key_frame) const {
+  return observations_.find(key_frame)->second;
+}
+
 std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point) {
-  size_t mem_address = (size_t )map_point;
+  size_t mem_address = (size_t) map_point;
   WRITE_TO_STREAM(mem_address, stream);
   unsigned count = map_point->observations_.size();
   stream.write((char *) map_point->position_.data(),

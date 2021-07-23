@@ -3,6 +3,8 @@
 //
 
 #include <g2o/solvers/dense/linear_solver_dense.h>
+#include <g2o/types/sim3/sim3.h>
+#include <g2o/types/sim3/types_seven_dof_expmap.h>
 
 #include "monocular_optimization.h"
 #include "utils.h"
@@ -11,6 +13,8 @@
 #include "edges/se3_project_xyz_pose_only.h"
 #include <logging.h>
 #include <map/map_point.h>
+
+#include <debug/debug_utils.h>
 
 namespace orb_slam3 {
 namespace optimization {
@@ -21,7 +25,7 @@ void OptimizePose(MonocularFrame * frame) {
   BaseMonocular::MonocularMapPoints map_points = frame->GetMapPoints();
 
   g2o::SparseOptimizer optimizer;
-  InitializeOptimizer<g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>>(optimizer);
+  InitializeOptimizer<g2o::LinearSolverDense>(optimizer);
 
   geometry::Pose pose = frame->GetPosition();
 
@@ -83,7 +87,7 @@ void OptimizePose(MonocularFrame * frame) {
         edge->setRobustKernel(nullptr);
     }
 
-   // std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
+    // std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
     //std::cout << "VERTEX POSE " << i << frame_vertex->estimate() << std::endl;
 
   }
@@ -91,6 +95,74 @@ void OptimizePose(MonocularFrame * frame) {
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);
 
   frame->SetPosition(frame_vertex->estimate());
+
+}
+
+size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
+                    const frame::monocular::MonocularKeyFrame * const from_frame,
+                    geometry::Sim3Transformation & in_out_transformation,
+                    const std::unordered_map<map::MapPoint *, size_t> & matches,
+                    const std::unordered_map<map::MapPoint *, int> & predicted_levels) {
+
+  const precision_t threshold = to_frame->GetSensorConstants()->sim3_optimization_threshold;
+  g2o::SparseOptimizer optimizer;
+  InitializeOptimizer<g2o::LinearSolverDense, g2o::BlockSolverX>(optimizer);
+
+  int max_id = Sim3FillOptimizer(optimizer, to_frame, from_frame,
+                                 in_out_transformation,
+                                 matches,
+                                 predicted_levels);
+
+  auto trans_vertex = dynamic_cast<g2o::VertexSim3Expmap *>(optimizer.vertex(0));
+  assert(nullptr != trans_vertex);
+
+  in_out_transformation.print();
+  optimizer.setVerbose(true);
+  optimizer.initializeOptimization();
+  optimizer.optimize(5);
+  in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
+  in_out_transformation.T = trans_vertex->estimate().translation();
+  in_out_transformation.s = trans_vertex->estimate().scale();
+  in_out_transformation.print();
+
+
+
+  for (int i = 1; i <= max_id; ++i) {
+    auto from_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 3));
+    if (nullptr == from_mp_vertex) continue;
+    // There is only one edge coming out from this vertex
+    auto from_to_edge = dynamic_cast<g2o::EdgeSim3ProjectXYZ *>(*from_mp_vertex->edges().begin());
+    assert(nullptr != from_to_edge);
+
+    auto to_mp_vertex = dynamic_cast<g2o::VertexPointXYZ *>(optimizer.vertex(4 * i - 1));
+    assert(nullptr != to_mp_vertex);
+    auto to_from_edge = dynamic_cast<g2o::EdgeInverseSim3ProjectXYZ *>(*to_mp_vertex->edges().begin());
+    assert(nullptr != to_from_edge);
+
+    if (from_to_edge->chi2() > threshold || to_from_edge->chi2() > threshold) {
+      optimizer.removeEdge(from_to_edge);
+      optimizer.removeVertex(from_mp_vertex);
+      optimizer.removeEdge(to_from_edge);
+      optimizer.removeVertex(to_mp_vertex);
+    } else {
+      from_to_edge->setRobustKernel(nullptr);
+      to_from_edge->setRobustKernel(nullptr);
+    }
+  }
+
+  if (optimizer.edges().size() < to_frame->GetSensorConstants()->min_number_of_edges_sim3_opt)
+    return 0;
+
+  optimizer.initializeOptimization();
+  optimizer.optimize(10);
+
+  in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
+  in_out_transformation.T = trans_vertex->estimate().translation();
+  in_out_transformation.s = trans_vertex->estimate().scale();
+  in_out_transformation.print();
+//  cv::imshow("projected matches", debug::DrawMapPointMatches(to_frame, from_frame, matches));
+//  cv::waitKey();
+  return optimizer.vertices().size() / 2;
 
 }
 

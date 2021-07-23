@@ -11,11 +11,10 @@ namespace iterators {
 
 ProjectionSearchIterator::ProjectionSearchIterator(std::list<frame::MapPointVisibilityParams>::const_iterator begin,
                                                    std::list<frame::MapPointVisibilityParams>::const_iterator end,
-                                                   const Features * from_features,
-                                                   const std::map<std::size_t, map::MapPoint *> * from_map_points)
+                                                   const Features * from_features)
     : it_(begin),
       end_(end),
-      pointee_(from_features,  from_map_points) {
+      pointee_(from_features) {
   if(begin != end)
     pointee_.SetVisibileMapPoint(*it_);
 }

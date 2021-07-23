@@ -55,14 +55,30 @@ class BaseMonocular {
   virtual void EraseMapPoint(size_t feature_id);
 
  protected:
-  bool IsVisible(map::MapPoint * map_point,
-                 MapPointVisibilityParams & out_map_point,
-                 precision_t radius_multiplier,
-                 unsigned int window_size,
-                 int level ,
-                 const geometry::Pose & pose,
-                 const geometry::Pose & inverse_position,
-                 const features::IFeatureExtractor * feature_extractor) const;
+
+  /*!
+   *
+   * @param mp_local_coords - the point coordinates in local cf
+   * @param mp_world_coords - the point coordinates in the world cf of the current frame
+   * @param min_allowed_distance min invariance distance in local cf
+   * @param max_allowed_distance max invariance distance in local cf
+   * @param normal The normal in the world cf of the current frame
+   * @param local_position - the world coordinates of current cf
+   * @param radius_multiplier
+   * @param level
+   * @param out_map_point
+   * @param feature_extractor
+   */
+  bool PointVisible(const TPoint3D & mp_local_coords,
+                    const TPoint3D & mp_world_coords,
+                    precision_t min_allowed_distance,
+                    precision_t max_allowed_distance,
+                    const TVector3D & normal,
+                    const TVector3D & local_position,
+                    precision_t radius_multiplier,
+                    int level,
+                    MapPointVisibilityParams & out_map_point,
+                    const features::IFeatureExtractor * feature_extractor) const;
 
  void SerializeToStream(std::ostream & stream) const;
  protected:
