@@ -294,6 +294,7 @@ cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
     TPoint2D proj2, proj1;
     if (mp2->IsInKeyFrame(frame2)) {
       size_t feature_id = mp2->Observation(frame2).GetFeatureId();
+      assert(feature_id < frame2->GetFeatureHandler()->GetFeatures().keypoints.size());
       proj2 = frame2->GetFeatureHandler()->GetFeatures().keypoints[feature_id].pt;
     } else {
       TPoint3D mp_local_cf = frame2->GetPosition().Transform(mp2->GetPosition());

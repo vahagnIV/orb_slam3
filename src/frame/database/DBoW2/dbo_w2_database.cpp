@@ -16,6 +16,7 @@ void DBoW2Database::Append(KeyFrame * keyframe) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
   for (auto wf: feature_handler->GetWordFrequencies()) {
+    assert(wf.first < inverted_file_.size());
     inverted_file_[wf.first][keyframe] = wf.second;
   }
 }
@@ -49,7 +50,7 @@ void DBoW2Database::SearchWordSharingKeyFrames(const BaseFrame * keyframe,
   {
     // TODO: find a better way
     auto kf = dynamic_cast<const KeyFrame *> (keyframe);
-    if (nullptr != keyframe)
+    if (nullptr != kf)
       neighbours = kf->GetCovisibilityGraph().GetCovisibleKeyFrames();
   }
 
@@ -57,7 +58,7 @@ void DBoW2Database::SearchWordSharingKeyFrames(const BaseFrame * keyframe,
     assert(b.first < inverted_file_.size());
     for (auto kf_count: inverted_file_[b.first]) {
       auto kf = kf_count.first;
-      out_word_sharing_key_frames[kf] += kf_count.second *  b.second;
+      out_word_sharing_key_frames[kf] += kf_count.second * b.second;
     }
   }
 }
@@ -148,6 +149,7 @@ void DBoW2Database::Erase(KeyFrame * key_frame) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(key_frame->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
   for (auto wid: feature_handler->GetBowVector()) {
+    assert(wid.first < inverted_file_.size());
     inverted_file_[wid.first].erase(key_frame);
   }
 }

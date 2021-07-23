@@ -140,9 +140,9 @@ FrameType MonocularFrame::Type() const {
 }
 
 KeyFrame * MonocularFrame::CreateKeyFrame() {
-  auto kf = reference_keyframe_ = new MonocularKeyFrame(this);
-  map_->AddKeyFrame(kf);
-  return kf;
+  reference_keyframe_ = new MonocularKeyFrame(this);
+  map_->AddKeyFrame(reference_keyframe_);
+  return reference_keyframe_;
 }
 
 void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
@@ -301,6 +301,7 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   MapPointVisibilityParams vmp;
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
+    assert(mp.first < last_frame->feature_handler_->GetFeatures().keypoints.size());
     if (BaseMonocular::PointVisible(pose.Transform(mp.second->GetPosition()),
                                     mp.second->GetPosition(),
                                     mp.second->GetMinInvarianceDistance(),

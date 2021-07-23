@@ -21,6 +21,7 @@ KeyFrame::KeyFrame(TimePoint time_point,
 
 void KeyFrame::SetBad() {
   bad_flag_ = true;
+  assert(nullptr != map_);
   map_->EraseKeyFrame(this);
 }
 

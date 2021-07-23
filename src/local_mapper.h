@@ -44,9 +44,9 @@ class LocalMapper : public PositionObserver,
  private:
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas * atlas_;
-  std::atomic_bool cancelled_{};
+  std::atomic_bool cancelled_;
   std::thread * thread_;
-  bool accept_key_frames_{};
+  bool accept_key_frames_;
   frame::IKeyFrameDatabase * key_frame_database_;
 };
 
