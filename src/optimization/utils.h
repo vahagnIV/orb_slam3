@@ -47,14 +47,15 @@ template<typename TEdge>
 TEdge * CreateEdge(const features::Features & features,
                    const features::IFeatureExtractor * feature_extractor,
                    const TPoint2D & measurement,
-                   int level) {
+                   int level,
+                   precision_t huber_delta) {
   auto edge = new TEdge();
   edge->setMeasurement(measurement);
   edge->setInformation(TMatrix22::Identity()
                            / feature_extractor->GetAcceptableSquareError(level));
   auto * rk = new g2o::RobustKernelHuber;
   edge->setRobustKernel(rk);
-  static const precision_t delta = std::sqrt(10);
+  static const precision_t delta = huber_delta;
   rk->setDelta(delta);
   return edge;
 }

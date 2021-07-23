@@ -17,6 +17,9 @@ struct SensorConstants {
   precision_t projection_search_radius_multiplier;
   precision_t projection_search_radius_multiplier_after_relocalization;
   precision_t projection_search_radius_multiplier_after_lost;
+  unsigned min_number_of_edges_sim3_opt;
+  precision_t sim3_optimization_threshold;
+  precision_t sim3_optimization_huber_delta;
 
 };
 

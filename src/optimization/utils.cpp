@@ -153,7 +153,8 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
     auto from_to_edge = CreateEdge<g2o::EdgeSim3ProjectXYZ>(to_features,
                                                             to_frame->GetFeatureExtractor(),
                                                             to_features.undistorted_keypoints[to_feature_id],
-                                                            to_features.keypoints[to_feature_id].level);
+                                                            to_features.keypoints[to_feature_id].level,
+                                                            to_frame->GetSensorConstants()->sim3_optimization_huber_delta);
     from_to_edge->setId(4 * id_counter - 2);
     from_to_edge->setVertex(0, from_mp_vertex);
     from_to_edge->setVertex(1, optimizer.vertex(0));
@@ -185,7 +186,8 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
     auto to_from_edge = CreateEdge<g2o::EdgeInverseSim3ProjectXYZ>(from_features,
                                                                    from_frame->GetFeatureExtractor(),
                                                                    measurement,
-                                                                   level);
+                                                                   level,
+                                                                   from_frame->GetSensorConstants()->sim3_optimization_huber_delta);
     to_from_edge->setId(4 * id_counter);
     to_from_edge->setVertex(0, to_mp_vertex);
     to_from_edge->setVertex(1, optimizer.vertex(0));

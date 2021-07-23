@@ -300,6 +300,9 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   constants.projection_search_radius_multiplier = 1.;
   constants.projection_search_radius_multiplier_after_relocalization = 5.;
   constants.projection_search_radius_multiplier_after_lost = 15.;
+  constants.min_number_of_edges_sim3_opt = 20;
+  constants.sim3_optimization_threshold = 10.;
+  constants.sim3_optimization_huber_delta = std::sqrt(10.);
 
   typedef orb_slam3::camera::FishEye FISH_EYE;
   typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;

@@ -104,7 +104,7 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
                     const std::unordered_map<map::MapPoint *, size_t> & matches,
                     const std::unordered_map<map::MapPoint *, int> & predicted_levels) {
 
-  static const precision_t threshold = 10.;
+  const precision_t threshold = to_frame->GetSensorConstants()->sim3_optimization_threshold;
   g2o::SparseOptimizer optimizer;
   InitializeOptimizer<g2o::LinearSolverDense, g2o::BlockSolverX>(optimizer);
 
@@ -150,7 +150,7 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
     }
   }
 
-  if (optimizer.edges().size() < 20)
+  if (optimizer.edges().size() < to_frame->GetSensorConstants()->min_number_of_edges_sim3_opt)
     return 0;
 
   optimizer.initializeOptimization();
@@ -160,8 +160,8 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   in_out_transformation.T = trans_vertex->estimate().translation();
   in_out_transformation.s = trans_vertex->estimate().scale();
   in_out_transformation.print();
-  cv::imshow("projected matches", debug::DrawMapPointMatches(to_frame, from_frame, matches));
-  cv::waitKey();
+//  cv::imshow("projected matches", debug::DrawMapPointMatches(to_frame, from_frame, matches));
+//  cv::waitKey();
   return optimizer.vertices().size() / 2;
 
 }
