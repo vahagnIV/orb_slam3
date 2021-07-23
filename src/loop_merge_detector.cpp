@@ -29,12 +29,11 @@ void LoopMergeDetector::RunIteration() {
 
 bool LoopMergeDetector::Intersect(const KeyFrameSet & bow_candidate_neighbours,
                                   const KeyFrameSet & key_frame_neighbours) {
-  for (auto bow_candidate_neighbour: bow_candidate_neighbours) {
-    if (key_frame_neighbours.find(bow_candidate_neighbour) != key_frame_neighbours.end()) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(bow_candidate_neighbours.begin(),
+                     bow_candidate_neighbours.end(),
+                     [&key_frame_neighbours]( frame::KeyFrame * key_frame){
+    return key_frame_neighbours.find(key_frame)!=key_frame_neighbours.end();
+  });
 }
 
 void LoopMergeDetector::FindMapPointMatches(const frame::KeyFrame * current_key_frame,
@@ -60,51 +59,53 @@ void LoopMergeDetector::FindMapPointMatches(const frame::KeyFrame * current_key_
 LoopMergeDetector::DetectionResult LoopMergeDetector::DetectLoopOrMerge(frame::KeyFrame * key_frame) const {
 
   frame::IKeyFrameDatabase::KeyFrameSet merge_candidates, loop_candidates;
-  key_frame_database_->DetectNBestCandidates(key_frame, loop_candidates, merge_candidates, 3);
+  key_frame_database_->DetectNBestCandidates(key_frame,
+                                             loop_candidates,
+                                             merge_candidates,
+                                             constants::MAX_NUMBER_OF_MATCH_CANDIDATES);
   auto key_frame_neighbours = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames();
 
   // TODO: remove the following line
-  loop_candidates = merge_candidates;
-  if (!loop_candidates.empty()) {
+  if (!merge_candidates.empty()) {
 
-    for (const auto & loop_candidate: loop_candidates) {
-      if (loop_candidate->IsBad()) continue;
+    for (const auto & merge_candidate: merge_candidates) {
+      if (merge_candidate->IsBad()) continue;
 
-      auto loop_candidate_neighbours = loop_candidate->GetCovisibilityGraph().GetCovisibleKeyFrames(5);
-      loop_candidate_neighbours.insert(loop_candidate);
+      auto loop_candidate_neighbours = merge_candidate->GetCovisibilityGraph().GetCovisibleKeyFrames(constants::LM_COVISIBLE_COUNT);
+      loop_candidate_neighbours.insert(merge_candidate);
 
       // Proximity check
       if (Intersect(loop_candidate_neighbours, key_frame_neighbours)) continue;
       MapPointMatches matches;
       FindMapPointMatches(key_frame, loop_candidate_neighbours, matches);
-      /*cv::Mat result = debug::DrawMapPointMatches(dynamic_cast<frame::monocular::MonocularKeyFrame *>(key_frame),
-                                                  dynamic_cast<frame::monocular::MonocularKeyFrame *>(loop_candidate),
-                                                  matches);
-      cv::imshow("Matched mps", result);
-      cv::waitKey();*/
 
-      if (matches.size() < 20)
+      if (matches.size() < constants::LM_MIN_NUMBER_OF_MP_MATCHES)
         continue;
 
       geometry::Sim3Transformation transformation;
-      if (key_frame->FindSim3Transformation(matches, loop_candidate, transformation)) {
+      if (key_frame->FindSim3Transformation(matches, merge_candidate, transformation)) {
         frame::KeyFrame::MapPointSet map_points;
         for (const auto & loop_neighbour: loop_candidate_neighbours) {
           loop_neighbour->ListMapPoints(map_points);
         }
         std::list<frame::MapPointVisibilityParams> visible_map_points;
-        const auto & pose = loop_candidate->GetPosition();
-        key_frame->FilterVisibleMapPoints(map_points, transformation, pose, visible_map_points, 8);
-        if (visible_map_points.size() < 50)
+        const auto & pose = merge_candidate->GetPosition();
+        key_frame->FilterVisibleMapPoints(map_points,
+                                          transformation,
+                                          pose,
+                                          visible_map_points,
+                                          8);
+        if (visible_map_points.size() < constants::LM_MIN_NUMBER_OF_VISIBLES)
           continue;
 
-        key_frame->AdjustSim3Transformation(visible_map_points, loop_candidate, transformation);
+        key_frame->AdjustSim3Transformation(visible_map_points, merge_candidate, transformation);
       }
 
     }
   }
 
-  return LoopMergeDetector::MergeDetected;
+
+  return LoopMergeDetector::Empty;
 }
 
 }
