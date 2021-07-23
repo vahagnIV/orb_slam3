@@ -238,16 +238,16 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
   geometry::Pose inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
     map_point.map_point = mp;
-    if(BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
-                                   mp->GetPosition(),
-                                   mp->GetMinInvarianceDistance(),
-                                   mp->GetMaxInvarianceDistance(),
-                                   mp->GetNormal(),
-                                   inverse_pose.T,
-                                   radius_multiplier,
-                                   -1,
-                                   map_point,
-                                   GetFeatureExtractor())) {
+    if (BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
+                                    mp->GetPosition(),
+                                    mp->GetMinInvarianceDistance(),
+                                    mp->GetMaxInvarianceDistance(),
+                                    mp->GetNormal(),
+                                    inverse_pose.T,
+                                    radius_multiplier,
+                                    -1,
+                                    map_point,
+                                    GetFeatureExtractor())) {
 
       out_filetered_map_points.push_back(map_point);
     }
@@ -301,17 +301,20 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   MapPointVisibilityParams vmp;
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
-    if (BaseMonocular::IsVisible(mp.second,
-                                 pose.Transform(mp.second->GetPosition()),
-                                 1.,
-                                 vmp,
-                                 radius_multiplier,
-                                 last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
-                                 pose,
-                                 inverse_pose,
-                                 feature_handler_->GetFeatureExtractor())) {
+    if (BaseMonocular::PointVisible(pose.Transform(mp.second->GetPosition()),
+                                    mp.second->GetPosition(),
+                                    mp.second->GetMinInvarianceDistance(),
+                                    mp.second->GetMaxInvarianceDistance(),
+                                    mp.second->GetNormal(),
+                                    inverse_pose.T,
+                                    radius_multiplier,
+                                    last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
+                                    vmp,
+                                    GetFeatureExtractor())) {
+      vmp.map_point = mp.second;
       out_visibles.push_back(vmp);
     }
+
   }
 }
 

@@ -29,9 +29,6 @@ class MonocularFrame : public Frame, public BaseMonocular {
   KeyFrame * CreateKeyFrame() override;
   bool Link(Frame * other) override;
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
- protected:
-  void SerializeToStream(std::ostream & stream) const override;
- public:
   bool EstimatePositionByProjectingMapPoints(Frame * frame, std::list<MapPointVisibilityParams> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
   precision_t GetSimilarityScore(const BaseFrame * other) const override;
@@ -42,8 +39,9 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointCount() const override;
   void UpdateFromReferenceKeyFrame() override;
-
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
+ protected:
+  void SerializeToStream(std::ostream & stream) const override;
 
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
