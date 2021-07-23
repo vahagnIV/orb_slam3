@@ -101,7 +101,7 @@ bool BaseMonocular::PointVisible(const TPoint3D & mp_local_coords,
       level > 0 ? level : feature_extractor->PredictScale(distance, max_allowed_distance / 1.2);
 
   precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
-  assert(out_map_point.level < feature_extractor->GetScaleFactors().size());
+  assert((size_t)out_map_point.level < feature_extractor->GetScaleFactors().size());
   out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
 
   return true;
