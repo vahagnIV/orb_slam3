@@ -25,6 +25,10 @@ class LoopMergeDetector : public PositionObserver {
   typedef std::unordered_set<frame::KeyFrame *> KeyFrameSet;
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
   DetectionResult DetectLoopOrMerge(frame::KeyFrame * key_frame) const;
+  static bool DetectLoopOrMerge(const frame::KeyFrame * key_frame,
+                         frame::IKeyFrameDatabase::KeyFrameSet & current_neighbourhood,
+                         frame::KeyFrame * candidate_keyframe,
+                         geometry::Sim3Transformation & out_sim3_transformation) ;
  private:
   static bool Intersect(const KeyFrameSet & bow_candidate_neighbours, const KeyFrameSet & key_frame_neighbours);
   static void FindMapPointMatches(const frame::KeyFrame * current_key_frame,
