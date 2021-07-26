@@ -8,6 +8,7 @@
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"
 #include <map/atlas.h>
+#include <map/map_point.h>
 
 // TODO: remove this in multithreading
 #include <loop_merge_detector.h>

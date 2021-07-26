@@ -186,8 +186,6 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
       NFEATURES2, SCALE_FACTOR, LEVELS,
       INIT_THRESHOLD, MIN_THRESHOLD);
 
-
-
   cv::VideoCapture cap;
   cap.set(cv::CAP_PROP_AUTOFOCUS, 0);
   if (!cap.open(0)) {
@@ -212,7 +210,13 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame =
-        new MF(eigen_image, std::chrono::system_clock::now(), image_path, feature_extractor, camera, &constants, &handler_factory);
+        new MF(eigen_image,
+               std::chrono::system_clock::now(),
+               image_path,
+               feature_extractor,
+               camera,
+               &constants,
+               &handler_factory);
 
     auto result = tracker.Track(frame);
     if (orb_slam3::TrackingResult::OK == result)
@@ -342,7 +346,29 @@ void initialize() {
   orb_slam3::logging::Initialize();
 }
 
+struct A {
+  A(int x) : x(x) {
+    std::cout << "Constructor " << x << std::endl;
+  }
+
+  A(const A & other) : x(other.x) {
+    std::cout << "Copy Constructor " << x << std::endl;
+  }
+
+  ~A() {
+    std::cout << "Destructor " << x << std::endl;
+  }
+  int x;
+};
+
+A f(int x) {
+  return A(x);
+}
+
 int main(int argc, char * argv[]) {
+  A a (std::move(f(1))), b = f(2);
+  std::cout << "aaaa" << std::endl;
+  return 0;
 
   initialize();
   nlohmann::json config;

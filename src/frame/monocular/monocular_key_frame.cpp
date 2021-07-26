@@ -460,9 +460,7 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   auto mono_rel_kf = dynamic_cast<const MonocularKeyFrame *>(relative_kf);
   assert(nullptr != mono_rel_kf);
 
-  optimization::OptimizeSim3(this, mono_rel_kf, in_out_transformation, matches, levels);
-
-  return 0;
+  return optimization::OptimizeSim3(this, mono_rel_kf, in_out_transformation, matches, levels);
 }
 
 }

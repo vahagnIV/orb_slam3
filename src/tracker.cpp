@@ -9,6 +9,7 @@
 #include "logging.h"
 #include <frame/key_frame.h>
 #include <optimization/bundle_adjustment.h>
+#include <map/map_point.h>
 
 #include "local_mapper.h"
 #include "debug/debug_utils.h"
