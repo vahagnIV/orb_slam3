@@ -346,24 +346,6 @@ void initialize() {
   orb_slam3::logging::Initialize();
 }
 
-struct A {
-  A(int x) : x(x) {
-    std::cout << "Constructor " << x << std::endl;
-  }
-
-  A(const A & other) : x(other.x) {
-    std::cout << "Copy Constructor " << x << std::endl;
-  }
-
-  ~A() {
-    std::cout << "Destructor " << x << std::endl;
-  }
-  int x;
-};
-
-A f(int x) {
-  return A(x);
-}
 
 int main(int argc, char * argv[]) {
   initialize();
