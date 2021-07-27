@@ -9,6 +9,7 @@
 #include "logging.h"
 #include <frame/key_frame.h>
 #include <optimization/bundle_adjustment.h>
+#include <map/map_point.h>
 
 #include "local_mapper.h"
 #include "debug/debug_utils.h"
@@ -73,7 +74,8 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::MapPoi
 }
 
 bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
-  frame->SetPosition(reference_keyframe_->GetPosition());
+  frame->SetStagingPosition(reference_keyframe_->GetPosition());
+  frame->ApplyStaging();
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
@@ -256,17 +258,21 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
     auto pose = current_key_frame->GetPosition();
     pose.T /= depths[depths.size() / 2];
-    current_key_frame->SetPosition(pose);
-    frame->SetPosition(pose);
+    current_key_frame->SetStagingPosition(pose);
+    current_key_frame->ApplyStaging();
+    frame->SetStagingPosition(pose);
+    frame->ApplyStaging();
 
     std::sort(depths.begin(), depths.end());
     for (auto mp: map_points) {
       TPoint3D pose = mp->GetPosition();
       pose /= depths[depths.size() / 2];
-      mp->SetMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
-      mp->SetMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
-      mp->SetPosition(pose);
-      mp->Refresh(frame->GetFeatureExtractor());
+      mp->SetStagingMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
+      mp->SetStagingMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
+      mp->SetStagingPosition(pose);
+      mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
+      mp->CalculateNormalStaging();
+      mp->ApplyStaging();
     }
 
     reference_keyframe_ = current_key_frame;
@@ -337,7 +343,8 @@ void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
   geometry::Pose pose;
   pose.R = angular_velocity_ * last_frame_->GetPosition().R;
   pose.T = -pose.R * (last_frame_->GetInversePosition().T + velocity_);
-  frame->SetPosition(pose);
+  frame->SetStagingPosition(pose);
+  frame->ApplyStaging();
 }
 
 }  // namespace orb_slam3

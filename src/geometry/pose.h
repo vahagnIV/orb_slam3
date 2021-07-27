@@ -22,6 +22,14 @@ struct Pose {
     return Quaternion(R, T);
   }
 
+  Pose();
+  Pose(Pose && other);
+  Pose(const Pose & other);
+  Pose(TMatrix33 R, TVector3D T);
+
+  Pose & operator=(Pose && other);
+  Pose & operator=(const Pose & other);
+
   TVector3D Transform(const TPoint3D & point) const;
 
   Pose GetInversePose() const;

@@ -19,15 +19,20 @@ MapPoint::MapPoint(TPoint3D point,
                    precision_t max_invariance_distance,
                    precision_t min_invariance_distance,
                    Map * map)
-    : position_(std::move(point)),
-      max_invariance_distance_(max_invariance_distance),
-      min_invariance_distance_(min_invariance_distance),
+    : /*position_(std::move(point)),
+      max_invariance_distance_(0),
+      min_invariance_distance_(0),*/
       visible_(1),
       found_(1),
       map_(map),
       bad_flag_(false),
       first_observed_frame_id_(first_observed_frame_id),
       replaced_map_point_(nullptr) {
+  SetStagingPosition(point);
+  SetStagingMinInvarianceDistance(min_invariance_distance);
+  SetStagingMaxInvarianceDistance(max_invariance_distance);
+  ApplyStagingPosition();
+  ApplyMinMaxInvDistanceStaging();
   map_->AddMapPoint(this);
   ++counter_;
 }
@@ -70,11 +75,6 @@ void MapPoint::SetBad() {
   map_->EraseMapPoint(this);
 }
 
-void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
-  ComputeDistinctiveDescriptor(feature_extractor);
-  UpdateNormalAndDepth();
-}
-
 void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor) {
 
   std::vector<features::DescriptorType> descriptors;
@@ -107,17 +107,35 @@ void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * 
 
 }
 
-void MapPoint::UpdateNormalAndDepth() {
-  normal_.setZero();
+void MapPoint::CalculateNormalStaging() {
+  staging_normal_.setZero();
   for (const auto & frame_id_pair: observations_) {
-    auto normal = frame_id_pair.first->GetNormal(position_);
-    normal_ += normal;
+    auto normal = frame_id_pair.first->GetNormalFromStaging(staging_position_);
+    staging_normal_ += normal;
   }
-  normal_.normalize();
+  staging_normal_.normalize();
 }
 
-void MapPoint::SetPosition(const TPoint3D & position) {
-  position_ = position;
+void MapPoint::SetStagingPosition(const TPoint3D & position) {
+  staging_position_ = position;
+}
+
+void MapPoint::ApplyStagingPosition() {
+  position_ = staging_position_;
+}
+
+void MapPoint::ApplyNormalStaging() {
+  normal_ = staging_normal_;
+}
+void MapPoint::ApplyMinMaxInvDistanceStaging() {
+  min_invariance_distance_ = staging_min_invariance_distance_;
+  max_invariance_distance_ = staging_max_invariance_distance_;
+}
+
+void MapPoint::ApplyStaging() {
+  ApplyStagingPosition();
+  ApplyNormalStaging();
+  ApplyMinMaxInvDistanceStaging();
 }
 
 const MapPoint::MapType MapPoint::Observations() const { /// TODO change prototype

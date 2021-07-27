@@ -25,6 +25,7 @@ class KeyFrame : public BaseFrame {
   virtual ~KeyFrame() = default;
  public:
   virtual TVector3D GetNormal(const TPoint3D & point) const = 0;
+  virtual TVector3D GetNormalFromStaging(const TPoint3D & point) const = 0;
   CovisibilityGraphNode & GetCovisibilityGraph() {
     return covisibility_graph_;
   }

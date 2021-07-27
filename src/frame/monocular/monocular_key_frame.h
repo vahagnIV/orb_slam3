@@ -29,7 +29,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  precision_t GetSimilarityScore(const BaseFrame * other) const override;
   void FuseMapPoints(MapPointSet & map_points) override;
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
@@ -52,6 +51,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
                                   const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
+  TVector3D GetNormalFromStaging(const TPoint3D & point) const override;
  private:
 
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);

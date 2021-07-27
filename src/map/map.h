@@ -8,11 +8,16 @@
 // == stl =====
 #include <unordered_set>
 
-// == orb-slam3 ===
-#include "../frame/frame_base.h"
-
 namespace orb_slam3 {
+
+namespace frame{
+class KeyFrame;
+}
+
 namespace map {
+
+class MapPoint;
+
 class Map {
  public:
   friend std::ostream & operator << (std::ostream & stream, const Map * map_point);

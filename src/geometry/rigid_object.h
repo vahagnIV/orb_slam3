@@ -22,29 +22,32 @@ class RigidObject {
   virtual ~RigidObject() = default;
  public:
   // Setters
-  void SetPosition(const geometry::Pose & pose) {
-    SetPosition(pose.R, pose.T);
+  void SetStagingPosition(const geometry::Pose & pose) {
+    SetStagingPosition(pose.R, pose.T);
   }
 
-  void SetPosition(const g2o::SE3Quat & quaternion) {
-    SetPosition(quaternion.rotation().toRotationMatrix(), quaternion.translation());
+  void SetStagingPosition(const g2o::SE3Quat & quaternion) {
+    SetStagingPosition(quaternion.rotation().toRotationMatrix(), quaternion.translation());
   }
 
   void SetIdentity() {
-    TMatrix33 R;
-    TPoint3D T;
-    R.setIdentity();
-    T.setZero();
-    SetPosition(R, T);
+    SetStagingPosition(TMatrix33::Identity(), TVector3D::Zero());
+    ApplyStaging();
   }
 
  public:
   // Getters
   const geometry::Pose & GetPosition() const { return pose_; }
+  const geometry::Pose & GetStagingPosition() const { return staging_pose_; }
 
   geometry::Pose GetPositionWithLock() const {
     std::unique_lock<std::mutex> lock(position_mutex_);
     return pose_;
+  }
+
+  void ApplyStaging() {
+    pose_ = staging_pose_;
+    inverse_pose_ = pose_.GetInversePose();
   }
 
   const geometry::Pose & GetInversePosition() const { return inverse_pose_; }
@@ -54,15 +57,15 @@ class RigidObject {
     return inverse_pose_;
   }
  private:
-  void SetPosition(const TMatrix33 & R, const TPoint3D & T) {
-    pose_.R = R;
-    pose_.T = T;
-    inverse_pose_ = pose_.GetInversePose();
+  void SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) {
+    staging_pose_.R = R;
+    staging_pose_.T = T;
   }
 
  private:
   geometry::Pose pose_;
   geometry::Pose inverse_pose_;
+  geometry::Pose staging_pose_;
 
   mutable std::mutex position_mutex_;
 };

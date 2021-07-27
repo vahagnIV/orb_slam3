@@ -3,7 +3,6 @@
 //
 #include <g2o/solvers/eigen/linear_solver_eigen.h>
 
-
 #include "bundle_adjustment.h"
 #include <map/map_point.h>
 #include <logging.h>
@@ -37,9 +36,10 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
 
   // Collect frame positions
   for (auto frame_vertex: frame_map) {
-    if (nullptr == loop_kf || loop_kf->IsInitial())
-      frame_vertex.first->SetPosition(frame_vertex.second->estimate());
-    else {
+    if (nullptr == loop_kf || loop_kf->IsInitial()) {
+      frame_vertex.first->SetStagingPosition(frame_vertex.second->estimate());
+      frame_vertex.first->ApplyStaging();
+    } else {
       // TODO: Implement for loop closing
       std::runtime_error("This is not implemented yet");
     }
@@ -48,8 +48,9 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   // Collect Map Point positions
   for (auto mp_vertex: mp_map) {
     if (nullptr == loop_kf || loop_kf->IsInitial()) {
-      mp_vertex.first->SetPosition(mp_vertex.second->estimate());
-      mp_vertex.first->Refresh((*key_frames.begin())->GetFeatureExtractor());
+      mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
+      mp_vertex.first->CalculateNormalStaging();
+      mp_vertex.first->ApplyStaging();
     } else {
       std::runtime_error("BA not implemented for Loop closing");
     }
@@ -101,17 +102,22 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
   }
 
   for (auto to_delete: observations_to_delete) {
-    if(!to_delete.first->IsBad())
+    if (!to_delete.first->IsBad())
       to_delete.second->EraseMapPoint(to_delete.first);
   }
 
   for (auto mp_vertex: mp_map) {
-    if(!mp_vertex.first->IsBad())
-      mp_vertex.first->SetPosition(mp_vertex.second->estimate());
+    if (!mp_vertex.first->IsBad()) {
+      mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
+      mp_vertex.first->CalculateNormalStaging();
+      mp_vertex.first->ApplyStaging();
+    }
   }
   for (auto frame_vertex: frame_map) {
-    if (!frame_vertex.second->fixed())
-      frame_vertex.first->SetPosition(frame_vertex.second->estimate());
+    if (!frame_vertex.second->fixed()) {
+      frame_vertex.first->SetStagingPosition(frame_vertex.second->estimate());
+      frame_vertex.first->ApplyStaging();
+    }
   }
 
 }

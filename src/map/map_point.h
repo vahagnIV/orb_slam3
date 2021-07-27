@@ -44,9 +44,13 @@ class MapPoint {
 
   void EraseObservation(frame::KeyFrame *);
 
-  void Refresh(const features::IFeatureExtractor * feature_extractor);
+//  void Refresh(const features::IFeatureExtractor * feature_extractor);
 
-  void SetPosition(const TPoint3D & position);
+  void SetStagingPosition(const TPoint3D & position);
+  void ApplyStagingPosition();
+  void ApplyNormalStaging();
+  void ApplyMinMaxInvDistanceStaging();
+  void ApplyStaging();
 
   const features::DescriptorType GetDescriptor() const { return descriptor_; }
 
@@ -58,7 +62,7 @@ class MapPoint {
 
   precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
   precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
-  bool IsInKeyFrame(const frame::KeyFrame * keyframe) const ;
+  bool IsInKeyFrame(const frame::KeyFrame * keyframe) const;
   const frame::Observation & Observation(const frame::KeyFrame * key_frame) const;
 
   bool IsValid() const { return true; }
@@ -79,20 +83,22 @@ class MapPoint {
   void SetReplaced(map::MapPoint * replaced);
   map::MapPoint * GetReplaced();
 
-  void UpdateNormalAndDepth();
-  void SetMaxInvarianceDistance(precision_t max_invariance_distance) {
-    max_invariance_distance_ = max_invariance_distance;
+  void CalculateNormalStaging();
+
+  void SetStagingMaxInvarianceDistance(precision_t max_invariance_distance) {
+    staging_max_invariance_distance_ = max_invariance_distance;
   }
-  void SetMinInvarianceDistance(precision_t min_invariance_distance) {
-    min_invariance_distance_ = min_invariance_distance;
+  void SetStagingMinInvarianceDistance(precision_t min_invariance_distance) {
+    staging_min_invariance_distance_ = min_invariance_distance;
   }
 
- private:
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
+
  private:
   static std::atomic_uint64_t counter_;
   // Position in the world coordinate system
   TPoint3D position_;
+  TPoint3D staging_position_;
 
   // The keyframe => Observation map of observations
   MapType observations_;
@@ -102,7 +108,10 @@ class MapPoint {
 
   // The normal
   TVector3D normal_;
+  TVector3D staging_normal_;
+  precision_t staging_max_invariance_distance_;
   precision_t max_invariance_distance_;
+  precision_t staging_min_invariance_distance_;
   precision_t min_invariance_distance_;
 
   // Statistics on how many times the map point should have been

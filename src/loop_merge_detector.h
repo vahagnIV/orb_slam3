@@ -12,8 +12,7 @@ namespace orb_slam3 {
 class LoopMergeDetector : public PositionObserver {
 
  public:
-  LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database);
-  LoopMergeDetector() {}
+  explicit LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database);
   void RunIteration();
  private:
   enum DetectionResult {
@@ -24,12 +23,20 @@ class LoopMergeDetector : public PositionObserver {
  private:
   typedef std::unordered_set<frame::KeyFrame *> KeyFrameSet;
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
-  DetectionResult DetectLoopOrMerge(frame::KeyFrame * key_frame) const;
+  static bool DetectLoopOrMerge(const frame::KeyFrame * key_frame,
+                                frame::IKeyFrameDatabase::KeyFrameSet & current_neighbourhood,
+                                frame::KeyFrame * candidate_keyframe,
+                                geometry::Sim3Transformation & out_sim3_transformation);
  private:
   static bool Intersect(const KeyFrameSet & bow_candidate_neighbours, const KeyFrameSet & key_frame_neighbours);
   static void FindMapPointMatches(const frame::KeyFrame * current_key_frame,
                                   const LoopMergeDetector::KeyFrameSet & loop_neighbours,
                                   MapPointMatches & out_matches);
+  static void ListSurroundingWindow(const frame::KeyFrame * key_frame,
+                                    frame::IKeyFrameDatabase::KeyFrameSet & out_window);
+  static void ListAllMapPoints(const frame::IKeyFrameDatabase::KeyFrameSet & key_frames,
+                               std::unordered_set<map::MapPoint *> & out_mps);
+  static void SearchAndFuse();
  private:
   frame::IKeyFrameDatabase * key_frame_database_;
 

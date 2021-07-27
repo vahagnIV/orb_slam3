@@ -54,7 +54,6 @@ class BaseFrame : public geometry::RigidObject {
   virtual FrameType Type() const = 0;
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
   virtual const SensorConstants * GetSensorConstants() const { return sensor_constants_; }
-  virtual precision_t GetSimilarityScore(const BaseFrame * other) const = 0;
   //virtual bool Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Atlas * atlas) = 0;
   size_t Id() const { return id_; }
 

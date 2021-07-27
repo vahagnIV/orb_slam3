@@ -29,7 +29,6 @@ add_library(orbslam SHARED
         loop_merge_detector.cpp
         logging.cpp
 
-#        frame/frame_base.cpp
         frame/key_frame.cpp
         frame/monocular/base_monocular.cpp
         frame/monocular/monocular_frame.cpp
@@ -37,7 +36,6 @@ add_library(orbslam SHARED
         frame/covisibility_graph_node.cpp
         frame/observation.cpp
         frame/frame.cpp
-        frame/key_frame_database.cpp
         frame/database/DBoW2/dbo_w2_database.cpp
 
         camera/monocular_camera.cpp

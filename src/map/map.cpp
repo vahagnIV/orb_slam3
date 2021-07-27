@@ -5,6 +5,9 @@
 // == orb-slam3 ===
 #include "map.h"
 #include <frame/key_frame.h>
+#include <map/map_point.h>
+
+
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
 namespace orb_slam3 {
 namespace map {

@@ -8,6 +8,7 @@
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"
 #include <map/atlas.h>
+#include <map/map_point.h>
 
 // TODO: remove this in multithreading
 #include <loop_merge_detector.h>
@@ -216,8 +217,12 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);
   for (auto mp:mps) {
-    if (!mp->IsBad())
-      mp->Refresh(frame->GetFeatureExtractor());
+    if (!mp->IsBad()) {
+      mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
+      mp->CalculateNormalStaging();
+      mp->ApplyNormalStaging();
+    }
+
   }
   frame->GetCovisibilityGraph().Update();
 }
@@ -238,8 +243,11 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       kf->SetBad();
     }
     for (auto mp : map_points) {
-      if (!mp->IsBad())
-        mp->Refresh(kf->GetFeatureExtractor());
+      if (!mp->IsBad()) {
+        mp->CalculateNormalStaging();
+        mp->ApplyNormalStaging();
+        mp->ComputeDistinctiveDescriptor(kf->GetFeatureExtractor());
+      }
     }
   }
 
