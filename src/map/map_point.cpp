@@ -75,11 +75,6 @@ void MapPoint::SetBad() {
   map_->EraseMapPoint(this);
 }
 
-/*void MapPoint::Refresh(const features::IFeatureExtractor * feature_extractor) {
-  ComputeDistinctiveDescriptor(feature_extractor);
-  CalculateNormalStaging();
-}*/
-
 void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor) {
 
   std::vector<features::DescriptorType> descriptors;
