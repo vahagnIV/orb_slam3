@@ -51,6 +51,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
                                   const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
+  TVector3D GetNormalFromStaging(const TPoint3D & point) const override;
  private:
 
   void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);

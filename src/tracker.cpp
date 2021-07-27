@@ -267,10 +267,12 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     for (auto mp: map_points) {
       TPoint3D pose = mp->GetPosition();
       pose /= depths[depths.size() / 2];
-      mp->SetMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
-      mp->SetMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
-      mp->SetPosition(pose);
-      mp->Refresh(frame->GetFeatureExtractor());
+      mp->SetStagingMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
+      mp->SetStagingMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
+      mp->SetStagingPosition(pose);
+      mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
+      mp->CalculateNormalStaging();
+      mp->ApplyStaging();
     }
 
     reference_keyframe_ = current_key_frame;

@@ -29,7 +29,9 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
   SetMap(frame->GetMap());
   for (auto mp: map_points_) {
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
-    mp.second->Refresh(GetFeatureHandler()->GetFeatureExtractor());
+    mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
+    mp.second->CalculateNormalStaging();
+    mp.second->ApplyNormalStaging();
   }
   logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
   logging::RetrieveLogger()->debug("Number of map points:  {}", map_points_.size());
@@ -47,6 +49,12 @@ void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) c
 
 TVector3D MonocularKeyFrame::GetNormal(const TPoint3D & point) const {
   TPoint3D normal = GetInversePosition().T - point;
+  normal.normalize();
+  return normal;
+}
+
+TVector3D MonocularKeyFrame::GetNormalFromStaging(const TPoint3D & point) const {
+  TPoint3D normal = GetStagingPosition().GetInversePose().T - point;
   normal.normalize();
   return normal;
 }
@@ -171,7 +179,9 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
     AddMapPoint(map_point, match.first);
     other_frame->AddMapPoint(map_point, match.second);
 
-    map_point->Refresh(feature_handler_->GetFeatureExtractor());
+    map_point->ComputeDistinctiveDescriptor(feature_handler_->GetFeatureExtractor());
+    map_point->CalculateNormalStaging();
+    map_point->ApplyNormalStaging();
     out_newly_created.insert(map_point);
     ++newly_created_mps;
   }
