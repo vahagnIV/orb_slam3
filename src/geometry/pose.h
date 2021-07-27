@@ -23,11 +23,11 @@ struct Pose {
   }
 
   Pose();
-//  Pose(Pose && other);
+  Pose(Pose && other);
   Pose(const Pose & other);
   Pose(TMatrix33 R, TVector3D T);
 
-//  Pose & operator=(Pose && other);
+  Pose & operator=(Pose && other);
   Pose & operator=(const Pose & other);
 
   TVector3D Transform(const TPoint3D & point) const;

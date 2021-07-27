@@ -7,8 +7,8 @@
 namespace orb_slam3 {
 namespace geometry {
 
-//Pose::Pose(Pose && other) : R(std::move(other.R)), T(std::move(other.T)) {
-//}
+Pose::Pose(Pose && other) : R(std::move(other.R)), T(std::move(other.T)) {
+}
 
 Pose::Pose(const Pose & other) : R(other.R), T(other.T) {
 }
@@ -26,11 +26,11 @@ std::ostream & operator<<(std::ostream & stream, const Pose & p) {
   return stream;
 }
 
-//Pose & Pose::operator=(Pose && other) {
-//  R = std::move(other.R);
-//  T = std::move(other.T);
-//  return *this;
-//}
+Pose & Pose::operator=(Pose && other) {
+  R = std::move(other.R);
+  T = std::move(other.T);
+  return *this;
+}
 
 Pose & Pose::operator=(const Pose & other) {
   R = other.R;
