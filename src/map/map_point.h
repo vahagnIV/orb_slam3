@@ -47,6 +47,7 @@ class MapPoint {
   void Refresh(const features::IFeatureExtractor * feature_extractor);
 
   void SetPosition(const TPoint3D & position);
+  void ApplyStaging();
 
   const features::DescriptorType GetDescriptor() const { return descriptor_; }
 
@@ -93,6 +94,7 @@ class MapPoint {
   static std::atomic_uint64_t counter_;
   // Position in the world coordinate system
   TPoint3D position_;
+  TPoint3D staging_position_;
 
   // The keyframe => Observation map of observations
   MapType observations_;

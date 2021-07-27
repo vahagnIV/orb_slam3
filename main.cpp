@@ -366,10 +366,6 @@ A f(int x) {
 }
 
 int main(int argc, char * argv[]) {
-  A a (std::move(f(1))), b = f(2);
-  std::cout << "aaaa" << std::endl;
-  return 0;
-
   initialize();
   nlohmann::json config;
   LoadConfig(config);

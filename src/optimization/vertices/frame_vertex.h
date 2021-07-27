@@ -20,7 +20,7 @@ class FrameVertex : public g2o::VertexSE3Expmap {
  public:
   FrameVertex() = default;
   explicit FrameVertex(frame::BaseFrame * frame) : frame_(frame) {
-    setEstimate(g2o::SE3Quat(frame->GetPosition().R, frame->GetPosition().T));
+    setEstimate(g2o::SE3Quat(frame->GetStagingPosition().R, frame->GetStagingPosition().T));
   }
 
   frame::BaseFrame * GetFrame() { return frame_; }

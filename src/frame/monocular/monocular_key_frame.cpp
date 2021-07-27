@@ -24,7 +24,8 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->Id(),
                                                                         frame->GetFeatureHandler()),
                                                                BaseMonocular(*frame) {
-  SetPosition(frame->GetPosition());
+  SetStagingPosition(frame->GetPosition());
+  ApplyStaging();
   SetMap(frame->GetMap());
   for (auto mp: map_points_) {
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
@@ -42,15 +43,6 @@ FrameType MonocularKeyFrame::Type() const {
 
 void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
   BaseMonocular::ListMapPoints(out_map_points);
-}
-
-precision_t MonocularKeyFrame::GetSimilarityScore(const BaseFrame * other) const {
-  /* if (other->Type() != MONOCULAR) {
-     return 0;
-   }
-   return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
-                             dynamic_cast<const BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);*/
-  return 0;
 }
 
 TVector3D MonocularKeyFrame::GetNormal(const TPoint3D & point) const {

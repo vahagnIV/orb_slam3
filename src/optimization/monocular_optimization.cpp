@@ -94,7 +94,8 @@ void OptimizePose(MonocularFrame * frame) {
 
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);
 
-  frame->SetPosition(frame_vertex->estimate());
+  frame->SetStagingPosition(frame_vertex->estimate());
+  frame->ApplyStaging();
 
 }
 

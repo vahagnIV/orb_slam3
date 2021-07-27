@@ -85,7 +85,8 @@ bool MonocularFrame::Link(Frame * other) {
                                 from_frame->feature_handler_->GetFeatures()));
   cv::waitKey();
 
-  this->SetPosition(pose);
+  this->SetStagingPosition(pose);
+  this->ApplyStaging();
   std::unordered_set<map::MapPoint *> map_points;
   InitializeMapPointsFromMatches(matches, points, from_frame, map_points);
   logging::RetrieveLogger()->debug("Linking found {} matches", map_points_.size());
@@ -147,15 +148,6 @@ KeyFrame * MonocularFrame::CreateKeyFrame() {
 
 void MonocularFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
   BaseMonocular::ListMapPoints(out_map_points);
-}
-
-precision_t MonocularFrame::GetSimilarityScore(const BaseFrame * other) const {
-//  if (other->Type() != MONOCULAR) {
-//    return 0;
-//  }
-//  return vocabulary_->score(this->GetFeatures().bow_container.bow_vector,
-//                            dynamic_cast<const BaseMonocular *>(other)->GetFeatures().bow_container.bow_vector);
-  return 0;
 }
 
 bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
@@ -228,6 +220,7 @@ bool MonocularFrame::IsValid() const {
 
 void MonocularFrame::OptimizePose() {
   optimization::OptimizePose(this);
+  this->ApplyStaging();
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
@@ -287,7 +280,8 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityPar
 
 void MonocularFrame::UpdateFromReferenceKeyFrame() {
   if (reference_keyframe_) {
-    SetPosition(reference_keyframe_->GetPosition());
+    SetStagingPosition(reference_keyframe_->GetPosition());
+    ApplyStaging();
     map_points_ = reference_keyframe_->GetMapPoints();
   }
 }
@@ -342,8 +336,10 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
     SearchInVisiblePoints(out_visibles, 0.9);
     if (map_points_.size() >= 20) {
       OptimizePose();
-      if (map_points_.size() >= 10)
+      if (map_points_.size() >= 10) {
+        ApplyStaging();
         return true;
+      }
     }
   }
   map_points_.clear();
