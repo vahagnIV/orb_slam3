@@ -15,7 +15,7 @@ TEST_F(Sim3PoseTests, InverseReturnsCorrectTransformation) {
   system_under_test.T << 1, 6, 2;
   system_under_test.s = 2.2;
 
-  geometry::Sim3Transformation inverse = system_under_test.GetInversePose();
+  geometry::Sim3Transformation inverse = system_under_test.GetInverse();
   geometry::Sim3Transformation mul = inverse * system_under_test;
   ASSERT_DOUBLE_EQ(mul.s, 1);
   ASSERT_LE((mul.R - TMatrix33::Identity()).norm(), 1e-15);

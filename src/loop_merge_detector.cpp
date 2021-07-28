@@ -54,7 +54,7 @@ void LoopMergeDetector::RunIteration() {
 
           geometry::Sim3Transformation from_current_to_merge_candidate =
               merge_candidate->GetInversePosition() *
-              transformation.GetInversePose() *
+                  transformation.GetInverse() *
               message.frame->GetPosition();
 
           for(const auto & mp: current_window_map_points){
@@ -62,7 +62,7 @@ void LoopMergeDetector::RunIteration() {
           }
 
           for(auto keyframe: current_kf_window){
-            geometry::Sim3Transformation transform = from_current_to_merge_candidate * keyframe->GetPosition();
+            geometry::Sim3Transformation transform =  keyframe->GetPosition() * from_current_to_merge_candidate.GetInverse();
             keyframe->SetStagingPosition(transform.R, transform.T);
             keyframe->FuseMapPoints(current_window_map_points, true);
           }

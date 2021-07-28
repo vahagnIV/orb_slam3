@@ -13,7 +13,7 @@ struct Sim3Transformation {
 
   TVector3D Transform(const TPoint3D & point) const;
 
-  Sim3Transformation GetInversePose() const;
+  Sim3Transformation GetInverse() const;
 
   Sim3Transformation operator*(const Sim3Transformation & other) const;
   Sim3Transformation operator*(const Pose & se3_other) const;
