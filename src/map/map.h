@@ -7,6 +7,7 @@
 
 // == stl =====
 #include <unordered_set>
+#include <ostream>
 
 namespace orb_slam3 {
 

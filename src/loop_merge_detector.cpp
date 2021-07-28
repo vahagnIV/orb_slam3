@@ -67,6 +67,8 @@ void LoopMergeDetector::RunIteration() {
             keyframe->FuseMapPoints(current_window_map_points, true);
           }
 
+//          optimization::
+
 
 
           // TODO: merge
