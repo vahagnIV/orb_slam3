@@ -4,6 +4,7 @@
 
 #include "loop_merge_detector.h"
 #include <map/map.h>
+#include <map/map_point.h>
 #include <geometry/ransac_sim3_solver.h>
 
 //TODO: remove in production
@@ -50,6 +51,23 @@ void LoopMergeDetector::RunIteration() {
           std::unordered_set<map::MapPoint *> candidate_window_map_points;
           ListSurroundingWindow(merge_candidate, candidate_kf_window);
           ListAllMapPoints(candidate_kf_window, candidate_window_map_points);
+
+          geometry::Sim3Transformation from_current_to_merge_candidate =
+              merge_candidate->GetInversePosition() *
+              transformation.GetInversePose() *
+              message.frame->GetPosition();
+
+          for(const auto & mp: current_window_map_points){
+            mp->SetStagingPosition(from_current_to_merge_candidate.Transform(mp->GetPosition()));
+          }
+
+          for(auto keyframe: current_kf_window){
+            geometry::Sim3Transformation transform = from_current_to_merge_candidate * keyframe->GetPosition();
+            keyframe->SetStagingPosition(transform.R, transform.T);
+            keyframe->FuseMapPoints(current_window_map_points, true);
+          }
+
+
 
           // TODO: merge
           return;

@@ -212,7 +212,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   std::unordered_set<map::MapPoint *> map_points;
   frame->ListMapPoints(map_points);
   for (auto kf: second_neighbours) {
-    kf->FuseMapPoints(map_points);
+    kf->FuseMapPoints(map_points, false);
   }
   frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);

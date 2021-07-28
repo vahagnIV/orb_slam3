@@ -56,12 +56,18 @@ class MapPoint {
 
   const TPoint3D & GetPosition() const { return position_; }
   const TVector3D & GetNormal() const { return normal_; }
+  const TPoint3D & GetStagingPosition() const { return staging_position_; }
+  const TVector3D & GetStagingNormal() const { return staging_normal_; }
 
   const MapType Observations() const;
   size_t GetObservationCount() const;
 
   precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
   precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
+
+  precision_t GetStagingMaxInvarianceDistance() const { return 1.2 * staging_max_invariance_distance_; }
+  precision_t GetStagingMinInvarianceDistance() const { return 0.8 * staging_min_invariance_distance_; }
+
   bool IsInKeyFrame(const frame::KeyFrame * keyframe) const;
   const frame::Observation & Observation(const frame::KeyFrame * key_frame) const;
 

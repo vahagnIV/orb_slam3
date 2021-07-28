@@ -29,7 +29,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  void FuseMapPoints(MapPointSet & map_points) override;
+  void FuseMapPoints(MapPointSet & map_points, bool use_staging) override;
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
  protected:
@@ -54,7 +54,9 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   TVector3D GetNormalFromStaging(const TPoint3D & point) const override;
  private:
 
-  void FilterVisibleMapPoints(const MapPointSet & map_points, std::list<MapPointVisibilityParams> & out_visibles);
+  void FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
+                              std::list<MapPointVisibilityParams> & out_visibles,
+                              bool use_staging);
   void EraseMapPointImpl(const map::MapPoint *, bool check_bad);
   void EraseMapPointImpl(size_t feature_id, bool check_bad);
   int GetMapPointLevel(const map::MapPoint * map_point) const;

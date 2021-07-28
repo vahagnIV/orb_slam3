@@ -192,9 +192,9 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
 
 }
 
-void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
+void MonocularKeyFrame::FuseMapPoints(MapPointSet & map_points, bool use_staging) {
   std::list<MapPointVisibilityParams> visibles;
-  FilterVisibleMapPoints(map_points, visibles);
+  FilterVisibleMapPoints(map_points, visibles, use_staging);
   typedef features::matching::iterators::ProjectionSearchIterator IteratorType;
   IteratorType begin(visibles.begin(), visibles.end(), &feature_handler_->GetFeatures());
   IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
@@ -225,22 +225,25 @@ void MonocularKeyFrame::FuseMapPoints(BaseFrame::MapPointSet & map_points) {
 }
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
-                                               std::list<MapPointVisibilityParams> & out_visibles) {
+                                               std::list<MapPointVisibilityParams> & out_visibles,
+                                               bool use_staging) {
   MapPointVisibilityParams visible_map_point;
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
-  auto pose = GetPosition();
+
+  auto pose = use_staging ? GetStagingPosition() : GetPosition();
   auto inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
     if (mp->IsBad()) continue;
     if (!mp->IsInKeyFrame(this)) {
       visible_map_point.map_point = mp;
+      TPoint3D map_point_position = use_staging ? mp->GetStagingPosition() : mp->GetPosition();
       if (local_map_points.find(mp) == local_map_points.end() &&
-          BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
-                                      mp->GetPosition(),
-                                      mp->GetMinInvarianceDistance(),
-                                      mp->GetMaxInvarianceDistance(),
-                                      mp->GetNormal(),
+          BaseMonocular::PointVisible(pose.Transform(map_point_position),
+                                      use_staging ? mp->GetStagingPosition() : mp->GetPosition(),
+                                      use_staging ? mp->GetStagingMinInvarianceDistance() : mp->GetMinInvarianceDistance(),
+                                      use_staging ? mp->GetStagingMaxInvarianceDistance() : mp->GetMaxInvarianceDistance(),
+                                      use_staging? mp->GetStagingNormal() :mp->GetNormal(),
                                       inverse_pose.T,
                                       GetSensorConstants()->max_allowed_discrepancy,
                                       -1,

@@ -38,7 +38,7 @@ Sim3Transformation Sim3Transformation::operator*(const Pose & se3_other) const {
   return Sim3Transformation{.R = R * se3_other.R, .T = s * R * se3_other.T + T, .s = s};
 }
 
-Sim3Transformation operator*(const Pose & se3_other, Sim3Transformation & self) {
+Sim3Transformation operator*(const Pose & se3_other, const Sim3Transformation & self) {
   return Sim3Transformation{.R = se3_other.R * self.R, .T = se3_other.R * self.T + se3_other.T, .s = self.s};
 }
 
