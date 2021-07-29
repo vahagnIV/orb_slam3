@@ -6,6 +6,7 @@
 #include <map/map.h>
 #include <map/map_point.h>
 #include <geometry/ransac_sim3_solver.h>
+#include <optimization/bundle_adjustment.h>
 
 //TODO: remove in production
 #include <debug/debug_utils.h>
@@ -55,21 +56,23 @@ void LoopMergeDetector::RunIteration() {
           geometry::Sim3Transformation from_current_to_merge_candidate =
               merge_candidate->GetInversePosition() *
                   transformation.GetInverse() *
-              message.frame->GetPosition();
+                  message.frame->GetPosition();
 
-          for(const auto & mp: current_window_map_points){
+          for (const auto & mp: current_window_map_points) {
             mp->SetStagingPosition(from_current_to_merge_candidate.Transform(mp->GetPosition()));
           }
 
-          for(auto keyframe: current_kf_window){
-            geometry::Sim3Transformation transform =  keyframe->GetPosition() * from_current_to_merge_candidate.GetInverse();
+          for (auto keyframe: current_kf_window) {
+            geometry::Sim3Transformation
+                transform = keyframe->GetPosition() * from_current_to_merge_candidate.GetInverse();
             keyframe->SetStagingPosition(transform.R, transform.T);
             keyframe->FuseMapPoints(current_window_map_points, true);
           }
 
-//          optimization::
-
-
+          optimization::LocalBundleAdjustment(current_kf_window, candidate_kf_window, current_window_map_points);
+          cv::Mat mm = cv::imread("/home/vahagn/Pictures/731c5e7b912764af7be25763ac7e098c.jpg");
+          cv::imshow("bad", mm);
+          cv::waitKey();
 
           // TODO: merge
           return;

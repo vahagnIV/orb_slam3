@@ -10,7 +10,7 @@ namespace optimization {
 namespace vertices {
 
 MapPointVertex::MapPointVertex(map::MapPoint * map_point)  : map_point_(map_point) {
-  setEstimate(map_point->GetPosition());
+  setEstimate(map_point->GetStagingPosition());
   setMarginalized(true);
   setFixed(false);
 }
