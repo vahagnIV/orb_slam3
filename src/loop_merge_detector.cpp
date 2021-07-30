@@ -104,11 +104,7 @@ void LoopMergeDetector::RunIteration() {
           }
           atlas_->SetCurrentMap(merge_candidate->GetMap());
 
-          cv::Mat mm = cv::imread("/home/vahagn/Pictures/731c5e7b912764af7be25763ac7e098c.jpg");
-          cv::imshow("bad", mm);
-          cv::waitKey();
 
-          // TODO: merge
           return;
         }
       }
