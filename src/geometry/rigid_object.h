@@ -30,6 +30,11 @@ class RigidObject {
     SetStagingPosition(quaternion.rotation().toRotationMatrix(), quaternion.translation());
   }
 
+  void SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) {
+    staging_pose_.R = R;
+    staging_pose_.T = T;
+  }
+
   void SetIdentity() {
     SetStagingPosition(TMatrix33::Identity(), TVector3D::Zero());
     ApplyStaging();
@@ -55,11 +60,6 @@ class RigidObject {
   geometry::Pose GetInversePositionWithLock() const {
     std::unique_lock<std::mutex> lock(position_mutex_);
     return inverse_pose_;
-  }
- private:
-  void SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) {
-    staging_pose_.R = R;
-    staging_pose_.T = T;
   }
 
  private:

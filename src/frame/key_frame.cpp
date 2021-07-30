@@ -30,5 +30,19 @@ void KeyFrame::SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
   pose_gba_.T = T;
 }
 
+CovisibilityGraphNode & KeyFrame::GetCovisibilityGraph() {
+  return covisibility_graph_;
+}
+
+const CovisibilityGraphNode & KeyFrame::GetCovisibilityGraph() const {
+  return covisibility_graph_;
+}
+
+bool KeyFrame::IsInitial() const { return is_initial_; }
+
+void KeyFrame::SetInitial(bool initial) { is_initial_ = initial; }
+
+bool KeyFrame::IsBad() const { return bad_flag_; }
+
 }
 }

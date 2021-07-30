@@ -14,7 +14,7 @@ TVector3D Sim3Transformation::Transform(const TPoint3D & point) const {
   return s * (R * point) + T;
 }
 
-Sim3Transformation Sim3Transformation::GetInversePose() const {
+Sim3Transformation Sim3Transformation::GetInverse() const {
   precision_t s_inv = 1 / s;
   return Sim3Transformation{.R = R.transpose(), .T = -R.transpose() * T * s_inv, .s = s_inv};
 }
@@ -38,8 +38,8 @@ Sim3Transformation Sim3Transformation::operator*(const Pose & se3_other) const {
   return Sim3Transformation{.R = R * se3_other.R, .T = s * R * se3_other.T + T, .s = s};
 }
 
-Sim3Transformation operator*(const Pose & se3_other, Sim3Transformation & self) {
-  return Sim3Transformation{.R = se3_other.R * self.R, .T = se3_other.R * self.T + se3_other.T, .s = self.s};
+Sim3Transformation operator*(const Pose & se3, const Sim3Transformation & sim3) {
+  return Sim3Transformation{.R = se3.R * sim3.R, .T = se3.R * sim3.T + se3.T, .s = sim3.s};
 }
 
 }

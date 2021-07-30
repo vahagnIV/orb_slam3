@@ -47,7 +47,7 @@ bool RANSACSim3Solver::operator()(Sim3Transformation & out_pose) {
 
 size_t RANSACSim3Solver::CheckPose(const Sim3Transformation & pose) {
   size_t number_of_inliers = 0;
-  Sim3Transformation inverse_pose = pose.GetInversePose();
+  Sim3Transformation inverse_pose = pose.GetInverse();
   assert(matches_.size() == projections_.size() && matches_.size() == errors_.size());
   for (size_t i = 0; i < matches_.size(); ++i) {
 

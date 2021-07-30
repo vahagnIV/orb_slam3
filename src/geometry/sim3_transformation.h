@@ -13,11 +13,11 @@ struct Sim3Transformation {
 
   TVector3D Transform(const TPoint3D & point) const;
 
-  Sim3Transformation GetInversePose() const;
+  Sim3Transformation GetInverse() const;
 
   Sim3Transformation operator*(const Sim3Transformation & other) const;
   Sim3Transformation operator*(const Pose & se3_other) const;
-  friend Sim3Transformation operator*(const Pose & se3_other, Sim3Transformation & self) ;
+  friend Sim3Transformation operator*(const Pose & se3_other, const Sim3Transformation & self) ;
 
   friend std::ostream & operator<<(std::ostream & stream, const Sim3Transformation & p);
 

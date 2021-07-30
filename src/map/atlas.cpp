@@ -25,5 +25,8 @@ void Atlas::CreateNewMap() {
 Atlas::~Atlas() {
 
 }
+void Atlas::SetCurrentMap(map::Map * map) {
+  current_map_ = map;
+}
 }
 }

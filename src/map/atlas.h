@@ -15,6 +15,7 @@ namespace map {
 class Atlas {
  public:
   Atlas();
+  void SetCurrentMap(map::Map * map);
   Map * GetCurrentMap();
   void CreateNewMap();
   ~Atlas();

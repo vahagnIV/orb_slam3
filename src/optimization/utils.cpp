@@ -126,7 +126,7 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
                  [](const std::pair<map::MapPoint *, size_t> & pair) {
                    return std::pair<size_t, map::MapPoint *>(pair.second, pair.first);
                  });
-//  geometry::Sim3Transformation sim3_transformation_inverse = in_out_transformation.GetInversePose();
+//  geometry::Sim3Transformation sim3_transformation_inverse = in_out_transformation.GetInverse();
 
   for (auto it: to_map_points) {
     size_t to_feature_id = it.first;

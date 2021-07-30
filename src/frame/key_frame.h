@@ -16,6 +16,8 @@ class Observation;
 
 class KeyFrame : public BaseFrame {
  public:
+  typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
+
   KeyFrame(TimePoint time_point,
            const std::string & filename,
            const SensorConstants * sensor_constants,
@@ -23,26 +25,86 @@ class KeyFrame : public BaseFrame {
            std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler);
 
   virtual ~KeyFrame() = default;
+
  public:
+  /*!
+   * Calculates the normal of a point to the origin of the local coordinate frame
+   * @param point the point
+   * @return the normal
+   */
   virtual TVector3D GetNormal(const TPoint3D & point) const = 0;
+
+  /*!
+   * Same as "GetNormal" however uses the staging variables
+   * @param point
+   * @return
+   */
   virtual TVector3D GetNormalFromStaging(const TPoint3D & point) const = 0;
-  CovisibilityGraphNode & GetCovisibilityGraph() {
-    return covisibility_graph_;
-  }
-  const CovisibilityGraphNode & GetCovisibilityGraph() const {
-    return covisibility_graph_;
-  }
-  bool IsInitial() const { return is_initial_; }
-  void SetInitial(bool initial) { is_initial_ = initial; }
-  bool IsBad() const { return bad_flag_; }
+
+  /*!
+   * Getter for the covisibility graph
+   * @return
+   */
+  CovisibilityGraphNode & GetCovisibilityGraph() ;
+
+  /*!
+   * Const getter for the covisibility graph
+   * @return
+   */
+  const CovisibilityGraphNode & GetCovisibilityGraph() const ;
+
+  /*!
+   * Checks if the frame is the initial frame in the map
+   * @return true is initial
+   */
+  bool IsInitial() const ;
+
+  /*!
+   * Sets the initial flag to true
+   * @param initial
+   */
+  void SetInitial(bool initial) ;
+
+  /*!
+   * Checks if the keyframe should be considered bad
+   * @return true if bad
+   */
+  bool IsBad() const ;
+
+  /*!
+   * Sets the bad flag and removes the keyframe from the graph
+   */
   virtual void SetBad();
+
   void SetPoseGBA(const TMatrix33 & R, const TVector3D & T);
   void SetKeyFrameGBA(KeyFrame * keyframe) { kf_gba_ = keyframe; }
+
+  /*!
+   * Creates new map points by matching features between the current frame and the "other"
+   * @param other The other frame
+   * @param out_newly_created output set of newly created map points
+   */
   virtual void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) = 0;
-  virtual void FuseMapPoints(MapPointSet & map_points) = 0;
+
+  /*!
+   * Matches the map_points to the map points in the current keyframe and
+   * replaces those that are matched with the corresponding map points of the current frame
+   * @param map_points - the map points to match
+   */
+  virtual void FuseMapPoints(MapPointSet & map_points, bool use_staging) = 0;
+
+  /*!
+   * Erases the map point from the current frame
+   */
   virtual void EraseMapPoint(const map::MapPoint *) = 0;
+
+  /*!
+   * Replaces the map point with the map point from the observation
+   * @param map_point map point to replace
+   * @param observation the new observation
+   */
   virtual void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) = 0;
-  typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
+
   virtual bool FindSim3Transformation(const MapPointMatches & map_point_matches,
                                       const KeyFrame * other,
                                       geometry::Sim3Transformation & out_transormation) const = 0;
