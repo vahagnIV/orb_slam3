@@ -7,12 +7,13 @@
 
 #include "position_observer.h"
 #include <frame/database/ikey_frame_database.h>
+#include <map/atlas.h>
 namespace orb_slam3 {
 
 class LoopMergeDetector : public PositionObserver {
 
  public:
-  explicit LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database);
+  LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database, map::Atlas * atlas);
   void RunIteration();
  private:
   enum DetectionResult {
@@ -39,6 +40,7 @@ class LoopMergeDetector : public PositionObserver {
   static void SearchAndFuse();
  private:
   frame::IKeyFrameDatabase * key_frame_database_;
+  map::Atlas * atlas_;
 
 };
 

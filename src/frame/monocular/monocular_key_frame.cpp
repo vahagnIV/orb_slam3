@@ -5,6 +5,7 @@
 #include "monocular_key_frame.h"
 #include "monocular_frame.h"
 #include <map/map_point.h>
+#include <map/map.h>
 #include <logging.h>
 #include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/iterators/projection_search_iterator.h>
@@ -222,6 +223,12 @@ void MonocularKeyFrame::FuseMapPoints(MapPointSet & map_points, bool use_staging
       }
     }
   }
+}
+
+void MonocularKeyFrame::SetMap(map::Map * map) {
+  if(map_)
+    map_->EraseKeyFrame(this);
+  BaseFrame::SetMap(map);
 }
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,

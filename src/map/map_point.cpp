@@ -22,12 +22,12 @@ MapPoint::MapPoint(TPoint3D point,
     : /*position_(std::move(point)),
       max_invariance_distance_(0),
       min_invariance_distance_(0),*/
-      visible_(1),
-      found_(1),
-      map_(map),
-      bad_flag_(false),
-      first_observed_frame_id_(first_observed_frame_id),
-      replaced_map_point_(nullptr) {
+    visible_(1),
+    found_(1),
+    map_(map),
+    bad_flag_(false),
+    first_observed_frame_id_(first_observed_frame_id),
+    replaced_map_point_(nullptr) {
   SetStagingPosition(point);
   SetStagingMinInvarianceDistance(min_invariance_distance);
   SetStagingMaxInvarianceDistance(max_invariance_distance);
@@ -73,6 +73,11 @@ void MapPoint::SetBad() {
     observations_.begin()->second.GetKeyFrame()->EraseMapPoint(this);
   }
   map_->EraseMapPoint(this);
+}
+
+void MapPoint::SetMap(map::Map * map) {
+  map_->EraseMapPoint(this);
+  map_ = map;
 }
 
 void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor) {

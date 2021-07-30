@@ -9,10 +9,7 @@
 #include <unordered_set>
 
 // == orb-slam3 ===
-#include "../features.h"
-#include "../ifeature_extractor.h"
-#include "../match.h"
-#include "validators/imatch_validator.h"
+#include <features/ifeature_extractor.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -25,7 +22,6 @@ class SNNMatcher {
                              typename IteratorType::value_type::iterator::value_type::id_type> MatchMapType;
   typedef typename IteratorType::value_type::iterator::value_type::id_type FromIdType;
   typedef typename IteratorType::value_type::id_type ToIdType;
-  typedef typename validators::IMatchValidator<ToIdType, FromIdType> ValidatorType;
 
   SNNMatcher(const precision_t nearest_neighbour_ratio, const unsigned threshold) :
       nearest_neighbour_ratio_(nearest_neighbour_ratio),
@@ -50,14 +46,7 @@ class SNNMatcher {
         unsigned distance = feature_extractor->ComputeDistance(d1, d2);
         if (distance > THRESHOLD_)
           continue;
-        bool validator_pass = true;
-        for (auto val: validators_)
-          if (!val->Validate(it_to->GetId(), it_from->GetId())) {
-            validator_pass = false;
-            break;
-          }
-        if (!validator_pass)
-          continue;
+
         if (distance < best_distance) {
           from_best_it = it_from;
           second_best_distance = best_distance;
@@ -81,21 +70,18 @@ class SNNMatcher {
       }
     }
 
+#ifndef NDEBUG
     std::unordered_set<FromIdType> validation_set;
     for (auto match: out_matches) {
       assert(validation_set.find(match.second) == validation_set.end());
       validation_set.insert(match.second);
     }
   }
-
-  void AddValidator(ValidatorType * validator) {
-    validators_.push_back(validator);
-  }
+#endif
 
  private:
   const precision_t nearest_neighbour_ratio_;
   const unsigned THRESHOLD_;
-  std::vector<ValidatorType *> validators_;
 };
 
 }

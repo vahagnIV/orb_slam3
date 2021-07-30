@@ -12,8 +12,8 @@
 #include <debug/debug_utils.h>
 namespace orb_slam3 {
 
-LoopMergeDetector::LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database) :
-    key_frame_database_(key_frame_database) {
+LoopMergeDetector::LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database, map::Atlas * atlas) :
+    key_frame_database_(key_frame_database), atlas_(atlas) {
 }
 
 void LoopMergeDetector::RunIteration() {
@@ -37,12 +37,13 @@ void LoopMergeDetector::RunIteration() {
 
       for (const auto & merge_candidate: merge_candidates) {
         if (merge_candidate->IsBad()) continue;
-        geometry::Sim3Transformation transformation;
-        if (DetectLoopOrMerge(message.frame, key_frame_neighbours, merge_candidate, transformation)) {
+        geometry::Sim3Transformation L12;
+        if (DetectLoopOrMerge(message.frame, key_frame_neighbours, merge_candidate, L12)) {
           std::cout << "==================================" << std::endl;
-          transformation.print();
+          L12.print();
           std::cout << "==================================" << std::endl;
 
+          // TODO: Stop Local Mapper
           frame::IKeyFrameDatabase::KeyFrameSet current_kf_window;
           std::unordered_set<map::MapPoint *> current_window_map_points;
           ListSurroundingWindow(message.frame, current_kf_window);
@@ -53,23 +54,56 @@ void LoopMergeDetector::RunIteration() {
           ListSurroundingWindow(merge_candidate, candidate_kf_window);
           ListAllMapPoints(candidate_kf_window, candidate_window_map_points);
 
-          geometry::Sim3Transformation from_current_to_merge_candidate =
+          geometry::Sim3Transformation G21 =
               merge_candidate->GetInversePosition() *
-                  transformation.GetInverse() *
+                  L12.GetInverse() *
                   message.frame->GetPosition();
 
-          for (const auto & mp: current_window_map_points) {
-            mp->SetStagingPosition(from_current_to_merge_candidate.Transform(mp->GetPosition()));
+          geometry::Sim3Transformation G12 = G21.GetInverse();
+          for (auto keyframe: message.frame->GetMap()->GetAllKeyFrames()) {
+            if (keyframe->IsBad())
+              continue;
+            geometry::Sim3Transformation
+            transform = keyframe->GetPosition() * G12;
+
+            keyframe->SetStagingPosition(transform.R, transform.T * G21.s);
           }
 
-          for (auto keyframe: current_kf_window) {
-            geometry::Sim3Transformation
-                transform = keyframe->GetPosition() * from_current_to_merge_candidate.GetInverse();
-            keyframe->SetStagingPosition(transform.R, transform.T);
+          for (const auto & mp: message.frame->GetMap()->GetAllMapPoints()) {
+            if (mp->IsBad())
+              continue;
+            mp->SetStagingPosition(G21.Transform(mp->GetPosition()));
+            mp->SetStagingMinInvarianceDistance(
+                mp->GetMinInvarianceDistance() / 1.2 * G21.s);
+            mp->SetStagingMinInvarianceDistance(
+                mp->GetMinInvarianceDistance() / 0.8 * G21.s);
+            mp->CalculateNormalStaging();
+          }
+
+          for (auto keyframe: message.frame->GetMap()->GetAllKeyFrames()) {
+            if (keyframe->IsBad())
+              continue;
             keyframe->FuseMapPoints(current_window_map_points, true);
           }
-
+          // TODO: release local mapper
           optimization::LocalBundleAdjustment(current_kf_window, candidate_kf_window, current_window_map_points);
+
+          // TODO: Stop everything
+          for (auto mp: message.frame->GetMap()->GetAllMapPoints()) {
+            if (mp->IsBad())
+              continue;
+            mp->SetMap(merge_candidate->GetMap());
+            mp->ApplyStaging();
+          }
+
+          for (auto kf: message.frame->GetMap()->GetAllKeyFrames()) {
+            if (kf->IsBad())
+              continue;
+            kf->SetMap(merge_candidate->GetMap());
+            kf->ApplyStaging();
+          }
+          atlas_->SetCurrentMap(merge_candidate->GetMap());
+
           cv::Mat mm = cv::imread("/home/vahagn/Pictures/731c5e7b912764af7be25763ac7e098c.jpg");
           cv::imshow("bad", mm);
           cv::waitKey();

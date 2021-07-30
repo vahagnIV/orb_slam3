@@ -241,7 +241,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Tracker tracker(atlas);
   orb_slam3::LocalMapper local_mapper(atlas, kf_database);
   tracker.AddObserver(&local_mapper);
-  orb_slam3::LoopMergeDetector lp_detector(kf_database);
+  orb_slam3::LoopMergeDetector lp_detector(kf_database, atlas);
   local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
   //local_mapper.Start();

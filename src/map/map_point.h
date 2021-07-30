@@ -82,6 +82,7 @@ class MapPoint {
   unsigned GetFound() const { return found_; }
   static size_t GetTotalMapPointCount() { return counter_; }
   Map * GetMap() { return map_; }
+  void SetMap(map::Map * map);
   inline bool IsBad() const { return bad_flag_; }
   void SetBad();
   ~MapPoint();

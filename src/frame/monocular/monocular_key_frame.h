@@ -32,6 +32,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void FuseMapPoints(MapPointSet & map_points, bool use_staging) override;
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
+  void SetMap(map::Map * map) override;
  protected:
   void SerializeToStream(std::ostream & stream) const override;
  public:
