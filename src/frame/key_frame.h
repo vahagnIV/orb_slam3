@@ -27,6 +27,9 @@ class KeyFrame : public BaseFrame {
   virtual ~KeyFrame() = default;
 
  public:
+
+  virtual void Initialize() = 0;
+
   /*!
    * Calculates the normal of a point to the origin of the local coordinate frame
    * @param point the point

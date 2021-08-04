@@ -26,7 +26,7 @@ BaseMonocular::BaseMonocular(const BaseMonocular & other)
       map_point_mutex_() {}
 
 void BaseMonocular::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
-//  std::unique_lock<std::mutex> lock(map_point_mutex_);
+  std::unique_lock<std::recursive_mutex> lock(map_point_mutex_);
   for (auto mp_id: map_points_) {
     if (!mp_id.second->IsBad()) {
       out_map_points.insert(mp_id.second);
@@ -35,7 +35,7 @@ void BaseMonocular::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_
 }
 
 BaseMonocular::MonocularMapPoints BaseMonocular::GetMapPoints() const {
-//  std::unique_lock<std::mutex> lock(map_point_mutex_);
+  std::unique_lock<std::recursive_mutex> lock(map_point_mutex_);
   std::map<size_t, map::MapPoint *> result;
   std::copy_if(map_points_.begin(),
                map_points_.end(),
@@ -45,16 +45,19 @@ BaseMonocular::MonocularMapPoints BaseMonocular::GetMapPoints() const {
 }
 
 void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
+  std::unique_lock<std::recursive_mutex> lock(map_point_mutex_);
   assert(!MapPointExists(map_point));
   map_points_[feature_id] = map_point;
 }
 
 void BaseMonocular::EraseMapPoint(size_t feature_id) {
+  std::unique_lock<std::recursive_mutex> lock(map_point_mutex_);
   assert(map_points_.find(feature_id) != map_points_.end());
   map_points_.erase(feature_id);
 }
 
 bool BaseMonocular::MapPointExists(const map::MapPoint * map_point) const {
+  std::unique_lock<std::recursive_mutex> lock(map_point_mutex_);
   for (auto mp: map_points_) {
     if (mp.second == map_point) {
       return true;

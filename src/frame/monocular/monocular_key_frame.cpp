@@ -28,11 +28,22 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
   SetStagingPosition(frame->GetPosition());
   ApplyStaging();
   SetMap(frame->GetMap());
-  for (auto mp: map_points_) {
-    mp.second->AddObservation(Observation(mp.second, this, mp.first));
-    mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
-    mp.second->CalculateNormalStaging();
-    mp.second->ApplyNormalStaging();
+
+}
+
+void MonocularKeyFrame::Initialize() {
+  auto mp = map_points_.begin();
+
+  while (mp!= map_points_.end()) {
+    if(mp->second->IsBad()){
+      mp = map_points_.erase(mp);
+      continue;
+    }
+    mp->second->AddObservation(Observation(mp->second, this, mp->first));
+    mp->second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
+    mp->second->CalculateNormalStaging();
+    mp->second->ApplyNormalStaging();
+    ++mp;
   }
   logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
   logging::RetrieveLogger()->debug("Number of map points:  {}", map_points_.size());
@@ -226,7 +237,7 @@ void MonocularKeyFrame::FuseMapPoints(MapPointSet & map_points, bool use_staging
 }
 
 void MonocularKeyFrame::SetMap(map::Map * map) {
-  if(map_)
+  if (map_)
     map_->EraseKeyFrame(this);
   BaseFrame::SetMap(map);
 }
@@ -248,9 +259,11 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
       if (local_map_points.find(mp) == local_map_points.end() &&
           BaseMonocular::PointVisible(pose.Transform(map_point_position),
                                       use_staging ? mp->GetStagingPosition() : mp->GetPosition(),
-                                      use_staging ? mp->GetStagingMinInvarianceDistance() : mp->GetMinInvarianceDistance(),
-                                      use_staging ? mp->GetStagingMaxInvarianceDistance() : mp->GetMaxInvarianceDistance(),
-                                      use_staging? mp->GetStagingNormal() :mp->GetNormal(),
+                                      use_staging ? mp->GetStagingMinInvarianceDistance()
+                                                  : mp->GetMinInvarianceDistance(),
+                                      use_staging ? mp->GetStagingMaxInvarianceDistance()
+                                                  : mp->GetMaxInvarianceDistance(),
+                                      use_staging ? mp->GetStagingNormal() : mp->GetNormal(),
                                       inverse_pose.T,
                                       GetSensorConstants()->max_allowed_discrepancy,
                                       -1,

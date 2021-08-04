@@ -27,6 +27,8 @@ LocalMapper::~LocalMapper() {
 
 void LocalMapper::Run() {
   while (!cancelled_) {
+    RunIteration();
+    continue;
     accept_key_frames_ = false;
     UpdateMessage message;
     GetUpdateQueue().wait_dequeue(message);
@@ -83,6 +85,7 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 }
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
+  keyframe->Initialize();
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ListMapPoints(map_points);
   for (auto mp: map_points) {

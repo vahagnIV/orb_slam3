@@ -49,10 +49,10 @@ void FillIntrinsicsAndDistortionCoeffsForLiveCameraTest(
     std::vector<orb_slam3::camera::MonocularCamera::Scalar> & intrinsics,
     std::vector<orb_slam3::camera::MonocularCamera::Scalar> & distortion_coeffs) {
 
-  intrinsics.push_back(8.1225318847808785e+02);
-  intrinsics.push_back(8.1565514576653572e+02);
-  intrinsics.push_back(4.0253426614624243e+02);
-  intrinsics.push_back(2.5644193555635479e+02);
+  intrinsics.push_back(7.8703054413601319e+02);
+  intrinsics.push_back(7.8926598592159007e+02);
+  intrinsics.push_back(3.1196540867477256e+02);
+  intrinsics.push_back(2.7125352035791116e+02);
 
   /*
   distortion_coeffs = { 9.1027671808818211e-02,
@@ -61,11 +61,8 @@ void FillIntrinsicsAndDistortionCoeffsForLiveCameraTest(
                             1.9992278275951163e-03,
                             0. };
                             */
-  distortion_coeffs = {8.0260387888370061e-02,
-                       -2.3658494730230581e-01,
-                       6.0946691237477612e-04,
-                       3.1997222204038837e-04,
-                       0.};
+  distortion_coeffs = {1.4801986156211303e-01, -8.0221045090808485e-01,
+                       -3.7003855409561658e-03, 2.6651562304416433e-03, 0.};
 }
 
 void FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(
@@ -168,7 +165,14 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
   orb_slam3::frame::SensorConstants constants;
   constants.min_mp_disappearance_count = 2;
+  constants.max_allowed_discrepancy = 5.9991;
   constants.number_of_keyframe_to_search_lm = 20;
+  constants.projection_search_radius_multiplier = 1.;
+  constants.projection_search_radius_multiplier_after_relocalization = 5.;
+  constants.projection_search_radius_multiplier_after_lost = 15.;
+  constants.min_number_of_edges_sim3_opt = 20;
+  constants.sim3_optimization_threshold = 10.;
+  constants.sim3_optimization_huber_delta = std::sqrt(10.);
 
   orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
   orb_slam3::Tracker tracker(atlas);
@@ -196,14 +200,16 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   const std::string image_dir = "/tmp/orb_images/";
   size_t i = 0;
   while (true) {
+    ++i;
     std::string image_path = image_dir + std::to_string(i) + ".jpg";
     cv::Mat image;
     cap >> image;
     assert(!image.empty());
     cv::imwrite(image_path, image);
-    image = cv::imread(image_path, cv::IMREAD_COLOR);
+//    image = cv::imread(image_path, cv::IMREAD_COLOR);
 
-    //imshow("For me", image);
+    cv::imshow("For me", image);
+    cv::waitKey(1);
     if (i < 4) continue;
 
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", i);
@@ -244,7 +250,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::LoopMergeDetector lp_detector(kf_database, atlas);
   local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
-  //local_mapper.Start();
+  local_mapper.Start();
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(),
       NFEATURES1, SCALE_FACTOR, LEVELS,
@@ -254,8 +260,16 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
       NFEATURES2, SCALE_FACTOR, LEVELS,
       INIT_THRESHOLD, MIN_THRESHOLD);
   orb_slam3::features::IFeatureExtractor * fe = feature_extractor;
+  std::chrono::system_clock::time_point last = std::chrono::system_clock::now();
+  const std::chrono::system_clock::duration fps(50000000);
   for (size_t i = 0; i < filenames.size(); ++i) {
+
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
+
+    if (i > 0)
+      std::this_thread::sleep_for(
+          (timestamps[i] - timestamps[i - 1]) - std::chrono::duration_cast<std::chrono::system_clock::duration>(
+              std::chrono::system_clock::now() - last));
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
@@ -264,17 +278,19 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     if (orb_slam3::TrackingResult::OK == result) {
       fe = _feature_extractor;
 
-      std::string image_name = boost::filesystem::path(filenames[i]).filename().string();
-      std::string out_filename = (dumb_dir / image_name).string();
-      std::ofstream map_stream(out_filename, std::ios::binary);
-      map_stream << atlas->GetCurrentMap();
+//      std::string image_name = boost::filesystem::path(filenames[i]).filename().string();
+//      std::string out_filename = (dumb_dir / image_name).string();
+//      std::ofstream map_stream(out_filename, std::ios::binary);
+//      map_stream << atlas->GetCurrentMap();
     }
 
     if (orb_slam3::TrackingResult::TRACKING_FAILED == result)
       exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 //    cv::imshow("im", image);
+    last = std::chrono::system_clock::now();
     cv::waitKey(1);
+
   }
 }
 
@@ -346,7 +362,6 @@ void initialize() {
   orb_slam3::logging::Initialize();
 }
 
-
 int main(int argc, char * argv[]) {
   initialize();
   nlohmann::json config;
@@ -356,7 +371,7 @@ int main(int argc, char * argv[]) {
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
 
   TestMonocularTum(voc, config["datasetPath"]);
-  //TestLiveCamera(voc);
+//  TestLiveCamera(voc);
 
   return 0;
 }

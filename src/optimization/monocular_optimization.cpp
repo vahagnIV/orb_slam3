@@ -118,7 +118,6 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   assert(nullptr != trans_vertex);
 
   in_out_transformation.print();
-  optimizer.setVerbose(true);
   optimizer.initializeOptimization();
   optimizer.optimize(5);
   in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();

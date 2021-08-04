@@ -87,7 +87,7 @@ class BaseMonocular {
   /// Private member variables
  private:
   const camera::MonocularCamera * camera_;
-  mutable std::mutex map_point_mutex_;
+  mutable std::recursive_mutex map_point_mutex_;
 
 };
 
