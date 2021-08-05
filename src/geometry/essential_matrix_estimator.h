@@ -37,8 +37,8 @@ class EssentialMatrixEstimator : protected TransfromationEstimatorBase {
                                precision_t & out_score) const;
 
   bool FindPose(const TMatrix33 & essential,
-                const std::vector<HomogenousPoint> & points_to,
-                const std::vector<HomogenousPoint> & points_from,
+                const features::Features & features_to,
+                const features::Features & features_from,
                 const std::unordered_map<std::size_t, std::size_t> & matches,
                 std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                 Pose & out_pose) const;

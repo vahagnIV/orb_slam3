@@ -14,8 +14,8 @@ const precision_t TransfromationEstimatorBase::MIN_PARALLAX_DEG = 1.0;
 const precision_t TransfromationEstimatorBase::MIN_MATCH_RATIO = 0.75;
 
 size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
-                                              const std::vector<HomogenousPoint> & points_to,
-                                              const std::vector<HomogenousPoint> & points_from,
+                                              const features::Features & features_to,
+                                              const features::Features & features_from,
                                               const std::unordered_map<std::size_t, std::size_t> & matches,
                                               precision_t & out_parallax,
                                               std::unordered_map<std::size_t, TPoint3D> & out_triangulated) const {
@@ -26,16 +26,30 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
   typedef std::unordered_map<std::size_t, std::size_t>::const_iterator I;
   for (I i = matches.begin(); i != matches.end(); ++i) {
 
-    const HomogenousPoint & point_to = points_to[i->first];
-    const HomogenousPoint & point_from = points_from[i->second];
+    const HomogenousPoint & point_to = features_to.undistorted_and_unprojected_keypoints[i->first];
+    const HomogenousPoint & point_from = features_from.undistorted_and_unprojected_keypoints[i->second];
+    const features::KeyPoint projection_to = features_to.keypoints[i->first];
+    const features::KeyPoint projection_from = features_from.keypoints[i->second];
 
     precision_t point_cos_parallax;
     TPoint3D triangulated;
+//    if (!utils::Triangulate(solution, point_from, point_to, triangulated))
+//      continue;
+
+//    if (!utils::ValidateTriangulatedPoint(point_from,
+//                                          nullptr,
+//                                          nullptr,
+//                                          projection_from.pt,
+//                                          projection_to.pt,
+//                                          solution,
+//                                          5.991))
+//      continue;
+
     if (!utils::TriangulateAndValidate(point_from,
                                        point_to,
                                        solution,
-                                        4 * sigma_threshold__square_,
-                                         4 * sigma_threshold__square_,
+                                       4 * sigma_threshold__square_,
+                                       4 * sigma_threshold__square_,
                                        PARALLAX_THRESHOLD,
                                        point_cos_parallax,
                                        triangulated)) {
@@ -60,8 +74,8 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
 }
 
 bool TransfromationEstimatorBase::FindCorrectPose(const std::vector<Pose> & candidate_solutions,
-                                                  const std::vector<HomogenousPoint> & points_to,
-                                                  const std::vector<HomogenousPoint> & points_from,
+                                                  const features::Features & features_to,
+                                                  const features::Features & features_from,
                                                   const std::unordered_map<std::size_t, std::size_t> & matches,
                                                   std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                                   Pose & out_pose) const {
@@ -70,7 +84,12 @@ bool TransfromationEstimatorBase::FindCorrectPose(const std::vector<Pose> & cand
   for (const auto & candidate : candidate_solutions) {
     std::unordered_map<std::size_t, TPoint3D> tmp_triangulated;
     precision_t parallax;
-    size_t no_good = CheckPose(candidate, points_to, points_from, matches, parallax, tmp_triangulated);
+    size_t no_good = CheckPose(candidate,
+                               features_to,
+                               features_from,
+                               matches,
+                               parallax,
+                               tmp_triangulated);
     if (best_count < no_good) {
       second_best_count = best_count;
       best_count = no_good;

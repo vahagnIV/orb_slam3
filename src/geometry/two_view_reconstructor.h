@@ -11,6 +11,7 @@
 // == orb-slam3 ===
 #include "essential_matrix_estimator.h"
 #include "homography_matrix_estimator.h"
+#include <features/features.h>
 
 namespace orb_slam3 {
 namespace geometry {
@@ -20,8 +21,8 @@ class TwoViewReconstructor {
   TwoViewReconstructor(unsigned number_of_ransac_iterations,
                        precision_t sigma_threshold = 1.0);
 
-  bool Reconstruct(const std::vector<HomogenousPoint> & points_to,
-                   const std::vector<HomogenousPoint> & points_from,
+  bool Reconstruct(const features::Features & features_to,
+                   const features::Features & features_from,
                    const std::unordered_map<std::size_t, std::size_t> & matches,
                    Pose & out_pose,
                    std::unordered_map<std::size_t, TPoint3D> & out_points) const;

@@ -22,8 +22,8 @@ TwoViewReconstructor::TwoViewReconstructor(const unsigned number_of_ransac_itera
       homography_matrix_estimator_(sigma_threshold) {
 }
 
-bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & points_to,
-                                       const std::vector<HomogenousPoint> & points_from,
+bool TwoViewReconstructor::Reconstruct(const features::Features & features_to,
+                                       const features::Features & features_from,
                                        const std::unordered_map<std::size_t, std::size_t> & matches,
                                        Pose & out_pose,
                                        std::unordered_map<std::size_t, TPoint3D> & out_points) const {
@@ -38,16 +38,16 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
   std::unordered_set<std::size_t> homography_inliers, essential_inliers;
 
   // TODO: do this in parallel
-  essential_matrix_estimator_.FindBestEssentialMatrix(points_to,
-                                                      points_from,
+  essential_matrix_estimator_.FindBestEssentialMatrix(features_to.undistorted_and_unprojected_keypoints,
+                                                      features_from.undistorted_and_unprojected_keypoints,
                                                       matches,
                                                       random_match_subset_idx,
                                                       essential,
                                                       essential_inliers,
                                                       f_score);
 
-  homography_matrix_estimator_.FindBestHomographyMatrix(points_to,
-                                                        points_from,
+  homography_matrix_estimator_.FindBestHomographyMatrix(features_to.undistorted_and_unprojected_keypoints,
+                                                        features_from.undistorted_and_unprojected_keypoints,
                                                         matches,
                                                         random_match_subset_idx,
                                                         homography,
@@ -57,16 +57,16 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
   if (h_score > f_score) {
     std::cout << "Homography" << std::endl;
     return homography_matrix_estimator_.FindPose(homography,
-                                                 points_to,
-                                                 points_from,
+                                                 features_to,
+                                                 features_from,
                                                  matches,
                                                  out_points,
                                                  out_pose);
   }
   std::cout << "Essential" << std::endl;
   return essential_matrix_estimator_.FindPose(essential,
-                                              points_to,
-                                              points_from,
+                                              features_to,
+                                              features_from,
                                               matches,
                                               out_points,
                                               out_pose);

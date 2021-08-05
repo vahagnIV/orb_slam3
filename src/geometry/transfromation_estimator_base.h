@@ -11,8 +11,9 @@
 
 // == orb-slam3 ===
 #include "../typedefs.h"
-#include "../features/match.h"
+#include <features/features.h>
 #include "pose.h"
+
 
 namespace orb_slam3 {
 namespace geometry {
@@ -27,8 +28,8 @@ class TransfromationEstimatorBase {
 
   size_t
   CheckPose(const Pose & solution,
-            const std::vector<HomogenousPoint> & points_to,
-            const std::vector<HomogenousPoint> & points_from,
+            const features::Features & features_to,
+            const features::Features & features_from,
             const std::unordered_map<std::size_t, std::size_t> & matches,
             precision_t & out_parallax,
             std::unordered_map<std::size_t, TPoint3D> & out_triangulated) const;
@@ -42,8 +43,8 @@ class TransfromationEstimatorBase {
   static const precision_t MIN_PARALLAX_DEG;
   static const precision_t MIN_MATCH_RATIO;
   bool FindCorrectPose(const std::vector<Pose> & candidate_solutions,
-                       const std::vector<HomogenousPoint> & points_to,
-                       const std::vector<HomogenousPoint> & points_from,
+                       const features::Features & features_to,
+                       const features::Features & features_from,
                        const std::unordered_map<std::size_t, std::size_t> & matches,
                        std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                        Pose & out_pose) const;

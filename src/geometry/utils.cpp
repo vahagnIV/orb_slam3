@@ -91,6 +91,14 @@ precision_t ComputeReprojectionError(const HomogenousPoint & point, const Homoge
   return error_x * error_x + error_y * error_y;
 }
 
+precision_t ComputeReprojectionError(const TPoint3D & point,
+                                     const TPoint2D & projection,
+                                     const camera::MonocularCamera * camera) {
+  TPoint2D predicted_projection;
+  camera->ProjectAndDistort(point, predicted_projection);
+  return (predicted_projection - projection).squaredNorm();
+}
+
 bool TriangulateAndValidate(const HomogenousPoint & point_from,
                             const HomogenousPoint & point_to,
                             const Pose & pose,
@@ -114,6 +122,27 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
 
   if (utils::ComputeReprojectionError(out_triangulated, point_from) > reprojection_threshold_from
       || utils::ComputeReprojectionError(triangulated2, point_to) > reprojection_threshold_to)
+    return false;
+
+  return true;
+}
+
+bool ValidateTriangulatedPoint(const TPoint3D & point_from,
+                               camera::MonocularCamera * camera_from,
+                               camera::MonocularCamera * camera_to,
+                               const TPoint2D & point_from_projection,
+                               const TPoint2D & point_to_projection,
+                               const Pose & pose,
+                               precision_t reprojection_error) {
+
+  if (point_from.z() < 0)
+    return false;
+
+  const TVector3D triangulated2 = pose.Transform(point_from);
+  if (triangulated2.z() < 0) return false;
+
+  if (utils::ComputeReprojectionError(point_from, point_from_projection, camera_from) > reprojection_error
+      || utils::ComputeReprojectionError(triangulated2, point_to_projection, camera_to) > reprojection_error)
     return false;
 
   return true;

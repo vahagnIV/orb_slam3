@@ -5,8 +5,9 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_GEOMETRY_UTILS_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_GEOMETRY_UTILS_H_
 
-#include "../typedefs.h"
+
 #include "pose.h"
+#include <camera/monocular_camera.h>
 
 namespace orb_slam3 {
 namespace geometry {
@@ -17,7 +18,7 @@ namespace utils {
  * @param vector the input vecot
  * @return The skew-symmetric matrix
  */
-TMatrix33 SkewSymmetricMatrix(const TVector3D &vector);
+TMatrix33 SkewSymmetricMatrix(const TVector3D & vector);
 
 /*!
  * Computes the relative transformation between 2 coordinate systems that are specified by the
@@ -43,9 +44,9 @@ void ComputeRelativeTransformation(const Pose & pose_to,
  * @return true if triangulation successful
  */
 bool Triangulate(const Pose & pose,
-                 const HomogenousPoint &point_from,
-                 const HomogenousPoint &point_to,
-                 TPoint3D &out_trinagulated);
+                 const HomogenousPoint & point_from,
+                 const HomogenousPoint & point_to,
+                 TPoint3D & out_trinagulated);
 
 /*!
  * Computes the parallax of a point between 2 coordinate systems
@@ -55,7 +56,7 @@ bool Triangulate(const Pose & pose,
  * @return The parallax
  */
 precision_t ComputeCosParallax(const Pose & pose,
-                               const TPoint3D &point);
+                               const TPoint3D & point);
 
 /*!
  * Computes the error of projecting point
@@ -63,7 +64,7 @@ precision_t ComputeCosParallax(const Pose & pose,
  * @param original_point The known projection
  * @return The error
  */
-precision_t ComputeReprojectionError(const HomogenousPoint &point, const HomogenousPoint &original_point);
+precision_t ComputeReprojectionError(const HomogenousPoint & point, const HomogenousPoint & original_point);
 
 /*!
  * Triangulate point visible by two frames that were made in 2 coordinate systems
@@ -77,14 +78,22 @@ precision_t ComputeReprojectionError(const HomogenousPoint &point, const Homogen
  * @param out_triangulated The output triangulated point
  * @return true on success
  */
-bool TriangulateAndValidate(const HomogenousPoint &point_from,
-                                   const HomogenousPoint &point_to,
-                                   const Pose & pose,
-                                   precision_t reprojection_threshold_to,
-                                   precision_t reprojection_threshold_from,
-                                   precision_t parallax_threshold,
-                                   precision_t & out_parallax,
-                                   TPoint3D &out_triangulated);
+bool TriangulateAndValidate(const HomogenousPoint & point_from,
+                            const HomogenousPoint & point_to,
+                            const Pose & pose,
+                            precision_t reprojection_threshold_to,
+                            precision_t reprojection_threshold_from,
+                            precision_t parallax_threshold,
+                            precision_t & out_parallax,
+                            TPoint3D & out_triangulated);
+
+bool ValidateTriangulatedPoint(const TPoint3D & point_from,
+                               camera::MonocularCamera * camera_from,
+                               camera::MonocularCamera * camera_to,
+                               const TPoint2D & point_from_projection,
+                               const TPoint2D & point_to_projection,
+                               const Pose & pose,
+                               precision_t reprojection_error);
 
 }
 }

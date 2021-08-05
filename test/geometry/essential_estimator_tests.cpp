@@ -123,8 +123,8 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
 
   GenerateRandomSubsets(0, matches.size(), 8, 200, matches, random_matches);
 
-  system_under_test.FindBestEssentialMatrix(to_features_.undistorted_and_unprojected_keypoints,
-                                            from_features_.undistorted_and_unprojected_keypoints,
+  system_under_test.FindBestEssentialMatrix(to_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
+                                            from_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
                                             matches,
                                             random_matches,
                                             E,
@@ -139,8 +139,8 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecoveredWithNoise) {
   std::unordered_map<std::size_t, TPoint3D> triangulated;
   geometry::Pose estimated_pose;
   system_under_test.FindPose(E,
-                             to_features_.undistorted_and_unprojected_keypoints,
-                             from_features_.undistorted_and_unprojected_keypoints,
+                             to_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
+                             from_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
                              matches,
                              triangulated,
                              estimated_pose);
@@ -174,8 +174,8 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
 
   GenerateRandomSubsets(0, matches.size(), 8, 5, matches, random_matches);
 
-  system_under_test.FindBestEssentialMatrix(to_features_.undistorted_and_unprojected_keypoints,
-                                            from_features_.undistorted_and_unprojected_keypoints,
+  system_under_test.FindBestEssentialMatrix(to_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
+                                            from_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
                                             matches,
                                             random_matches,
                                             E,
@@ -190,8 +190,8 @@ TEST_F(EssentialEstimatorTests, EssentialMatrixCorrectlyRecovered) {
   std::unordered_map<std::size_t, TPoint3D> triangulated;
   geometry::Pose estimated_pose;
   system_under_test.FindPose(E,
-                             to_features_.undistorted_and_unprojected_keypoints,
-                             from_features_.undistorted_and_unprojected_keypoints,
+                             to_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
+                             from_features_.undistorted_and_unprojected_keypoints, <#initializer#>,
                              matches,
                              triangulated,
                              estimated_pose);

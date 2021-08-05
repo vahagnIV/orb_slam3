@@ -60,8 +60,8 @@ bool MonocularFrame::Link(Frame * other) {
   geometry::TwoViewReconstructor reconstructor(200, GetCamera()->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   geometry::Pose pose;
-  if (!reconstructor.Reconstruct(feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints,
-                                 from_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints,
+  if (!reconstructor.Reconstruct(feature_handler_->GetFeatures(),
+                                 from_frame->feature_handler_->GetFeatures(),
                                  matches,
                                  pose,
                                  points)) {

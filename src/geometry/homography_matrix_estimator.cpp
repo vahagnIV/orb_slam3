@@ -16,8 +16,8 @@ const precision_t HomographyMatrixEstimator::HOMOGRAPHY_SCORE = 5.991;
 
 
 bool HomographyMatrixEstimator::FindPose(const TMatrix33 & homography,
-                                         const std::vector<HomogenousPoint> & points_to,
-                                         const std::vector<HomogenousPoint> & points_from,
+                                         const features::Features & features_to,
+                                         const features::Features & features_from,
                                          const std::unordered_map<std::size_t, std::size_t> & matches,
                                          std::unordered_map<std::size_t, TPoint3D> & out_triangulated,
                                          Pose & out_pose) const {
@@ -38,7 +38,10 @@ bool HomographyMatrixEstimator::FindPose(const TMatrix33 & homography,
   FillSolutionsForPositiveD(d1, d2, d3, U, VT, candidate_solutions.begin(), candidate_solutions.begin() + 4, s);
   FillSolutionsForNegativeD(d1, d2, d3, U, VT, candidate_solutions.begin() + 4, candidate_solutions.end(), s);
 
-  return this->FindCorrectPose(candidate_solutions, points_to, points_from, matches,
+  return this->FindCorrectPose(candidate_solutions,
+                               features_to,
+                               features_from,
+                               matches,
                                out_triangulated, out_pose);
 }
 

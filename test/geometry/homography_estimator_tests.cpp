@@ -58,7 +58,7 @@ TEST_F(HomographyEstimatorTests, HomographyEstimatorWorksCorrectly) {
     points_to[i] /= points_to[i][2];
     points_from[i] /= points_from[i][2];
   }
-  estimator.FindPose(H, points_to, points_from, matches, triangulated, pose);
+  estimator.FindPose(H, points_to, <#initializer#>, points_from, <#initializer#>, matches, triangulated, pose);
   ASSERT_TRUE((pose.T.normalized() - T.normalized()).norm() < 1e-12);
   ASSERT_TRUE((pose.R - R).norm() < 1e-12);
 }
