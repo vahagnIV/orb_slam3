@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 project(orb_slam3)
-
 set(CMAKE_CXX_STANDARD 11)
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(g2o REQUIRED)
 
+add_definitions(-DMULTITHREADED)
 
 enable_testing()
 include_directories(external ${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR})

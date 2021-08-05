@@ -173,7 +173,9 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
     // TODO: remove the following line
   }
-//  (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+#ifndef MULTITHREADED
+  (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+#endif
 //  ComputeVelocity(frame, last_frame_);
   ReplaceLastFrame(frame);
   return TrackingResult::OK;
@@ -247,7 +249,6 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->Initialize();
 
     current_map->SetInitialKeyFrame(initial_key_frame);
-//    current_map->AddKeyFrame(current_key_frame);
 
     std::unordered_set<frame::KeyFrame *> key_frames{initial_key_frame, current_key_frame};
     std::unordered_set<map::MapPoint *> map_points;
@@ -283,12 +284,14 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     state_ = OK;
     last_frame_ = frame;
 
-//    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
-//    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
+    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
 
 
     // TODO: remove the following line in multithreading
-//    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+#ifndef MULTITHREADED
+    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+#endif
 
   } else {
     delete frame;

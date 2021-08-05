@@ -60,7 +60,7 @@ void MapPoint::AddObservation(const frame::Observation & observation) {
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
-  //std::unique_lock<std::mutex> lock(feature_mutex_); TODO
+//  std::unique_lock<std::recursive_mutex> lock(feature_mutex_); TODO
   auto it = observations_.find(frame);
   assert(it != observations_.end());
   observations_.erase(it);
@@ -126,7 +126,14 @@ void MapPoint::SetStagingPosition(const TPoint3D & position) {
 }
 
 void MapPoint::ApplyStagingPosition() {
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
   position_ = staging_position_;
+}
+
+const TPoint3D & MapPoint::GetPosition() const {
+
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  return position_;
 }
 
 void MapPoint::ApplyNormalStaging() {

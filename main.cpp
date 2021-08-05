@@ -250,7 +250,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::LoopMergeDetector lp_detector(kf_database, atlas);
   local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
+#ifdef MULTITHREADED
+#warning "MULTITHREDING IS ENABLED"
   local_mapper.Start();
+#endif
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(),
       NFEATURES1, SCALE_FACTOR, LEVELS,
@@ -266,10 +269,12 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
 
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
 
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
     if (i > 0)
       std::this_thread::sleep_for(
-          (timestamps[i] - timestamps[i - 1]) - std::chrono::duration_cast<std::chrono::system_clock::duration>(
-              std::chrono::system_clock::now() - last));
+          (timestamps[i] - timestamps[i - 1]) - (now - last));
+    last = now;
+
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
@@ -288,7 +293,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
       exit(1);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 //    cv::imshow("im", image);
-    last = std::chrono::system_clock::now();
+
     cv::waitKey(1);
 
   }

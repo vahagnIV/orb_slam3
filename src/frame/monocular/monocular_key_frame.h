@@ -53,7 +53,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                                   const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
   TVector3D GetNormalFromStaging(const TPoint3D & point) const override;
-  void Initialize() override;
+  void InitializeImpl() override;
  private:
 
   void FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,

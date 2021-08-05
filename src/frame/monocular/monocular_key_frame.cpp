@@ -31,7 +31,7 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
 
 }
 
-void MonocularKeyFrame::Initialize() {
+void MonocularKeyFrame::InitializeImpl() {
   auto mp = map_points_.begin();
 
   while (mp!= map_points_.end()) {

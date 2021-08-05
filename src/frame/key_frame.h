@@ -28,7 +28,7 @@ class KeyFrame : public BaseFrame {
 
  public:
 
-  virtual void Initialize() = 0;
+  void Initialize();
 
   /*!
    * Calculates the normal of a point to the origin of the local coordinate frame
@@ -125,6 +125,10 @@ class KeyFrame : public BaseFrame {
                                           geometry::Sim3Transformation & in_out_transformation) const = 0;
 
  protected:
+  virtual void InitializeImpl() = 0;
+
+ protected:
+  bool is_initialized_;
   CovisibilityGraphNode covisibility_graph_;
   bool is_initial_;
   bool bad_flag_;
