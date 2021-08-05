@@ -289,8 +289,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
 //      map_stream << atlas->GetCurrentMap();
     }
 
-    if (orb_slam3::TrackingResult::TRACKING_FAILED == result)
+    if (orb_slam3::TrackingResult::TRACKING_FAILED == result){
+      std::cout << "============= " << local_mapper.GetUpdateQueue().size_approx() << std::endl;
       exit(1);
+    }
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 //    cv::imshow("im", image);
 

@@ -33,8 +33,8 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
 void MonocularKeyFrame::InitializeImpl() {
   auto mp = map_points_.begin();
 
-  while (mp!= map_points_.end()) {
-    if(mp->second->IsBad()){
+  while (mp != map_points_.end()) {
+    if (mp->second->IsBad()) {
       mp = map_points_.erase(mp);
       continue;
     }
@@ -153,18 +153,41 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
     if (map_points_.find(match.first) != map_points_.end()
         || other_frame->map_points_.find(match.second) != other_frame->map_points_.end())
       continue;
-    precision_t parallax;
+
     TPoint3D triangulated;
-    if (!geometry::utils::TriangulateAndValidate(other_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second],
-                                                 feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.first],
-                                                 relative_pose,
-                                                 5.991 * GetCamera()->FxInv() * GetCamera()->FxInv(),
-                                                 5.991 * other_frame->GetCamera()->FxInv()
-                                                     * other_frame->GetCamera()->FxInv(),
-                                                 constants::PARALLAX_THRESHOLD,
-                                                 parallax,
-                                                 triangulated))
+    const HomogenousPoint
+        & local_point = feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.first];
+    const HomogenousPoint & remote_point =
+        other_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second];
+    const features::KeyPoint & remote_key_point = other_frame->feature_handler_->GetFeatures().keypoints[match.second];
+    const features::KeyPoint & local_key_point = feature_handler_->GetFeatures().keypoints[match.first];
+    if (!geometry::utils::Triangulate(relative_pose,
+                                      remote_point, local_point, triangulated))
       continue;
+
+    if (!geometry::utils::ValidateTriangulatedPoint(remote_point,
+                                                    other_frame->GetCamera(),
+                                                    GetCamera(),
+                                                    remote_key_point.pt,
+                                                    local_key_point.pt,
+                                                    relative_pose,
+                                                    5.991 * GetFeatureExtractor()->GetAcceptableSquareError(
+                                                        local_key_point.level)))
+      continue;
+
+    precision_t parallax = geometry::utils::ComputeCosParallax(relative_pose, triangulated);
+    if (parallax > constants::PARALLAX_THRESHOLD)
+      continue;
+//    if (!geometry::utils::TriangulateAndValidate(other_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second],
+//                                                 feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.first],
+//                                                 relative_pose,
+//                                                 5.991 * GetCamera()->FxInv() * GetCamera()->FxInv(),
+//                                                 5.991 * other_frame->GetCamera()->FxInv()
+//                                                     * other_frame->GetCamera()->FxInv(),
+//                                                 constants::PARALLAX_THRESHOLD,
+//                                                 parallax,
+//                                                 triangulated))
+//      continue;
     TPoint2D pt_other, pt_this;
     other_frame->GetCamera()->ProjectAndDistort(triangulated, pt_other);
     GetCamera()->ProjectAndDistort(relative_pose.Transform(triangulated), pt_this);

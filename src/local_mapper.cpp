@@ -186,13 +186,18 @@ void LocalMapper::RunIteration() {
 
     if (!CheckNewKeyFrames()) {
       FuseMapPoints(message.frame);
-      Optimize(message.frame);
+    }
+    if(!CheckNewKeyFrames()){
       KeyFrameCulling(message.frame);
     }
+    if (!CheckNewKeyFrames()){
+      Optimize(message.frame);
+    }
+
     if (!message.frame->IsBad())
       NotifyObservers(message);
     //TODO: Remove this line in multithreading
-    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
+//    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
 //    NotifyObservers(message.frame);
   }
 }
