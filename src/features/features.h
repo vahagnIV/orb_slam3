@@ -44,17 +44,19 @@ class Features {
 
   void AssignFeaturesToGrid();
 
-//  void UndistortKeyPoints();
+  void SetCamera(const camera::MonocularCamera * camera) { camera_ = camera; }
+  const camera::MonocularCamera * GetCamera() const { return camera_; }
  private:
   bool PosInGrid(const TPoint2D & kp,
                  size_t & posX,
                  size_t & posY) const;
 
  private:
-   precision_t width_;
+  precision_t width_;
   precision_t height_;
   const precision_t grid_element_width_inv_;
   const precision_t grid_element_height_inv_;
+  const camera::MonocularCamera * camera_;
 
 };
 

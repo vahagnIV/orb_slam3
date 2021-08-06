@@ -18,6 +18,7 @@
 
 namespace orb_slam3 {
 #define CAMERA_PARAMS_COUNT 4
+#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
 
 typedef double precision_t;
 

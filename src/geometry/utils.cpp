@@ -127,7 +127,7 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
   return true;
 }
 
-bool ValidateTriangulatedPoint(const TPoint3D & point_from,
+bool ValidateTriangulatedPoint(const TPoint3D & triangulated,
                                const camera::MonocularCamera * camera_from,
                                const camera::MonocularCamera * camera_to,
                                const TPoint2D & point_from_projection,
@@ -135,13 +135,13 @@ bool ValidateTriangulatedPoint(const TPoint3D & point_from,
                                const Pose & pose,
                                precision_t reprojection_error) {
 
-  if (point_from.z() < 0)
+  if (triangulated.z() < 0)
     return false;
 
-  const TVector3D triangulated2 = pose.Transform(point_from);
+  const TVector3D triangulated2 = pose.Transform(triangulated);
   if (triangulated2.z() < 0) return false;
 
-  if (utils::ComputeReprojectionError(point_from, point_from_projection, camera_from) > reprojection_error
+  if (utils::ComputeReprojectionError(triangulated, point_from_projection, camera_from) > reprojection_error
       || utils::ComputeReprojectionError(triangulated2, point_to_projection, camera_to) > reprojection_error)
     return false;
 

@@ -5,7 +5,7 @@
 #include "sim3_transformation.h"
 #include <iostream>
 
-#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
+
 
 namespace orb_slam3 {
 namespace geometry {

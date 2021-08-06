@@ -29,17 +29,6 @@ void LocalMapper::Run() {
   while (!cancelled_) {
     RunIteration();
     continue;
-    accept_key_frames_ = false;
-    UpdateMessage message;
-    GetUpdateQueue().wait_dequeue(message);
-    switch (message.type) {
-      case PositionMessageType::Final:continue;
-      case PositionMessageType::Initial:continue;
-      case PositionMessageType::Update: {
-        std::cout << message.frame->Id() << std::endl;
-//        CreateNewMapPoints(message.frame);
-      }
-    }
   }
   accept_key_frames_ = true;
 }

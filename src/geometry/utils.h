@@ -87,7 +87,7 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
                             precision_t & out_parallax,
                             TPoint3D & out_triangulated);
 
-bool ValidateTriangulatedPoint(const TPoint3D & point_from,
+bool ValidateTriangulatedPoint(const TPoint3D & triangulated,
                                const camera::MonocularCamera * camera_from,
                                const camera::MonocularCamera * camera_to,
                                const TPoint2D & point_from_projection,

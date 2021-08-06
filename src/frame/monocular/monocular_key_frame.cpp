@@ -353,6 +353,7 @@ void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
   WRITE_TO_STREAM(id_, stream);
   WRITE_TO_STREAM(bad_flag_, stream);
   BaseMonocular::SerializeToStream(stream);
+  stream << GetFeatureHandler() ;
 }
 
 void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
