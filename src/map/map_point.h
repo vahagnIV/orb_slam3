@@ -135,7 +135,7 @@ class MapPoint {
   mutable std::mutex feature_mutex_;
 
   // Mutex for locking position
-  mutable std::recursive_mutex position_mutex_;
+  mutable std::mutex position_mutex_;
   map::MapPoint * replaced_map_point_;
 
 };

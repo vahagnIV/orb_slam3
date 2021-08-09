@@ -126,13 +126,14 @@ void MapPoint::SetStagingPosition(const TPoint3D & position) {
 }
 
 void MapPoint::ApplyStagingPosition() {
-  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+
+  std::unique_lock<std::mutex> lock(position_mutex_);
   position_ = staging_position_;
 }
 
 const TPoint3D & MapPoint::GetPosition() const {
 
-  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  std::unique_lock<std::mutex> lock(position_mutex_);
   return position_;
 }
 

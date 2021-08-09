@@ -76,8 +76,8 @@ class SNNMatcher {
       assert(validation_set.find(match.second) == validation_set.end());
       validation_set.insert(match.second);
     }
-  }
 #endif
+  }
 
  private:
   const precision_t nearest_neighbour_ratio_;
