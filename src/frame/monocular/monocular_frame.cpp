@@ -42,6 +42,7 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
     camera->UndistortPoint(features.keypoints[i].pt, features.undistorted_keypoints[i]);
     camera->UnprojectAndUndistort(features.keypoints[i].pt, features.undistorted_and_unprojected_keypoints[i]);
   }
+  features.SetCamera(camera);
 
   feature_handler_ = handler_factory->CreateFeatureHandler(features, feature_extractor);
 }

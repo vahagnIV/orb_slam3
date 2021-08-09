@@ -33,29 +33,33 @@ size_t TransfromationEstimatorBase::CheckPose(const Pose & solution,
 
     precision_t point_cos_parallax;
     TPoint3D triangulated;
-//    if (!utils::Triangulate(solution, point_from, point_to, triangulated))
-//      continue;
-
-//    if (!utils::ValidateTriangulatedPoint(point_from,
-//                                          nullptr,
-//                                          nullptr,
-//                                          projection_from.pt,
-//                                          projection_to.pt,
-//                                          solution,
-//                                          5.991))
-//      continue;
-
-    if (!utils::TriangulateAndValidate(point_from,
-                                       point_to,
-                                       solution,
-                                       4 * sigma_threshold__square_,
-                                       4 * sigma_threshold__square_,
-                                       PARALLAX_THRESHOLD,
-                                       point_cos_parallax,
-                                       triangulated)) {
-
+    if (!utils::Triangulate(solution, point_from, point_to, triangulated))
       continue;
-    }
+
+    if(geometry::utils::ComputeCosParallax(solution, triangulated) > constants::PARALLAX_THRESHOLD)
+      continue;
+
+    if (!utils::ValidateTriangulatedPoint(triangulated,
+                                          features_from.GetCamera(),
+                                          features_to.GetCamera(),
+                                          projection_from.pt,
+                                          projection_to.pt,
+                                          solution,
+                                          5.991))
+      continue;
+
+
+//    if (!utils::TriangulateAndValidate(point_from,
+//                                       point_to,
+//                                       solution,
+//                                       4 * sigma_threshold__square_,
+//                                       4 * sigma_threshold__square_,
+//                                       PARALLAX_THRESHOLD,
+//                                       point_cos_parallax,
+//                                       triangulated)) {
+//
+//      continue;
+//    }
     out_triangulated[i->first] = triangulated;
 
     triangulated_cos_parallax.push_back(point_cos_parallax);

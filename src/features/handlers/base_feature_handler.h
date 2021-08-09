@@ -21,6 +21,7 @@ enum MatchingSeverity {
 
 namespace handlers {
 class BaseFeatureHandler {
+  friend std::ostream & operator<<(std::ostream & stream, const BaseFeatureHandler * handler);
  public:
   BaseFeatureHandler(Features && features, const IFeatureExtractor * feature_extractor)
       : features_(features),
@@ -35,6 +36,9 @@ class BaseFeatureHandler {
                          FastMatches & out_matches,
                          MatchingSeverity severity,
                          bool check_orientation) const = 0;
+
+ protected:
+  virtual void Serialize(std::ostream & stream) const = 0;
 
  private:
   const Features features_;
