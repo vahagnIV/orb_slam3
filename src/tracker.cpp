@@ -20,11 +20,12 @@ const size_t MAX_FRAMES = 30;
 const size_t MIN_FRAMES = 0;
 const size_t MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT = 15;
 
-Tracker::Tracker(orb_slam3::map::Atlas * atlas)
+Tracker::Tracker(orb_slam3::map::Atlas * atlas, LocalMapper * local_mapper)
     : atlas_(atlas),
       velocity_is_valid_(false),
       last_frame_(nullptr),
-      state_(NOT_INITIALIZED) {
+      state_(NOT_INITIALIZED),
+      local_mapper_(local_mapper) {
   kf_counter = 1000;
 }
 
@@ -81,17 +82,17 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 
 TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
-  if (frame->Id() == 50) {
-    atlas_->CreateNewMap();
-    frame->SetIdentity();
-    state_ = FIRST_IMAGE;
-    frame->SetMap(atlas_->GetCurrentMap());
-    ReplaceLastFrame(frame);
-    this->last_key_frame_ = nullptr;
-    this->reference_keyframe_ = nullptr;
-    this->velocity_is_valid_ = false;
-    return TrackingResult::OK;
-  }
+//  if (frame->Id() == 50) {
+//    atlas_->CreateNewMap();
+//    frame->SetIdentity();
+//    state_ = FIRST_IMAGE;
+//    frame->SetMap(atlas_->GetCurrentMap());
+//    ReplaceLastFrame(frame);
+//    this->last_key_frame_ = nullptr;
+//    this->reference_keyframe_ = nullptr;
+//    this->velocity_is_valid_ = false;
+//    return TrackingResult::OK;
+//  }
 
   last_frame_->UpdateFromReferenceKeyFrame();
 
@@ -149,8 +150,8 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->SearchInVisiblePoints(visible_map_points);
 
   frame->OptimizePose();
-//  if(frame->GetMapPointCount() < 30)
-//    return TrackingResult::TRACKING_FAILED;
+  if (frame->GetMapPointCount() < 20)
+    return TrackingResult::TRACKING_FAILED;
   frame->SetMap(atlas_->GetCurrentMap());
   debug::DisplayTrackingInfo(frame,
                              last_frame_,
@@ -168,12 +169,11 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
     last_key_frame_ = keyframe;
-//    atlas_->GetCurrentMap()->AddKeyFrame(keyframe);
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame = keyframe});
-
-    // TODO: remove the following line
+    local_mapper_->AddToqueue(keyframe);
   }
-  (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+#ifndef MULTITHREADED
+  local_mapper_->RunIteration();
+#endif
 //  ComputeVelocity(frame, last_frame_);
   ReplaceLastFrame(frame);
   return TrackingResult::OK;
@@ -192,7 +192,7 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
     std::cout << "NeedNewKeyFrame = false0" << std::endl;
     return false;
   }
-  bool local_mapper_accepts_key_frame = true;
+  bool local_mapper_accepts_key_frame = local_mapper_->AcceptKeyFrames();
   float th_ref_ratio = 0.9f; // for monocular only
   bool more_than_min_frames_passed = frame->Id() >= last_key_frame_->Id() + MIN_FRAMES;
   std::unordered_set<map::MapPoint *> map_points;
@@ -239,11 +239,14 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
     initial_key_frame->SetInitial(true);
+
     frame::KeyFrame * current_key_frame = frame->CreateKeyFrame();
     last_key_frame_ = current_key_frame;
 
+    initial_key_frame->Initialize();
+    current_key_frame->Initialize();
+
     current_map->SetInitialKeyFrame(initial_key_frame);
-//    current_map->AddKeyFrame(current_key_frame);
 
     std::unordered_set<frame::KeyFrame *> key_frames{initial_key_frame, current_key_frame};
     std::unordered_set<map::MapPoint *> map_points;
@@ -278,13 +281,16 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
-
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
-    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
+    local_mapper_->AddToqueue(initial_key_frame);
+    local_mapper_->AddToqueue(current_key_frame);
+//    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
+//    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
 
 
     // TODO: remove the following line in multithreading
-    (dynamic_cast<LocalMapper *>(*(observers_.begin())))->RunIteration();
+#ifndef MULTITHREADED
+    local_mapper_->RunIteration();
+#endif
 
   } else {
     delete frame;

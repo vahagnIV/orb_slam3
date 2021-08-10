@@ -10,7 +10,6 @@
 #include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/iterators/projection_search_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
-#include <features/matching/validators/triangulation_validator.h>
 #include <geometry/utils.h>
 #include <geometry/ransac_sim3_solver.h>
 #include <optimization/monocular_optimization.h>
@@ -18,7 +17,6 @@
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
-#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
 MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->GetTimeCreated(),
                                                                         frame->GetFilename(),
                                                                         frame->GetSensorConstants(),
@@ -28,16 +26,6 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
   SetStagingPosition(frame->GetPosition());
   ApplyStaging();
   SetMap(frame->GetMap());
-  for (auto mp: map_points_) {
-    mp.second->AddObservation(Observation(mp.second, this, mp.first));
-    mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
-    mp.second->CalculateNormalStaging();
-    mp.second->ApplyNormalStaging();
-  }
-  logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
-  logging::RetrieveLogger()->debug("Number of map points:  {}", map_points_.size());
-
-  covisibility_graph_.Update();
 }
 
 FrameType MonocularKeyFrame::Type() const {
@@ -226,7 +214,7 @@ void MonocularKeyFrame::FuseMapPoints(MapPointSet & map_points, bool use_staging
 }
 
 void MonocularKeyFrame::SetMap(map::Map * map) {
-  if(map_)
+  if (map_)
     map_->EraseKeyFrame(this);
   BaseFrame::SetMap(map);
 }
@@ -248,9 +236,11 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
       if (local_map_points.find(mp) == local_map_points.end() &&
           BaseMonocular::PointVisible(pose.Transform(map_point_position),
                                       use_staging ? mp->GetStagingPosition() : mp->GetPosition(),
-                                      use_staging ? mp->GetStagingMinInvarianceDistance() : mp->GetMinInvarianceDistance(),
-                                      use_staging ? mp->GetStagingMaxInvarianceDistance() : mp->GetMaxInvarianceDistance(),
-                                      use_staging? mp->GetStagingNormal() :mp->GetNormal(),
+                                      use_staging ? mp->GetStagingMinInvarianceDistance()
+                                                  : mp->GetMinInvarianceDistance(),
+                                      use_staging ? mp->GetStagingMaxInvarianceDistance()
+                                                  : mp->GetMaxInvarianceDistance(),
+                                      use_staging ? mp->GetStagingNormal() : mp->GetNormal(),
                                       inverse_pose.T,
                                       GetSensorConstants()->max_allowed_discrepancy,
                                       -1,
@@ -318,6 +308,7 @@ void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
   WRITE_TO_STREAM(id_, stream);
   WRITE_TO_STREAM(bad_flag_, stream);
   BaseMonocular::SerializeToStream(stream);
+  stream << GetFeatureHandler();
 }
 
 void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
@@ -473,6 +464,26 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   assert(nullptr != mono_rel_kf);
 
   return optimization::OptimizeSim3(this, mono_rel_kf, in_out_transformation, matches, levels);
+}
+
+void MonocularKeyFrame::InitializeImpl() {
+  auto mp = map_points_.begin();
+
+  while (mp != map_points_.end()) {
+    if (mp->second->IsBad()) {
+      mp = map_points_.erase(mp);
+      continue;
+    }
+    mp->second->AddObservation(Observation(mp->second, this, mp->first));
+    mp->second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
+    mp->second->CalculateNormalStaging();
+    mp->second->ApplyNormalStaging();
+    ++mp;
+  }
+  logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
+  logging::RetrieveLogger()->debug("Number of map points:  {}", map_points_.size());
+
+  covisibility_graph_.Update();
 }
 
 }

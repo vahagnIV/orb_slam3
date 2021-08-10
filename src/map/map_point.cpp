@@ -8,7 +8,7 @@
 #include <map/map.h>
 
 #include <utility>
-#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
+
 namespace orb_slam3 {
 namespace map {
 
