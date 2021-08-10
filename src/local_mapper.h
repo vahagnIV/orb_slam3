@@ -16,19 +16,20 @@
 
 namespace orb_slam3 {
 
-class LocalMapper : public PositionObserver,
-                    public Observable<UpdateMessage> {
+class LocalMapper {
  public:
   explicit LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database);
-  ~LocalMapper() override;
+  ~LocalMapper();
  public:
   void Start();
   void Stop();
-  void MapPointCulling(frame::KeyFrame * keyframe);
   void RunIteration();
   bool AcceptKeyFrames() { return accept_key_frames_; };
+  void AddToqueue(frame::KeyFrame * key_frame);
+  size_t GetQueueSize() const { return new_key_frames_.size_approx(); }
  private:
   void Run();
+  void MapPointCulling(frame::KeyFrame * keyframe);
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
   bool CheckNewKeyFrames() const;
   void CreateNewMapPoints(frame::KeyFrame * key_frame);
@@ -42,6 +43,7 @@ class LocalMapper : public PositionObserver,
   static void FuseMapPoints(frame::KeyFrame * frame);
 
  private:
+  moodycamel::BlockingConcurrentQueue<frame::KeyFrame *> new_key_frames_;
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas * atlas_;
   std::atomic_bool cancelled_;

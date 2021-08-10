@@ -49,8 +49,8 @@ add_library(orbslam SHARED
         features/matching/iterators/projection_search_iterator.cpp
         features/matching/iterators/projection_search_pointee.cpp
         features/handlers/DBoW2/bow_to_iterator.cpp
+        features/handlers/base_feature_handler.cpp
         features/matching/validators/orientation_validator.cpp
-        features/matching/validators/triangulation_validator.cpp
         features/handlers/DBoW2/dbo_w2_handler.cpp
         features/factories/dbo_w2_handler_factory.cpp
 

@@ -14,6 +14,7 @@ KeyFrame::KeyFrame(TimePoint time_point,
                    size_t id,
                    std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler)
     : BaseFrame(time_point, filename, sensor_constants, id, feature_handler),
+      is_initialized_(false),
       covisibility_graph_(this),
       is_initial_(false),
       bad_flag_(false),
@@ -43,6 +44,13 @@ bool KeyFrame::IsInitial() const { return is_initial_; }
 void KeyFrame::SetInitial(bool initial) { is_initial_ = initial; }
 
 bool KeyFrame::IsBad() const { return bad_flag_; }
+
+void KeyFrame::Initialize() {
+  if (is_initialized_)
+    return;
+  is_initialized_ = true;
+  InitializeImpl();
+}
 
 }
 }

@@ -4,7 +4,7 @@
 
 // == orb-slam3 ===
 #include "features.h"
-#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
+
 namespace orb_slam3 {
 namespace features {
 

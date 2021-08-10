@@ -15,6 +15,7 @@
 #include "observable.h"
 #include "position_observer.h"
 #include "tracking_result.h"
+#include "local_mapper.h"
 
 namespace orb_slam3 {
 
@@ -29,7 +30,7 @@ class Tracker : public Observer<frame::KeyFrame *>,
     OK
   };
  public:
-  Tracker(orb_slam3::map::Atlas * atlas);
+  Tracker(orb_slam3::map::Atlas * atlas, LocalMapper * local_mapper);
 
   /*!
    * Processes the frame
@@ -69,7 +70,8 @@ class Tracker : public Observer<frame::KeyFrame *>,
   frame::KeyFrame * last_key_frame_;
   frame::KeyFrame * reference_keyframe_;
   State state_;
-  size_t last_relocalization_frame_id_ = 0;                                       
+  size_t last_relocalization_frame_id_ = 0;
+  LocalMapper * local_mapper_;
 };
 
 }

@@ -6,8 +6,6 @@
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include "monocular/monocular_key_frame.h"
 
-#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
-
 namespace orb_slam3 {
 namespace frame {
 

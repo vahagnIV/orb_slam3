@@ -16,10 +16,9 @@
 namespace orb_slam3 {
 
 LocalMapper::LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database)
-    : PositionObserver(),
-    atlas_(atlas),
-    thread_(nullptr),
-    key_frame_database_(key_frame_database) {}
+    : atlas_(atlas),
+      thread_(nullptr),
+      key_frame_database_(key_frame_database) {}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -27,17 +26,7 @@ LocalMapper::~LocalMapper() {
 
 void LocalMapper::Run() {
   while (!cancelled_) {
-    accept_key_frames_ = false;
-    UpdateMessage message;
-    GetUpdateQueue().wait_dequeue(message);
-    switch (message.type) {
-      case PositionMessageType::Final:continue;
-      case PositionMessageType::Initial:continue;
-      case PositionMessageType::Update: {
-        std::cout << message.frame->Id() << std::endl;
-//        CreateNewMapPoints(message.frame);
-      }
-    }
+    RunIteration();
   }
   accept_key_frames_ = true;
 }
@@ -83,6 +72,7 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 }
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
+  keyframe->Initialize();
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ListMapPoints(map_points);
   for (auto mp: map_points) {
@@ -170,28 +160,39 @@ void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & lo
 }
 
 bool LocalMapper::CheckNewKeyFrames() const {
-  bool new_keyframes = GetUpdateQueue().size_approx() > 0;
+  bool new_keyframes = new_key_frames_.size_approx() > 0;
   return new_keyframes;
 }
 
 void LocalMapper::RunIteration() {
-  UpdateMessage message;
-  while (GetUpdateQueue().try_dequeue(message)) {
-    ProcessNewKeyFrame(message.frame);
-    MapPointCulling(message.frame);
-    CreateNewMapPoints(message.frame);
+  frame::KeyFrame * key_frame;
+  while (new_key_frames_.try_dequeue(key_frame)) {
+    accept_key_frames_ = false;
+    ProcessNewKeyFrame(key_frame);
+
+    MapPointCulling(key_frame);
+    CreateNewMapPoints(key_frame);
 
     if (!CheckNewKeyFrames()) {
-      FuseMapPoints(message.frame);
-      Optimize(message.frame);
-      KeyFrameCulling(message.frame);
+      FuseMapPoints(key_frame);
     }
-    if (!message.frame->IsBad())
-      NotifyObservers(message);
+    if (!CheckNewKeyFrames()) {
+      KeyFrameCulling(key_frame);
+    }
+    if (!CheckNewKeyFrames()) {
+      Optimize(key_frame);
+    }
+//    if (!message.frame->IsBad())
+//      NotifyObservers(message);
     //TODO: Remove this line in multithreading
-    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
+//    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
 //    NotifyObservers(message.frame);
+    accept_key_frames_ = true;
   }
+}
+
+void LocalMapper::AddToqueue(frame::KeyFrame * key_frame) {
+  new_key_frames_.enqueue(key_frame);
 }
 
 void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out) {

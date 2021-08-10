@@ -11,8 +11,6 @@
 #include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 
-#define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
-
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
