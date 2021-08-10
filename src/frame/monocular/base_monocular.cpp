@@ -20,26 +20,22 @@ BaseMonocular::BaseMonocular(const camera::MonocularCamera * camera)
 
 BaseMonocular::BaseMonocular(const BaseMonocular & other)
     : map_points_(other.map_points_),
-      camera_(other.camera_),
-      map_point_mutex_() {}
+      camera_(other.camera_){}
 
 void BaseMonocular::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
-//  std::unique_lock<std::mutex> lock(map_point_mutex_);
-  for (auto mp_id: map_points_) {
-    if (!mp_id.second->IsBad()) {
-      out_map_points.insert(mp_id.second);
-    }
-  }
+  MapToSet(map_points_, out_map_points);
 }
 
-BaseMonocular::MonocularMapPoints BaseMonocular::GetMapPoints() const {
-//  std::unique_lock<std::mutex> lock(map_point_mutex_);
-  std::map<size_t, map::MapPoint *> result;
-  std::copy_if(map_points_.begin(),
-               map_points_.end(),
-               std::inserter(result, result.begin()),
-               [](const std::pair<size_t, map::MapPoint *> & mp_id) { return !mp_id.second->IsBad(); });
-  return result;
+const BaseMonocular::MonocularMapPoints & BaseMonocular::GetMapPoints() const {
+  return map_points_;
+}
+
+void BaseMonocular::ClearMapPoints() {
+  map_points_.clear();
+}
+
+size_t BaseMonocular::GetMapPointsCount() const {
+  return map_points_.size();
 }
 
 void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
@@ -99,7 +95,7 @@ bool BaseMonocular::PointVisible(const TPoint3D & mp_local_coords,
       level > 0 ? level : feature_extractor->PredictScale(distance, max_allowed_distance / 1.2);
 
   precision_t r = radius_multiplier * (track_view_cos > 0.998 ? 2.5 : 4.0);
-  assert((size_t)out_map_point.level < feature_extractor->GetScaleFactors().size());
+  assert((size_t) out_map_point.level < feature_extractor->GetScaleFactors().size());
   out_map_point.window_size = r * feature_extractor->GetScaleFactors()[out_map_point.level];
 
   return true;

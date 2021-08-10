@@ -46,13 +46,25 @@ class BaseMonocular {
   /// Public Functions
  public:
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const;
-  MonocularMapPoints GetMapPoints() const;
+  const MonocularMapPoints & GetMapPoints() const;
+  size_t GetMapPointsCount() const;
+  void ClearMapPoints();
 
   const camera::MonocularCamera * GetCamera() const { return camera_; }
   bool MapPointExists(const map::MapPoint * map_point) const;
  public:
   virtual void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
   virtual void EraseMapPoint(size_t feature_id);
+
+  template<typename TMap, typename TSet>
+  static void MapToSet(const TMap & map, TSet & out_set) {
+    std::transform(map.begin(),
+                   map.end(),
+                   std::inserter(out_set, out_set.begin()),
+                   [](const typename TMap::value_type & pair) {
+                     return pair.second;
+                   });
+  }
 
  protected:
 
@@ -80,14 +92,13 @@ class BaseMonocular {
                     MapPointVisibilityParams & out_map_point,
                     const features::IFeatureExtractor * feature_extractor) const;
 
- void SerializeToStream(std::ostream & stream) const;
+  void SerializeToStream(std::ostream & stream) const;
  protected:
-  MonocularMapPoints map_points_;
-
   /// Private member variables
+
  private:
+  MonocularMapPoints map_points_;
   const camera::MonocularCamera * camera_;
-  mutable std::mutex map_point_mutex_;
 
 };
 

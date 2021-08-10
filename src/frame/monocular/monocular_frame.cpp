@@ -89,7 +89,7 @@ bool MonocularFrame::Link(Frame * other) {
   this->ApplyStaging();
   std::unordered_set<map::MapPoint *> map_points;
   InitializeMapPointsFromMatches(matches, points, from_frame, map_points);
-  logging::RetrieveLogger()->debug("Linking found {} matches", map_points_.size());
+  logging::RetrieveLogger()->debug("Linking found {} matches", GetMapPointsCount());
   return true;
 }
 
@@ -115,9 +115,10 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
     return false;
   }
 
+  MonocularMapPoints reference_kf_map_points = reference_kf->GetMapPointsWithLock();
   for (const auto & match: matches) {
-    auto map_point = reference_kf->map_points_.find(match.second);
-    assert(map_point != reference_kf->map_points_.end());
+    auto map_point = reference_kf_map_points.find(match.second);
+    assert(map_point != reference_kf_map_points.end());
     AddMapPoint(map_point->second, match.first);
   }
 
@@ -132,8 +133,8 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
   return matches.size() >= 10;
 }
 
-size_t MonocularFrame::GetMapPointCount() const {
-  return map_points_.size();
+size_t MonocularFrame::GetMapPointsCount() const {
+  return BaseMonocular::GetMapPointsCount();
 }
 
 FrameType MonocularFrame::Type() const {
@@ -205,9 +206,10 @@ void MonocularFrame::ComputeMatchesFromReferenceKF(const MonocularKeyFrame * ref
                               features::MatchingSeverity::MIDDLE,
                               true);
 
+  MonocularMapPoints reference_kf_map_points = reference_kf->GetMapPointsWithLock();
   auto match_it = out_matches.begin();
   while (match_it != out_matches.end()) {
-    if (reference_kf->map_points_.find(match_it->second) == reference_kf->map_points_.end())
+    if (reference_kf_map_points.find(match_it->second) == reference_kf_map_points.end())
       match_it = out_matches.erase(match_it);
     else
       ++match_it;
@@ -282,7 +284,10 @@ void MonocularFrame::UpdateFromReferenceKeyFrame() {
   if (reference_keyframe_) {
     SetStagingPosition(reference_keyframe_->GetPosition());
     ApplyStaging();
-    map_points_ = reference_keyframe_->GetMapPoints();
+    ClearMapPoints();
+    for(const auto & mp: reference_keyframe_->GetMapPointsWithLock()){
+      AddMapPoint(mp.second, mp.first);
+    }
   }
 }
 
@@ -314,12 +319,10 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
 }
 
 BaseMonocular::MonocularMapPoints MonocularFrame::GetBadMapPoints() const {
-
   BaseMonocular::MonocularMapPoints result;
-  for (auto mp: map_points_)
+  for (auto mp: GetMapPoints())
     if (mp.second->IsBad())
       result.insert(mp);
-
   return result;
 }
 
@@ -330,19 +333,19 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
   precision_t radiuses[] = {15, 30};
 
   for (precision_t radius: radiuses) {
-    map_points_.clear();
+    ClearMapPoints();
     out_visibles.clear();
     FilterFromLastFrame(last_frame, out_visibles, radius);
     SearchInVisiblePoints(out_visibles, 0.9);
-    if (map_points_.size() >= 20) {
+    if (GetMapPointsCount() >= 20) {
       OptimizePose();
-      if (map_points_.size() >= 10) {
+      if (GetMapPointsCount() >= 10) {
         ApplyStaging();
         return true;
       }
     }
   }
-  map_points_.clear();
+  ClearMapPoints();
   return false;
 }
 

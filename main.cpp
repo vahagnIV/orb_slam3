@@ -286,10 +286,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     if (orb_slam3::TrackingResult::OK == result) {
       fe = _feature_extractor;
 
-      std::string image_name = boost::filesystem::path(filenames[i]).filename().string();
-      std::string out_filename = (dumb_dir / image_name).string();
-      std::ofstream map_stream(out_filename, std::ios::binary);
-      map_stream << atlas->GetCurrentMap();
+//      std::string image_name = boost::filesystem::path(filenames[i]).filename().string();
+//      std::string out_filename = (dumb_dir / image_name).string();
+//      std::ofstream map_stream(out_filename, std::ios::binary);
+//      map_stream << atlas->GetCurrentMap();
     }
 
     if (orb_slam3::TrackingResult::TRACKING_FAILED == result){

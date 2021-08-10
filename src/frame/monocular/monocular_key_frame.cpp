@@ -32,6 +32,11 @@ FrameType MonocularKeyFrame::Type() const {
   return MONOCULAR;
 }
 
+BaseMonocular::MonocularMapPoints MonocularKeyFrame::GetMapPointsWithLock() const {
+  std::unique_lock<std::recursive_mutex> lock(map_points_mutex_);
+  return GetMapPoints();
+}
+
 void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
   BaseMonocular::ListMapPoints(out_map_points);
 }
@@ -84,35 +89,30 @@ precision_t MonocularKeyFrame::ComputeSceneMedianDepth(const MapPointSet & map_p
 
 void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) {
 
+  if (other->Type() != Type()) {
+    throw std::runtime_error("Matching Stereo With Monocular is not implemented yet");
+  }
+
   auto other_frame = dynamic_cast<MonocularKeyFrame *> (other);
   if (other_frame == this)
     return;
 
-  MonocularMapPoints local_map_points_map = GetMapPoints(), others_map_points_map = other_frame->GetMapPoints();
+  const MonocularMapPoints & local_map_points_map = GetMapPoints();
+  const MonocularMapPoints & others_map_points_map = other_frame->GetMapPoints();
 
   MapPointSet local_map_points, others_map_points;
-  std::transform(local_map_points_map.begin(),
-                 local_map_points_map.end(),
-                 std::inserter(local_map_points, local_map_points.begin()),
-                 [](const std::pair<size_t, map::MapPoint *> & mp_id) { return mp_id.second; });
-
-  std::transform(others_map_points_map.begin(),
-                 others_map_points_map.end(),
-                 std::inserter(others_map_points, others_map_points.begin()),
-                 [](const std::pair<size_t, map::MapPoint *> & mp_id) { return mp_id.second; });
+  MapToSet(local_map_points_map, local_map_points);
+  MapToSet(others_map_points_map, others_map_points);
 
   auto local_pose = GetPositionWithLock();
   auto other_pose = other_frame->GetPositionWithLock();
+
   if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
     logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());
     return;
   }
 
   logging::RetrieveLogger()->debug("LM: Initial local map point count: {}", local_map_points.size());
-
-  if (other->Type() != Type()) {
-    throw std::runtime_error("Matching Stereo With Monocular is not implemented yet");
-  }
 
   features::FastMatches matches;
   feature_handler_->FastMatch(other_frame->GetFeatureHandler(), matches, features::MatchingSeverity::STRONG, true);
@@ -128,8 +128,8 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
   unsigned newly_created_mps = 0;
 
   for (auto match: matches) {
-    if (map_points_.find(match.first) != map_points_.end()
-        || other_frame->map_points_.find(match.second) != other_frame->map_points_.end())
+    if (local_map_points_map.find(match.first) != local_map_points_map.end()
+        || others_map_points_map.find(match.second) != others_map_points_map.end())
       continue;
     precision_t parallax;
     TPoint3D triangulated;
@@ -164,6 +164,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
                                        min_invariance_distance,
                                        GetMap());
 //    std::cout << map_point->GetPosition() << std::endl;
+
 
     AddMapPoint(map_point, match.first);
     other_frame->AddMapPoint(map_point, match.second);

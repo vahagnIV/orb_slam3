@@ -33,6 +33,9 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void EraseMapPoint(const map::MapPoint *) override;
   void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
   void SetMap(map::Map * map) override;
+
+ public:
+  MonocularMapPoints GetMapPointsWithLock() const;
  protected:
   void SerializeToStream(std::ostream & stream) const override;
   void InitializeImpl() override;
@@ -69,6 +72,8 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                                const geometry::Pose & others_pose);
   static precision_t ComputeBaseline(const geometry::Pose & local_pose, const geometry::Pose & others_pose);
   static precision_t ComputeSceneMedianDepth(const MapPointSet & map_points, unsigned q, const geometry::Pose & pose);
+ private:
+  mutable std::recursive_mutex map_points_mutex_;
 
 };
 
