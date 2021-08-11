@@ -22,8 +22,12 @@ class KeyFrame;
 
 class Observation {
  public:
+  Observation();
   Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids);
   Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right);
+  Observation(const Observation & other);
+
+  Observation & operator=(const Observation & other);
 
   virtual ~Observation() = default;
   /*!
@@ -62,7 +66,7 @@ class Observation {
   size_t GetFeatureId() const;
   size_t GetLeftFeatureId() const;
   size_t GetRightFeatureId() const;
-  friend std::ostream & operator << (std::ostream & stream, const Observation & map_point);
+  friend std::ostream & operator<<(std::ostream & stream, const Observation & map_point);
 
   /*!
    * Creates a robust kernel for optimization
@@ -76,7 +80,7 @@ class Observation {
  protected:
   map::MapPoint * map_point_;
   KeyFrame * key_frame_;
-  const std::vector<std::size_t> feature_ids_;
+  std::vector<std::size_t> feature_ids_;
 
 };
 

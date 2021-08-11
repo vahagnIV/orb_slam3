@@ -48,13 +48,14 @@ class BaseMonocular {
   void ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const;
   const MonocularMapPoints & GetMapPoints() const;
   size_t GetMapPointsCount() const;
+  map::MapPoint* GetMapPoint(size_t feature_id) const;
   void ClearMapPoints();
 
   const camera::MonocularCamera * GetCamera() const { return camera_; }
   bool MapPointExists(const map::MapPoint * map_point) const;
  public:
   virtual void AddMapPoint(map::MapPoint * map_point, size_t feature_id);
-  virtual void EraseMapPoint(size_t feature_id);
+  virtual map::MapPoint * EraseMapPoint(size_t feature_id);
 
   template<typename TMap, typename TSet>
   static void MapToSet(const TMap & map, TSet & out_set) {

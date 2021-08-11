@@ -95,11 +95,18 @@ class MapPoint {
   void SetStagingMaxInvarianceDistance(precision_t max_invariance_distance) {
     staging_max_invariance_distance_ = max_invariance_distance;
   }
+
   void SetStagingMinInvarianceDistance(precision_t min_invariance_distance) {
     staging_min_invariance_distance_ = min_invariance_distance;
   }
 
+  std::recursive_mutex & ObservationMutex() const { return observation_mutex_; }
+
+  bool GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const;
+
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
+  void LockObservationsContainer() const;
+  void UnlockObservationsContainer() const;
 
  private:
   static std::atomic_uint64_t counter_;
@@ -132,7 +139,7 @@ class MapPoint {
   size_t first_observed_frame_id_;
 
   // Mutex for locking observation
-  mutable std::mutex feature_mutex_;
+  mutable std::recursive_mutex observation_mutex_;
 
   // Mutex for locking position
   std::mutex position_mutex_;

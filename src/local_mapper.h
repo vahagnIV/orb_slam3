@@ -33,14 +33,16 @@ class LocalMapper {
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
   bool CheckNewKeyFrames() const;
   void CreateNewMapPoints(frame::KeyFrame * key_frame);
- private:
   void KeyFrameCulling(frame::KeyFrame * keyframe);
+
+ private:
   static void FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
                                   frame::KeyFrame::MapPointSet & local_map_points,
                                   std::unordered_set<frame::KeyFrame *> & out_fixed);
   static void Optimize(frame::KeyFrame * frame);
   static void ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out);
   static void FuseMapPoints(frame::KeyFrame * frame);
+  static void ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp);
 
  private:
   moodycamel::BlockingConcurrentQueue<frame::KeyFrame *> new_key_frames_;

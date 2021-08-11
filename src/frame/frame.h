@@ -74,7 +74,7 @@ class Frame : public BaseFrame {
    * Return the number of map points in the frame
    * @return The number of map points in the frame
    */
-  virtual size_t GetMapPointCount() const = 0;
+  virtual size_t GetMapPointsCount() const = 0;
 
   /*!
    * Filters all map points that are visible in the current frame.

@@ -63,7 +63,7 @@ class BaseFrame : public geometry::RigidObject {
   const std::shared_ptr<const features::handlers::BaseFeatureHandler> & GetFeatureHandler() const { return feature_handler_; }
 
   virtual void SetMap(map::Map * map) { map_ = map; }
-  const map::Map * GetMap() const { return map_; }
+  map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
  protected:
   virtual void SerializeToStream(std::ostream & stream) const = 0;

@@ -9,16 +9,33 @@
 namespace orb_slam3 {
 namespace frame {
 
+Observation::Observation() : map_point_(nullptr), key_frame_(nullptr), feature_ids_() {
+
+}
+
 Observation::Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id) : map_point_(map_point),
                                                                                                key_frame_(key_frame),
                                                                                                feature_ids_({feature_id}) {
 }
+
 Observation::Observation(map::MapPoint * map_point,
                          KeyFrame * key_frame,
                          size_t feature_id_left,
                          size_t feature_id_right) : map_point_(map_point),
                                                     key_frame_(key_frame),
                                                     feature_ids_({feature_id_left, feature_id_right}) {
+}
+
+Observation::Observation(const Observation & other)
+    : map_point_(other.map_point_), key_frame_(other.key_frame_), feature_ids_(other.feature_ids_) {
+
+}
+
+Observation & Observation::operator=(const Observation & other) {
+  key_frame_ = other.key_frame_;
+  map_point_ = other.map_point_;
+  feature_ids_ = other.feature_ids_;
+  return *this;
 }
 
 optimization::edges::BABinaryEdge * Observation::CreateBinaryEdge() const {
@@ -59,29 +76,29 @@ size_t Observation::GetFeatureId() const {
 }
 
 size_t Observation::GetLeftFeatureId() const {
-  assert(! IsMonocular());
+  assert(!IsMonocular());
   return feature_ids_[1];
 }
 std::ostream & operator<<(std::ostream & stream, const Observation & observation) {
   size_t frame_id = observation.GetKeyFrame()->Id();
-  size_t mem_address = (size_t )observation.GetMapPoint();
+  size_t mem_address = (size_t) observation.GetMapPoint();
   WRITE_TO_STREAM(mem_address, stream);
   WRITE_TO_STREAM(frame_id, stream);
 
   int type = 0;
-  if(observation.IsMonocular()) {
+  if (observation.IsMonocular()) {
     type = MONOCULAR;
   } else
     throw std::runtime_error("Only monocular observation serialization is implemented");
   WRITE_TO_STREAM(type, stream);
 
-  for(size_t feature_id: observation.feature_ids_)
+  for (size_t feature_id: observation.feature_ids_)
     WRITE_TO_STREAM(feature_id, stream);
   return stream;
 }
 
 size_t Observation::GetRightFeatureId() const {
-  assert(! IsMonocular());
+  assert(!IsMonocular());
   return feature_ids_[0];
 }
 
