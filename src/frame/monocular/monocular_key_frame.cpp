@@ -228,7 +228,6 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
 
 void MonocularKeyFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
   assert(!map_point->IsBad());
-  std::unique_lock<std::recursive_mutex> lock(map_points_mutex_);
   BaseMonocular::AddMapPoint(map_point, feature_id);
   map_point->AddObservation(Observation(map_point, this, feature_id));
 }
@@ -237,16 +236,15 @@ void MonocularKeyFrame::EraseMapPoint(map::MapPoint * map_point) {
   Observation observation;
   if (map_point->GetObservation(this, observation)) {
     BaseMonocular::EraseMapPoint(observation.GetFeatureId());
+    map_point->EraseObservation(this);
   } else
     assert(false);
 }
 
 map::MapPoint * MonocularKeyFrame::EraseMapPoint(size_t feature_id) {
-  std::unique_lock<std::recursive_mutex> lock(map_points_mutex_);
   map::MapPoint * mp = BaseMonocular::EraseMapPoint(feature_id);
   Observation observation;
   if (mp->GetObservation(this, observation)) {
-    std::unique_lock<std::recursive_mutex> mp_lock(mp->ObservationMutex());
     mp->EraseObservation(this);
   }
   return mp;
@@ -448,6 +446,7 @@ void MonocularKeyFrame::UnlockMapPointContainer() const {
 
 void MonocularKeyFrame::AddMapPoint(Observation & observation) {
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
+  observation.GetMapPoint()->AddObservation(observation);
 }
 
 }

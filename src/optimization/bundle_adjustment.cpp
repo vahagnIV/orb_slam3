@@ -60,6 +60,7 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
 void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
                            std::unordered_set<frame::KeyFrame *> & fixed_keyframes,
                            frame::BaseFrame::MapPointSet & local_map_points,
+                           std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> & out_observations_to_delete,
                            bool * stop_flag) {
   g2o::SparseOptimizer optimizer;
   optimizer.setVerbose(true);
@@ -100,11 +101,6 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
   } else {
     logging::RetrieveLogger()->info("Local BA: removing {} edges",
                                     observations_to_delete.size());
-  }
-
-  for (auto to_delete: observations_to_delete) {
-    if (!to_delete.first->IsBad())
-      to_delete.second->EraseMapPoint(to_delete.first);
   }
 
   for (auto mp_vertex: mp_map) {

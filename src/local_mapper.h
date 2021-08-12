@@ -43,6 +43,7 @@ class LocalMapper {
   static void ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out);
   static void FuseMapPoints(frame::KeyFrame * frame);
   static void ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp);
+  static void SetBad(map::MapPoint * map_point);
 
  private:
   moodycamel::BlockingConcurrentQueue<frame::KeyFrame *> new_key_frames_;
