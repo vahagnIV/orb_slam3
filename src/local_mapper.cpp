@@ -148,7 +148,7 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
     obs_to_delete.second->LockMapPointContainer();
     obs_to_delete.first->LockObservationsContainer();
     obs_to_delete.second->EraseMapPoint(obs_to_delete.first);
-    if(obs_to_delete.first->GetObservationCount() == 1)
+    if (obs_to_delete.first->GetObservationCount() == 1)
       SetBad(obs_to_delete.first);
     obs_to_delete.first->UnlockObservationsContainer();
     obs_to_delete.second->UnlockMapPointContainer();
@@ -248,20 +248,19 @@ void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unord
 void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   std::unordered_set<frame::KeyFrame *> second_neighbours;
   ListCovisiblesOfCovisibles(frame, second_neighbours);
-  std::unordered_set<map::MapPoint *> map_points;
-  frame->ListMapPoints(map_points);
-
+  frame->LockMapPointContainer();
   for (auto kf: second_neighbours) {
+    std::unordered_set<map::MapPoint *> map_points;
+    kf->ListMapPoints(map_points);
+
     std::list<frame::MapPointVisibilityParams> visibles;
-    kf->FilterVisibleMapPoints(map_points, visibles, false);
+    frame->FilterVisibleMapPoints(map_points, visibles, false);
     std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_mps;
     std::list<frame::Observation> local_mps;
-    kf->MatchVisibleMapPoints(visibles, matched_mps, local_mps);
+    frame->MatchVisibleMapPoints(visibles, matched_mps, local_mps);
 
-    kf->LockMapPointContainer();
     for (auto & obs: local_mps)
-      kf->AddMapPoint(obs);
-    kf->UnlockMapPointContainer();
+      frame->AddMapPoint(obs);
 
     for (auto match: matched_mps) {
       if (match.first->GetObservationCount() > match.second->GetObservationCount())
@@ -280,9 +279,9 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
       mp->CalculateNormalStaging();
       mp->ApplyNormalStaging();
     }
-
   }
   frame->GetCovisibilityGraph().Update();
+  frame->UnlockMapPointContainer();
 }
 
 void LocalMapper::ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp) {
