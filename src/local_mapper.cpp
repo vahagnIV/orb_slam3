@@ -5,6 +5,7 @@
 #include "local_mapper.h"
 #include "frame/map_point_visibility_params.h"
 #include "frame/key_frame.h"
+#include <frame/observation.h>
 #include "logging.h"
 #include "optimization/bundle_adjustment.h"
 #include <map/atlas.h>
@@ -54,11 +55,11 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
     map::MapPoint * mp = *mp_it;
     if (mp->IsBad()) { mp_it = recently_added_map_points_.erase(mp_it); }
     else if (static_cast<precision_t>(mp->GetFound()) / mp->GetVisible() < 0.25) {
-      mp->SetBad();
+      SetBad(mp);
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 2
         && mp->GetObservationCount() < keyframe->GetSensorConstants()->min_mp_disappearance_count) {
-      mp->SetBad();
+      SetBad(mp);
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 3) {
       mp_it = recently_added_map_points_.erase(mp_it);
@@ -97,9 +98,30 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   logging::RetrieveLogger()->debug("LM: covisible frame count: {}", covisible_frames.size());
 
   for (auto neighbour_keyframe: covisible_frames) {
-    frame::KeyFrame::MapPointSet new_map_points;
+    frame::KeyFrame::NewMapPoints new_map_points;
+
     key_frame->CreateNewMapPoints(neighbour_keyframe, new_map_points);
-    recently_added_map_points_.insert(new_map_points.begin(), new_map_points.end());
+    key_frame->LockMapPointContainer();
+    neighbour_keyframe->LockMapPointContainer();
+    for (auto & new_mp: new_map_points) {
+      frame::Observation & key_frame_obs = std::get<0>(new_mp);
+      frame::Observation & neighbour_obs = std::get<1>(new_mp);
+      assert(key_frame_obs.GetKeyFrame() == key_frame);
+      assert(neighbour_obs.GetKeyFrame() == neighbour_keyframe);
+      assert(key_frame_obs.GetMapPoint() == neighbour_obs.GetMapPoint());
+      map::MapPoint * map_point = key_frame_obs.GetMapPoint();
+      map_point->AddObservation(key_frame_obs);
+      map_point->AddObservation(neighbour_obs);
+
+      map_point->ComputeDistinctiveDescriptor(key_frame->GetFeatureExtractor());
+      map_point->CalculateNormalStaging();
+      map_point->ApplyNormalStaging();
+      key_frame->AddMapPoint(key_frame_obs);
+      neighbour_keyframe->AddMapPoint(neighbour_obs);
+      recently_added_map_points_.insert(map_point);
+    }
+    key_frame->UnlockMapPointContainer();
+    neighbour_keyframe->UnlockMapPointContainer();
   }
   frame::KeyFrame::MapPointSet map_points;
   key_frame->ListMapPoints(map_points);
@@ -114,7 +136,23 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
   if (fixed_keyframes.size() < 2 && fixed_keyframes.size() == local_keyframes.size())
     return;
-  optimization::LocalBundleAdjustment(local_keyframes, fixed_keyframes, local_map_points);
+
+  std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
+  optimization::LocalBundleAdjustment(local_keyframes,
+                                      fixed_keyframes,
+                                      local_map_points,
+                                      observations_to_delete,
+                                      nullptr);
+
+  for (auto & obs_to_delete: observations_to_delete) {
+    obs_to_delete.second->LockMapPointContainer();
+    obs_to_delete.first->LockObservationsContainer();
+    obs_to_delete.second->EraseMapPoint(obs_to_delete.first);
+    if (obs_to_delete.first->GetObservationCount() == 1)
+      SetBad(obs_to_delete.first);
+    obs_to_delete.first->UnlockObservationsContainer();
+    obs_to_delete.second->UnlockMapPointContainer();
+  }
   for (auto & kf: local_keyframes)
     kf->GetCovisibilityGraph().Update();
 
@@ -210,11 +248,29 @@ void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unord
 void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   std::unordered_set<frame::KeyFrame *> second_neighbours;
   ListCovisiblesOfCovisibles(frame, second_neighbours);
-  std::unordered_set<map::MapPoint *> map_points;
-  frame->ListMapPoints(map_points);
+  frame->LockMapPointContainer();
   for (auto kf: second_neighbours) {
-    kf->FuseMapPoints(map_points, false);
+    std::unordered_set<map::MapPoint *> map_points;
+    kf->ListMapPoints(map_points);
+
+    std::list<frame::MapPointVisibilityParams> visibles;
+    frame->FilterVisibleMapPoints(map_points, visibles, false);
+    std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_mps;
+    std::list<frame::Observation> local_mps;
+    frame->MatchVisibleMapPoints(visibles, matched_mps, local_mps);
+
+    for (auto & obs: local_mps)
+      frame->AddMapPoint(obs);
+
+    for (auto match: matched_mps) {
+      if (match.first->GetObservationCount() > match.second->GetObservationCount())
+        ReplaceMapPoint(match.second, match.first);
+      else
+        ReplaceMapPoint(match.first, match.second);
+    }
+
   }
+
   frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);
   for (auto mp:mps) {
@@ -223,9 +279,35 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
       mp->CalculateNormalStaging();
       mp->ApplyNormalStaging();
     }
-
   }
   frame->GetCovisibilityGraph().Update();
+  frame->UnlockMapPointContainer();
+}
+
+void LocalMapper::ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp) {
+  map::MapPoint::MapType old_observations = old_mp->Observations();
+  for (auto old_obs: old_observations) {
+    old_obs.second.GetKeyFrame()->LockMapPointContainer();
+  }
+  old_mp->LockObservationsContainer();
+  new_mp->LockObservationsContainer();
+
+  for (auto old_obs: old_observations) {
+    frame::KeyFrame * key_frame = old_obs.second.GetKeyFrame();
+    if (new_mp->IsInKeyFrame(key_frame)) {
+      key_frame->EraseMapPoint(new_mp);
+    }
+    key_frame->EraseMapPoint(old_mp);
+    old_obs.second.SetMapPoint(new_mp);
+    key_frame->AddMapPoint(old_obs.second);
+  }
+  old_mp->SetReplaced(new_mp);
+  old_mp->GetMap()->EraseMapPoint(old_mp);
+  old_mp->UnlockObservationsContainer();
+  new_mp->UnlockObservationsContainer();
+  for (auto old_obs: old_observations) {
+    old_obs.second.GetKeyFrame()->UnlockMapPointContainer();
+  }
 }
 
 void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
@@ -241,7 +323,20 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
         ++mobs;
     if (mobs > map_points.size() * 0.9) {
       key_frame_database_->Erase(kf);
+      kf->LockMapPointContainer();
+      for (auto mp: map_points) {
+        if (mp->IsBad())
+          continue;
+
+        mp->LockObservationsContainer();
+        kf->EraseMapPoint(mp);
+        if (mp->GetObservationCount() == 1) {
+          SetBad(mp);
+        }
+        mp->UnlockObservationsContainer();
+      }
       kf->SetBad();
+      kf->UnlockMapPointContainer();
     }
     for (auto mp : map_points) {
       if (!mp->IsBad()) {
@@ -251,6 +346,19 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       }
     }
   }
+
+}
+
+void LocalMapper::SetBad(map::MapPoint * map_point) {
+  map::MapPoint::MapType observations = map_point->Observations();
+  for (auto & obs: observations) {
+    frame::KeyFrame * last_key_frame = obs.second.GetKeyFrame();
+    last_key_frame->LockMapPointContainer();
+    last_key_frame->EraseMapPoint(map_point);
+    last_key_frame->UnlockMapPointContainer();
+  }
+  map_point->SetBad();
+  map_point->GetMap()->EraseMapPoint(map_point);
 
 }
 

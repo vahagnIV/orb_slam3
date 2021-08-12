@@ -19,15 +19,12 @@ MapPoint::MapPoint(TPoint3D point,
                    precision_t max_invariance_distance,
                    precision_t min_invariance_distance,
                    Map * map)
-    : /*position_(std::move(point)),
-      max_invariance_distance_(0),
-      min_invariance_distance_(0),*/
-    visible_(1),
-    found_(1),
-    map_(map),
-    bad_flag_(false),
-    first_observed_frame_id_(first_observed_frame_id),
-    replaced_map_point_(nullptr) {
+    : visible_(1),
+      found_(1),
+      map_(map),
+      bad_flag_(false),
+      first_observed_frame_id_(first_observed_frame_id),
+      replaced_map_point_(nullptr) {
   SetStagingPosition(point);
   SetStagingMinInvarianceDistance(min_invariance_distance);
   SetStagingMaxInvarianceDistance(max_invariance_distance);
@@ -41,11 +38,16 @@ MapPoint::~MapPoint() {
   --counter_;
 }
 
-void MapPoint::SetReplaced(map::MapPoint * replaced) {
-  auto ob = Observations();
-  for (auto & obs: ob) {
-    obs.second.GetKeyFrame()->ReplaceMapPoint(replaced, obs.second);
+bool MapPoint::GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const {
+  auto it = observations_.find(key_frame);
+  if (it != observations_.end()) {
+    out_observation = it->second;
+    return true;
   }
+  return false;
+}
+
+void MapPoint::SetReplaced(map::MapPoint * replaced) {
   SetBad();
   replaced_map_point_ = replaced;
 }
@@ -69,10 +71,7 @@ void MapPoint::EraseObservation(frame::KeyFrame * frame) {
 void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
-  while (!observations_.empty()) {
-    observations_.begin()->second.GetKeyFrame()->EraseMapPoint(this);
-  }
-  map_->EraseMapPoint(this);
+  observations_.clear();
 }
 
 void MapPoint::SetMap(map::Map * map) {
@@ -126,12 +125,14 @@ void MapPoint::SetStagingPosition(const TPoint3D & position) {
 }
 
 void MapPoint::ApplyStagingPosition() {
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
   position_ = staging_position_;
 }
 
 void MapPoint::ApplyNormalStaging() {
   normal_ = staging_normal_;
 }
+
 void MapPoint::ApplyMinMaxInvDistanceStaging() {
   min_invariance_distance_ = staging_min_invariance_distance_;
   max_invariance_distance_ = staging_max_invariance_distance_;
@@ -144,13 +145,17 @@ void MapPoint::ApplyStaging() {
 }
 
 const MapPoint::MapType MapPoint::Observations() const { /// TODO change prototype
-//  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_;
 }
 
 size_t MapPoint::GetObservationCount() const {
 //  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.size();
+}
+
+const TPoint3D & MapPoint::GetPosition() const {
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  return position_;
 }
 
 bool MapPoint::IsInKeyFrame(const frame::KeyFrame * keyframe) const {
@@ -174,6 +179,14 @@ std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point) {
     stream << obs.second;
   }
   return stream;
+}
+
+void MapPoint::LockObservationsContainer() const {
+  observation_mutex_.lock();
+}
+
+void MapPoint::UnlockObservationsContainer() const {
+  observation_mutex_.unlock();
 }
 
 }

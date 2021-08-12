@@ -21,8 +21,9 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
 
 void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
                            std::unordered_set<frame::KeyFrame *> & fixed_keyframes,
-                           frame::KeyFrame::MapPointSet & local_map_points,
-                           bool * stop_flag = nullptr);
+                           frame::BaseFrame::MapPointSet & local_map_points,
+                           std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> & out_observations_to_delete,
+                           bool * stop_flag);
 
 
 }

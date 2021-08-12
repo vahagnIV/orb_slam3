@@ -22,7 +22,8 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->GetSensorConstants(),
                                                                         frame->Id(),
                                                                         frame->GetFeatureHandler()),
-                                                               BaseMonocular(*frame) {
+                                                               BaseMonocular(*frame),
+                                                               map_points_mutex_() {
   SetStagingPosition(frame->GetPosition());
   ApplyStaging();
   SetMap(frame->GetMap());
@@ -30,6 +31,11 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
 
 FrameType MonocularKeyFrame::Type() const {
   return MONOCULAR;
+}
+
+BaseMonocular::MonocularMapPoints MonocularKeyFrame::GetMapPointsWithLock() const {
+  std::unique_lock<std::recursive_mutex> lock(map_points_mutex_);
+  return GetMapPoints();
 }
 
 void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) const {
@@ -82,37 +88,32 @@ precision_t MonocularKeyFrame::ComputeSceneMedianDepth(const MapPointSet & map_p
   return depths[(depths.size() - 1) / q];
 }
 
-void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) {
+void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints & out_newly_created) const {
+
+  if (other->Type() != Type()) {
+    throw std::runtime_error("Matching Stereo With Monocular is not implemented yet");
+  }
 
   auto other_frame = dynamic_cast<MonocularKeyFrame *> (other);
   if (other_frame == this)
     return;
 
-  MonocularMapPoints local_map_points_map = GetMapPoints(), others_map_points_map = other_frame->GetMapPoints();
+  const MonocularMapPoints & local_map_points_map = GetMapPoints();
+  const MonocularMapPoints & others_map_points_map = other_frame->GetMapPoints();
 
   MapPointSet local_map_points, others_map_points;
-  std::transform(local_map_points_map.begin(),
-                 local_map_points_map.end(),
-                 std::inserter(local_map_points, local_map_points.begin()),
-                 [](const std::pair<size_t, map::MapPoint *> & mp_id) { return mp_id.second; });
-
-  std::transform(others_map_points_map.begin(),
-                 others_map_points_map.end(),
-                 std::inserter(others_map_points, others_map_points.begin()),
-                 [](const std::pair<size_t, map::MapPoint *> & mp_id) { return mp_id.second; });
+  MapToSet(local_map_points_map, local_map_points);
+  MapToSet(others_map_points_map, others_map_points);
 
   auto local_pose = GetPositionWithLock();
   auto other_pose = other_frame->GetPositionWithLock();
+
   if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
     logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());
     return;
   }
 
   logging::RetrieveLogger()->debug("LM: Initial local map point count: {}", local_map_points.size());
-
-  if (other->Type() != Type()) {
-    throw std::runtime_error("Matching Stereo With Monocular is not implemented yet");
-  }
 
   features::FastMatches matches;
   feature_handler_->FastMatch(other_frame->GetFeatureHandler(), matches, features::MatchingSeverity::STRONG, true);
@@ -125,11 +126,9 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
                                    other_frame->Id(),
                                    Id());
 
-  unsigned newly_created_mps = 0;
-
   for (auto match: matches) {
-    if (map_points_.find(match.first) != map_points_.end()
-        || other_frame->map_points_.find(match.second) != other_frame->map_points_.end())
+    if (local_map_points_map.find(match.first) != local_map_points_map.end()
+        || others_map_points_map.find(match.second) != others_map_points_map.end())
       continue;
     precision_t parallax;
     TPoint3D triangulated;
@@ -150,9 +149,6 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
       continue;
     if (!GetCamera()->IsInFrustum(pt_this))
       continue;
-//    TPoint3D world_pos = other_frame->GetInversePosition().Transform(triangulated);
-//    assert(world_pos.z() > 0);
-
     precision_t min_invariance_distance, max_invariance_distance;
     feature_handler_->GetFeatureExtractor()->ComputeInvariantDistances(triangulated,
                                                                        other_frame->feature_handler_->GetFeatures().keypoints[match.second],
@@ -163,27 +159,17 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, MapPointSet 
                                        max_invariance_distance,
                                        min_invariance_distance,
                                        GetMap());
-//    std::cout << map_point->GetPosition() << std::endl;
 
-    AddMapPoint(map_point, match.first);
-    other_frame->AddMapPoint(map_point, match.second);
-
-    map_point->ComputeDistinctiveDescriptor(feature_handler_->GetFeatureExtractor());
-    map_point->CalculateNormalStaging();
-    map_point->ApplyNormalStaging();
-    out_newly_created.insert(map_point);
-    ++newly_created_mps;
+    out_newly_created.emplace_back(Observation(map_point, const_cast<MonocularKeyFrame *>(this), match.first),
+                                   Observation(map_point, other, match.second));
   }
-  logging::RetrieveLogger()->debug("LM: Created {} new map_points between frames {} and {}",
-                                   newly_created_mps,
-                                   other_frame->Id(),
-                                   Id());
-
 }
 
-void MonocularKeyFrame::FuseMapPoints(MapPointSet & map_points, bool use_staging) {
-  std::list<MapPointVisibilityParams> visibles;
-  FilterVisibleMapPoints(map_points, visibles, use_staging);
+void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibilityParams> & visibles,
+                                              std::list<std::pair<map::MapPoint *,
+                                                                  map::MapPoint *>> & out_matched_map_points,
+                                              std::list<Observation> & out_local_matches) const {
+
   typedef features::matching::iterators::ProjectionSearchIterator IteratorType;
   IteratorType begin(visibles.begin(), visibles.end(), &feature_handler_->GetFeatures());
   IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
@@ -191,26 +177,15 @@ void MonocularKeyFrame::FuseMapPoints(MapPointSet & map_points, bool use_staging
   MatcherType::MatchMapType matches;
   MatcherType matcher(1., 50);
   matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), matches);
+  for (auto & match: matches) {
+    map::MapPoint * local_mp = GetMapPoint(match.second);
+    if (nullptr == local_mp)
+      out_local_matches.emplace_back(match.first, const_cast<MonocularKeyFrame *>(this), match.second);
+    else
+      out_matched_map_points.emplace_back(local_mp, match.first);
 
-  MonocularMapPoints local_map_points = GetMapPoints();
-
-  for (auto match: matches) {
-    auto it = local_map_points.find(match.second);
-    if (it == local_map_points.end()) {
-      if (match.first->IsInKeyFrame(this))
-        continue;
-      AddMapPoint(match.first, match.second);
-    } else {
-      if (it->second == match.first)
-        continue;;
-      if (match.first->GetObservationCount() > it->second->GetObservationCount()) {
-        it->second->SetReplaced(match.first);
-        this->map_points_[match.second] = match.first;
-      } else {
-        match.first->SetReplaced(it->second);
-      }
-    }
   }
+
 }
 
 void MonocularKeyFrame::SetMap(map::Map * map) {
@@ -221,7 +196,7 @@ void MonocularKeyFrame::SetMap(map::Map * map) {
 
 void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
                                                std::list<MapPointVisibilityParams> & out_visibles,
-                                               bool use_staging) {
+                                               bool use_staging) const {
   MapPointVisibilityParams visible_map_point;
   MapPointSet local_map_points;
   ListMapPoints(local_map_points);
@@ -257,51 +232,30 @@ void MonocularKeyFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id
   map_point->AddObservation(Observation(map_point, this, feature_id));
 }
 
-void MonocularKeyFrame::EraseMapPointImpl(const map::MapPoint * map_point, bool check_bad) {
-  assert(nullptr != map_point);
-  map::MapPoint::MapType observations = map_point->Observations();
-  auto f = observations.find(this);
-  assert(f != observations.end());
-  EraseMapPointImpl(f->second.GetFeatureId(), check_bad);
+void MonocularKeyFrame::EraseMapPoint(map::MapPoint * map_point) {
+  Observation observation;
+  if (map_point->GetObservation(this, observation)) {
+    BaseMonocular::EraseMapPoint(observation.GetFeatureId());
+    map_point->EraseObservation(this);
+  } else
+    assert(false);
 }
 
-void MonocularKeyFrame::EraseMapPointImpl(size_t feature_id, bool check_bad) {
-  auto m_it = this->map_points_.find(feature_id);
-  assert(m_it != this->map_points_.end());
-  m_it->second->EraseObservation(this);
-  if (check_bad && m_it->second->GetObservationCount() == 1) {
-    m_it->second->SetBad();
+map::MapPoint * MonocularKeyFrame::EraseMapPoint(size_t feature_id) {
+  map::MapPoint * mp = BaseMonocular::EraseMapPoint(feature_id);
+  Observation observation;
+  if (mp->GetObservation(this, observation)) {
+    mp->EraseObservation(this);
   }
-  BaseMonocular::EraseMapPoint(feature_id);
-}
-
-void MonocularKeyFrame::EraseMapPoint(const map::MapPoint * map_point) {
-  EraseMapPointImpl(map_point, true);
-}
-
-void MonocularKeyFrame::EraseMapPoint(size_t feature_id) {
-  EraseMapPointImpl(feature_id, true);
-}
-
-void MonocularKeyFrame::ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) {
-
-  assert(observation.GetKeyFrame() == this);
-  assert(map_points_.find(observation.GetFeatureId()) != map_points_.end());
-
-  EraseMapPointImpl(observation.GetMapPoint(), false);
-  if (map_point->IsInKeyFrame(this)) {
-    EraseMapPointImpl(map_point, false);
-  }
-  AddMapPoint(map_point, observation.GetFeatureId());
+  return mp;
 }
 
 void MonocularKeyFrame::SetBad() {
-  while (!map_points_.empty()) {
-    auto mp_it = map_points_.begin();
-    assert(!mp_it->second->IsBad());
-    EraseMapPoint(mp_it->second);
-  }
   KeyFrame::SetBad();
+  MonocularMapPoints mps = GetMapPoints();
+  for (auto mp: mps) {
+    EraseMapPoint(mp.first);
+  }
 }
 
 void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
@@ -324,12 +278,12 @@ void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
 
   for (const auto & match: matches) {
 
-    auto local_mp_it = map_points_.find(match.first);
-    if (local_mp_it == map_points_.end()) continue;
+    auto local_mp_it = GetMapPoints().find(match.first);
+    if (local_mp_it == GetMapPoints().end()) continue;
     map::MapPoint * local_map_point = local_mp_it->second;
 
-    auto kf_map_point_it = mono_other->map_points_.find(match.second);
-    if (kf_map_point_it == mono_other->map_points_.end()) continue;
+    auto kf_map_point_it = mono_other->GetMapPoints().find(match.second);
+    if (kf_map_point_it == mono_other->GetMapPoints().end()) continue;
     map::MapPoint * kf_map_point = kf_map_point_it->second;
     if (!local_map_point->IsBad() && !kf_map_point->IsBad())
       out_matches.emplace_back(local_map_point, kf_map_point);
@@ -467,23 +421,32 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
 }
 
 void MonocularKeyFrame::InitializeImpl() {
-  auto mp = map_points_.begin();
 
-  while (mp != map_points_.end()) {
-    if (mp->second->IsBad()) {
-      mp = map_points_.erase(mp);
+  for (auto mp : GetMapPoints()) {
+    if(mp.second->IsBad())
       continue;
-    }
-    mp->second->AddObservation(Observation(mp->second, this, mp->first));
-    mp->second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
-    mp->second->CalculateNormalStaging();
-    mp->second->ApplyNormalStaging();
-    ++mp;
+    mp.second->AddObservation(Observation(mp.second, this, mp.first));
+    mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
+    mp.second->CalculateNormalStaging();
+    mp.second->ApplyNormalStaging();
   }
   logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
-  logging::RetrieveLogger()->debug("Number of map points:  {}", map_points_.size());
+  logging::RetrieveLogger()->debug("Number of map points:  {}", GetMapPointsCount());
 
   covisibility_graph_.Update();
+}
+
+void MonocularKeyFrame::LockMapPointContainer() const {
+  map_points_mutex_.lock();
+}
+
+void MonocularKeyFrame::UnlockMapPointContainer() const {
+  map_points_mutex_.unlock();
+}
+
+void MonocularKeyFrame::AddMapPoint(Observation & observation) {
+  BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
+  observation.GetMapPoint()->AddObservation(observation);
 }
 
 }

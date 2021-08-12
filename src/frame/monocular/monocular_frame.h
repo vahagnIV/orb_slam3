@@ -36,8 +36,13 @@ class MonocularFrame : public Frame, public BaseMonocular {
                               std::list<MapPointVisibilityParams> & out_filetered_map_points,
                               precision_t radius_multiplier) const override;
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) override;
-  size_t GetMapPointCount() const override;
+  size_t GetMapPointsCount() const ;
   void UpdateFromReferenceKeyFrame() override;
+ public:
+  /*!
+   * Used for debugging
+   * @return a map of bad map points only
+   */
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
  protected:
   void SerializeToStream(std::ostream & stream) const override;

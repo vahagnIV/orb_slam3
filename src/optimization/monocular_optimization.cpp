@@ -86,10 +86,6 @@ void OptimizePose(MonocularFrame * frame) {
       if (N - 2 == i)
         edge->setRobustKernel(nullptr);
     }
-
-    // std::cout << "EDGE COUNT " << optimizer.edges().size() << std::endl;
-    //std::cout << "VERTEX POSE " << i << frame_vertex->estimate() << std::endl;
-
   }
 
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);

@@ -25,20 +25,28 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
 
  public:
 
-  void CreateNewMapPoints(frame::KeyFrame * other, MapPointSet & out_newly_created) override;
+  void CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints & out_newly_created) const override;
+  void FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
+                              std::list<MapPointVisibilityParams> & out_visibles,
+                              bool use_staging) const override;
+
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  void FuseMapPoints(MapPointSet & map_points, bool use_staging) override;
-  void EraseMapPoint(const map::MapPoint *) override;
-  void ReplaceMapPoint(map::MapPoint * map_point, const Observation & observation) override;
+  void EraseMapPoint(map::MapPoint *) override;
   void SetMap(map::Map * map) override;
+  void LockMapPointContainer() const override;
+  void UnlockMapPointContainer() const override;
+
+
+ public:
+  MonocularMapPoints GetMapPointsWithLock() const;
  protected:
   void SerializeToStream(std::ostream & stream) const override;
   void InitializeImpl() override;
  public:
   void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
-  void EraseMapPoint(size_t feature_id) override;
+  map::MapPoint * EraseMapPoint(size_t feature_id) override;
   void SetBad() override;
   void FindMatchingMapPoints(const KeyFrame * other,
                              MapPointMatches & out_matches) const override;
@@ -54,13 +62,12 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                                   const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
   TVector3D GetNormalFromStaging(const TPoint3D & point) const override;
+  void AddMapPoint(Observation & observation) override;
+  void MatchVisibleMapPoints(const std::list<MapPointVisibilityParams> & visibles,
+                             std::list<std::pair<map::MapPoint *, map::MapPoint *>> & out_matched_map_points,
+                             std::list<Observation> & out_local_matches) const override;
  private:
 
-  void FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
-                              std::list<MapPointVisibilityParams> & out_visibles,
-                              bool use_staging);
-  void EraseMapPointImpl(const map::MapPoint *, bool check_bad);
-  void EraseMapPointImpl(size_t feature_id, bool check_bad);
   int GetMapPointLevel(const map::MapPoint * map_point) const;
 
  private:
@@ -69,6 +76,8 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                                const geometry::Pose & others_pose);
   static precision_t ComputeBaseline(const geometry::Pose & local_pose, const geometry::Pose & others_pose);
   static precision_t ComputeSceneMedianDepth(const MapPointSet & map_points, unsigned q, const geometry::Pose & pose);
+ private:
+  mutable std::recursive_mutex map_points_mutex_;
 
 };
 

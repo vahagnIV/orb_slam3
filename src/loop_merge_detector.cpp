@@ -83,10 +83,16 @@ void LoopMergeDetector::RunIteration() {
           for (auto keyframe: message.frame->GetMap()->GetAllKeyFrames()) {
             if (keyframe->IsBad())
               continue;
-            keyframe->FuseMapPoints(current_window_map_points, true);
+            //TODO: Implement this function
+//            keyframe->FuseMapPoints(current_window_map_points, true);
           }
           // TODO: release local mapper
-          optimization::LocalBundleAdjustment(current_kf_window, candidate_kf_window, current_window_map_points);
+          std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
+          optimization::LocalBundleAdjustment(current_kf_window,
+                                              candidate_kf_window,
+                                              current_window_map_points,
+                                              observations_to_delete,
+                                              nullptr);
 
           // TODO: Stop everything
           for (auto mp: message.frame->GetMap()->GetAllMapPoints()) {

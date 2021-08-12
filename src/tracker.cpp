@@ -150,7 +150,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->SearchInVisiblePoints(visible_map_points);
 
   frame->OptimizePose();
-  if (frame->GetMapPointCount() < 20)
+  if (frame->GetMapPointsCount() < 20)
     return TrackingResult::TRACKING_FAILED;
   frame->SetMap(atlas_->GetCurrentMap());
   debug::DisplayTrackingInfo(frame,
