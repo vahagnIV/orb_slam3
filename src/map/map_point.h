@@ -54,7 +54,7 @@ class MapPoint {
 
   const features::DescriptorType GetDescriptor() const { return descriptor_; }
 
-  const TPoint3D & GetPosition() const { return position_; }
+  const TPoint3D & GetPosition() const;
   const TVector3D & GetNormal() const { return normal_; }
   const TPoint3D & GetStagingPosition() const { return staging_position_; }
   const TVector3D & GetStagingNormal() const { return staging_normal_; }
@@ -100,8 +100,6 @@ class MapPoint {
     staging_min_invariance_distance_ = min_invariance_distance;
   }
 
-  std::recursive_mutex & ObservationMutex() const { return observation_mutex_; }
-
   bool GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const;
 
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
@@ -142,7 +140,7 @@ class MapPoint {
   mutable std::recursive_mutex observation_mutex_;
 
   // Mutex for locking position
-  std::mutex position_mutex_;
+  mutable std::recursive_mutex position_mutex_;
   map::MapPoint * replaced_map_point_;
 
 };

@@ -125,6 +125,7 @@ void MapPoint::SetStagingPosition(const TPoint3D & position) {
 }
 
 void MapPoint::ApplyStagingPosition() {
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
   position_ = staging_position_;
 }
 
@@ -150,6 +151,11 @@ const MapPoint::MapType MapPoint::Observations() const { /// TODO change prototy
 size_t MapPoint::GetObservationCount() const {
 //  std::unique_lock<std::mutex> lock(feature_mutex_);
   return observations_.size();
+}
+
+const TPoint3D & MapPoint::GetPosition() const {
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  return position_;
 }
 
 bool MapPoint::IsInKeyFrame(const frame::KeyFrame * keyframe) const {
