@@ -16,6 +16,9 @@ std::string to_string(MessageType type) {
     case MAP_POINT_CREATED:return "Map Point created";
     case MAP_POINT_DELETED:return "Map Point deleted";
     case OBSERVATION_ADDED:return "Observation added";
+    case KEYFRAME_POSITION_UPDATED:return "Keyframe position updated";
+    case KEYFRAME_COVISIBILITY_UPDATED:return "Keyframe covisibility updated";
+    case MAP_POINT_GEOMETRY_UPDATED:return "Map Point Position changed";
     default:return "Unknown";
   }
 }

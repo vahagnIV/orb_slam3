@@ -38,6 +38,12 @@ void KeyFrame::SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
   pose_gba_.T = T;
 }
 
+void KeyFrame::ApplyStaging() {
+  RigidObject::ApplyStaging();
+  if (Settings::Get().MessageRequested(messages::KEYFRAME_POSITION_UPDATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFramePositionUpdated(this));
+}
+
 CovisibilityGraphNode & KeyFrame::GetCovisibilityGraph() {
   return covisibility_graph_;
 }
@@ -57,6 +63,24 @@ void KeyFrame::Initialize() {
     return;
   is_initialized_ = true;
   InitializeImpl();
+}
+
+void KeyFrame::AddMapPoint(Observation & observation) {
+  this->AddMapPointImpl(observation);
+  observation.GetMapPoint()->AddObservation(observation);
+  if (Settings::Get().MessageRequested(messages::OBSERVATION_ADDED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::ObservationAdded(observation));
+}
+
+void KeyFrame::EraseMapPoint(map::MapPoint * map_point) {
+  Observation observation;
+  if (map_point->GetObservation(this, observation)) {
+    EraseMapPointImpl(observation);
+    map_point->EraseObservation(this);
+    if (Settings::Get().MessageRequested(messages::OBSERVATION_DELETED))
+      messages::MessageProcessor::Instance().Enqueue(new messages::ObservationDeleted(observation));
+  } else
+    assert(false);
 }
 
 }

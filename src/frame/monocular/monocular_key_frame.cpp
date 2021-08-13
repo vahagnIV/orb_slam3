@@ -226,19 +226,8 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
   }
 }
 
-void MonocularKeyFrame::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
-  assert(!map_point->IsBad());
-  BaseMonocular::AddMapPoint(map_point, feature_id);
-  map_point->AddObservation(Observation(map_point, this, feature_id));
-}
-
-void MonocularKeyFrame::EraseMapPoint(map::MapPoint * map_point) {
-  Observation observation;
-  if (map_point->GetObservation(this, observation)) {
-    BaseMonocular::EraseMapPoint(observation.GetFeatureId());
-    map_point->EraseObservation(this);
-  } else
-    assert(false);
+void MonocularKeyFrame::EraseMapPointImpl(Observation & observation) {
+  BaseMonocular::EraseMapPoint(observation.GetFeatureId());
 }
 
 map::MapPoint * MonocularKeyFrame::EraseMapPoint(size_t feature_id) {
@@ -428,7 +417,7 @@ void MonocularKeyFrame::InitializeImpl() {
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
     mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
     mp.second->CalculateNormalStaging();
-    mp.second->ApplyNormalStaging();
+    mp.second->ApplyStaging();
   }
   logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());
   logging::RetrieveLogger()->debug("Number of map points:  {}", GetMapPointsCount());
@@ -444,9 +433,8 @@ void MonocularKeyFrame::UnlockMapPointContainer() const {
   map_points_mutex_.unlock();
 }
 
-void MonocularKeyFrame::AddMapPoint(Observation & observation) {
+void MonocularKeyFrame::AddMapPointImpl(Observation & observation) {
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
-  observation.GetMapPoint()->AddObservation(observation);
 }
 
 }

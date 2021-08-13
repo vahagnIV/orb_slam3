@@ -66,6 +66,9 @@ add_library(orbslam SHARED
         messages/map_point_deleted.cpp
         messages/observation_added.cpp
         messages/observation_deleted.cpp
+        messages/key_frame_position_updated.cpp
+        messages/key_frame_covisibility_updated.cpp
+        messages/map_point_geometry_updated.cpp
 
         map/map_point.cpp
         map/map.cpp
@@ -148,7 +151,7 @@ add_library(orbslam SHARED
 
         orb_vocabulary.h
         identifiable.h
-        logging.h )
+        logging.h)
 
 target_include_directories(orbslam INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 

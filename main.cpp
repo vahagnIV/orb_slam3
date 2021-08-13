@@ -2,9 +2,8 @@
 #include <frame/monocular/monocular_frame.h>
 #include <image_utils.h>
 #include <tracker.h>
-#include <messages/messages.h>
 #include <settings.h>
-#include <Eigen/Eigen>
+#include <main_utils/message_print_functions.h>
 #include <json/json.hpp>
 #include <chrono>
 #include <fstream>
@@ -239,93 +238,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   }
 }
 
-std::string FormatTimePoint(const orb_slam3::TimePoint & time_point) {
-  std::time_t now_c = std::chrono::system_clock::to_time_t(time_point);
-  return std::string(std::ctime(&now_c));
-}
 
-void PrintTrackingInfo(const orb_slam3::messages::BaseMessage * message) {
-  assert(message->Type() == orb_slam3::messages::TRACKING_INFO);
-  auto tracking_info = dynamic_cast<const orb_slam3::messages::TrackingInfo *>(message);
-  assert(nullptr != tracking_info);
-
-  std::cout << "Received Position update Message" << std::endl;
-  std::cout << "Time " << FormatTimePoint(tracking_info->time_point) << std::endl;
-  tracking_info->position.print();
-  tracking_info->velocity.print();
-}
-
-void PrintKeyFrameCreated(const orb_slam3::messages::BaseMessage * message) {
-  assert(message->Type() == orb_slam3::messages::KEYFRAME_CREATED);
-  auto kf_created = dynamic_cast<const orb_slam3::messages::KeyFrameCreated *>(message);
-  assert(nullptr != kf_created);
-
-  std::cout << "New Key Frame created " << std::endl;
-  std::cout << "Id: " << kf_created->id << std::endl;
-  std::cout << "Map Id: " << kf_created->map_id << std::endl;
-  std::cout << "Position: " << std::endl;
-  kf_created->position.print();
-
-}
-
-void PrintKeyFrameDeleted(const orb_slam3::messages::BaseMessage * message) {
-  assert(message->Type() == orb_slam3::messages::KEYFRAME_DELETED);
-  auto kf_deleted = dynamic_cast<const orb_slam3::messages::KeyFrameDeleted *>(message);
-  assert(nullptr != kf_deleted);
-
-  std::cout << "Keyframe with id " << kf_deleted->id << " deleted " << std::endl;
-}
-
-void PrintMapcreated(const orb_slam3::messages::BaseMessage * message) {
-  assert(message->Type() == orb_slam3::messages::MAP_CREATED);
-  auto map_created = dynamic_cast<const orb_slam3::messages::MapCreated *>(message);
-  assert(nullptr != map_created);
-
-  std::cout << "Map Created with Id " << map_created->map << std::endl;
-}
-
-void PrintMapPointCreated(const orb_slam3::messages::BaseMessage * message) {
-  assert(message->Type() == orb_slam3::messages::MAP_POINT_CREATED);
-  auto mp_created = dynamic_cast<const orb_slam3::messages::MapPointCreated *>(message);
-  assert(nullptr != mp_created);
-
-  std::cout << "Map point created " << std::endl;
-  std::cout << "Id " << mp_created->id << std::endl;
-  std::cout << "Map: " << mp_created->map_id << std::endl;
-  std::cout << "Position:\n" << mp_created->position << std::endl;
-
-}
-
-void PrintMapPointDeleted(const orb_slam3::messages::BaseMessage * message) {
-  assert(message->Type() == orb_slam3::messages::MAP_POINT_DELETED);
-  auto mp_deleted = dynamic_cast<const orb_slam3::messages::MapPointDeleted *>(message);
-  assert(nullptr != mp_deleted);
-  std::cout << "Map point deleted " << mp_deleted->id << std::endl;
-}
-
-void PrintMessages(bool & cancellation_token) {
-  while (cancellation_token) {
-    orb_slam3::messages::BaseMessage * message;
-    if (orb_slam3::messages::MessageProcessor::Instance().Dequeue(message)) {
-      switch (message->Type()) {
-
-        case orb_slam3::messages::MAP_CREATED:PrintMapcreated(message);
-          break;
-        case orb_slam3::messages::TRACKING_INFO:PrintTrackingInfo(message);
-          break;
-        case orb_slam3::messages::KEYFRAME_CREATED:PrintKeyFrameCreated(message);
-          break;
-        case orb_slam3::messages::KEYFRAME_DELETED:PrintKeyFrameDeleted(message);
-          break;
-        case orb_slam3::messages::MAP_POINT_CREATED:PrintMapPointCreated(message);
-          break;
-          case orb_slam3::messages::MAP_POINT_DELETED:PrintMapPointDeleted(message);
-          break;
-      }
-      delete message;
-    }
-  }
-}
 
 void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                      orb_slam3::camera::MonocularCamera * camera,
@@ -346,6 +259,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_DELETED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_CREATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_DELETED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_ADDED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_DELETED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_POSITION_UPDATED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_GEOMETRY_UPDATED);
   bool cancellation_token = true;
   std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));
 //  local_mapper.AddObserver(&lp_detector);

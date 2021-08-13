@@ -26,7 +26,6 @@ struct CovisibilityGraphNode {
 
   std::vector<KeyFrame *> sorted_connected_frames_;
   std::vector<size_t> sorted_weights_;
-  mutable std::mutex mutex_;
 
 };
 

@@ -29,8 +29,7 @@ MapPoint::MapPoint(TPoint3D point,
   SetStagingPosition(point);
   SetStagingMinInvarianceDistance(min_invariance_distance);
   SetStagingMaxInvarianceDistance(max_invariance_distance);
-  ApplyStagingPosition();
-  ApplyMinMaxInvDistanceStaging();
+  ApplyStaging();
   map_->AddMapPoint(this);
   if(Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointCreated(this));
