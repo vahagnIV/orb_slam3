@@ -1,0 +1,16 @@
+//
+// Created by vahagn on 13/08/2021.
+//
+
+#ifndef ORB_SLAM3_SRC_MESSAGES_MESSAGES_H_
+#define ORB_SLAM3_SRC_MESSAGES_MESSAGES_H_
+
+#include "message_processor.h"
+#include "tracking_info.h"
+#include "map_created.h"
+#include "map_point_deleted.h"
+#include "map_point_created.h"
+#include "key_frame_created.h"
+#include "key_frame_deleted.h"
+
+#endif //ORB_SLAM3_SRC_MESSAGES_MESSAGES_H_

@@ -4,6 +4,8 @@
 
 #include "key_frame.h"
 #include <map/map.h>
+#include <settings.h>
+#include <messages/messages.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -18,12 +20,17 @@ KeyFrame::KeyFrame(TimePoint time_point,
       covisibility_graph_(this),
       is_initial_(false),
       bad_flag_(false),
-      kf_gba_(nullptr) {}
+      kf_gba_(nullptr) {
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(this));
+}
 
 void KeyFrame::SetBad() {
   bad_flag_ = true;
   assert(nullptr != map_);
   map_->EraseKeyFrame(this);
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_DELETED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameDeleted(this));
 }
 
 void KeyFrame::SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {

@@ -28,6 +28,7 @@ add_library(orbslam SHARED
         local_mapper.cpp
         loop_merge_detector.cpp
         logging.cpp
+        settings.cpp
 
         frame/key_frame.cpp
         frame/monocular/base_monocular.cpp
@@ -53,6 +54,18 @@ add_library(orbslam SHARED
         features/matching/validators/orientation_validator.cpp
         features/handlers/DBoW2/dbo_w2_handler.cpp
         features/factories/dbo_w2_handler_factory.cpp
+
+        messages/message_type.cpp
+        messages/base_message.cpp
+        messages/message_processor.cpp
+        messages/key_frame_created.cpp
+        messages/key_frame_deleted.cpp
+        messages/tracking_info.cpp
+        messages/map_created.cpp
+        messages/map_point_created.cpp
+        messages/map_point_deleted.cpp
+        messages/observation_added.cpp
+        messages/observation_deleted.cpp
 
         map/map_point.cpp
         map/map.cpp
