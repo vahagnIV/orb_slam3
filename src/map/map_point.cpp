@@ -6,7 +6,8 @@
 #include "map_point.h"
 #include <frame/key_frame.h>
 #include <map/map.h>
-
+#include <settings.h>
+#include <messages/messages.h>
 #include <utility>
 
 namespace orb_slam3 {
@@ -28,9 +29,10 @@ MapPoint::MapPoint(TPoint3D point,
   SetStagingPosition(point);
   SetStagingMinInvarianceDistance(min_invariance_distance);
   SetStagingMaxInvarianceDistance(max_invariance_distance);
-  ApplyStagingPosition();
-  ApplyMinMaxInvDistanceStaging();
+  ApplyStaging();
   map_->AddMapPoint(this);
+  if(Settings::Get().MessageRequested(messages::MAP_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::MapPointCreated(this));
   ++counter_;
 }
 
@@ -72,6 +74,8 @@ void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
   observations_.clear();
+  if(Settings::Get().MessageRequested(messages::MAP_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::MapPointDeleted(this));
 }
 
 void MapPoint::SetMap(map::Map * map) {

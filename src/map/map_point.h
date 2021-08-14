@@ -47,9 +47,7 @@ class MapPoint {
 //  void Refresh(const features::IFeatureExtractor * feature_extractor);
 
   void SetStagingPosition(const TPoint3D & position);
-  void ApplyStagingPosition();
-  void ApplyNormalStaging();
-  void ApplyMinMaxInvDistanceStaging();
+
   void ApplyStaging();
 
   const features::DescriptorType GetDescriptor() const { return descriptor_; }
@@ -81,7 +79,7 @@ class MapPoint {
   unsigned GetVisible() const { return visible_; }
   unsigned GetFound() const { return found_; }
   static size_t GetTotalMapPointCount() { return counter_; }
-  Map * GetMap() { return map_; }
+  Map * GetMap() const { return map_; }
   void SetMap(map::Map * map);
   inline bool IsBad() const { return bad_flag_; }
   void SetBad();
@@ -105,6 +103,10 @@ class MapPoint {
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
   void LockObservationsContainer() const;
   void UnlockObservationsContainer() const;
+ private:
+  void ApplyStagingPosition();
+  void ApplyNormalStaging();
+  void ApplyMinMaxInvDistanceStaging();
 
  private:
   static std::atomic_uint64_t counter_;

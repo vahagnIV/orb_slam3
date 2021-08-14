@@ -115,7 +115,7 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
 
       map_point->ComputeDistinctiveDescriptor(key_frame->GetFeatureExtractor());
       map_point->CalculateNormalStaging();
-      map_point->ApplyNormalStaging();
+      map_point->ApplyStaging();
       key_frame->AddMapPoint(key_frame_obs);
       neighbour_keyframe->AddMapPoint(neighbour_obs);
       recently_added_map_points_.insert(map_point);
@@ -277,7 +277,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
     if (!mp->IsBad()) {
       mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
       mp->CalculateNormalStaging();
-      mp->ApplyNormalStaging();
+      mp->ApplyStaging();
     }
   }
   frame->GetCovisibilityGraph().Update();
@@ -341,7 +341,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
     for (auto mp : map_points) {
       if (!mp->IsBad()) {
         mp->CalculateNormalStaging();
-        mp->ApplyNormalStaging();
+        mp->ApplyStaging();
         mp->ComputeDistinctiveDescriptor(kf->GetFeatureExtractor());
       }
     }

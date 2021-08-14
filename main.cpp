@@ -2,8 +2,8 @@
 #include <frame/monocular/monocular_frame.h>
 #include <image_utils.h>
 #include <tracker.h>
-
-#include <Eigen/Eigen>
+#include <settings.h>
+#include <main_utils/message_print_functions.h>
 #include <json/json.hpp>
 #include <chrono>
 #include <fstream>
@@ -238,6 +238,8 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   }
 }
 
+
+
 void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                      orb_slam3::camera::MonocularCamera * camera,
                      const std::vector<std::string> & filenames,
@@ -251,6 +253,18 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Tracker tracker(atlas, &local_mapper);
 //  tracker.AddObserver(&local_mapper);
   orb_slam3::LoopMergeDetector lp_detector(kf_database, atlas);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_CREATED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::TRACKING_INFO);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_CREATED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_DELETED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_CREATED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_DELETED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_ADDED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_DELETED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_POSITION_UPDATED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_GEOMETRY_UPDATED);
+  bool cancellation_token = true;
+  std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));
 //  local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
 #ifdef MULTITHREADED
@@ -292,7 +306,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
 //      map_stream << atlas->GetCurrentMap();
     }
 
-    if (orb_slam3::TrackingResult::TRACKING_FAILED == result){
+    if (orb_slam3::TrackingResult::TRACKING_FAILED == result) {
       std::cout << "============= " << local_mapper.GetQueueSize() << std::endl;
       exit(1);
     }

@@ -8,6 +8,8 @@
 #include "covisibility_graph_node.h"
 #include "key_frame.h"
 #include <map/map_point.h>
+#include <settings.h>
+#include <messages/messages.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -22,7 +24,7 @@ void CovisibilityGraphNode::Update() {
   std::unordered_map<KeyFrame *, size_t> connected_frame_weights;
   frame_->ListMapPoints(local_map_points_);
   for (auto map_point:local_map_points_) {
-    for (const auto& obs: map_point->Observations()) {
+    for (const auto & obs: map_point->Observations()) {
       if (obs.first == this->frame_)
         continue;
       ++connected_frame_weights[obs.second.GetKeyFrame()];
@@ -36,7 +38,6 @@ void CovisibilityGraphNode::Update() {
 
   std::sort(weight_frame_pairs.begin(), weight_frame_pairs.end());
 
-  std::unique_lock<std::mutex> lock_guard(mutex_);
   sorted_connected_frames_.clear();
   sorted_weights_.clear();
   sorted_weights_.reserve(weight_frame_pairs.size());
@@ -45,12 +46,15 @@ void CovisibilityGraphNode::Update() {
     sorted_weights_.push_back(p->first);
     sorted_connected_frames_.push_back(p->second);
   }
+
+  if (Settings::Get().MessageRequested(messages::KEYFRAME_COVISIBILITY_UPDATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCovisibilityUpdated(this->frame_->Id(),
+                                                                                             sorted_connected_frames_));
 }
 
-std::unordered_set<KeyFrame *> CovisibilityGraphNode::GetCovisibleKeyFrames( size_t count) const {
-  std::lock_guard<std::mutex> m(mutex_);
+std::unordered_set<KeyFrame *> CovisibilityGraphNode::GetCovisibleKeyFrames(size_t count) const {
   std::unordered_set<KeyFrame *> result;
-  for (size_t i = 0; i< std::min(sorted_connected_frames_.size(), count); ++i)
+  for (size_t i = 0; i < std::min(sorted_connected_frames_.size(), count); ++i)
     if (!sorted_connected_frames_[i]->IsBad())
       result.insert(sorted_connected_frames_[i]);
   return result;

@@ -1,0 +1,31 @@
+//
+// Created by vahagn on 13/08/2021.
+//
+
+#ifndef ORB_SLAM3_SRC_MESSAGES_MESSAGE_TYPE_H_
+#define ORB_SLAM3_SRC_MESSAGES_MESSAGE_TYPE_H_
+#include <string>
+namespace orb_slam3 {
+namespace messages {
+
+enum MessageType {
+  MAP_CREATED = 0b1,
+  TRACKING_INFO = 0b10,
+  /*reserved = 4,*/
+  KEYFRAME_CREATED = 0b100,
+  MAP_POINT_CREATED = 16,
+  KEYFRAME_DELETED = 32,
+  MAP_POINT_DELETED = 64,
+  OBSERVATION_ADDED = 128,
+  OBSERVATION_DELETED = 256,
+  KEYFRAME_POSITION_UPDATED = 512,
+  KEYFRAME_COVISIBILITY_UPDATED = 1024,
+  MAP_POINT_GEOMETRY_UPDATED = 2048
+};
+
+
+std::string to_string(MessageType type);
+
+}
+}
+#endif //ORB_SLAM3_SRC_MESSAGES_MESSAGE_TYPE_H_

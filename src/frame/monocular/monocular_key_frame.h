@@ -33,7 +33,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   TVector3D GetNormal(const TPoint3D & point) const override;
   FrameType Type() const override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  void EraseMapPoint(map::MapPoint *) override;
+  void EraseMapPointImpl(Observation & observation) override;
   void SetMap(map::Map * map) override;
   void LockMapPointContainer() const override;
   void UnlockMapPointContainer() const override;
@@ -45,7 +45,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void SerializeToStream(std::ostream & stream) const override;
   void InitializeImpl() override;
  public:
-  void AddMapPoint(map::MapPoint * map_point, size_t feature_id) override;
   map::MapPoint * EraseMapPoint(size_t feature_id) override;
   void SetBad() override;
   void FindMatchingMapPoints(const KeyFrame * other,
@@ -62,7 +61,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                                   const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
   TVector3D GetNormalFromStaging(const TPoint3D & point) const override;
-  void AddMapPoint(Observation & observation) override;
+  void AddMapPointImpl(Observation & observation) override;
   void MatchVisibleMapPoints(const std::list<MapPointVisibilityParams> & visibles,
                              std::list<std::pair<map::MapPoint *, map::MapPoint *>> & out_matched_map_points,
                              std::list<Observation> & out_local_matches) const override;

@@ -5,6 +5,8 @@
 #include <cassert>
 
 #include "tracker.h"
+#include <settings.h>
+#include <messages/messages.h>
 #include "constants.h"
 #include "logging.h"
 #include <frame/key_frame.h>
@@ -109,8 +111,6 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     delete frame;
     return TrackingResult::TRACKING_FAILED;
   }
-  ComputeVelocity(frame, last_frame_);
-
 
 //  debug::DrawCommonMapPoints(frame->GetFilename(),
 //                             reference_keyframe_->GetFilename(),
@@ -153,6 +153,15 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (frame->GetMapPointsCount() < 20)
     return TrackingResult::TRACKING_FAILED;
   frame->SetMap(atlas_->GetCurrentMap());
+  ComputeVelocity(frame, last_frame_);
+
+  if (Settings::Get().MessageRequested(messages::MessageType::TRACKING_INFO)) {
+    messages::MessageProcessor::Instance().Enqueue(new messages::TrackingInfo(frame->GetPosition(),
+                                                                              frame->GetTimeCreated(),
+                                                                              geometry::Pose(angular_velocity_,
+                                                                                             velocity_)));
+  }
+
   debug::DisplayTrackingInfo(frame,
                              last_frame_,
                              atlas_->GetCurrentMap(),

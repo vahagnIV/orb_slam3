@@ -114,12 +114,12 @@ class KeyFrame : public BaseFrame {
    * Adds map point to the key-frame's container
    * @param observation
    */
-  virtual void AddMapPoint(Observation & observation) = 0;
+  virtual void AddMapPoint(Observation & observation);
 
   /*!
    * Erases the map point from the current frame
    */
-  virtual void EraseMapPoint(map::MapPoint *) = 0;
+  virtual void EraseMapPoint(map::MapPoint *);
 
   /*!
    * Locks the map point container so map points can be added and erased safely
@@ -154,9 +154,12 @@ class KeyFrame : public BaseFrame {
   virtual size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
                                           const KeyFrame * relative_kf,
                                           geometry::Sim3Transformation & in_out_transformation) const = 0;
+  void ApplyStaging();
 
  protected:
   virtual void InitializeImpl() = 0;
+  virtual void AddMapPointImpl(Observation & observation) = 0;
+  virtual void EraseMapPointImpl(Observation & observation) = 0;
 
  protected:
   bool is_initialized_;

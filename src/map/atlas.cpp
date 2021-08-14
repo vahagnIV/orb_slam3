@@ -4,6 +4,8 @@
 
 // == orb-slam3 ===
 #include "atlas.h"
+#include <settings.h>
+#include <messages/messages.h>
 
 namespace orb_slam3 {
 namespace map {
@@ -20,6 +22,8 @@ Map * Atlas::GetCurrentMap() {
 
 void Atlas::CreateNewMap() {
   current_map_ = new Map();
+  if(Settings::Get().MessageRequested(messages::MAP_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::MapCreated(current_map_));
 }
 
 Atlas::~Atlas() {
