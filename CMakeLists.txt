@@ -12,6 +12,7 @@ enable_testing()
 include_directories(external ${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(drawer)
 
 add_executable(test_p main.cpp main_utils/message_print_functions.cpp )
 
