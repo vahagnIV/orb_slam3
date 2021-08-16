@@ -38,6 +38,7 @@ class DrawerImpl {
  public:
   void KeyFrameCreated(messages::KeyFrameCreated *message);
   void MapPointCreated(messages::MapPointCreated *message);
+  void MapPointDeleted(messages::MapPointDeleted *message);
   void TrackingInfo(messages::TrackingInfo *message);
   void KeyFrameUpdated();
 

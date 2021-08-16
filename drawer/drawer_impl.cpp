@@ -84,6 +84,9 @@ void DrawerImpl::WorkThread() {
       case messages::MessageType::MAP_POINT_CREATED:
         MapPointCreated(Extract<messages::MapPointCreated>(message));
         break;
+      case messages::MessageType::MAP_POINT_DELETED:
+        MapPointDeleted(Extract<messages::MapPointDeleted>(message));
+        break;
     }
     delete message;
   }
@@ -209,6 +212,10 @@ void DrawerImpl::MapPointCreated(messages::MapPointCreated *message) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
   graph_.AddNode(mp_node);
 
+}
+
+void DrawerImpl::MapPointDeleted(messages::MapPointDeleted *message) {
+  graph_.DeleteNode(message->id);
 }
 
 void DrawerImpl::KeyFrameUpdated() {

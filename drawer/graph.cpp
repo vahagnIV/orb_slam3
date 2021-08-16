@@ -18,7 +18,10 @@ void Graph::AddNode(Node * node) {
 }
 
 void Graph::DeleteNode(size_t node_id) {
-
+  assert(NodeExists(node_id));
+  Node * node = GetNode(node_id);
+  nodes_.erase(node_id);
+  delete node;
 }
 
 void Graph::AddEdge(Edge * edge) {
@@ -36,7 +39,7 @@ void Graph::Draw() {
   }
 }
 
-const Node * Graph::GetNode(size_t node_id) const {
+Node * Graph::GetNode(size_t node_id) const {
   auto it = nodes_.find(node_id);
   if (it == nodes_.end())
     return nullptr;
