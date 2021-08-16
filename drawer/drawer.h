@@ -1,20 +1,23 @@
 //
-// Created by vahagn on 13.06.21.
+// Created by vahagn on 16/08/2021.
 //
-
-#include <pangolin/pangolin.h>
-#include <geometry/pose.h>
 
 #ifndef ORB_SLAM3_DRAWER_DRAWER_H_
 #define ORB_SLAM3_DRAWER_DRAWER_H_
 
-class Drawer {
- public:
-  Drawer(int width, int height){
-    pangolin::CreateWindowAndBind("Map", width, height);
-  }
+#include "drawer_impl.h"
 
-  void DrawKeyFrame(orb_slam3::geometry::Pose & pose);
-};
+namespace orb_slam3 {
+namespace drawer {
+
+/*!
+ * Initializes static variable and links necessary libraries
+ * @return true on success
+ */
+bool Initialize();
+void Terminate();
+
+}
+}
 
 #endif //ORB_SLAM3_DRAWER_DRAWER_H_

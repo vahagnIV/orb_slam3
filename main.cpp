@@ -3,7 +3,8 @@
 #include <image_utils.h>
 #include <tracker.h>
 #include <settings.h>
-#include <main_utils/message_print_functions.h>
+//#include <main_utils/message_print_functions.h>
+#include <drawer.h>
 #include <json/json.hpp>
 #include <chrono>
 #include <fstream>
@@ -263,8 +264,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_DELETED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_POSITION_UPDATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_GEOMETRY_UPDATED);
-  bool cancellation_token = true;
-  std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));
+  /*bool cancellation_token = true;
+  std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));*/
+  orb_slam3::drawer::DrawerImpl drawer(1024, 768);
+  drawer.Start();
 //  local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
 #ifdef MULTITHREADED
@@ -382,7 +385,7 @@ void LoadConfig(nlohmann::json & config) {
 }
 
 void initialize() {
-
+  orb_slam3::drawer::Initialize();
   orb_slam3::logging::Initialize();
 }
 
