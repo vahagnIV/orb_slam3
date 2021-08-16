@@ -6,6 +6,7 @@
 #include <shaders/shader_repository.h>
 #include "drawer_impl.h"
 #include "key_frame_node.h"
+#include "map_point_node.h"
 
 namespace orb_slam3 {
 namespace drawer {
@@ -79,6 +80,9 @@ void DrawerImpl::WorkThread() {
         break;
       case messages::MessageType::TRACKING_INFO:
         TrackingInfo(Extract<messages::TrackingInfo>(message));
+        break;
+      case messages::MessageType::MAP_POINT_CREATED:
+        MapPointCreated(Extract<messages::MapPointCreated>(message));
         break;
     }
     delete message;
@@ -196,10 +200,20 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated *message) {
   graph_.AddNode(kf_node);
 }
 
-void DrawerImpl::KeyFrameUpdated() {
+void DrawerImpl::MapPointCreated(messages::MapPointCreated *message) {
+  auto mp_node = new MapPointNode(message->id);
+  glGenBuffers(1, &mp_node->buffer_id);
+  float buffer[] = {message->position.x() / 5., message->position.y() / 5., message->position.z() / 5.};
+
+  glBindBuffer(GL_ARRAY_BUFFER, mp_node->buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+  graph_.AddNode(mp_node);
 
 }
 
+void DrawerImpl::KeyFrameUpdated() {
+
+}
 
 }
 }

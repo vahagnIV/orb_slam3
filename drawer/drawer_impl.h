@@ -36,8 +36,9 @@ class DrawerImpl {
   const std::string GetError() const;
 
  public:
-  void KeyFrameCreated(messages::KeyFrameCreated * message);
-  void TrackingInfo(messages::TrackingInfo * message);
+  void KeyFrameCreated(messages::KeyFrameCreated *message);
+  void MapPointCreated(messages::MapPointCreated *message);
+  void TrackingInfo(messages::TrackingInfo *message);
   void KeyFrameUpdated();
 
  private:
