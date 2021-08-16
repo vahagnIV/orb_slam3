@@ -15,7 +15,7 @@
 #include <messages/messages.h>
 
 // ===== drawer ======
-#include "key_frame_details.h"
+#include "graph.h"
 
 #ifndef ORB_SLAM3_DRAWER_IMPL_DRAWER_H_
 #define ORB_SLAM3_DRAWER_IMPL_DRAWER_H_
@@ -42,7 +42,6 @@ class DrawerImpl {
 
  private:
   void WorkThread();
-  void Draw();
 
   template<typename T>
   T * Extract(messages::BaseMessage * message) {
@@ -52,6 +51,7 @@ class DrawerImpl {
   }
 
   void Convert(const geometry::Pose & pose, glm::mat4 & out_mat);
+  static void CreatePositionRectangle(const geometry::Pose &pose, float result[]);
 
  private:
   size_t windo_width_;
@@ -61,8 +61,9 @@ class DrawerImpl {
   std::thread * thread_;
   std::string error_;
   bool cancellation_token_;
-  std::unordered_map<size_t, KeyFrameDetails> key_frames_;
+  Graph graph_;
   glm::mat4 transformation_matrix_;
+  GLuint position_vertex_buffer_id_;
 
 };
 

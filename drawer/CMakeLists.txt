@@ -9,7 +9,8 @@ add_library(drawer SHARED
         node.cpp
         graph.cpp
         edge.cpp
-        shaders/shader_repository.cpp)
+        shaders/shader_repository.cpp
+        key_frame_node.cpp)
 target_link_libraries(drawer
         ${OpenGL_LIBRARIES}
         ${GLEW_LIBRARIES}

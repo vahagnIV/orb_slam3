@@ -10,9 +10,10 @@
 namespace orb_slam3 {
 namespace drawer {
 
-Node::Node(size_t id) : id_(id) {
+Node::Node(size_t id) : id_(id), draw_nonce_(0) {
 
 }
+
 void Node::AddEdge(const Edge * edge) {
   size_t other_id = GetOtherNodeIdFromedge(edge);
   if (edges_.find(other_id) != edges_.end())

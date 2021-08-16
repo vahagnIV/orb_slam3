@@ -19,11 +19,13 @@ class Node {
   void AddEdge(const Edge * edge);
   const Edge * DeleteEdgeTo(const Node * other);
   size_t Id() const;
+  virtual void Draw() const = 0;
  private:
   size_t GetOtherNodeIdFromedge(const Edge * edge) const ;
  private:
   size_t id_;
   std::unordered_map<size_t, const Edge *> edges_;
+  size_t draw_nonce_;
 
 };
 

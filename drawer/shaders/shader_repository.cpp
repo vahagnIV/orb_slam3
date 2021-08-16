@@ -5,17 +5,21 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 
 #include "shader_repository.h"
 #include "vertex_shader.h"
 #include "key_frame_fragment_shader.h"
+#include "frame_fragment_shader.h"
 
 namespace orb_slam3 {
 namespace drawer {
 bool ShaderRepository::is_initialized_ = false;
 GLuint ShaderRepository::vertex_shader_id_ = 0;
 GLuint ShaderRepository::keyframe_fragment_shader_id_ = 0;
+GLuint ShaderRepository::frame_fragment_shader_id_ = 0;
 GLuint ShaderRepository::keyframe_program_id_ = 0;
+GLuint ShaderRepository::position_program_id_ = 0;
 
 void ShaderRepository::InitializeVertexShader() {
   ShaderRepository & repo = Instance();
@@ -31,25 +35,29 @@ void ShaderRepository::InitializeVertexShader() {
     std::vector<char> VertexShaderErrorMessage(info_log_length + 1);
     glGetShaderInfoLog(vertex_shader_id_, info_log_length, NULL, &VertexShaderErrorMessage[0]);
     printf("%s\n", &VertexShaderErrorMessage[0]);
+    assert(false);
     exit(1);
   }
 
 }
-void ShaderRepository::InitializeKeyFrameFragmentShader() {
-  keyframe_fragment_shader_id_ = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(keyframe_fragment_shader_id_, 1, &KEYFRAME_FRAGMENT_SHADER_SOURCE, NULL);
-  glCompileShader(keyframe_fragment_shader_id_);
+
+GLuint ShaderRepository::InitializeFragmentShader(const char *source) {
+  GLuint shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(shader_id, 1, &source, NULL);
+  glCompileShader(shader_id);
   // Check Fragment Shader
   GLint result = GL_FALSE;
   int info_log_length;
-  glGetShaderiv(keyframe_fragment_shader_id_, GL_COMPILE_STATUS, &result);
-  glGetShaderiv(keyframe_fragment_shader_id_, GL_INFO_LOG_LENGTH, &info_log_length);
+  glGetShaderiv(shader_id, GL_COMPILE_STATUS, &result);
+  glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
   if (info_log_length > 0) {
     std::vector<char> FragmentShaderErrorMessage(info_log_length + 1);
-    glGetShaderInfoLog(keyframe_fragment_shader_id_, info_log_length, NULL, FragmentShaderErrorMessage.data());
+    glGetShaderInfoLog(shader_id, info_log_length, NULL, FragmentShaderErrorMessage.data());
     printf("%s\n", &FragmentShaderErrorMessage[0]);
+    assert(false);
     exit(1);
   }
+  return shader_id;
 }
 
 void ShaderRepository::Initialize() {
@@ -57,25 +65,40 @@ void ShaderRepository::Initialize() {
     return;
   is_initialized_ = true;
 
-  InitializeVertexShader();
-  InitializeKeyFrameFragmentShader();
+  GLuint VertexArrayID;
+  glGenVertexArrays(1, &VertexArrayID);
+  glBindVertexArray(VertexArrayID);
 
-  keyframe_program_id_ = glCreateProgram();
-  glAttachShader(keyframe_program_id_, vertex_shader_id_);
-  glAttachShader(keyframe_program_id_, keyframe_fragment_shader_id_);
-  glLinkProgram(keyframe_program_id_);
+  InitializeVertexShader();
+  keyframe_fragment_shader_id_ = InitializeFragmentShader(KEYFRAME_FRAGMENT_SHADER_SOURCE);
+  frame_fragment_shader_id_ = InitializeFragmentShader(FRAME_FRAGMENT_SHADER_SOURCE);
+  keyframe_program_id_ = CreateProgram(vertex_shader_id_, keyframe_fragment_shader_id_);
+  position_program_id_ = CreateProgram(vertex_shader_id_, frame_fragment_shader_id_);
+
+}
+
+GLuint ShaderRepository::GetPositionProgramId() {
+  return position_program_id_;
+}
+
+GLuint ShaderRepository::CreateProgram(GLuint vertex_shader_id, GLuint fragment_shader_id) {
+  GLuint program_id = glCreateProgram();
+  glAttachShader(program_id, vertex_shader_id);
+  glAttachShader(program_id, fragment_shader_id);
+  glLinkProgram(program_id);
 
   GLint result = GL_FALSE;
   int info_log_length;
   // Check the program
-  glGetProgramiv(keyframe_program_id_, GL_LINK_STATUS, &result);
-  glGetProgramiv(keyframe_program_id_, GL_INFO_LOG_LENGTH, &info_log_length);
+  glGetProgramiv(program_id, GL_LINK_STATUS, &result);
+  glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
   if (info_log_length > 0) {
     std::vector<char> ProgramErrorMessage(info_log_length + 1);
-    glGetProgramInfoLog(keyframe_program_id_, info_log_length, NULL, &ProgramErrorMessage[0]);
+    glGetProgramInfoLog(program_id, info_log_length, NULL, &ProgramErrorMessage[0]);
     printf("%s\n", &ProgramErrorMessage[0]);
     exit(1);
   }
+  return program_id;
 }
 
 ShaderRepository::~ShaderRepository() {
