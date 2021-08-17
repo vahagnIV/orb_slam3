@@ -18,7 +18,9 @@ void Graph::AddNode(Node * node) {
 }
 
 void Graph::DeleteNode(size_t node_id) {
-  assert(NodeExists(node_id));
+  if(!NodeExists(node_id))
+    return;
+//  assert(NodeExists(node_id));
   Node * node = GetNode(node_id);
   nodes_.erase(node_id);
   delete node;
