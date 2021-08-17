@@ -175,7 +175,7 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
   IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
   typedef features::matching::SNNMatcher<IteratorType> MatcherType;
   MatcherType::MatchMapType matches;
-  MatcherType matcher(1., 50);
+  MatcherType matcher(1.0, GetFeatureExtractor()->GetLowThreshold());
   matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), matches);
   for (auto & match: matches) {
     map::MapPoint * local_mp = GetMapPoint(match.second);

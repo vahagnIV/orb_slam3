@@ -90,6 +90,9 @@ void DrawerImpl::WorkThread() {
       case messages::MessageType::MAP_POINT_DELETED:
         MapPointDeleted(Extract<messages::MapPointDeleted>(message));
         break;
+      case messages::MessageType::KEYFRAME_POSITION_UPDATED:
+        KeyFramePositionUpdated(Extract<messages::KeyFramePositionUpdated>(message));
+        break;
     }
     delete message;
   }
@@ -217,12 +220,23 @@ void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
 
 }
 
-void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
+void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted *message) {
   graph_.DeleteNode(message->id);
 }
 
-void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
+void DrawerImpl::MapPointDeleted(messages::MapPointDeleted *message) {
   graph_.DeleteNode(message->id);
+}
+
+void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated *message) {
+  auto node = dynamic_cast<KeyFrameNode *>(graph_.GetNode(message->id));
+  // TODO: This issue arises because monocular keyframe's constructor raises this event
+  // TODO: before raising kf creted event.
+  if(nullptr == node)
+    return;
+  CreatePositionRectangle(message->position, node->vertices);
+  glBindBuffer(GL_ARRAY_BUFFER, node->vertex_buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(node->vertices), node->vertices, GL_STATIC_DRAW);
 }
 
 void DrawerImpl::KeyFrameUpdated() {

@@ -12,6 +12,7 @@ namespace messages {
 class KeyFramePositionUpdated : public BaseMessage {
  public:
   KeyFramePositionUpdated(const frame::KeyFrame * keyframe);
+  size_t id;
   MessageType Type() const override;
   const geometry::Pose position;
 
