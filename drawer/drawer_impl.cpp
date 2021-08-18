@@ -4,6 +4,7 @@
 
 #include <messages/messages.h>
 #include <shaders/shader_repository.h>
+#include <shaders/color_repository.h>
 #include "drawer_impl.h"
 #include "key_frame_node.h"
 #include "map_point_node.h"
@@ -125,13 +126,11 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   GLuint MatrixID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "MVP");
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &transformation_matrix_[0][0]);
 
-  float red[] = {1, 0, 0};
-  float green[] = {0, 1, 0};
-  GLuint color_id = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "col");
-  glUniform3fv(color_id, 1, &green[0]);
+
+  ShaderRepository::UseColor(ColorRepository::Green());
 
   graph_.Draw();
-  glUniform3fv(color_id, 1, &red[0]);
+  ShaderRepository::UseColor(ColorRepository::Red());
 
 //  glUseProgram(ShaderRepository::GetPositionProgramId());
   float buffer[18];
@@ -186,7 +185,7 @@ void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float resu
   TVector3D top_right = inverse.Transform(top_right_init);
   TVector3D bottom_right = inverse.Transform(bottom_right_init);
 
-#define COPY(dest, source) for(int i =0; i < 3; ++i) *(dest+i)=source[i] / 5.;
+#define COPY(dest, source) for(int i =0; i < 3; ++i) *((dest)+i)=(source)[i] / 5.;
 
   COPY(result, bottom_left.data());
   COPY(result + 3, top_left.data());
@@ -212,7 +211,9 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
 void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
   auto mp_node = new MapPointNode(message->id);
   glGenBuffers(1, &mp_node->buffer_id);
-  float buffer[] = {message->position.x() / 5., message->position.y() / 5., message->position.z() / 5.};
+  float buffer[] = {static_cast<float>(message->position.x() / 5.),
+                    static_cast<float>(message->position.y() / 5.),
+                    static_cast<float>(message->position.z() / 5.)};
 
   glBindBuffer(GL_ARRAY_BUFFER, mp_node->buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);

@@ -4,6 +4,9 @@
 
 #include "graph.h"
 #include <cassert>
+#include <shaders/shader_repository.h>
+#include <shaders/color_repository.h>
+#include "key_frame_node.h"
 
 namespace orb_slam3 {
 namespace drawer {
@@ -12,7 +15,7 @@ Graph::Graph() {
 
 }
 
-void Graph::AddNode(Node * node) {
+void Graph::AddNode(Node *node) {
   assert(!NodeExists(node->Id()));
   nodes_[node->Id()] = node;
 }
@@ -36,8 +39,15 @@ void Graph::DeleteEdge(size_t node_id1, size_t node_id2) {
 
 void Graph::Draw() {
 
-  for (const auto & node:nodes_) {
-    node.second->Draw();
+  ShaderRepository::UseColor(ColorRepository::Green());
+  for (const auto &node:nodes_) {
+    if (dynamic_cast<KeyFrameNode *>(node.second))
+      node.second->Draw();
+  }
+  ShaderRepository::UseColor(ColorRepository::Blue());
+  for (const auto &node:nodes_) {
+    if (nullptr == dynamic_cast<KeyFrameNode *>(node.second))
+      node.second->Draw();
   }
 }
 

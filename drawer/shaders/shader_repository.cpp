@@ -20,6 +20,7 @@ GLuint ShaderRepository::keyframe_fragment_shader_id_ = 0;
 GLuint ShaderRepository::frame_fragment_shader_id_ = 0;
 GLuint ShaderRepository::keyframe_program_id_ = 0;
 GLuint ShaderRepository::position_program_id_ = 0;
+GLuint ShaderRepository::color_id_ = 0;
 
 void ShaderRepository::InitializeVertexShader() {
   ShaderRepository & repo = Instance();
@@ -74,7 +75,12 @@ void ShaderRepository::Initialize() {
   frame_fragment_shader_id_ = InitializeFragmentShader(FRAME_FRAGMENT_SHADER_SOURCE);
   keyframe_program_id_ = CreateProgram(vertex_shader_id_, keyframe_fragment_shader_id_);
   position_program_id_ = CreateProgram(vertex_shader_id_, frame_fragment_shader_id_);
+  color_id_ = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "col");
+}
 
+void ShaderRepository::UseColor(const float *color) {
+  ShaderRepository & repo = Instance();
+  glUniform3fv(repo.color_id_, 1, color);
 }
 
 GLuint ShaderRepository::GetPositionProgramId() {

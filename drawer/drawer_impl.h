@@ -54,7 +54,7 @@ class DrawerImpl {
     return converted_message;
   }
 
-  void Convert(const geometry::Pose & pose, glm::mat4 & out_mat);
+  static void Convert(const geometry::Pose & pose, glm::mat4 & out_mat);
   static void CreatePositionRectangle(const geometry::Pose &pose, float result[]);
 
  private:

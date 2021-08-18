@@ -15,6 +15,7 @@ class ShaderRepository {
   static void Initialize();
   static GLuint GetKeyFrameProgramId();
   static GLuint GetPositionProgramId();
+  static void UseColor(const float * color);
  private:
   static ShaderRepository & Instance() {
     static ShaderRepository repository;
@@ -32,6 +33,7 @@ class ShaderRepository {
   static GLuint frame_fragment_shader_id_;
   static GLuint keyframe_program_id_;
   static GLuint position_program_id_;
+  static GLuint color_id_;
   ~ShaderRepository();
 
 };

@@ -10,6 +10,7 @@ add_library(drawer SHARED
         graph.cpp
         edge.cpp
         shaders/shader_repository.cpp
+        shaders/color_repository.cpp
         map_point_node.cpp
         key_frame_node.cpp)
 target_link_libraries(drawer
