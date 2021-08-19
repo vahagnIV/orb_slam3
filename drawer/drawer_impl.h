@@ -55,7 +55,7 @@ class DrawerImpl {
   }
 
   static void Convert(const geometry::Pose & pose, glm::mat4 & out_mat);
-  static void CreatePositionRectangle(const geometry::Pose &pose, float result[]);
+  void CreatePositionRectangle(const geometry::Pose &pose, float result[]) const;
 
  private:
   size_t windo_width_;
@@ -68,6 +68,7 @@ class DrawerImpl {
   Graph graph_;
   glm::mat4 transformation_matrix_;
   GLuint position_vertex_buffer_id_;
+  precision_t scale_;
 
 };
 

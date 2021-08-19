@@ -19,7 +19,8 @@ DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
     window_(nullptr),
     thread_(nullptr),
     error_(),
-    cancellation_token_(false) {
+    cancellation_token_(false),
+    scale_(3.){
 
 }
 
@@ -172,7 +173,7 @@ void DrawerImpl::Convert(const geometry::Pose & pose, glm::mat4 & out_mat) {
 
 }
 
-void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float result[]) {
+void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float result[]) const {
   static const TVector3D bottom_left_init{-0.5, -0.5, 0};
   static const TVector3D top_left_init{-0.5, 0.5, 0};
   static const TVector3D top_right_init{0.5, 0.5, 0};
@@ -185,7 +186,7 @@ void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float resu
   TVector3D top_right = inverse.Transform(top_right_init);
   TVector3D bottom_right = inverse.Transform(bottom_right_init);
 
-#define COPY(dest, source) for(int i =0; i < 3; ++i) *((dest)+i)=(source)[i] / 5.;
+#define COPY(dest, source) for(int i =0; i < 3; ++i) *((dest)+i)=(source)[i] / scale_;
 
   COPY(result, bottom_left.data());
   COPY(result + 3, top_left.data());
@@ -211,9 +212,9 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
 void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
   auto mp_node = new MapPointNode(message->id);
   glGenBuffers(1, &mp_node->buffer_id);
-  float buffer[] = {static_cast<float>(message->position.x() / 5.),
-                    static_cast<float>(message->position.y() / 5.),
-                    static_cast<float>(message->position.z() / 5.)};
+  float buffer[] = {static_cast<float>(message->position.x() / scale_),
+                    static_cast<float>(message->position.y() / scale_),
+                    static_cast<float>(message->position.z() / scale_)};
 
   glBindBuffer(GL_ARRAY_BUFFER, mp_node->buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
