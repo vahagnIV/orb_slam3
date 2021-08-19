@@ -169,7 +169,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
   orb_slam3::frame::SensorConstants constants;
   constants.min_mp_disappearance_count = 2;
-  constants.max_allowed_discrepancy = 5.9991;
+  constants.max_allowed_discrepancy = 3;
   constants.number_of_keyframe_to_search_lm = 20;
   constants.projection_search_radius_multiplier = 1.;
   constants.projection_search_radius_multiplier_after_relocalization = 5.;
@@ -342,7 +342,7 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
 
   orb_slam3::frame::SensorConstants constants;
   constants.min_mp_disappearance_count = 2;
-  constants.max_allowed_discrepancy = 5.9991;
+  constants.max_allowed_discrepancy = 3;
   constants.number_of_keyframe_to_search_lm = 20;
   constants.projection_search_radius_multiplier = 1.;
   constants.projection_search_radius_multiplier_after_relocalization = 5.;

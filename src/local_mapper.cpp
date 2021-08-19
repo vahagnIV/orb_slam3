@@ -65,6 +65,7 @@ void LocalMapper::MapPointCulling(frame::KeyFrame *keyframe) {
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 3) {
       mp_it = recently_added_map_points_.erase(mp_it);
+      --erased;
     } else {
       --erased;
       ++mp_it;
@@ -97,6 +98,8 @@ void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame *keyframe) {
 }
 
 void LocalMapper::CreateNewMapPoints(frame::KeyFrame *key_frame) {
+  if(key_frame->IsInitial())
+    return;
   auto covisible_frames =
       key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(key_frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
 
@@ -128,8 +131,6 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame *key_frame) {
     key_frame->UnlockMapPointContainer();
     neighbour_keyframe->UnlockMapPointContainer();
   }
-  frame::KeyFrame::MapPointSet map_points;
-  key_frame->ListMapPoints(map_points);
 }
 
 void LocalMapper::Optimize(frame::KeyFrame *frame) {
@@ -220,10 +221,8 @@ void LocalMapper::RunIteration() {
       FuseMapPoints(key_frame);
     }
     if (!CheckNewKeyFrames()) {
-      KeyFrameCulling(key_frame);
-    }
-    if (!CheckNewKeyFrames()) {
       Optimize(key_frame);
+      KeyFrameCulling(key_frame);
     }
 //    if (!message.frame->IsBad())
 //      NotifyObservers(message);
@@ -242,6 +241,7 @@ void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame *frame, std::unorde
   std::unordered_set<frame::KeyFrame *> covisibles =
       frame->GetCovisibilityGraph().GetCovisibleKeyFrames(frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
   for (auto kf: covisibles) {
+    out.insert(kf);
     std::unordered_set<frame::KeyFrame *> second_covisibles = kf->GetCovisibilityGraph().GetCovisibleKeyFrames(20);
     for (auto second_frame: second_covisibles) {
       if (frame != second_frame && covisibles.find(kf) != covisibles.end())
