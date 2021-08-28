@@ -65,6 +65,8 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   void MatchVisibleMapPoints(const std::list<MapPointVisibilityParams> & visibles,
                              std::list<std::pair<map::MapPoint *, map::MapPoint *>> & out_matched_map_points,
                              std::list<Observation> & out_local_matches) const override;
+  int GetScaleLevel(map::MapPoint *map_point) const override;
+  int GetScaleLevel(const Observation &observation) const override;
  private:
 
   int GetMapPointLevel(const map::MapPoint * map_point) const;

@@ -156,6 +156,9 @@ class KeyFrame : public BaseFrame {
                                           geometry::Sim3Transformation & in_out_transformation) const = 0;
   void ApplyStaging();
 
+  virtual int GetScaleLevel(map::MapPoint * map_point) const = 0;
+  virtual int GetScaleLevel(const Observation &observation) const = 0;
+
  protected:
   virtual void InitializeImpl() = 0;
   virtual void AddMapPointImpl(Observation & observation) = 0;

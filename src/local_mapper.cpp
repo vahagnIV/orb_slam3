@@ -326,11 +326,26 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       continue;
     frame::KeyFrame::MapPointSet map_points;
     kf->ListMapPoints(map_points);
-    int mobs = 0;
-    for (auto mp: map_points)
-      if (mp->GetObservationCount() >= 3)
-        ++mobs;
-    if (mobs > map_points.size() * 0.9) {
+    int redundan_observations = 0;
+    for (auto mp: map_points) {
+      if (mp->GetObservationCount() >= 3) {
+        frame::Observation observation;
+        if (!mp->GetObservation(kf, observation))
+          throw std::runtime_error("KeyframeCulling Observation not in map point");
+        int scale_level = kf->GetScaleLevel(observation);
+        map::MapPoint::MapType observations = mp->Observations();
+        long no_obs =
+            std::count_if(observations.begin(),
+                       observations.end(),
+                       [&scale_level](const map::MapPoint::MapType::value_type &obs) {
+                         return obs.second.GetKeyFrame()->GetScaleLevel(obs.second) < scale_level + 1;
+                       }) - 1;
+        if (no_obs > 3l)
+          ++redundan_observations;
+      }
+    }
+
+    if (redundan_observations > map_points.size() * 0.9) {
       key_frame_database_->Erase(kf);
       kf->LockMapPointContainer();
       for (auto mp: map_points) {

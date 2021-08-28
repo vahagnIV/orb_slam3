@@ -444,8 +444,19 @@ void MonocularKeyFrame::UnlockMapPointContainer() const {
   map_points_mutex_.unlock();
 }
 
-void MonocularKeyFrame::AddMapPointImpl(Observation & observation) {
+void MonocularKeyFrame::AddMapPointImpl(Observation &observation) {
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
+}
+
+int MonocularKeyFrame::GetScaleLevel(map::MapPoint *map_point) const {
+  Observation observation;
+  if (!map_point->GetObservation(this, observation))
+    return -1;
+  return GetScaleLevel(observation);
+}
+
+int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
+  return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
 }
