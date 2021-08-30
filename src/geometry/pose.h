@@ -23,18 +23,20 @@ struct Pose {
   }
 
   Pose();
-  Pose(Pose && other);
-  Pose(const Pose & other);
+  Pose(Pose &&other);
+  Pose(const Pose &other);
   Pose(TMatrix33 R, TVector3D T);
 
-  Pose & operator=(Pose && other);
-  Pose & operator=(const Pose & other);
+  Pose &operator=(Pose &&other);
+  Pose &operator=(const Pose &other);
 
-  TVector3D Transform(const TPoint3D & point) const;
+  Pose operator*(const Pose &other) const;
+
+  TVector3D Transform(const TPoint3D &point) const;
 
   Pose GetInversePose() const;
 
-  friend std::ostream & operator<<(std::ostream & stream, const Pose & p);
+  friend std::ostream &operator<<(std::ostream &stream, const Pose &p);
 
   void print() const;
 

@@ -158,8 +158,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (Settings::Get().MessageRequested(messages::MessageType::TRACKING_INFO)) {
     messages::MessageProcessor::Instance().Enqueue(new messages::TrackingInfo(frame->GetPosition(),
                                                                               frame->GetTimeCreated(),
-                                                                              geometry::Pose(angular_velocity_,
-                                                                                             velocity_)));
+                                                                              velocity_));
   }
 
   debug::DisplayTrackingInfo(frame,
@@ -349,15 +348,12 @@ TrackingResult Tracker::Track(frame::Frame * frame) {
 }
 
 void Tracker::ComputeVelocity(const geometry::RigidObject * object2, const geometry::RigidObject * object1) {
-  velocity_ = object1->GetInversePosition().T - object2->GetInversePosition().T;
-  angular_velocity_ = object1->GetPosition().R * object2->GetInversePosition().R;
+  velocity_ = object2->GetPositionWithLock() * object1->GetInversePosition();
   velocity_is_valid_ = true;
 }
 
 void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
-  geometry::Pose pose;
-  pose.R = angular_velocity_ * last_frame_->GetPosition().R;
-  pose.T = -pose.R * (last_frame_->GetInversePosition().T + velocity_);
+  geometry::Pose pose = velocity_ * last_frame_->GetPosition();
   frame->SetStagingPosition(pose);
   frame->ApplyStaging();
 }
