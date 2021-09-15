@@ -33,7 +33,7 @@ class DrawerImpl {
   void Start();
   void Stop();
   bool Started() const;
-  const std::string GetError() const;
+  const std::string & GetError() const;
 
  public:
   void KeyFrameCreated(messages::KeyFrameCreated *message);

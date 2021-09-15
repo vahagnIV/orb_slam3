@@ -448,7 +448,7 @@ void MonocularKeyFrame::AddMapPointImpl(Observation &observation) {
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
 }
 
-int MonocularKeyFrame::GetScaleLevel(map::MapPoint *map_point) const {
+int MonocularKeyFrame::GetScaleLevel(const map::MapPoint *map_point) const {
   Observation observation;
   if (!map_point->GetObservation(this, observation))
     return -1;

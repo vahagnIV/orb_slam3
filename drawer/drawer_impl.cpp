@@ -40,7 +40,7 @@ bool DrawerImpl::Started() const {
   return nullptr != thread_;
 }
 
-const std::string DrawerImpl::GetError() const {
+const std::string & DrawerImpl::GetError() const {
   return error_;
 }
 
