@@ -241,9 +241,5 @@ void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated *mess
   glBufferData(GL_ARRAY_BUFFER, sizeof(node->vertices), node->vertices, GL_STATIC_DRAW);
 }
 
-void DrawerImpl::KeyFrameUpdated() {
-
-}
-
 }
 }
