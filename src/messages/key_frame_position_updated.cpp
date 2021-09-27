@@ -7,7 +7,8 @@
 namespace orb_slam3 {
 namespace messages {
 
-KeyFramePositionUpdated::KeyFramePositionUpdated(const frame::KeyFrame * keyframe) : position(keyframe->GetPosition()) {
+KeyFramePositionUpdated::KeyFramePositionUpdated(const frame::KeyFrame *keyframe)
+    : id(keyframe->Id()), position(keyframe->GetPosition()) {
 }
 
 MessageType KeyFramePositionUpdated::Type() const {

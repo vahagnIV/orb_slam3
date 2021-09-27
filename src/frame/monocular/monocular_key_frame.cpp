@@ -116,7 +116,7 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
   logging::RetrieveLogger()->debug("LM: Initial local map point count: {}", local_map_points.size());
 
   features::FastMatches matches;
-  feature_handler_->FastMatch(other_frame->GetFeatureHandler(), matches, features::MatchingSeverity::STRONG, true);
+  feature_handler_->FastMatch(other_frame->GetFeatureHandler(), matches, features::MatchingSeverity::STRONG, false);
 
   geometry::Pose relative_pose;
   geometry::utils::ComputeRelativeTransformation(GetPosition(), other_frame->GetPosition(), relative_pose);
@@ -175,15 +175,26 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
   IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
   typedef features::matching::SNNMatcher<IteratorType> MatcherType;
   MatcherType::MatchMapType matches;
-  MatcherType matcher(1., 50);
+  MatcherType matcher(1.0, GetFeatureExtractor()->GetLowThreshold());
   matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), matches);
-  for (auto & match: matches) {
-    map::MapPoint * local_mp = GetMapPoint(match.second);
-    if (nullptr == local_mp)
-      out_local_matches.emplace_back(match.first, const_cast<MonocularKeyFrame *>(this), match.second);
-    else
-      out_matched_map_points.emplace_back(local_mp, match.first);
 
+  for (auto & match: matches) {
+
+    map::MapPoint * local_mp = GetMapPoint(match.second);
+    const features::KeyPoint & key_point = GetFeatureHandler()->GetFeatures().keypoints[match.second];
+    const TPoint2D & original_point = key_point.pt;
+    TPoint2D projected;
+    GetCamera()->ProjectAndDistort(GetPosition().Transform(match.first->GetPosition()), projected);
+    precision_t error = (original_point - projected).squaredNorm();
+    if (error / GetFeatureExtractor()->GetAcceptableSquareError(key_point.level)
+        > 5.99)
+      continue;
+
+    if (nullptr == local_mp) {
+      out_local_matches.emplace_back(match.first, const_cast<MonocularKeyFrame *>(this), match.second);
+    } else {
+      out_matched_map_points.emplace_back(local_mp, match.first);
+    }
   }
 
 }
@@ -412,7 +423,7 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
 void MonocularKeyFrame::InitializeImpl() {
 
   for (auto mp : GetMapPoints()) {
-    if(mp.second->IsBad())
+    if (mp.second->IsBad())
       continue;
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
     mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
@@ -433,8 +444,19 @@ void MonocularKeyFrame::UnlockMapPointContainer() const {
   map_points_mutex_.unlock();
 }
 
-void MonocularKeyFrame::AddMapPointImpl(Observation & observation) {
+void MonocularKeyFrame::AddMapPointImpl(Observation &observation) {
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
+}
+
+int MonocularKeyFrame::GetScaleLevel(const map::MapPoint *map_point) const {
+  Observation observation;
+  if (!map_point->GetObservation(this, observation))
+    return -1;
+  return GetScaleLevel(observation);
+}
+
+int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
+  return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
 }

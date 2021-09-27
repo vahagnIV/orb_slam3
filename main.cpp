@@ -3,7 +3,8 @@
 #include <image_utils.h>
 #include <tracker.h>
 #include <settings.h>
-#include <main_utils/message_print_functions.h>
+//#include <main_utils/message_print_functions.h>
+#include <drawer.h>
 #include <json/json.hpp>
 #include <chrono>
 #include <fstream>
@@ -168,7 +169,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
   orb_slam3::frame::SensorConstants constants;
   constants.min_mp_disappearance_count = 2;
-  constants.max_allowed_discrepancy = 5.9991;
+  constants.max_allowed_discrepancy = 3;
   constants.number_of_keyframe_to_search_lm = 20;
   constants.projection_search_radius_multiplier = 1.;
   constants.projection_search_radius_multiplier_after_relocalization = 5.;
@@ -263,8 +264,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_DELETED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_POSITION_UPDATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_GEOMETRY_UPDATED);
-  bool cancellation_token = true;
-  std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));
+  /*bool cancellation_token = true;
+  std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));*/
+  orb_slam3::drawer::DrawerImpl drawer(1024, 768);
+  drawer.Start();
 //  local_mapper.AddObserver(&lp_detector);
 //  local_mapper.AddObserver(&tracker);
 #ifdef MULTITHREADED
@@ -339,7 +342,7 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
 
   orb_slam3::frame::SensorConstants constants;
   constants.min_mp_disappearance_count = 2;
-  constants.max_allowed_discrepancy = 5.9991;
+  constants.max_allowed_discrepancy = 3;
   constants.number_of_keyframe_to_search_lm = 20;
   constants.projection_search_radius_multiplier = 1.;
   constants.projection_search_radius_multiplier_after_relocalization = 5.;
@@ -382,7 +385,7 @@ void LoadConfig(nlohmann::json & config) {
 }
 
 void initialize() {
-
+  orb_slam3::drawer::Initialize();
   orb_slam3::logging::Initialize();
 }
 

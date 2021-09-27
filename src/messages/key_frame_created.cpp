@@ -7,6 +7,8 @@
 namespace orb_slam3 {
 namespace messages {
 
+const MessageType KeyFrameCreated::type = KEYFRAME_CREATED;
+
 KeyFrameCreated::KeyFrameCreated(const frame::KeyFrame * key_frame) : id(key_frame->Id()),
                                                                       map_id((size_t) key_frame->GetMap()),
                                                                       position(key_frame->GetPosition()) {

@@ -134,7 +134,17 @@ void MapPoint::ApplyStagingPosition() {
 }
 
 void MapPoint::ApplyNormalStaging() {
+  std::unique_lock<std::recursive_mutex> lock(normal_mutex_);
   normal_ = staging_normal_;
+}
+
+const TPoint3D & MapPoint::GetPositionWithLock() const {
+  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  return position_;
+}
+const TVector3D & MapPoint::GetNormalWithLock() const {
+  std::unique_lock<std::recursive_mutex> lock(normal_mutex_);
+  return normal_;
 }
 
 void MapPoint::ApplyMinMaxInvDistanceStaging() {

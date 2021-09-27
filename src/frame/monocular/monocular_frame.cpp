@@ -233,11 +233,13 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
   geometry::Pose inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
     map_point.map_point = mp;
-    if (BaseMonocular::PointVisible(pose.Transform(mp->GetPosition()),
-                                    mp->GetPosition(),
+    TPoint3D position = mp->GetPositionWithLock();
+    TVector3D normal = mp->GetNormalWithLock();
+    if (BaseMonocular::PointVisible(pose.Transform(position),
+                                    position,
                                     mp->GetMinInvarianceDistance(),
                                     mp->GetMaxInvarianceDistance(),
-                                    mp->GetNormal(),
+                                    normal,
                                     inverse_pose.T,
                                     radius_multiplier,
                                     -1,
@@ -282,7 +284,7 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityPar
 
 void MonocularFrame::UpdateFromReferenceKeyFrame() {
   if (reference_keyframe_) {
-    SetStagingPosition(reference_keyframe_->GetPosition());
+    SetStagingPosition(reference_keyframe_->GetPositionWithLock());
     ApplyStaging();
     ClearMapPoints();
     for(const auto & mp: reference_keyframe_->GetMapPointsWithLock()){
@@ -301,11 +303,14 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
     assert(mp.first < last_frame->feature_handler_->GetFeatures().keypoints.size());
-    if (BaseMonocular::PointVisible(pose.Transform(mp.second->GetPosition()),
-                                    mp.second->GetPosition(),
+    TPoint3D position = mp.second->GetPositionWithLock();
+    TVector3D normal = mp.second->GetNormalWithLock();
+
+    if (BaseMonocular::PointVisible(pose.Transform(position),
+                                    position,
                                     mp.second->GetMinInvarianceDistance(),
                                     mp.second->GetMaxInvarianceDistance(),
-                                    mp.second->GetNormal(),
+                                    normal,
                                     inverse_pose.T,
                                     radius_multiplier,
                                     last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,

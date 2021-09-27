@@ -42,12 +42,16 @@ void Pose::print() const {
   std::cout << R << std::endl << T << std::endl;
 }
 
-TVector3D Pose::Transform(const TPoint3D & point) const {
+TVector3D Pose::Transform(const TPoint3D &point) const {
   return R * point + T;
 }
 
 Pose Pose::GetInversePose() const {
   return Pose(R.transpose(), -R.transpose() * T);
+}
+
+Pose Pose::operator*(const Pose &other) const {
+  return Pose(R * other.R, R * other.T + T);
 }
 
 }

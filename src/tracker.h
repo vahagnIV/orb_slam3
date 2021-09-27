@@ -64,8 +64,13 @@ class Tracker : public Observer<frame::KeyFrame *>,
   int kf_counter = 0;
   map::Atlas * atlas_;
   bool velocity_is_valid_;
-  TVector3D velocity_;
-  TMatrix33 angular_velocity_;
+
+  geometry::Pose velocity_;
+
+//  TVector3D velocity_;
+//  TMatrix33 angular_velocity_;
+
+
   frame::Frame * last_frame_;
   frame::KeyFrame * last_key_frame_;
   frame::KeyFrame * reference_keyframe_;

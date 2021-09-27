@@ -10,6 +10,8 @@
 #include "optimization/bundle_adjustment.h"
 #include <map/atlas.h>
 #include <map/map_point.h>
+#include <settings.h>
+#include <messages/messages.h>
 
 // TODO: remove this in multithreading
 #include <loop_merge_detector.h>
@@ -63,6 +65,7 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
       mp_it = recently_added_map_points_.erase(mp_it);
     } else if (keyframe->Id() > mp->GetFirstObservedFrameId() && keyframe->Id() - mp->GetFirstObservedFrameId() >= 3) {
       mp_it = recently_added_map_points_.erase(mp_it);
+      --erased;
     } else {
       --erased;
       ++mp_it;
@@ -74,6 +77,9 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   keyframe->Initialize();
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(keyframe));
+
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ListMapPoints(map_points);
   for (auto mp: map_points) {
@@ -92,8 +98,14 @@ void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
 }
 
 void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
+  if (key_frame->IsInitial())
+    return;
+  assert(!key_frame->IsBad());
+
   auto covisible_frames =
       key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(key_frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
+
+  assert(!covisible_frames.empty());
 
   logging::RetrieveLogger()->debug("LM: covisible frame count: {}", covisible_frames.size());
 
@@ -123,8 +135,6 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
     key_frame->UnlockMapPointContainer();
     neighbour_keyframe->UnlockMapPointContainer();
   }
-  frame::KeyFrame::MapPointSet map_points;
-  key_frame->ListMapPoints(map_points);
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {
@@ -215,10 +225,8 @@ void LocalMapper::RunIteration() {
       FuseMapPoints(key_frame);
     }
     if (!CheckNewKeyFrames()) {
-      KeyFrameCulling(key_frame);
-    }
-    if (!CheckNewKeyFrames()) {
       Optimize(key_frame);
+      KeyFrameCulling(key_frame);
     }
 //    if (!message.frame->IsBad())
 //      NotifyObservers(message);
@@ -237,6 +245,7 @@ void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unord
   std::unordered_set<frame::KeyFrame *> covisibles =
       frame->GetCovisibilityGraph().GetCovisibleKeyFrames(frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
   for (auto kf: covisibles) {
+    out.insert(kf);
     std::unordered_set<frame::KeyFrame *> second_covisibles = kf->GetCovisibilityGraph().GetCovisibleKeyFrames(20);
     for (auto second_frame: second_covisibles) {
       if (frame != second_frame && covisibles.find(kf) != covisibles.end())
@@ -317,11 +326,26 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       continue;
     frame::KeyFrame::MapPointSet map_points;
     kf->ListMapPoints(map_points);
-    int mobs = 0;
-    for (auto mp: map_points)
-      if (mp->GetObservationCount() >= 3)
-        ++mobs;
-    if (mobs > map_points.size() * 0.9) {
+    int redundan_observations = 0;
+    for (auto mp: map_points) {
+      if (mp->GetObservationCount() >= 3) {
+        frame::Observation observation;
+        if (!mp->GetObservation(kf, observation))
+          throw std::runtime_error("KeyframeCulling Observation not in map point");
+        int scale_level = kf->GetScaleLevel(observation);
+        map::MapPoint::MapType observations = mp->Observations();
+        long no_obs =
+            std::count_if(observations.begin(),
+                       observations.end(),
+                       [&scale_level](const map::MapPoint::MapType::value_type &obs) {
+                         return obs.second.GetKeyFrame()->GetScaleLevel(obs.second) < scale_level + 1;
+                       }) - 1;
+        if (no_obs > 3l)
+          ++redundan_observations;
+      }
+    }
+
+    if (redundan_observations > map_points.size() * 0.9) {
       key_frame_database_->Erase(kf);
       kf->LockMapPointContainer();
       for (auto mp: map_points) {

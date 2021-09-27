@@ -18,6 +18,7 @@ class KeyFrameCreated : public BaseMessage {
   const size_t id;
   const size_t map_id;
   const geometry::Pose position;
+  static const MessageType type;
 
 };
 

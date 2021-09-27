@@ -53,7 +53,9 @@ class MapPoint {
   const features::DescriptorType GetDescriptor() const { return descriptor_; }
 
   const TPoint3D & GetPosition() const;
+  const TPoint3D & GetPositionWithLock() const;
   const TVector3D & GetNormal() const { return normal_; }
+  const TVector3D & GetNormalWithLock() const;
   const TPoint3D & GetStagingPosition() const { return staging_position_; }
   const TVector3D & GetStagingNormal() const { return staging_normal_; }
 
@@ -143,6 +145,8 @@ class MapPoint {
 
   // Mutex for locking position
   mutable std::recursive_mutex position_mutex_;
+  mutable std::recursive_mutex normal_mutex_;
+
   map::MapPoint * replaced_map_point_;
 
 };
