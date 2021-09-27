@@ -16,13 +16,20 @@ Pose::Pose(const Pose & other) : R(other.R), T(other.T) {
 Pose::Pose() {
 }
 
-Pose::Pose(TMatrix33 R, TVector3D T): R(std::move(R)), T(std::move(T)) {
+Pose::Pose(TMatrix33 R, TVector3D T) : R(std::move(R)), T(std::move(T)) {
 
 }
 
 std::ostream & operator<<(std::ostream & stream, const Pose & p) {
   stream.write((char *) p.R.data(), p.R.size() * sizeof(decltype(p.R)::Scalar));
   stream.write((char *) p.T.data(), p.T.size() * sizeof(decltype(p.T)::Scalar));
+  return stream;
+
+}
+
+std::istream & operator>>(std::istream & stream, const Pose & p) {
+  stream.read((char *) p.R.data(), p.R.size() * sizeof(decltype(p.R)::Scalar));
+  stream.read((char *) p.T.data(), p.T.size() * sizeof(decltype(p.T)::Scalar));
   return stream;
 }
 
@@ -42,7 +49,7 @@ void Pose::print() const {
   std::cout << R << std::endl << T << std::endl;
 }
 
-TVector3D Pose::Transform(const TPoint3D &point) const {
+TVector3D Pose::Transform(const TPoint3D & point) const {
   return R * point + T;
 }
 
@@ -50,7 +57,7 @@ Pose Pose::GetInversePose() const {
   return Pose(R.transpose(), -R.transpose() * T);
 }
 
-Pose Pose::operator*(const Pose &other) const {
+Pose Pose::operator*(const Pose & other) const {
   return Pose(R * other.R, R * other.T + T);
 }
 

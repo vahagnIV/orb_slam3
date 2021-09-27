@@ -15,12 +15,17 @@ namespace map {
 class Atlas {
  public:
   Atlas();
-  void SetCurrentMap(map::Map * map);
+  ~Atlas();
+
   Map * GetCurrentMap();
   void CreateNewMap();
-  ~Atlas();
+  size_t GetMapCount() const;
+  const std::unordered_set<map::Map * > & GetMaps() const;
+
  private:
+  void SetCurrentMap(map::Map * map);
   Map * current_map_;
+  std::unordered_set<map::Map * > maps_;
 };
 
 }

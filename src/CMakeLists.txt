@@ -85,6 +85,8 @@ add_library(orbslam SHARED
         geometry/random_subset_generator.cpp
         geometry/sim3_transformation.cpp
 
+        serialization/serialization_context.cpp
+
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp
         optimization/vertices/map_point_vertex.cpp

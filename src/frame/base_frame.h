@@ -35,6 +35,20 @@ class BaseFrame : public geometry::RigidObject {
     return stream;
   }
 
+  friend std::istream & operator>>(std::istream & stream, BaseFrame * frame) {
+    frame->DeSerializeFromStream(stream);
+    geometry::Pose position;
+    stream >> position;
+    frame->SetStagingPosition(position);
+    frame->ApplyStaging();
+    stream >> position; // CHECK IF COINCIDES WITH THE inverse?
+    size_t filename_length;
+    stream.read((char *) &filename_length, sizeof(filename_length));
+    std::string filename(filename_length, ' ');
+    stream.read(const_cast<char *>(filename.data()), filename_length);
+    return stream;
+  }
+
   BaseFrame(TimePoint time_point,
             const std::string & filename,
             const SensorConstants * sensor_constants,
@@ -65,8 +79,8 @@ class BaseFrame : public geometry::RigidObject {
   virtual void SetMap(map::Map * map) { map_ = map; }
   map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
- protected:
   virtual void SerializeToStream(std::ostream & stream) const = 0;
+  virtual void DeSerializeFromStream(std::istream & stream) const = 0;
 
  protected:
   const TimePoint time_point_;

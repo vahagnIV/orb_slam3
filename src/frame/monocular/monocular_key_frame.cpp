@@ -459,6 +459,10 @@ int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
   return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
+void MonocularKeyFrame::DeSerializeFromStream(std::istream & stream) const {
+
+}
+
 }
 }
 }

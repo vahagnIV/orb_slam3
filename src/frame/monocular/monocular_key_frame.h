@@ -44,6 +44,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
  protected:
   void SerializeToStream(std::ostream & stream) const override;
   void InitializeImpl() override;
+  void DeSerializeFromStream(std::istream & stream) const override;
  public:
   map::MapPoint * EraseMapPoint(size_t feature_id) override;
   void SetBad() override;

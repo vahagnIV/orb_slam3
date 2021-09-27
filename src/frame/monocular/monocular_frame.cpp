@@ -358,37 +358,9 @@ void MonocularFrame::SerializeToStream(std::ostream & stream) const {
   throw std::runtime_error("Not implemented");
 }
 
-/*bool MonocularFrame::Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Map * map) {
-  ComputeBow();
-  std::vector<frame::KeyFrame *>
-      candidate_key_frames = key_frame_database->DetectRelocalizationCandidates(this, map);
-  if (candidate_key_frames.empty()) {
-    return false;
-  }
-  size_t number_of_candidate_key_frames = candidate_key_frames.size();
+void MonocularFrame::DeSerializeFromStream(std::istream & stream) const {
 
-  std::unordered_map<size_t, size_t> out_map_point_matches;
-
-  std::vector<bool> vbDiscarded;
-  vbDiscarded.resize(number_of_candidate_key_frames);
-
-  int nCandidates = 0;
-
-  for (int i = 0; i < number_of_candidate_key_frames; ++i) {
-    frame::KeyFrame * candidate_key_frame = candidate_key_frames[i];
-    assert(candidate_key_frame->Type() == MONOCULAR);
-    auto base_mono_key_frame = dynamic_cast<BaseMonocular *>(candidate_key_frame);
-    SearchByBow(base_mono_key_frame, out_map_point_matches, GetFeatureExtractor(),
-                false, true);
-
-    std::vector<MLPnPsolver *> vpMLPnPsolvers;
-    vpMLPnPsolvers.resize(number_of_candidate_key_frames);
-  }
-
-
-  //TODO: implement
-  return false;
-}*/
+}
 
 }
 }

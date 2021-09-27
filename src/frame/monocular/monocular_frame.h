@@ -46,6 +46,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
  protected:
   void SerializeToStream(std::ostream & stream) const override;
+  void DeSerializeFromStream(std::istream & stream) const override;
 
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;

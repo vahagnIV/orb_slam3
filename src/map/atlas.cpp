@@ -22,8 +22,9 @@ Map * Atlas::GetCurrentMap() {
 
 void Atlas::CreateNewMap() {
   current_map_ = new Map();
-  if(Settings::Get().MessageRequested(messages::MAP_CREATED))
+  if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapCreated(current_map_));
+  maps_.insert(current_map_);
 }
 
 Atlas::~Atlas() {
@@ -32,5 +33,14 @@ Atlas::~Atlas() {
 void Atlas::SetCurrentMap(map::Map * map) {
   current_map_ = map;
 }
+
+size_t Atlas::GetMapCount() const {
+  return maps_.size();
+}
+
+const std::unordered_set<map::Map *> & Atlas::GetMaps() const {
+  return maps_;
+}
+
 }
 }
