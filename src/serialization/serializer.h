@@ -15,6 +15,14 @@ namespace frame {
 class Observation;
 }
 
+namespace features{
+namespace handlers {
+
+class BaseFeatureHandler;
+
+}
+}
+
 namespace serialization{
 
 class Serializer {
@@ -25,6 +33,8 @@ class Serializer {
   static void Serialize(const frame::KeyFrame *kf, std::ostream &stream);
   static void Serialize(const map::MapPoint *mp, std::ostream &stream);
   static void Serialize(const frame::Observation &observation, std::ostream &stream);
+
+
 
  private:
   static void Serialize(const std::string &string, std::ostream &stream);

@@ -9,7 +9,7 @@
 namespace orb_slam3 {
 namespace serialization {
 
-void Serializer::Serialize(const map::Atlas *atlas, std::ostream &stream) {
+void Serializer::Serialize(const map::Atlas * atlas, std::ostream & stream) {
   size_t map_count = atlas->GetMapCount();
   WRITE_TO_STREAM(map_count, stream);
   for (const auto map: atlas->GetMaps()) {
@@ -17,7 +17,9 @@ void Serializer::Serialize(const map::Atlas *atlas, std::ostream &stream) {
   }
 }
 
-void Serializer::Serialize(const map::Map *map, std::ostream &stream) {
+void Serializer::Serialize(const map::Map * map, std::ostream & stream) {
+  size_t map_id = reinterpret_cast<size_t>(map);
+  WRITE_TO_STREAM(map_id, stream);
   size_t kf_count = map->GetAllKeyFrames().size();
   WRITE_TO_STREAM(kf_count, stream);
   for (const auto kf: map->GetAllKeyFrames())
@@ -28,18 +30,30 @@ void Serializer::Serialize(const map::Map *map, std::ostream &stream) {
 
 }
 
-void Serializer::Serialize(const frame::KeyFrame *kf, std::ostream &stream) {
+void Serializer::Serialize(const frame::KeyFrame * kf, std::ostream & stream) {
+  frame::FrameType type = kf->Type();
+  WRITE_TO_STREAM(type, stream);
+
+  size_t time_created = kf->GetTimeCreated().time_since_epoch().count();
+  WRITE_TO_STREAM(time_created, stream);
+
   size_t kf_id = kf->Id();
   WRITE_TO_STREAM(kf_id, stream);
+
   Serialize(kf->GetFilename(), stream);
+
   size_t map_id = reinterpret_cast<size_t>(kf->GetMap());
   assert(map_id > 0);
   WRITE_TO_STREAM(map_id, stream);
+
   stream << kf->GetPosition();
+
+  stream << kf->GetFeatureHandler();
+
   kf->SerializeToStream(stream);
 }
 
-void Serializer::Serialize(const map::MapPoint *mp, std::ostream &stream) {
+void Serializer::Serialize(const map::MapPoint * mp, std::ostream & stream) {
   size_t mp_id = reinterpret_cast<size_t>(mp);
   WRITE_TO_STREAM(mp_id, stream);
   stream.write((char *) mp->GetPosition().data(), 3 * sizeof(TPoint3D::Scalar));
@@ -51,13 +65,13 @@ void Serializer::Serialize(const map::MapPoint *mp, std::ostream &stream) {
   }
 }
 
-void Serializer::Serialize(const std::string &string, std::ostream &stream) {
+void Serializer::Serialize(const std::string & string, std::ostream & stream) {
   size_t length = string.length();
   WRITE_TO_STREAM(length, stream);
   stream.write(string.data(), length);
 }
 
-void Serializer::Serialize(const frame::Observation &observation, std::ostream &stream) {
+void Serializer::Serialize(const frame::Observation & observation, std::ostream & stream) {
   size_t frame_id = observation.GetKeyFrame()->Id();
   size_t mem_address = reinterpret_cast<size_t>( observation.GetMapPoint());
   WRITE_TO_STREAM(mem_address, stream);

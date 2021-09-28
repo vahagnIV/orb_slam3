@@ -19,7 +19,9 @@ namespace serialization {
 
 class Deserializer {
  public:
-  map::Atlas *Deserialize(std::istream &istream, SerializationContext &context);
+  map::Atlas * Deserialize(std::istream & istream, SerializationContext & context);
+  map::Map * DeserializeMap(std::istream & istream, SerializationContext & context);
+  frame::KeyFrame * DeserializeKeyFrame(std::istream & istream, SerializationContext & context);
 
 };
 

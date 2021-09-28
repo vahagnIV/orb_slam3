@@ -14,7 +14,7 @@ namespace orb_slam3 {
 namespace serialization {
 
 struct SerializationContext {
-  std::unordered_map<const map::Map *, size_t> map_id;
+  std::unordered_map<size_t, map::Map *> map_id;
 };
 
 

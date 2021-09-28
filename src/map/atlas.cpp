@@ -31,6 +31,7 @@ Atlas::~Atlas() {
 
 }
 void Atlas::SetCurrentMap(map::Map * map) {
+  maps_.insert(map);
   current_map_ = map;
 }
 
