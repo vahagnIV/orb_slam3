@@ -10,6 +10,9 @@
 #include <typedefs.h>
 
 namespace orb_slam3 {
+namespace frame {
+class Observation;
+}
 namespace serialization {
 
 struct SerializationContext {
@@ -18,14 +21,15 @@ struct SerializationContext {
 
 class Serializer {
  public:
-  static void Serialize(const map::Atlas * atlas, std::ostream & stream, SerializationContext & context);
+  static void Serialize(const map::Atlas *atlas, std::ostream &stream);
  private:
-  static void Serialize(const map::Map * map, std::ostream & stream, SerializationContext & context);
-  static void Serialize(const frame::KeyFrame * kf, std::ostream & stream, SerializationContext & context);
-  static void Serialize(const map::MapPoint * mp, std::ostream & stream, SerializationContext & context);
+  static void Serialize(const map::Map *map, std::ostream &stream);
+  static void Serialize(const frame::KeyFrame *kf, std::ostream &stream);
+  static void Serialize(const map::MapPoint *mp, std::ostream &stream);
+  static void Serialize(const frame::Observation &observation, std::ostream &stream);
 
  private:
-  static void Serialize(const std::string & string, std::ostream & stream);
+  static void Serialize(const std::string &string, std::ostream &stream);
 
 };
 

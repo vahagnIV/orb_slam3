@@ -79,23 +79,6 @@ size_t Observation::GetLeftFeatureId() const {
   assert(!IsMonocular());
   return feature_ids_[1];
 }
-std::ostream & operator<<(std::ostream & stream, const Observation & observation) {
-  size_t frame_id = observation.GetKeyFrame()->Id();
-  size_t mem_address = (size_t) observation.GetMapPoint();
-  WRITE_TO_STREAM(mem_address, stream);
-  WRITE_TO_STREAM(frame_id, stream);
-
-  int type = 0;
-  if (observation.IsMonocular()) {
-    type = MONOCULAR;
-  } else
-    throw std::runtime_error("Only monocular observation serialization is implemented");
-  WRITE_TO_STREAM(type, stream);
-
-  for (size_t feature_id: observation.feature_ids_)
-    WRITE_TO_STREAM(feature_id, stream);
-  return stream;
-}
 
 size_t Observation::GetRightFeatureId() const {
   assert(!IsMonocular());
@@ -116,6 +99,8 @@ g2o::RobustKernel * Observation::CreateRobustKernel() {
   rk->setDelta(constants::HUBER_MONO_DELTA);
   return rk;
 }
+
+
 
 /*
 Observation & Observation::operator=(const Observation & other) {
