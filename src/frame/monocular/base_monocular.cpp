@@ -95,8 +95,8 @@ bool BaseMonocular::PointVisible(const TPoint3D & mp_local_coords,
     return false;
   }
 
-  this->GetCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
-  if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
+  this->GetMonoCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
+  if (!this->GetMonoCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }
 

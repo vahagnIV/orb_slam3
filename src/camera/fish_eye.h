@@ -13,11 +13,9 @@ namespace camera {
 
 class FishEye : public IDistortionModel {
  public:
-  static const int DistrortionSize = 4;
-  typedef typename g2o::BaseVertex<CAMERA_PARAMS_COUNT + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType
-      EstimateType;
-  FishEye(EstimateType *estimate)
-      : estimate_(estimate) {}
+
+  FishEye()
+      : k1_(0), k2_(0), k3_(0), k4_(0) {}
   // IDistortion
 
   bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
@@ -25,19 +23,18 @@ class FishEye : public IDistortionModel {
   void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const override;
 
  public:
-  typedef EstimateType::Scalar Scalar;
 
-  inline const Scalar &K1() const noexcept { return (*estimate_)[4]; }
-  inline const Scalar &K2() const noexcept { return (*estimate_)[5]; }
-  inline const Scalar &K3() const noexcept { return (*estimate_)[6]; }
-  inline const Scalar &K4() const noexcept { return (*estimate_)[7]; }
+  inline const precision_t &K1() const noexcept { return k1_; }
+  inline const precision_t &K2() const noexcept { return k2_; }
+  inline const precision_t &K3() const noexcept { return k3_; }
+  inline const precision_t &K4() const noexcept { return k4_; }
 
-  void SetK1(Scalar k1) noexcept { (*estimate_)[4] = k1; }
-  void SetK2(Scalar k2) noexcept { (*estimate_)[5] = k2; }
-  void SetK3(Scalar k3) noexcept { (*estimate_)[6] = k3; }
-  void SetK4(Scalar k4) noexcept { (*estimate_)[7] = k4; }
+  void SetK1(precision_t k1) noexcept { k1_ = k1; }
+  void SetK2(precision_t k2) noexcept { k2_ = k2; }
+  void SetK3(precision_t k3) noexcept { k3_ = k3; }
+  void SetK4(precision_t k4) noexcept { k4_ = k4; }
  protected:
-  EstimateType *estimate_;
+  precision_t k1_, k2_, k3_, k4_;
 
 };
 

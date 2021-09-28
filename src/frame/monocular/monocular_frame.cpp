@@ -57,7 +57,7 @@ bool MonocularFrame::Link(Frame * other) {
   if (!ComputeMatchesForLinking(from_frame, matches))
     return false;
 
-  geometry::TwoViewReconstructor reconstructor(200, GetCamera()->FxInv());
+  geometry::TwoViewReconstructor reconstructor(200, GetMonoCamera()->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   geometry::Pose pose;
   if (!reconstructor.Reconstruct(feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints,
@@ -362,6 +362,9 @@ void MonocularFrame::DeSerializeFromStream(std::istream & stream) const {
 
 }
 
+const camera::ICamera *MonocularFrame::GetCamera() const {
+  return this->GetMonoCamera();
+}
 }
 }
 }

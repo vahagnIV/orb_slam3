@@ -112,7 +112,8 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
   const features::Features & from_features = from_frame->GetFeatureHandler()->GetFeatures();
 
   int id_counter = 0;
-  auto transformation_vertex = CreateSim3Vertex(in_out_transformation, to_frame->GetCamera(), from_frame->GetCamera());
+  auto transformation_vertex = CreateSim3Vertex(in_out_transformation, to_frame->GetMonoCamera(),
+                                                from_frame->GetMonoCamera());
   transformation_vertex->_fix_scale = false;
   transformation_vertex->setId(id_counter);
 
@@ -180,7 +181,7 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
       TPoint3D virtual_point = sim3_transformation_inverse.Transform(from_pose.Transform(to_mp->GetPosition()));
       if (virtual_point.z() <= 0)
         continue;
-      from_frame->GetCamera()->ProjectPoint(virtual_point, measurement);*/
+      from_frame->GetMonoCamera()->ProjectPoint(virtual_point, measurement);*/
     }
 
     auto to_from_edge = CreateEdge<g2o::EdgeInverseSim3ProjectXYZ>(from_features,

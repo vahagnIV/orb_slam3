@@ -51,7 +51,7 @@ class BaseMonocular {
   map::MapPoint* GetMapPoint(size_t feature_id) const;
   void ClearMapPoints();
 
-  const camera::MonocularCamera * GetCamera() const { return camera_; }
+  const camera::MonocularCamera * GetMonoCamera() const { return camera_; }
   bool MapPointExists(const map::MapPoint * map_point) const;
  public:
   virtual void AddMapPoint(map::MapPoint * map_point, size_t feature_id);

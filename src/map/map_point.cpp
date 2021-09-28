@@ -189,5 +189,9 @@ void MapPoint::UnlockObservationsContainer() const {
   observation_mutex_.unlock();
 }
 
+void MapPoint::Serialize(std::ostream &ostream) const {
+
+}
+
 }
 }

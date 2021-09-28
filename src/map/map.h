@@ -30,6 +30,7 @@ class Map {
   std::unordered_set<MapPoint *> GetAllMapPoints() const;
   std::unordered_set<frame::KeyFrame *> GetAllKeyFrames() const;
   size_t GetSize() const { return key_frames_.size(); }
+  void Serialize(std::ostream & ostream) const;
  private:
   std::unordered_set<frame::KeyFrame *> key_frames_;
   frame::KeyFrame * initial_keyframe_;

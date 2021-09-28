@@ -104,6 +104,7 @@ class MapPoint {
   void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
   void LockObservationsContainer() const;
   void UnlockObservationsContainer() const;
+  void Serialize(std::ostream & ostream) const;
  private:
   void ApplyStagingPosition();
   void ApplyNormalStaging();

@@ -135,19 +135,19 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
     if (!geometry::utils::TriangulateAndValidate(other_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second],
                                                  feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.first],
                                                  relative_pose,
-                                                 5.991 * GetCamera()->FxInv() * GetCamera()->FxInv(),
-                                                 5.991 * other_frame->GetCamera()->FxInv()
-                                                     * other_frame->GetCamera()->FxInv(),
+                                                 5.991 * GetMonoCamera()->FxInv() * GetMonoCamera()->FxInv(),
+                                                 5.991 * other_frame->GetMonoCamera()->FxInv()
+                                                     * other_frame->GetMonoCamera()->FxInv(),
                                                  constants::PARALLAX_THRESHOLD,
                                                  parallax,
                                                  triangulated))
       continue;
     TPoint2D pt_other, pt_this;
-    other_frame->GetCamera()->ProjectAndDistort(triangulated, pt_other);
-    GetCamera()->ProjectAndDistort(relative_pose.Transform(triangulated), pt_this);
-    if (!other_frame->GetCamera()->IsInFrustum(pt_other))
+    other_frame->GetMonoCamera()->ProjectAndDistort(triangulated, pt_other);
+    GetMonoCamera()->ProjectAndDistort(relative_pose.Transform(triangulated), pt_this);
+    if (!other_frame->GetMonoCamera()->IsInFrustum(pt_other))
       continue;
-    if (!GetCamera()->IsInFrustum(pt_this))
+    if (!GetMonoCamera()->IsInFrustum(pt_this))
       continue;
     precision_t min_invariance_distance, max_invariance_distance;
     feature_handler_->GetFeatureExtractor()->ComputeInvariantDistances(triangulated,
@@ -184,7 +184,7 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
     const features::KeyPoint & key_point = GetFeatureHandler()->GetFeatures().keypoints[match.second];
     const TPoint2D & original_point = key_point.pt;
     TPoint2D projected;
-    GetCamera()->ProjectAndDistort(GetPosition().Transform(match.first->GetPosition()), projected);
+    GetMonoCamera()->ProjectAndDistort(GetPosition().Transform(match.first->GetPosition()), projected);
     precision_t error = (original_point - projected).squaredNorm();
     if (error / GetFeatureExtractor()->GetAcceptableSquareError(key_point.level)
         > 5.99)
@@ -310,9 +310,9 @@ bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches &
                                                         loop_candidate_pose.Transform(pair.second->GetPosition()));
                  });
 
-  const camera::MonocularCamera * local_camera = GetCamera();
+  const camera::MonocularCamera * local_camera = GetMonoCamera();
   const camera::MonocularCamera
-      * loop_candidate_camera = mono_loop_cand->GetCamera();
+      * loop_candidate_camera = mono_loop_cand->GetMonoCamera();
 
   std::transform(matched_points.begin(),
                  matched_points.end(),
@@ -461,6 +461,10 @@ int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
 
 void MonocularKeyFrame::DeSerializeFromStream(std::istream & stream) const {
 
+}
+
+const camera::ICamera *MonocularKeyFrame::GetCamera() const {
+  return this->GetMonoCamera();
 }
 
 }

@@ -61,7 +61,7 @@ void Serializer::Serialize(const map::MapPoint * mp, std::ostream & stream) {
   size_t observation_count = observations.size();
   WRITE_TO_STREAM(observation_count, stream);
   for (const auto obs: observations) {
-    obs.
+//    obs.
   }
 }
 

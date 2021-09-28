@@ -11,40 +11,36 @@
 namespace orb_slam3 {
 namespace camera {
 
-class KannalaBrandt8 : public IDistortionModel{
+class KannalaBrandt8 : public IDistortionModel {
  public:
-  static const int DistrortionSize = 8;
-  typedef typename g2o::BaseVertex<CAMERA_PARAMS_COUNT + DistrortionSize, Eigen::Matrix<double, -1, 1>>::EstimateType
-      EstimateType;
   // IDistortion
-  KannalaBrandt8(EstimateType *estimate)
-  : estimate_(estimate) {}
-  bool DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) const override;
-  bool UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const override;
-  void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const override ;
+  KannalaBrandt8()
+      : k1_(0), k2_(0), k3_(0), k4_(0), k5_(0), k6_(0), p1_(0), p2_(0) {}
+  bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
+  bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const override;
+  void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const override;
  public:
-  typedef EstimateType::Scalar Scalar;
 
-  inline const Scalar & K1() const noexcept { return (*estimate_)[4]; }
-  inline const Scalar & K2() const noexcept { return (*estimate_)[5]; }
-  inline const Scalar & P1() const noexcept { return (*estimate_)[6]; }
-  inline const Scalar & P2() const noexcept { return (*estimate_)[7]; }
-  inline const Scalar & K3() const noexcept { return (*estimate_)[8]; }
-  inline const Scalar & K4() const noexcept { return (*estimate_)[9]; }
-  inline const Scalar & K5() const noexcept { return (*estimate_)[10]; }
-  inline const Scalar & K6() const noexcept { return (*estimate_)[11]; }
+  inline const precision_t &K1() const noexcept { return k1_; }
+  inline const precision_t &K2() const noexcept { return k2_; }
+  inline const precision_t &P1() const noexcept { return p1_; }
+  inline const precision_t &P2() const noexcept { return p2_; }
+  inline const precision_t &K3() const noexcept { return k3_; }
+  inline const precision_t &K4() const noexcept { return k4_; }
+  inline const precision_t &K5() const noexcept { return k5_; }
+  inline const precision_t &K6() const noexcept { return k6_; }
 
-  void SetK1(Scalar k1) noexcept { (*estimate_)[4] = k1; }
-  void SetK2(Scalar k2) noexcept { (*estimate_)[5] = k2; }
-  void SetP1(Scalar p1) noexcept { (*estimate_)[6] = p1; }
-  void SetP2(Scalar p2) noexcept { (*estimate_)[7] = p2; }
-  void SetK3(Scalar k3) noexcept { (*estimate_)[8] = k3; }
-  void SetK4(Scalar k4) noexcept { (*estimate_)[9] = k4; }
-  void SetK5(Scalar k5) noexcept { (*estimate_)[10] = k5; }
-  void SetK6(Scalar k6) noexcept { (*estimate_)[11] = k6; }
+  void SetK1(precision_t k1) noexcept { k1_ = k1; }
+  void SetK2(precision_t k2) noexcept { k2_ = k2; }
+  void SetP1(precision_t p1) noexcept { p1_ = p1; }
+  void SetP2(precision_t p2) noexcept { p2_ = p2; }
+  void SetK3(precision_t k3) noexcept { k3_ = k3; }
+  void SetK4(precision_t k4) noexcept { k4_ = k4; }
+  void SetK5(precision_t k5) noexcept { k5_ = k5; }
+  void SetK6(precision_t k6) noexcept { k6_ = k6; }
  protected:
-  EstimateType *estimate_;
-
+  precision_t k1_, k2_, k3_, k4_, k5_, k6_;
+  precision_t p1_, p2_;
 
 };
 

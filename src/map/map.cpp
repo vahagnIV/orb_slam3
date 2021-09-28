@@ -62,5 +62,21 @@ std::ostream & operator<<(std::ostream & stream, const Map * map) {
   return stream;
 }
 
+void Map::Serialize(std::ostream &ostream) const {
+  size_t map_id = reinterpret_cast<size_t>(this);
+  WRITE_TO_STREAM(map_id, ostream);
+
+  size_t kf_count = GetAllKeyFrames().size();
+  WRITE_TO_STREAM(kf_count, ostream);
+  for (const auto kf: GetAllKeyFrames())
+    kf->SerializeToStream(ostream);
+
+  size_t mp_count = GetAllMapPoints().size();
+  WRITE_TO_STREAM(mp_count, ostream);
+  for (const auto mp: GetAllMapPoints())
+    mp->Serialize(ostream);
+
+}
+
 }
 }

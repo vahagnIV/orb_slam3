@@ -127,7 +127,7 @@ char DrawCommonMapPoints(const std::string & filename1,
         transformed2 =
         dynamic_cast<const geometry::RigidObject *>(frame2)->GetPosition().Transform(mp_id.second->GetPosition());
     frame1->GetCamera()->ProjectAndDistort(transfored1, projected1);
-    frame1->GetCamera()->ProjectAndDistort(transformed2, projected2);
+    frame1->GetMonoCamera()->ProjectAndDistort(transformed2, projected2);
 
     cv::Point2f projected_key_point1(projected1.x(), projected1.y());
     cv::Point2f projected_key_point2(frame1_image.cols + projected2.x(), projected2.y());
@@ -174,12 +174,12 @@ void DisplayTrackingInfo(const frame::Frame * frame,
   if (mode & 1) {
     for (auto vmp: frame_visibles) {
       TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      fr->GetMonoCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
       cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
     }
     for (auto vmp: visible_map_points) {
       TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
+      fr->GetMonoCamera()->ProjectAndDistort(fr->GetPosition().Transform(vmp.map_point->GetPosition()), pt);
       cv::circle(image, cv::Point2f(pt.x(), pt.y()), 3, cv::Scalar(0, 255, 255));
     }
   }
@@ -187,7 +187,7 @@ void DisplayTrackingInfo(const frame::Frame * frame,
   if (mode & 2) {
     for (auto mp: fr->GetMapPoints()) {
       TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      fr->GetMonoCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
       cv::circle(image, cv::Point2f(pt.x(), pt.y()), 5, cv::Scalar(0, 255, 0));
     }
   }
@@ -195,7 +195,7 @@ void DisplayTrackingInfo(const frame::Frame * frame,
   if (mode & 4) {
     for (auto mp: fr->GetBadMapPoints()) {
       TPoint2D pt;
-      fr->GetCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
+      fr->GetMonoCamera()->ProjectAndDistort(fr->GetPosition().Transform(mp.second->GetPosition()), pt);
       cv::circle(image, cv::Point2f(pt.x(), pt.y()), 2, cv::Scalar(0, 0, 255));
     }
   }
@@ -261,7 +261,7 @@ void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
     cv::KeyPoint key_point;
     TPoint2D projection;
     TPoint3D local_coords = frame1->GetPosition().Transform(mp->GetPosition());
-    frame1->GetCamera()->ProjectAndDistort(local_coords, projection);
+    frame1->GetMonoCamera()->ProjectAndDistort(local_coords, projection);
     key_point.pt.x = projection.x();
     key_point.pt.y = projection.y();
     auto mp_it = observations.find(const_cast<frame::monocular::MonocularKeyFrame *>(frame1));
@@ -301,7 +301,7 @@ cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
       proj2 = frame2->GetFeatureHandler()->GetFeatures().keypoints[feature_id].pt;
     } else {
       TPoint3D mp_local_cf = frame2->GetPosition().Transform(mp2->GetPosition());
-      frame2->GetCamera()->ProjectAndDistort(mp_local_cf, proj2);
+      frame2->GetMonoCamera()->ProjectAndDistort(mp_local_cf, proj2);
     }
 
     size_t feature_id = mp.first;

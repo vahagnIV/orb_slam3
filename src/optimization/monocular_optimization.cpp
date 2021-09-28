@@ -42,7 +42,7 @@ void OptimizePose(MonocularFrame * frame) {
     size_t feature_id = mp_id.first;
     if (map_point->IsBad())
       continue;
-    auto edge = new edges::SE3ProjectXYZPoseOnly(map_point, feature_id, frame->GetCamera(), map_point->GetPosition());
+    auto edge = new edges::SE3ProjectXYZPoseOnly(map_point, feature_id, frame->GetMonoCamera(), map_point->GetPosition());
     edge->setId(++max_id);
     edge->setVertex(0, frame_vertex);
 

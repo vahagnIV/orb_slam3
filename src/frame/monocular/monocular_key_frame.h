@@ -68,6 +68,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                              std::list<Observation> & out_local_matches) const override;
   int GetScaleLevel(const map::MapPoint *map_point) const override;
   int GetScaleLevel(const Observation &observation) const override;
+  const camera::ICamera *GetCamera() const override;
  private:
 
   int GetMapPointLevel(const map::MapPoint * map_point) const;

@@ -8,24 +8,28 @@
 #include <memory>
 
 // === orb-slam3 ===
+
 #include "map.h"
 
 namespace orb_slam3 {
 namespace map {
+
 class Atlas {
  public:
   Atlas();
   ~Atlas();
 
-  Map * GetCurrentMap();
+  Map *GetCurrentMap();
   void CreateNewMap();
   size_t GetMapCount() const;
-  const std::unordered_set<map::Map * > & GetMaps() const;
+  const std::unordered_set<map::Map *> &GetMaps() const;
 
-  void SetCurrentMap(map::Map * map);
+  void SetCurrentMap(map::Map *map);
+  void Serialize(std::ostream &ostream) const;
+  void Deserialize(std::istream &istream);
  private:
-  Map * current_map_;
-  std::unordered_set<map::Map * > maps_;
+  Map *current_map_;
+  std::unordered_set<map::Map *> maps_;
 };
 
 }

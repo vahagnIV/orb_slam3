@@ -11,15 +11,15 @@ namespace camera {
 
 bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
 
-  const Scalar &x = undistorted[0];
-  const Scalar &y = undistorted[1];
+  const precision_t &x = undistorted[0];
+  const precision_t &y = undistorted[1];
 
-  Scalar r2 = x * x + y * y;
-  Scalar r4 = r2 * r2;
-  Scalar r6 = r4 * r2;
+  precision_t r2 = x * x + y * y;
+  precision_t r4 = r2 * r2;
+  precision_t r6 = r4 * r2;
 
-  Scalar cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
-  Scalar a1 = 2 * x * y;
+  precision_t cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
+  precision_t a1 = 2 * x * y;
 
   distorted[0] = x * cdist + P1() * a1 + P2() * (r2 + 2 * x * x);
   distorted[1] = y * cdist + P2() * a1 + P1() * (r2 + 2 * y * y);
@@ -31,8 +31,8 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, Homogenous
 
   undistorted = distorted;
 
-  Scalar &x = undistorted[0];
-  Scalar &y = undistorted[1];
+  precision_t &x = undistorted[0];
+  precision_t &y = undistorted[1];
   undistorted[2] = 1;
   precision_t x0 = x = distorted[0], y0 = y = distorted[1];
 
@@ -57,16 +57,16 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, Homogenous
 
 void KannalaBrandt5::ComputeJacobian(const TPoint2D &point,
                                      IDistortionModel::JacobianType &out_jacobian) const {
-  const Scalar &x = point[0];
-  const Scalar &y = point[1];
+  const precision_t &x = point[0];
+  const precision_t &y = point[1];
 
-  Scalar r2 = x * x + y * y;
-  Scalar r4 = r2 * r2;
-  Scalar r6 = r4 * r2;
+  precision_t r2 = x * x + y * y;
+  precision_t r4 = r2 * r2;
+  precision_t r6 = r4 * r2;
 
-  Scalar cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
-  Scalar a1 = 2 * x * y;
-  Scalar Dcdist = K1() + 2 * K2() * r2 + 3 * K3() * r4;
+  precision_t cdist = 1 + K1() * r2 + K2() * r4 + K3() * r6;
+  precision_t a1 = 2 * x * y;
+  precision_t Dcdist = K1() + 2 * K2() * r2 + 3 * K3() * r4;
   out_jacobian << cdist + 2 * x * x * Dcdist + 2 * y * P1() + 6 * x * P2(), a1 * Dcdist + 2 * x * P1() + 2 * y * P2(),
       a1 * Dcdist + 2 * y * P2() + 2 * x * P1(), cdist + 2 * y * y * Dcdist + 2 * x * P2() + 6 * y * P1();
 }

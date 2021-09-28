@@ -47,8 +47,8 @@ orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
 
 void FillIntrinsicsAndDistortionCoeffsForLiveCameraTest(
 
-    std::vector<orb_slam3::camera::MonocularCamera::Scalar> & intrinsics,
-    std::vector<orb_slam3::camera::MonocularCamera::Scalar> & distortion_coeffs) {
+    std::vector<orb_slam3::precision_t> & intrinsics,
+    std::vector<orb_slam3::precision_t> & distortion_coeffs) {
 
   intrinsics.push_back(8.1225318847808785e+02);
   intrinsics.push_back(8.1565514576653572e+02);
@@ -70,8 +70,8 @@ void FillIntrinsicsAndDistortionCoeffsForLiveCameraTest(
 }
 
 void FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(
-    std::vector<orb_slam3::camera::MonocularCamera::Scalar> & intrinsics,
-    std::vector<orb_slam3::camera::MonocularCamera::Scalar> & distortion_coeffs) {
+    std::vector<orb_slam3::precision_t> & intrinsics,
+    std::vector<orb_slam3::precision_t> & distortion_coeffs) {
 
   intrinsics.push_back(190.97847715128717);
   intrinsics.push_back(190.9733070521226);
@@ -109,19 +109,18 @@ void ReadImagesForMonocularTestTum(
 }
 
 template<typename T>
-void CreateDistortionModel(orb_slam3::camera::MonocularCamera * camera,
-                           const std::vector<orb_slam3::camera::FishEye::Scalar> distortion_coeffs) {
+void CreateDistortionModel(orb_slam3::camera::MonocularCamera *camera,
+                           const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
   assert(false);
 }
 
 template<>
 void CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>(
-    orb_slam3::camera::MonocularCamera * camera,
-    const std::vector<orb_slam3::camera::KannalaBrandt5::Scalar> distortion_coeffs) {
+    orb_slam3::camera::MonocularCamera *camera,
+    const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
-  orb_slam3::camera::KannalaBrandt5 * distortion =
-      camera->CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>();
+  auto distortion = new orb_slam3::camera::KannalaBrandt5();
   assert(5 == distortion_coeffs.size());
   size_t i = 0;
   distortion->SetK1(distortion_coeffs[i++]);
@@ -129,28 +128,29 @@ void CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>(
   distortion->SetP1(distortion_coeffs[i++]);
   distortion->SetP2(distortion_coeffs[i++]);
   distortion->SetK3(distortion_coeffs[i++]);
+  camera->SetDistortionModel(distortion);
 }
 
 template<>
 void CreateDistortionModel<orb_slam3::camera::FishEye>(
-    orb_slam3::camera::MonocularCamera * camera,
-    const std::vector<orb_slam3::camera::FishEye::Scalar> distortion_coeffs) {
+    orb_slam3::camera::MonocularCamera *camera,
+    const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
-  orb_slam3::camera::FishEye * distortion =
-      camera->CreateDistortionModel<orb_slam3::camera::FishEye>();
+  auto distortion = new orb_slam3::camera::FishEye();
   assert(4 <= distortion_coeffs.size());
   size_t i = 0;
   distortion->SetK1(distortion_coeffs[i++]);
   distortion->SetK2(distortion_coeffs[i++]);
   distortion->SetK3(distortion_coeffs[i++]);
   distortion->SetK4(distortion_coeffs[i++]);
+  camera->SetDistortionModel(distortion);
 }
 
 orb_slam3::camera::MonocularCamera *
 CreateMonocularCamera(
     const size_t cam_width,
     const size_t cam_height,
-    const std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics) {
+    const std::vector<orb_slam3::precision_t> intrinsics) {
 
   typedef orb_slam3::camera::MonocularCamera MC;
   MC * camera = new MC(cam_width, cam_height);
@@ -325,8 +325,8 @@ void TestLiveCamera(orb_slam3::features::BowVocabulary & voc) {
 
   typedef orb_slam3::camera::KannalaBrandt5 KANNALABRANDT5;
 
-  std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics;
-  std::vector<KANNALABRANDT5::Scalar> distortion_coeffs;
+  std::vector<orb_slam3::precision_t> intrinsics;
+  std::vector<orb_slam3::precision_t> distortion_coeffs;
   FillIntrinsicsAndDistortionCoeffsForLiveCameraTest(intrinsics, distortion_coeffs);
 
   const size_t width = 640;
@@ -354,8 +354,8 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   typedef orb_slam3::camera::FishEye FISH_EYE;
   typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;
 
-  std::vector<orb_slam3::camera::MonocularCamera::Scalar> intrinsics;
-  std::vector<FISH_EYE::Scalar> distortion_coeffs;
+  std::vector<orb_slam3::precision_t> intrinsics;
+  std::vector<orb_slam3::precision_t> distortion_coeffs;
   FillIntrinsicsAndDistortionCoeffsForMonocularTestTum(intrinsics, distortion_coeffs);
 
   const size_t width = 512;

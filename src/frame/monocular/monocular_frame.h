@@ -44,6 +44,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
    * @return a map of bad map points only
    */
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
+  const camera::ICamera * GetCamera() const override;
  protected:
   void SerializeToStream(std::ostream & stream) const override;
   void DeSerializeFromStream(std::istream & stream) const override;

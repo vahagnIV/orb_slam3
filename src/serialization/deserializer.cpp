@@ -39,7 +39,7 @@ frame::KeyFrame * Deserializer::DeserializeKeyFrame(std::istream & istream, Seri
   frame::FrameType type;
   READ_FROM_STREAM(type, istream);
   if (frame::FrameType::MONOCULAR == type) {
-    fr
+//    fr
   }
   return nullptr;
 }

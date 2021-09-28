@@ -13,6 +13,7 @@
 #include "sensor_constants.h"
 #include "map_point_visibility_params.h"
 #include <features/handlers/base_feature_handler.h>
+#include <camera/icamera.h>
 
 namespace orb_slam3 {
 
@@ -64,6 +65,7 @@ class BaseFrame : public geometry::RigidObject {
 
  public:
   typedef std::unordered_set<map::MapPoint *> MapPointSet;
+  virtual const camera::ICamera *GetCamera() const = 0;
 
   virtual FrameType Type() const = 0;
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
