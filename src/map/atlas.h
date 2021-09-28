@@ -22,8 +22,8 @@ class Atlas {
   size_t GetMapCount() const;
   const std::unordered_set<map::Map * > & GetMaps() const;
 
- private:
   void SetCurrentMap(map::Map * map);
+ private:
   Map * current_map_;
   std::unordered_set<map::Map * > maps_;
 };

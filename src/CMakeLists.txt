@@ -86,6 +86,8 @@ add_library(orbslam SHARED
         geometry/sim3_transformation.cpp
 
         serialization/serialization_context.cpp
+        serialization/serializer.cpp
+        serialization/deserializer.cpp
 
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp

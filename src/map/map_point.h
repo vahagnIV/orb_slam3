@@ -28,7 +28,6 @@ class Map;
 class MapPoint {
  public:
   typedef std::unordered_map<const frame::KeyFrame *, frame::Observation> MapType;
-  friend std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point);
   MapPoint(TPoint3D point,
            size_t first_observed_frame_id,
            precision_t max_invariance_distance,

@@ -181,20 +181,6 @@ const frame::Observation & MapPoint::Observation(const frame::KeyFrame * key_fra
   return observations_.find(key_frame)->second;
 }
 
-std::ostream & operator<<(std::ostream & stream, const MapPoint * map_point) {
-  size_t mem_address = (size_t) map_point;
-  WRITE_TO_STREAM(mem_address, stream);
-  unsigned count = map_point->observations_.size();
-  stream.write((char *) map_point->position_.data(),
-               map_point->position_.rows() * sizeof(decltype(map_point->position_)::Scalar));
-  WRITE_TO_STREAM(count, stream);
-  WRITE_TO_STREAM(map_point->bad_flag_, stream);
-  for (auto obs: map_point->observations_) {
-    stream << obs.second;
-  }
-  return stream;
-}
-
 void MapPoint::LockObservationsContainer() const {
   observation_mutex_.lock();
 }
