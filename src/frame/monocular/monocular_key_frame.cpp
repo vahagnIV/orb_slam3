@@ -17,6 +17,11 @@
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
+
+MonocularKeyFrame::MonocularKeyFrame() {
+
+}
+
 MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->GetTimeCreated(),
                                                                         frame->GetFilename(),
                                                                         frame->GetSensorConstants(),
@@ -31,6 +36,13 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
 
 FrameType MonocularKeyFrame::Type() const {
   return MONOCULAR;
+}
+
+void MonocularKeyFrame::SetCamera(const camera::ICamera * icamera) {
+  if(icamera->Type() != camera::CameraType::MONOCULAR)
+    throw std::runtime_error("Invalid camera for monocular frame");
+
+  BaseMonocular::SetCamera(dynamic_cast<const camera::MonocularCamera *>(icamera));
 }
 
 BaseMonocular::MonocularMapPoints MonocularKeyFrame::GetMapPointsWithLock() const {
@@ -79,7 +91,7 @@ precision_t MonocularKeyFrame::ComputeSceneMedianDepth(const MapPointSet & map_p
   depths.reserve(map_points.size());
   TVector3D R_z = pose.R.row(2);
 
-  for (auto mp:map_points) {
+  for (auto mp: map_points) {
     if (mp->IsBad())
       continue;
     depths.push_back(R_z.dot(mp->GetPosition()) + pose.T.z());
@@ -258,13 +270,6 @@ void MonocularKeyFrame::SetBad() {
   }
 }
 
-void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
-  WRITE_TO_STREAM(id_, stream);
-  WRITE_TO_STREAM(bad_flag_, stream);
-  BaseMonocular::SerializeToStream(stream);
-  stream << GetFeatureHandler();
-}
-
 void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
                                               MapPointMatches & out_matches) const {
 
@@ -422,7 +427,7 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
 
 void MonocularKeyFrame::InitializeImpl() {
 
-  for (auto mp : GetMapPoints()) {
+  for (auto mp: GetMapPoints()) {
     if (mp.second->IsBad())
       continue;
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
@@ -444,26 +449,22 @@ void MonocularKeyFrame::UnlockMapPointContainer() const {
   map_points_mutex_.unlock();
 }
 
-void MonocularKeyFrame::AddMapPointImpl(Observation &observation) {
+void MonocularKeyFrame::AddMapPointImpl(Observation & observation) {
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
 }
 
-int MonocularKeyFrame::GetScaleLevel(const map::MapPoint *map_point) const {
+int MonocularKeyFrame::GetScaleLevel(const map::MapPoint * map_point) const {
   Observation observation;
   if (!map_point->GetObservation(this, observation))
     return -1;
   return GetScaleLevel(observation);
 }
 
-int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
+int MonocularKeyFrame::GetScaleLevel(const Observation & observation) const {
   return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
-void MonocularKeyFrame::DeSerializeFromStream(std::istream & stream) const {
-
-}
-
-const camera::ICamera *MonocularKeyFrame::GetCamera() const {
+const camera::ICamera * MonocularKeyFrame::GetCamera() const {
   return this->GetMonoCamera();
 }
 

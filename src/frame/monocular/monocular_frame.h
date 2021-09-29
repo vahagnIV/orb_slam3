@@ -45,10 +45,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
    */
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
   const camera::ICamera * GetCamera() const override;
- protected:
-  void SerializeToStream(std::ostream & stream) const override;
-  void DeSerializeFromStream(std::istream & stream) const override;
-
+  void SetCamera(const camera::ICamera * icamera) override;
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
   void InitializeMapPointsFromMatches(const std::unordered_map<std::size_t, std::size_t> & matches,

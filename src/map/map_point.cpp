@@ -193,5 +193,9 @@ void MapPoint::Serialize(std::ostream &ostream) const {
 
 }
 
+void MapPoint::DeSerialize(std::istream & istream) {
+
+}
+
 }
 }

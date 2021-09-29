@@ -6,14 +6,22 @@
 #define ORB_SLAM3_SRC_SERIALIZATION_SERIALIZATION_CONTEXT_H_
 #include <unordered_map>
 
-#include <map/atlas.h>
 #include <typedefs.h>
+#include <camera/icamera.h>
+#include <map/map.h>
+#include <orb_vocabulary.h>
+#include <features/ifeature_extractor.h>
+#include <frame/sensor_constants.h>
 
 namespace orb_slam3 {
 namespace serialization {
 
 struct SerializationContext {
+  std::unordered_map<size_t, camera::ICamera*> cam_id;
   std::unordered_map<size_t, map::Map *> map_id;
+  ORBVocabulary * vocabulary;
+  features::IFeatureExtractor * feature_extractor;
+  const frame::SensorConstants * sensor_constants;
 };
 
 }

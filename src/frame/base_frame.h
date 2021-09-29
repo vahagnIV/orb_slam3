@@ -17,6 +17,10 @@
 
 namespace orb_slam3 {
 
+namespace serialization{
+class SerializationContext;
+}
+
 namespace map {
 class MapPoint;
 class Map;
@@ -26,46 +30,49 @@ namespace frame {
 
 class BaseFrame : public geometry::RigidObject {
  public:
-  friend std::ostream & operator<<(std::ostream & stream, const BaseFrame * frame) {
-    frame->SerializeToStream(stream);
-    stream << frame->GetPosition();
-    stream << frame->GetInversePosition();
-    size_t size = frame->filename_.length();
-    stream.write((char *) &size, sizeof(size));
-    stream.write(frame->filename_.data(), size);
-    return stream;
-  }
+//  friend std::ostream & operator<<(std::ostream & stream, const BaseFrame * frame) {
+//    frame->SerializeToStream(stream);
+//    stream << frame->GetPosition();
+//    stream << frame->GetInversePosition();
+//    size_t size = frame->filename_.length();
+//    stream.write((char *) &size, sizeof(size));
+//    stream.write(frame->filename_.data(), size);
+//    return stream;
+//  }
+//
+//  friend std::istream & operator>>(std::istream & stream, BaseFrame * frame) {
+//    frame->DeSerializeFromStream(stream);
+//    geometry::Pose position;
+//    stream >> position;
+//    frame->SetStagingPosition(position);
+//    frame->ApplyStaging();
+//    stream >> position; // CHECK IF COINCIDES WITH THE inverse?
+//    size_t filename_length;
+//    stream.read((char *) &filename_length, sizeof(filename_length));
+//    std::string filename(filename_length, ' ');
+//    stream.read(const_cast<char *>(filename.data()), filename_length);
+//    return stream;
+//  }
 
-  friend std::istream & operator>>(std::istream & stream, BaseFrame * frame) {
-    frame->DeSerializeFromStream(stream);
-    geometry::Pose position;
-    stream >> position;
-    frame->SetStagingPosition(position);
-    frame->ApplyStaging();
-    stream >> position; // CHECK IF COINCIDES WITH THE inverse?
-    size_t filename_length;
-    stream.read((char *) &filename_length, sizeof(filename_length));
-    std::string filename(filename_length, ' ');
-    stream.read(const_cast<char *>(filename.data()), filename_length);
-    return stream;
-  }
-
+  BaseFrame();
   BaseFrame(TimePoint time_point,
             const std::string & filename,
             const SensorConstants * sensor_constants,
             size_t id,
-            const std::shared_ptr<const features::handlers::BaseFeatureHandler> & feature_handler = nullptr) :
-      time_point_(time_point),
-      filename_(filename),
-      sensor_constants_(sensor_constants),
-      id_(id),
-      feature_handler_(feature_handler),
-      map_(nullptr) {}
+            const std::shared_ptr<const features::handlers::BaseFeatureHandler> & feature_handler = nullptr);
+
   ~BaseFrame() override = default;
+ public:
+  void SetTimePoint(TimePoint time_point);
+  void SetFilename(const std::string & filename);
+  void SetSensorConstants(const SensorConstants * constants);
+  void SetId(size_t id);
+  void SetFeatureHandler(const std::shared_ptr<const features::handlers::BaseFeatureHandler> & handler);
 
  public:
   typedef std::unordered_set<map::MapPoint *> MapPointSet;
-  virtual const camera::ICamera *GetCamera() const = 0;
+  virtual const camera::ICamera * GetCamera() const = 0;
+  virtual void SetCamera(const camera::ICamera * icamera) = 0;
 
   virtual FrameType Type() const = 0;
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
@@ -81,12 +88,15 @@ class BaseFrame : public geometry::RigidObject {
   virtual void SetMap(map::Map * map) { map_ = map; }
   map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
-  virtual void SerializeToStream(std::ostream & stream) const = 0;
-  virtual void DeSerializeFromStream(std::istream & stream) const = 0;
+  void Serialize(std::ostream & stream) const;
+  void Deserialize(std::istream & stream, serialization::SerializationContext & context);
+ protected:
+  virtual void SerializeToStream(std::ostream & stream) const {};
+  virtual void DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) {};
 
  protected:
-  const TimePoint time_point_;
-  const std::string filename_;
+  TimePoint time_point_;
+  std::string filename_;
   const SensorConstants * sensor_constants_;
   size_t id_;
   std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler_;

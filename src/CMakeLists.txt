@@ -31,6 +31,7 @@ add_library(orbslam SHARED
         settings.cpp
 
         frame/key_frame.cpp
+        frame/base_frame.cpp
         frame/monocular/base_monocular.cpp
         frame/monocular/monocular_frame.cpp
         frame/monocular/monocular_key_frame.cpp
@@ -84,6 +85,10 @@ add_library(orbslam SHARED
         geometry/ransac_sim3_solver.cpp
         geometry/random_subset_generator.cpp
         geometry/sim3_transformation.cpp
+
+        factories/camera_factory.cpp
+        factories/key_frame_factory.cpp
+        factories/feature_handler_factory.cpp
 
         serialization/serialization_context.cpp
         serialization/serializer.cpp

@@ -39,9 +39,11 @@ class BaseMonocular {
  public:
   typedef std::map<size_t, map::MapPoint *> MonocularMapPoints;
   explicit BaseMonocular(const camera::MonocularCamera * camera);
+  BaseMonocular();
 
   BaseMonocular(const BaseMonocular & other);
   virtual ~BaseMonocular() = default;
+  void SetCamera(const camera::MonocularCamera * camera);
 
   /// Public Functions
  public:

@@ -25,6 +25,8 @@ class IDistortionModel {
   virtual bool UnDistortPoint(const HomogenousPoint &distorted,
                               HomogenousPoint &undistorted) const = 0;
   virtual void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const = 0;
+
+  virtual void Serialize(std::ostream & ostream) const = 0;
   virtual ~IDistortionModel() = default;
 
 };

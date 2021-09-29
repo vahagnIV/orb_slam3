@@ -16,6 +16,10 @@ Features::Features(precision_t width, precision_t height)
                                    / height) {
 }
 
+Features::Features() : width_(0), height_(0) {
+
+}
+
 void Features::ListFeaturesInArea(const TPoint2D & point,
                                   const size_t & window_size,
                                   const int & minLevel,
@@ -107,13 +111,25 @@ std::ostream & operator<<(std::ostream & stream, const Features & features) {
   for (auto & kp: features.keypoints) {
     stream << kp;
   }
-  for (auto ukp:features.undistorted_keypoints) {
+  for (auto ukp: features.undistorted_keypoints) {
     stream.write((char *) ukp.data(), ukp.rows() * sizeof(decltype(ukp)::Scalar));
   }
-  for (auto uukp:features.undistorted_and_unprojected_keypoints) {
+  for (auto uukp: features.undistorted_and_unprojected_keypoints) {
     stream.write((char *) uukp.data(), uukp.rows() * sizeof(decltype(uukp)::Scalar));
   }
   return stream;
+}
+
+void Features::SetWidth(precision_t width) {
+  width_ = width;
+  grid_element_width_inv_ = static_cast<precision_t >(constants::FRAME_GRID_COLS)
+      / width_;
+}
+
+void Features::SetHeight(precision_t height) {
+  height_ = height;
+  grid_element_height_inv_ = static_cast<precision_t >(constants::FRAME_GRID_ROWS)
+      / height_;
 }
 
 }

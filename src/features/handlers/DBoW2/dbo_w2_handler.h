@@ -14,8 +14,14 @@ namespace handlers {
 
 class DBoW2Handler : public BaseFeatureHandler {
  public:
-  DBoW2Handler(Features && features, const IFeatureExtractor * feature_extractor, const BowVocabulary * vocabulary)
+  DBoW2Handler(Features && features,
+               const IFeatureExtractor * feature_extractor,
+               const BowVocabulary * vocabulary)
       : BaseFeatureHandler(std::move(features), feature_extractor), vocabulary_(vocabulary) {}
+
+  DBoW2Handler(const IFeatureExtractor * feature_extractor,
+               const BowVocabulary * vocabulary)
+      : BaseFeatureHandler(feature_extractor), vocabulary_(vocabulary) {}
 
   void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
                  FastMatches & out_matches,
@@ -28,8 +34,7 @@ class DBoW2Handler : public BaseFeatureHandler {
   const DBoW2::BowVector & GetBowVector() const;
   const BowVocabulary * GetVocabulary() const { return vocabulary_; }
   const std::map<unsigned, std::size_t> & GetWordFrequencies() const { return word_frequencies_; }
- protected:
-  void Serialize(ostream & stream) const override;
+  HandlerType Type() const override;
  private:
   DBoW2::FeatureVector feature_vector_;
   DBoW2::BowVector bow_vector_;

@@ -50,7 +50,7 @@ void Serializer::Serialize(const frame::KeyFrame * kf, std::ostream & stream) {
 
   stream << kf->GetFeatureHandler();
 
-  kf->SerializeToStream(stream);
+//  kf->SerializeToStream(stream);
 }
 
 void Serializer::Serialize(const map::MapPoint * mp, std::ostream & stream) {

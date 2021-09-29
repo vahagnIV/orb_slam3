@@ -7,7 +7,7 @@
 namespace orb_slam3 {
 namespace camera {
 enum CameraType {
-  MONOCULAR
+  MONOCULAR = 1
 };
 }
 }

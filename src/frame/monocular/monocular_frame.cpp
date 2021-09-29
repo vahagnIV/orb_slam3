@@ -354,16 +354,15 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
   return false;
 }
 
-void MonocularFrame::SerializeToStream(std::ostream & stream) const {
-  throw std::runtime_error("Not implemented");
-}
-
-void MonocularFrame::DeSerializeFromStream(std::istream & stream) const {
-
-}
-
 const camera::ICamera *MonocularFrame::GetCamera() const {
   return this->GetMonoCamera();
+}
+
+void MonocularFrame::SetCamera(const camera::ICamera * icamera) {
+  if(icamera->Type() != camera::CameraType::MONOCULAR)
+    throw std::runtime_error("Invalid camera for monocular frame");
+
+  BaseMonocular::SetCamera(dynamic_cast<const camera::MonocularCamera *>(icamera));
 }
 }
 }

@@ -27,6 +27,7 @@ typedef Eigen::Matrix<uint8_t, 1, 32, Eigen::RowMajor> DescriptorType;
 class Features {
  public:
   friend std::ostream & operator<<(std::ostream & stream, const Features & frame);
+  Features();
   Features(precision_t width, precision_t height);
 
   DescriptorSet descriptors;
@@ -44,17 +45,18 @@ class Features {
 
   void AssignFeaturesToGrid();
 
-//  void UndistortKeyPoints();
+  void SetWidth(precision_t width);
+  void SetHeight(precision_t height);
  private:
   bool PosInGrid(const TPoint2D & kp,
                  size_t & posX,
                  size_t & posY) const;
 
  private:
-   precision_t width_;
+  precision_t width_;
   precision_t height_;
-  const precision_t grid_element_width_inv_;
-  const precision_t grid_element_height_inv_;
+  precision_t grid_element_width_inv_;
+  precision_t grid_element_height_inv_;
 
 };
 

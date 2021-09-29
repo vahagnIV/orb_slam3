@@ -124,5 +124,12 @@ void FishEye::ComputeJacobian(const TPoint2D & point,
   out_jacobian(1, 1) = (Dthetad * y2 / (r2 * (r2 + 1)) + thetad * x2 / r3);
 }
 
+void FishEye::Serialize(std::ostream & ostream) const {
+  WRITE_TO_STREAM(k1_, ostream);
+  WRITE_TO_STREAM(k2_, ostream);
+  WRITE_TO_STREAM(k3_, ostream);
+  WRITE_TO_STREAM(k4_, ostream);
+}
+
 }
 }

@@ -105,6 +105,7 @@ class MapPoint {
   void LockObservationsContainer() const;
   void UnlockObservationsContainer() const;
   void Serialize(std::ostream & ostream) const;
+  void DeSerialize(std::istream & istream);
  private:
   void ApplyStagingPosition();
   void ApplyNormalStaging();

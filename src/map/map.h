@@ -9,10 +9,15 @@
 #include <unordered_set>
 #include <ostream>
 
+
 namespace orb_slam3 {
 
 namespace frame{
 class KeyFrame;
+}
+
+namespace serialization{
+class SerializationContext;
 }
 
 namespace map {
@@ -31,6 +36,7 @@ class Map {
   std::unordered_set<frame::KeyFrame *> GetAllKeyFrames() const;
   size_t GetSize() const { return key_frames_.size(); }
   void Serialize(std::ostream & ostream) const;
+  void Deserialize(std::istream & istream, serialization::SerializationContext & context);
  private:
   std::unordered_set<frame::KeyFrame *> key_frames_;
   frame::KeyFrame * initial_keyframe_;

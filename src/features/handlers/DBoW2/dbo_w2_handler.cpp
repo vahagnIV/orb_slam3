@@ -89,8 +89,9 @@ const DBoW2::BowVector & DBoW2Handler::GetBowVector() const {
   return bow_vector_;
 }
 
-void DBoW2Handler::Serialize(ostream & stream) const {
 
+HandlerType DBoW2Handler::Type() const {
+  return HandlerType::DBoW2;
 }
 
 }

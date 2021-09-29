@@ -18,6 +18,7 @@ class KeyFrame : public BaseFrame {
  public:
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
   typedef std::vector<std::pair<Observation, Observation>> NewMapPoints;
+  KeyFrame() : BaseFrame(), covisibility_graph_(this) {}
 
   KeyFrame(TimePoint time_point,
            const std::string & filename,
@@ -156,8 +157,8 @@ class KeyFrame : public BaseFrame {
                                           geometry::Sim3Transformation & in_out_transformation) const = 0;
   void ApplyStaging();
 
-  virtual int GetScaleLevel(const map::MapPoint *map_point) const = 0;
-  virtual int GetScaleLevel(const Observation &observation) const = 0;
+  virtual int GetScaleLevel(const map::MapPoint * map_point) const = 0;
+  virtual int GetScaleLevel(const Observation & observation) const = 0;
 
  protected:
   virtual void InitializeImpl() = 0;

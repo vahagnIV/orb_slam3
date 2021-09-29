@@ -100,15 +100,15 @@ g2o::RobustKernel * Observation::CreateRobustKernel() {
   return rk;
 }
 
+void Observation::Serialize(std::ostream & ostream) const {
+  size_t feature_count = feature_ids_.size();
+  WRITE_TO_STREAM(feature_count, ostream);
+  ostream.write((char *) feature_ids_.size(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
+}
 
+void Observation::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
 
-/*
-Observation & Observation::operator=(const Observation & other) {
-  map_point_ = other.map_point_;
-  key_frame_ = other.key_frame_;
-//  feature_ids_ = other.feature_ids_;
-  return *this;
-}*/
+}
 
 }
 }

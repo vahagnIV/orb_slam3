@@ -300,6 +300,12 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, sensor_constants, &handler_factory);
     auto result = tracker.Track(frame);
+
+    if(i == 100){
+      std::ofstream my_file("step" + std::to_string(i) + ".bin");
+      atlas->Serialize(my_file);
+    }
+
     if (orb_slam3::TrackingResult::OK == result) {
       fe = _feature_extractor;
 
@@ -396,6 +402,10 @@ int main(int argc, char * argv[]) {
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
+
+  auto atlas = new orb_slam3::map::Atlas;
+  std::ifstream  ifstream("step100.bin");
+  atlas->Deserialize(ifstream);
 
   TestMonocularTum(voc, config["datasetPath"]);
 //  TestLiveCamera(voc);

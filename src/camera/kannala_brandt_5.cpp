@@ -71,5 +71,13 @@ void KannalaBrandt5::ComputeJacobian(const TPoint2D &point,
       a1 * Dcdist + 2 * y * P2() + 2 * x * P1(), cdist + 2 * y * y * Dcdist + 2 * x * P2() + 6 * y * P1();
 }
 
+void KannalaBrandt5::Serialize(std::ostream & ostream) const {
+  WRITE_TO_STREAM(k1_, ostream);
+  WRITE_TO_STREAM(k2_, ostream);
+  WRITE_TO_STREAM(p1_, ostream);
+  WRITE_TO_STREAM(p2_, ostream);
+  WRITE_TO_STREAM(k3_, ostream);
+}
+
 }
 }

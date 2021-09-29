@@ -103,19 +103,35 @@ void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_p
   out_projected << projected.x() * Fx() + Cx(), projected.y() * Fy() + Cy();
 }
 
-bool MonocularCamera::IsInFrustum(const TPoint2D &distorted) const {
+bool MonocularCamera::IsInFrustum(const TPoint2D & distorted) const {
   return distorted.x() >= 0 && distorted.x() < width_ && distorted.y() >= 0 && height_;
 //  return distorted.x() >= min_X_ && distorted.x() < max_X_ && distorted.y() >= min_Y_ && distorted.y() < max_Y_;
 }
 
-CameraType MonocularCamera::Type() {
+CameraType MonocularCamera::Type() const {
   return MONOCULAR;
 }
-void MonocularCamera::Serialize(std::ostream &ostream) const {
+
+void MonocularCamera::Serialize(std::ostream & ostream) const {
+  WRITE_TO_STREAM(fx_, ostream);
+  WRITE_TO_STREAM(fy_, ostream);
+  WRITE_TO_STREAM(cx_, ostream);
+  WRITE_TO_STREAM(cy_, ostream);
+  WRITE_TO_STREAM(width_, ostream);
+  WRITE_TO_STREAM(height_, ostream);
+  distortion_model_->Serialize(ostream);
+#warning "IMPLEMENT TYPE"
 
 }
 
-void MonocularCamera::Deserialize(std::istream &istream) {
+void MonocularCamera::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
+  READ_FROM_STREAM(fx_, istream);
+  READ_FROM_STREAM(fy_, istream);
+  READ_FROM_STREAM(cx_, istream);
+  READ_FROM_STREAM(cy_, istream);
+  READ_FROM_STREAM(width_, istream);
+  READ_FROM_STREAM(height_, istream);
+//  distortion_model_->Deserialize(istream, context);
 
 }
 

@@ -6,23 +6,26 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_ICAMERA_H_
 
 #include "idistortion_model.h"
-#include "serialization/serialization_context.h"
 #include "camera_type.h"
 
 namespace orb_slam3 {
+
+namespace serialization {
+class SerializationContext;
+}
+
 namespace camera {
 
 typedef Eigen::Matrix<precision_t, 2, 3> ProjectionJacobianType;
 
 class ICamera {
  public:
-  virtual CameraType Type() = 0;
-  virtual void ComputeJacobian(const TPoint3D &pt,
-                               ProjectionJacobianType &out_jacobian) const = 0;
-  virtual const IDistortionModel *GetDistortionModel() const = 0;
-  virtual void Serialize(std::ostream &ostream) const = 0;
-  virtual void Deserialize(std::istream &istream) = 0;
-  static ICamera *DeserializeFromStream(std::istream &istream, serialization::SerializationContext &context);
+  virtual CameraType Type() const = 0;
+  virtual void ComputeJacobian(const TPoint3D & pt,
+                               ProjectionJacobianType & out_jacobian) const = 0;
+  virtual const IDistortionModel * GetDistortionModel() const = 0;
+  virtual void Serialize(std::ostream & ostream) const = 0;
+  virtual void Deserialize(std::istream & istream, serialization::SerializationContext & context) = 0;
   virtual ~ICamera() = default;
 
 };

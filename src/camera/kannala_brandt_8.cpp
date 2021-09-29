@@ -9,12 +9,12 @@
 namespace orb_slam3 {
 namespace camera {
 
-bool KannalaBrandt8::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
+bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) const {
 
   const double x = undistorted[0];
   const double y = undistorted[1];
-  double &xd = distorted[0];
-  double &yd = distorted[1];
+  double & xd = distorted[0];
+  double & yd = distorted[1];
 
   double r2 = x * x + y * y;
   double r4 = r2 * r2;
@@ -30,14 +30,25 @@ bool KannalaBrandt8::DistortPoint(const HomogenousPoint &undistorted, Homogenous
   return true;
 }
 
-bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
+bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
   return false;
 }
 
-void KannalaBrandt8::ComputeJacobian(const TPoint2D &point,
-                                     IDistortionModel::JacobianType &out_jacobian) const {
+void KannalaBrandt8::ComputeJacobian(const TPoint2D & point,
+                                     IDistortionModel::JacobianType & out_jacobian) const {
 
+}
+
+void KannalaBrandt8::Serialize(std::ostream & ostream) const {
+  WRITE_TO_STREAM(k1_, ostream);
+  WRITE_TO_STREAM(k2_, ostream);
+  WRITE_TO_STREAM(p1_, ostream);
+  WRITE_TO_STREAM(p2_, ostream);
+  WRITE_TO_STREAM(k3_, ostream);
+  WRITE_TO_STREAM(k4_, ostream);
+  WRITE_TO_STREAM(k5_, ostream);
+  WRITE_TO_STREAM(k6_, ostream);
 }
 
 }

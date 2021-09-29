@@ -38,6 +38,7 @@ class KannalaBrandt8 : public IDistortionModel {
   void SetK4(precision_t k4) noexcept { k4_ = k4; }
   void SetK5(precision_t k5) noexcept { k5_ = k5; }
   void SetK6(precision_t k6) noexcept { k6_ = k6; }
+  void Serialize(std::ostream & ostream) const override;
  protected:
   precision_t k1_, k2_, k3_, k4_, k5_, k6_;
   precision_t p1_, p2_;

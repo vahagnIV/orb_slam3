@@ -30,6 +30,12 @@ class MonocularCamera
       height_(height),
       distortion_model_(nullptr) {
   }
+
+  MonocularCamera() :
+      width_(0),
+      height_(0),
+      distortion_model_(nullptr) {
+  }
   virtual ~MonocularCamera() { delete distortion_model_; }
 
  public: // ====  optimization =============
@@ -44,7 +50,7 @@ class MonocularCamera
 
  public:
 
-  void SetDistortionModel(IDistortionModel * model){
+  void SetDistortionModel(IDistortionModel * model) {
     distortion_model_ = model;
   }
 
@@ -66,13 +72,16 @@ class MonocularCamera
    * Width of the image
    * @return unsigned
    */
-  unsigned Width() const { return width_; }
+  inline unsigned Width() const { return width_; }
 
   /*!
    * Height of the image
    * @return
    */
-  unsigned Height() const { return height_; }
+  inline unsigned Height() const { return height_; }
+
+  inline void SetWidth(unsigned width) { width_ = width; }
+  inline void SetHeight(unsigned height) { height_ = height; }
 
   inline const precision_t & ImageBoundMinX() const { return min_X_; }
   inline const precision_t & ImageBoundMinY() const { return min_Y_; }
@@ -84,19 +93,19 @@ class MonocularCamera
    * @param points input
    * @param undistorted_points output
    */
-  bool UndistortPoint(const TPoint2D &point, TPoint2D &undistorted_point) const;
-  bool DistortPoint(const TPoint2D &undistorted, TPoint2D &distorted) const;
-  void UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const;
-  void ProjectPoint(const TPoint3D &point, TPoint2D &projected) const;
-  void ProjectAndDistort(const TPoint3D &point, TPoint2D &out_projected) const;
-  bool UnprojectAndUndistort(const TPoint2D &point, HomogenousPoint &unprojected) const;
+  bool UndistortPoint(const TPoint2D & point, TPoint2D & undistorted_point) const;
+  bool DistortPoint(const TPoint2D & undistorted, TPoint2D & distorted) const;
+  void UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const;
+  void ProjectPoint(const TPoint3D & point, TPoint2D & projected) const;
+  void ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const;
+  bool UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const;
 
-  inline const precision_t &Fx() const noexcept { return fx_; }
-  inline const precision_t &Fy() const noexcept { return fy_; }
-  inline const precision_t &Cx() const noexcept { return cx_; }
-  inline const precision_t &Cy() const noexcept { return cy_; }
-  inline const precision_t &FxInv() const noexcept { return fx_inv_; }
-  inline const precision_t &FyInv() const noexcept { return fy_inv_; }
+  inline const precision_t & Fx() const noexcept { return fx_; }
+  inline const precision_t & Fy() const noexcept { return fy_; }
+  inline const precision_t & Cx() const noexcept { return cx_; }
+  inline const precision_t & Cy() const noexcept { return cy_; }
+  inline const precision_t & FxInv() const noexcept { return fx_inv_; }
+  inline const precision_t & FyInv() const noexcept { return fy_inv_; }
 
   void SetFx(precision_t fx) noexcept {
     fx_ = fx;
@@ -108,9 +117,9 @@ class MonocularCamera
   }
   void SetCx(precision_t cx) noexcept { cx_ = cx; }
   void SetCy(precision_t cy) noexcept { cy_ = cy; }
-  CameraType Type() override;
-  void Serialize(std::ostream &ostream) const override;
-  void Deserialize(std::istream &istream) override;
+  CameraType Type() const override;
+  void Serialize(std::ostream & ostream) const override;
+  void Deserialize(std::istream & istream, serialization::SerializationContext & context) override;
 
 #if DistCoeffsLength == 8
   inline const double & K4() noexcept { return _estimate[9] ; }
@@ -130,7 +139,7 @@ class MonocularCamera
   precision_t min_X_, max_X_, min_Y_, max_Y_;
   precision_t fx_inv_, fy_inv_;
   precision_t fx_, fy_, cx_, cy_;
-  IDistortionModel *distortion_model_;
+  IDistortionModel * distortion_model_;
 
 };
 

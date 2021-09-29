@@ -15,12 +15,20 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
+BaseMonocular::BaseMonocular() : camera_(nullptr) {
+
+}
+
 BaseMonocular::BaseMonocular(const camera::MonocularCamera * camera)
     : camera_(camera) {}
 
 BaseMonocular::BaseMonocular(const BaseMonocular & other)
     : map_points_(other.map_points_),
       camera_(other.camera_) {}
+
+void BaseMonocular::SetCamera(const camera::MonocularCamera * camera) {
+  camera_ = camera;
+}
 
 void BaseMonocular::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
   MapToSet(map_points_, out_map_points);
@@ -45,12 +53,10 @@ void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
 
 map::MapPoint * BaseMonocular::GetMapPoint(size_t feature_id) const {
   auto it = map_points_.find(feature_id);
-  if(it == map_points_.end())
+  if (it == map_points_.end())
     return nullptr;
   return it->second;
 }
-
-
 
 map::MapPoint * BaseMonocular::EraseMapPoint(size_t feature_id) {
   assert(map_points_.find(feature_id) != map_points_.end());

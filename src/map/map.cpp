@@ -6,6 +6,8 @@
 #include "map.h"
 #include <frame/key_frame.h>
 #include <map/map_point.h>
+#include <serialization/serialization_context.h>
+#include <factories/key_frame_factory.h>
 
 namespace orb_slam3 {
 namespace map {
@@ -62,19 +64,39 @@ std::ostream & operator<<(std::ostream & stream, const Map * map) {
   return stream;
 }
 
-void Map::Serialize(std::ostream &ostream) const {
-  size_t map_id = reinterpret_cast<size_t>(this);
-  WRITE_TO_STREAM(map_id, ostream);
+void Map::Serialize(std::ostream & ostream) const {
 
   size_t kf_count = GetAllKeyFrames().size();
   WRITE_TO_STREAM(kf_count, ostream);
-  for (const auto kf: GetAllKeyFrames())
-    kf->SerializeToStream(ostream);
+  for (const auto kf: GetAllKeyFrames()) {
+    size_t kf_type = kf->Type();
+    WRITE_TO_STREAM(kf_type, ostream);
+    kf->Serialize(ostream);
+  }
 
   size_t mp_count = GetAllMapPoints().size();
   WRITE_TO_STREAM(mp_count, ostream);
-  for (const auto mp: GetAllMapPoints())
+  for (const auto mp: GetAllMapPoints()) {
     mp->Serialize(ostream);
+    MapPoint::MapType observations = mp->Observations();
+    size_t observation_size = observations.size();
+    WRITE_TO_STREAM(observation_size, ostream);
+    for (auto obs: observations) {
+      obs.second.Serialize(ostream);
+    }
+  }
+
+}
+
+void Map::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
+  size_t kf_count;
+  READ_FROM_STREAM(kf_count, istream);
+  for (size_t i = 0; i < kf_count; ++i) {
+    frame::FrameType kf_type;
+    READ_FROM_STREAM(kf_type, istream);
+    auto kf = factories::KeyFrameFactory::Create(kf_type);
+    kf->Deserialize(istream, context);
+  }
 
 }
 

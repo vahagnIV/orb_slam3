@@ -72,6 +72,8 @@ class Observation {
    * @return The pointer for the newly created kernel
    */
   virtual g2o::RobustKernel * CreateRobustKernel();
+  void Serialize(std::ostream & ostream) const;
+  void Deserialize(std::istream & istream, serialization::SerializationContext & context);
 
  protected:
   bool IsMonocular() const;
