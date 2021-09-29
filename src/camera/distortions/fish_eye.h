@@ -34,6 +34,8 @@ class FishEye : public IDistortionModel {
   void SetK3(precision_t k3) noexcept { k3_ = k3; }
   void SetK4(precision_t k4) noexcept { k4_ = k4; }
   void Serialize(std::ostream & ostream) const override;
+  DistortionModelType Type() override;
+  void Deserialize(std::istream &istream, serialization::SerializationContext &context) override;
  protected:
   precision_t k1_, k2_, k3_, k4_;
 

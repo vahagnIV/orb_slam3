@@ -10,6 +10,10 @@
 namespace orb_slam3 {
 namespace camera {
 
+DistortionModelType FishEye::Type() {
+  return DistortionModelType::FISHEYE;
+}
+
 bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) const {
 
   /*ACHTUNG: NOT TESTED*/
@@ -129,6 +133,13 @@ void FishEye::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k2_, ostream);
   WRITE_TO_STREAM(k3_, ostream);
   WRITE_TO_STREAM(k4_, ostream);
+}
+
+void FishEye::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(k1_, istream);
+  READ_FROM_STREAM(k2_, istream);
+  READ_FROM_STREAM(k3_, istream);
+  READ_FROM_STREAM(k4_, istream);
 }
 
 }

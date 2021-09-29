@@ -11,10 +11,10 @@
 namespace orb_slam3 {
 namespace camera {
 
-class KannalaBrandt5 : public IDistortionModel {
+class Barrel5 : public IDistortionModel {
  public:
   // IDistortion
-  KannalaBrandt5()
+  Barrel5()
       : k1_(0), k2_(0), p1_(0), p2_(0), k3_(0) {}
   bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
   bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const override;
@@ -33,6 +33,8 @@ class KannalaBrandt5 : public IDistortionModel {
   void SetP2(precision_t p2) noexcept { p2_ = p2; }
   void SetK3(precision_t k3) noexcept { k3_ = k3; }
   void Serialize(std::ostream & ostream) const override;
+  DistortionModelType Type() override;
+  void Deserialize(std::istream &istream, serialization::SerializationContext &context) override;
  protected:
   precision_t k1_, k2_, p1_, p2_, k3_;
 

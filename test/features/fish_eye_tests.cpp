@@ -4,7 +4,7 @@
 
 #include "fish_eye_tests.h"
 #include <camera/monocular_camera.h>
-#include <camera/fish_eye.h>
+#include <src/camera/distortions/fish_eye.h>
 #include <opencv2/opencv.hpp>
 namespace orb_slam3 {
 namespace test {

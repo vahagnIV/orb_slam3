@@ -12,6 +12,9 @@
 #include "map.h"
 
 namespace orb_slam3 {
+namespace serialization{
+class SerializationContext;
+}
 namespace map {
 
 class Atlas {
@@ -26,7 +29,7 @@ class Atlas {
 
   void SetCurrentMap(map::Map *map);
   void Serialize(std::ostream &ostream) const;
-  void Deserialize(std::istream &istream);
+  void Deserialize(std::istream &istream, serialization::SerializationContext &context);
  private:
   Map *current_map_;
   std::unordered_set<map::Map *> maps_;

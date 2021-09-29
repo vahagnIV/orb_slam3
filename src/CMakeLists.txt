@@ -41,9 +41,9 @@ add_library(orbslam SHARED
         frame/database/DBoW2/dbo_w2_database.cpp
 
         camera/monocular_camera.cpp
-        camera/kannala_brandt_5.cpp
-        camera/kannala_brandt_8.cpp
-        camera/fish_eye.cpp
+        camera/distortions/barrel5.cpp
+        camera/distortions/barrel8.cpp
+        camera/distortions/fish_eye.cpp
 
         features/orb_feature_extractor.cpp
         features/features.cpp
@@ -89,6 +89,7 @@ add_library(orbslam SHARED
         factories/camera_factory.cpp
         factories/key_frame_factory.cpp
         factories/feature_handler_factory.cpp
+        factories/distortion_model_factory.cpp
 
         serialization/serialization_context.cpp
         serialization/serializer.cpp
@@ -117,10 +118,10 @@ add_library(orbslam SHARED
         geometry/utils.h
 
         camera/monocular_camera.h
-        camera/idistortion_model.h
-        camera/kannala_brandt_5.h
-        camera/kannala_brandt_8.h
-        camera/fish_eye.h
+        camera/distortions/idistortion_model.h
+        camera/distortions/barrel5.h
+        camera/distortions/barrel8.h
+        camera/distortions/fish_eye.h
         camera/icamera.h
 
         frame/frame_type.h

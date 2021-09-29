@@ -11,7 +11,7 @@
 // == orb-slam3 ===
 #include "../typedefs.h"
 #include "../features/key_point.h"
-#include "idistortion_model.h"
+#include "src/camera/distortions/idistortion_model.h"
 #include "icamera.h"
 
 namespace orb_slam3 {

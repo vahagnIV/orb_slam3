@@ -36,16 +36,22 @@ void BaseFeatureHandler::Serialize(std::ostream & stream) const {
 }
 
 void BaseFeatureHandler::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-  size_t size = GetFeatures().Size();
+  size_t size;
   READ_FROM_STREAM(size, istream);
-  istream.read((char *) GetFeatures().descriptors.data(), 32 * size);
-  for (const auto & kp: GetFeatures().keypoints) {
+#warning fix width
+  features_.descriptors.resize(size, 32);// = GetFeatures().descriptors.Ones();
+//  GetFeatures().descriptors.allocate(Eigen::NoChange, Eigen::NoChange);
+  istream.read((char *) features_.descriptors.data(), 32 * size);
+  for (size_t i=0; i < size; ++i) {
+    features::KeyPoint kp;
     READ_FROM_STREAM(kp.level,istream);
     READ_FROM_STREAM(kp.size, istream);
     READ_FROM_STREAM(kp.angle,istream);
     istream.read((char *) kp.pt.data(), kp.pt.size() * sizeof(decltype(kp.pt)::Scalar));
+    features_.keypoints.push_back(kp);
   }
 
+#warning fix count
   for (const auto & ukp: GetFeatures().undistorted_keypoints)
     istream.read((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
 

@@ -9,6 +9,7 @@
 #include <settings.h>
 #include <messages/messages.h>
 #include <utility>
+#include <serialization/serialization_context.h>
 
 namespace orb_slam3 {
 namespace map {
@@ -31,16 +32,20 @@ MapPoint::MapPoint(TPoint3D point,
   SetStagingMaxInvarianceDistance(max_invariance_distance);
   ApplyStaging();
   map_->AddMapPoint(this);
-  if(Settings::Get().MessageRequested(messages::MAP_CREATED))
+  if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointCreated(this));
   ++counter_;
+}
+
+MapPoint::MapPoint() {
+// TODO: Initialize fields
 }
 
 MapPoint::~MapPoint() {
   --counter_;
 }
 
-bool MapPoint::GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const {
+bool MapPoint::GetObservation(const frame::KeyFrame *key_frame, frame::Observation &out_observation) const {
   auto it = observations_.find(key_frame);
   if (it != observations_.end()) {
     out_observation = it->second;
@@ -191,9 +196,36 @@ void MapPoint::UnlockObservationsContainer() const {
 
 void MapPoint::Serialize(std::ostream &ostream) const {
 
+  WRITE_TO_STREAM(max_invariance_distance_, ostream);
+  WRITE_TO_STREAM(min_invariance_distance_, ostream);
+  size_t map_id = reinterpret_cast<size_t>(map_);
+  WRITE_TO_STREAM(map_id, ostream);
+  ostream.write((char *) position_.data(), position_.size() * sizeof(decltype(position_)::Scalar));
+  ostream.write((char *) normal_.data(), normal_.size() * sizeof(decltype(position_)::Scalar));
+  WRITE_TO_STREAM(first_observed_frame_id_, ostream);
+  WRITE_TO_STREAM(visible_, ostream);
+  WRITE_TO_STREAM(found_, ostream);
+  size_t descriptor_length = descriptor_.size();
+  WRITE_TO_STREAM(descriptor_length, ostream);
+  ostream.write((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
 }
 
-void MapPoint::DeSerialize(std::istream & istream) {
+void MapPoint::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(max_invariance_distance_, istream);
+  READ_FROM_STREAM(min_invariance_distance_, istream);
+  size_t map_id;
+  READ_FROM_STREAM(map_id, istream);
+  map_ = context.map_id[map_id];
+  istream.read((char *) staging_position_.data(),
+               staging_position_.size() * sizeof(decltype(staging_position_)::Scalar));
+  istream.read((char *) normal_.data(), normal_.size() * sizeof(decltype(position_)::Scalar));
+  READ_FROM_STREAM(first_observed_frame_id_, istream);
+  READ_FROM_STREAM(visible_, istream);
+  READ_FROM_STREAM(found_, istream);
+  size_t descriptor_length;
+  READ_FROM_STREAM(descriptor_length, istream);
+  istream.read((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
+  ApplyStaging();
 
 }
 

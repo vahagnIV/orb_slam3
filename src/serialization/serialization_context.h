@@ -9,7 +9,7 @@
 #include <typedefs.h>
 #include <camera/icamera.h>
 #include <map/map.h>
-#include <orb_vocabulary.h>
+#include <features/bow_vocabulary.h>
 #include <features/ifeature_extractor.h>
 #include <frame/sensor_constants.h>
 
@@ -19,7 +19,9 @@ namespace serialization {
 struct SerializationContext {
   std::unordered_map<size_t, camera::ICamera*> cam_id;
   std::unordered_map<size_t, map::Map *> map_id;
-  ORBVocabulary * vocabulary;
+  std::unordered_map<size_t, frame::KeyFrame *> kf_id;
+  std::unordered_map<size_t, map::MapPoint *> mp_id;
+  features::BowVocabulary * vocabulary;
   features::IFeatureExtractor * feature_extractor;
   const frame::SensorConstants * sensor_constants;
 };

@@ -3,17 +3,18 @@
 //
 
 // == orb-slam3 ===
-#include "../constants.h"
+#include "constants.h"
 #include "monocular_camera.h"
+#include <factories/distortion_model_factory.h>
 
 namespace orb_slam3 {
 namespace camera {
 
-void MonocularCamera::UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const {
+void MonocularCamera::UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const {
   unprojected << (point.x() - Cx()) * fx_inv_, (point.y() - Cy()) * fy_inv_, 1;
 }
 
-void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
+void MonocularCamera::ProjectPoint(const TPoint3D &point, TPoint2D &projected) const {
   double z_inv = 1 / point.z();
   projected << point.x() * z_inv * Fx() + Cx(), point.y() * z_inv * Fy() + Cy();
 }
@@ -119,20 +120,26 @@ void MonocularCamera::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(cy_, ostream);
   WRITE_TO_STREAM(width_, ostream);
   WRITE_TO_STREAM(height_, ostream);
+  DistortionModelType type = distortion_model_->Type();
+  WRITE_TO_STREAM(type, ostream);
   distortion_model_->Serialize(ostream);
-#warning "IMPLEMENT TYPE"
-
 }
 
 void MonocularCamera::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
   READ_FROM_STREAM(fx_, istream);
+  SetFx(fx_);
   READ_FROM_STREAM(fy_, istream);
+  SetFy(fy_);
   READ_FROM_STREAM(cx_, istream);
   READ_FROM_STREAM(cy_, istream);
   READ_FROM_STREAM(width_, istream);
   READ_FROM_STREAM(height_, istream);
-//  distortion_model_->Deserialize(istream, context);
-
+  DistortionModelType type;
+  READ_FROM_STREAM(type, istream);
+  camera::IDistortionModel *distortion_model = factories::DistortionModelFactory::Create(type);
+  distortion_model->Deserialize(istream, context);
+  SetDistortionModel(distortion_model);
+  ComputeImageBounds();
 }
 
 }

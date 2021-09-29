@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 #include <constants.h>
-#include <camera/kannala_brandt_5.h>
-#include <camera/fish_eye.h>
+#include <src/camera/distortions/barrel5.h>
+#include <src/camera/distortions/fish_eye.h>
 #include <random>
 #include <local_mapper.h>
 #include <geometry/utils.h>
@@ -23,6 +23,7 @@
 #include <boost/filesystem.hpp>
 #include <features/factories/dbo_w2_handler_factory.h>
 #include <loop_merge_detector.h>
+#include <serialization/serialization_context.h>
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -116,11 +117,11 @@ void CreateDistortionModel(orb_slam3::camera::MonocularCamera *camera,
 }
 
 template<>
-void CreateDistortionModel<orb_slam3::camera::KannalaBrandt5>(
+void CreateDistortionModel<orb_slam3::camera::Barrel5>(
     orb_slam3::camera::MonocularCamera *camera,
     const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
-  auto distortion = new orb_slam3::camera::KannalaBrandt5();
+  auto distortion = new orb_slam3::camera::Barrel5();
   assert(5 == distortion_coeffs.size());
   size_t i = 0;
   distortion->SetK1(distortion_coeffs[i++]);
@@ -304,6 +305,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     if(i == 100){
       std::ofstream my_file("step" + std::to_string(i) + ".bin");
       atlas->Serialize(my_file);
+      exit(0);
     }
 
     if (orb_slam3::TrackingResult::OK == result) {
@@ -329,7 +331,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
 
 void TestLiveCamera(orb_slam3::features::BowVocabulary & voc) {
 
-  typedef orb_slam3::camera::KannalaBrandt5 KANNALABRANDT5;
+  typedef orb_slam3::camera::Barrel5 KANNALABRANDT5;
 
   std::vector<orb_slam3::precision_t> intrinsics;
   std::vector<orb_slam3::precision_t> distortion_coeffs;
@@ -358,7 +360,7 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   constants.sim3_optimization_huber_delta = std::sqrt(10.);
 
   typedef orb_slam3::camera::FishEye FISH_EYE;
-  typedef orb_slam3::camera::KannalaBrandt5 KANNALA_BRANDT5;
+  typedef orb_slam3::camera::Barrel5 KANNALA_BRANDT5;
 
   std::vector<orb_slam3::precision_t> intrinsics;
   std::vector<orb_slam3::precision_t> distortion_coeffs;
@@ -403,9 +405,12 @@ int main(int argc, char * argv[]) {
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
 
+  orb_slam3::serialization::SerializationContext context;
+  context.vocabulary = &voc;
+  context.feature_extractor = new orb_slam3::features::ORBFeatureExtractor(512, 512, 100, 1.2, 10, 10, 2);
   auto atlas = new orb_slam3::map::Atlas;
-  std::ifstream  ifstream("step100.bin");
-  atlas->Deserialize(ifstream);
+  std::ifstream ifstream("step100.bin");
+  atlas->Deserialize(ifstream, context);
 
   TestMonocularTum(voc, config["datasetPath"]);
 //  TestLiveCamera(voc);

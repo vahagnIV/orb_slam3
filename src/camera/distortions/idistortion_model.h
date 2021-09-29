@@ -9,16 +9,22 @@
 #include <g2o/core/base_vertex.h>
 
 // == orb-slam3 ===
-#include "../typedefs.h"
+#include "src/typedefs.h"
+#include "distortion_model_type.h"
 
 namespace orb_slam3 {
-namespace camera {
 
+namespace serialization {
+class SerializationContext;
+}
+
+namespace camera {
 
 class IDistortionModel {
  public:
 
   typedef Eigen::Matrix<double, 2, 2> JacobianType;
+  virtual DistortionModelType Type() = 0;
 
   virtual bool DistortPoint(const HomogenousPoint &undistorted,
                             HomogenousPoint &distorted) const = 0;
@@ -26,7 +32,8 @@ class IDistortionModel {
                               HomogenousPoint &undistorted) const = 0;
   virtual void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const = 0;
 
-  virtual void Serialize(std::ostream & ostream) const = 0;
+  virtual void Serialize(std::ostream &ostream) const = 0;
+  virtual void Deserialize(std::istream &istream, serialization::SerializationContext &context) = 0;
   virtual ~IDistortionModel() = default;
 
 };

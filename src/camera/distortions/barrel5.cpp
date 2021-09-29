@@ -3,13 +3,17 @@
 //
 
 // == orb-slam3 ===
-#include "kannala_brandt_5.h"
+#include "barrel5.h"
 #include <opencv2/opencv.hpp>
 
 namespace orb_slam3 {
 namespace camera {
 
-bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
+DistortionModelType Barrel5::Type() {
+  return DistortionModelType::BARREL5;
+}
+
+bool Barrel5::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
 
   const precision_t &x = undistorted[0];
   const precision_t &y = undistorted[1];
@@ -27,7 +31,7 @@ bool KannalaBrandt5::DistortPoint(const HomogenousPoint &undistorted, Homogenous
   return true;
 }
 
-bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
+bool Barrel5::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const {
 
   undistorted = distorted;
 
@@ -55,8 +59,8 @@ bool KannalaBrandt5::UnDistortPoint(const HomogenousPoint &distorted, Homogenous
   return false;
 }
 
-void KannalaBrandt5::ComputeJacobian(const TPoint2D &point,
-                                     IDistortionModel::JacobianType &out_jacobian) const {
+void Barrel5::ComputeJacobian(const TPoint2D &point,
+                              IDistortionModel::JacobianType &out_jacobian) const {
   const precision_t &x = point[0];
   const precision_t &y = point[1];
 
@@ -71,12 +75,20 @@ void KannalaBrandt5::ComputeJacobian(const TPoint2D &point,
       a1 * Dcdist + 2 * y * P2() + 2 * x * P1(), cdist + 2 * y * y * Dcdist + 2 * x * P2() + 6 * y * P1();
 }
 
-void KannalaBrandt5::Serialize(std::ostream & ostream) const {
+void Barrel5::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k1_, ostream);
   WRITE_TO_STREAM(k2_, ostream);
   WRITE_TO_STREAM(p1_, ostream);
   WRITE_TO_STREAM(p2_, ostream);
   WRITE_TO_STREAM(k3_, ostream);
+}
+
+void Barrel5::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(k1_, istream);
+  READ_FROM_STREAM(k2_, istream);
+  READ_FROM_STREAM(p1_, istream);
+  READ_FROM_STREAM(p2_, istream);
+  READ_FROM_STREAM(k3_, istream);
 }
 
 }

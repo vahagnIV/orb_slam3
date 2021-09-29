@@ -17,6 +17,10 @@
 
 namespace orb_slam3 {
 
+namespace serialization{
+class SerializationContext;
+}
+
 namespace frame {
 class KeyFrame;
 }
@@ -33,6 +37,8 @@ class MapPoint {
            precision_t max_invariance_distance,
            precision_t min_invariance_distance,
            Map * map);
+
+  MapPoint();
 
   /*!
    * Adds frame to the map points observations
@@ -105,7 +111,7 @@ class MapPoint {
   void LockObservationsContainer() const;
   void UnlockObservationsContainer() const;
   void Serialize(std::ostream & ostream) const;
-  void DeSerialize(std::istream & istream);
+  void Deserialize(std::istream &istream, serialization::SerializationContext &context);
  private:
   void ApplyStagingPosition();
   void ApplyNormalStaging();

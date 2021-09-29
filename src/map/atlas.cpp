@@ -76,8 +76,7 @@ void Atlas::Serialize(std::ostream & ostream) const {
 
 }
 
-void Atlas::Deserialize(std::istream & istream) {
-  serialization::SerializationContext context;
+void Atlas::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
   size_t camera_count;
   READ_FROM_STREAM(camera_count, istream);
   for (size_t i = 0; i < camera_count; ++i) {

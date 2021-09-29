@@ -4,12 +4,16 @@
 
 
 // == orb-slam3 ===
-#include "kannala_brandt_8.h"
+#include "barrel8.h"
 
 namespace orb_slam3 {
 namespace camera {
 
-bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) const {
+DistortionModelType Barrel8::Type() {
+  return DistortionModelType::BARREL8;
+}
+
+bool Barrel8::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) const {
 
   const double x = undistorted[0];
   const double y = undistorted[1];
@@ -30,17 +34,17 @@ bool KannalaBrandt8::DistortPoint(const HomogenousPoint & undistorted, Homogenou
   return true;
 }
 
-bool KannalaBrandt8::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const {
+bool Barrel8::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const {
   throw std::runtime_error("Kannala brandt8 undistort is not yet implemented");
   return false;
 }
 
-void KannalaBrandt8::ComputeJacobian(const TPoint2D & point,
-                                     IDistortionModel::JacobianType & out_jacobian) const {
+void Barrel8::ComputeJacobian(const TPoint2D & point,
+                              IDistortionModel::JacobianType & out_jacobian) const {
 
 }
 
-void KannalaBrandt8::Serialize(std::ostream & ostream) const {
+void Barrel8::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k1_, ostream);
   WRITE_TO_STREAM(k2_, ostream);
   WRITE_TO_STREAM(p1_, ostream);
@@ -49,6 +53,17 @@ void KannalaBrandt8::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k4_, ostream);
   WRITE_TO_STREAM(k5_, ostream);
   WRITE_TO_STREAM(k6_, ostream);
+}
+
+void Barrel8::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(k1_, istream);
+  READ_FROM_STREAM(k2_, istream);
+  READ_FROM_STREAM(p1_, istream);
+  READ_FROM_STREAM(p2_, istream);
+  READ_FROM_STREAM(k3_, istream);
+  READ_FROM_STREAM(k4_, istream);
+  READ_FROM_STREAM(k5_, istream);
+  READ_FROM_STREAM(k6_, istream);
 }
 
 }

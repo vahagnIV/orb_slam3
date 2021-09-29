@@ -5,6 +5,8 @@
 #include "observation.h"
 #include <optimization/edges/se3_project_xyz_pose.h>
 #include "monocular/monocular_key_frame.h"
+#include <serialization/serialization_context.h>
+#include <map/map_point.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -13,8 +15,8 @@ Observation::Observation() : map_point_(nullptr), key_frame_(nullptr), feature_i
 
 }
 
-Observation::Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id) : map_point_(map_point),
-                                                                                               key_frame_(key_frame),
+Observation::Observation(map::MapPoint *map_point, KeyFrame *key_frame, size_t feature_id) : map_point_(map_point),
+                                                                                             key_frame_(key_frame),
                                                                                                feature_ids_({feature_id}) {
 }
 
@@ -101,12 +103,33 @@ g2o::RobustKernel * Observation::CreateRobustKernel() {
 }
 
 void Observation::Serialize(std::ostream & ostream) const {
+  size_t mp_id = reinterpret_cast<size_t>(map_point_);
+  WRITE_TO_STREAM(mp_id, ostream);
+  size_t kf_id = key_frame_->Id();
+  WRITE_TO_STREAM(kf_id, ostream);
   size_t feature_count = feature_ids_.size();
   WRITE_TO_STREAM(feature_count, ostream);
-  ostream.write((char *) feature_ids_.size(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
+  ostream.write((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
 }
 
 void Observation::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
+  size_t mp_id;
+  READ_FROM_STREAM(mp_id, istream);
+  map::MapPoint *mp = context.mp_id[mp_id];
+
+  size_t kf_id;
+  READ_FROM_STREAM(kf_id, istream);
+  frame::KeyFrame *kf = context.kf_id[kf_id];
+
+  size_t feature_count;
+  READ_FROM_STREAM(feature_count, istream);
+  feature_ids_.resize(feature_count);
+  istream.read((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
+
+  map_point_ = mp;
+  key_frame_ = kf;
+  mp->AddObservation(*this);
+  key_frame_->AddMapPoint(*this);
 
 }
 

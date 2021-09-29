@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_ICAMERA_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_CAMERA_ICAMERA_H_
 
-#include "idistortion_model.h"
+#include "src/camera/distortions/idistortion_model.h"
 #include "camera_type.h"
 
 namespace orb_slam3 {
