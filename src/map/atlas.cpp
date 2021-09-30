@@ -69,7 +69,7 @@ void Atlas::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(map_count, ostream);
 
   for (const auto map: maps_) {
-    size_t map_id = reinterpret_cast<size_t>(this);
+    size_t map_id = reinterpret_cast<size_t>(map);
     WRITE_TO_STREAM(map_id, ostream);
     map->Serialize(ostream);
   }
@@ -98,6 +98,7 @@ void Atlas::Deserialize(std::istream &istream, serialization::SerializationConte
     READ_FROM_STREAM(map_id, istream);
     context.map_id[map_id] = map;
     map->Deserialize(istream, context);
+    SetCurrentMap(map);
   }
 
 }

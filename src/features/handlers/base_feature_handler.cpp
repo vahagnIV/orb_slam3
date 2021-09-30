@@ -18,9 +18,11 @@ BaseFeatureHandler::BaseFeatureHandler(const features::IFeatureExtractor * featu
 }
 
 void BaseFeatureHandler::Serialize(std::ostream & stream) const {
-  size_t size = GetFeatures().Size();
-  WRITE_TO_STREAM(size, stream);
-  stream.write((char *) GetFeatures().descriptors.data(), 32 * size);
+  Eigen::Index features_width = GetFeatures().descriptors.cols();
+  Eigen::Index features_height = GetFeatures().descriptors.rows();
+  WRITE_TO_STREAM(features_width, stream);
+  WRITE_TO_STREAM(features_height, stream);
+  stream.write((char *) GetFeatures().descriptors.data(), features_width * features_height * sizeof(decltype(GetFeatures().descriptors)::Scalar));
   for (const auto & kp: GetFeatures().keypoints) {
     WRITE_TO_STREAM(kp.level, stream);
     WRITE_TO_STREAM(kp.size, stream);
@@ -36,13 +38,14 @@ void BaseFeatureHandler::Serialize(std::ostream & stream) const {
 }
 
 void BaseFeatureHandler::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-  size_t size;
-  READ_FROM_STREAM(size, istream);
-#warning fix width
-  features_.descriptors.resize(size, 32);// = GetFeatures().descriptors.Ones();
-//  GetFeatures().descriptors.allocate(Eigen::NoChange, Eigen::NoChange);
-  istream.read((char *) features_.descriptors.data(), 32 * size);
-  for (size_t i=0; i < size; ++i) {
+  Eigen::Index features_width;
+  Eigen::Index features_height;
+  READ_FROM_STREAM(features_width, istream);
+  READ_FROM_STREAM(features_height, istream);
+  features_.descriptors.resize(features_height, features_width);
+
+  istream.read((char *) features_.descriptors.data(), features_width * features_height * sizeof(decltype(features_.descriptors)::Scalar));
+  for (Eigen::Index i=0; i < features_height; ++i) {
     features::KeyPoint kp;
     READ_FROM_STREAM(kp.level,istream);
     READ_FROM_STREAM(kp.size, istream);
@@ -51,12 +54,17 @@ void BaseFeatureHandler::Deserialize(std::istream & istream, serialization::Seri
     features_.keypoints.push_back(kp);
   }
 
-#warning fix count
-  for (const auto & ukp: GetFeatures().undistorted_keypoints)
+  for (Eigen::Index i=0; i < features_height; ++i) {
+    TPoint2D ukp;
     istream.read((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
+    features_.undistorted_keypoints.emplace_back(ukp);
+  }
 
-  for (const auto & ukp: GetFeatures().undistorted_and_unprojected_keypoints)
-    istream.read((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
+  for (Eigen::Index i=0; i < features_height; ++i) {
+    TPoint3D uukp;
+    istream.read((char *) uukp.data(), uukp.size() * sizeof(std::remove_reference<decltype(uukp)>::type::Scalar));
+    features_.undistorted_and_unprojected_keypoints.emplace_back(uukp);
+  }
 }
 
 }

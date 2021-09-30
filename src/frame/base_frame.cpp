@@ -62,6 +62,9 @@ void BaseFrame::Serialize(std::ostream & stream) const {
   assert(map_id > 0);
   WRITE_TO_STREAM(map_id, stream);
 
+  size_t camera_id = reinterpret_cast<size_t>(GetCamera());
+  WRITE_TO_STREAM(camera_id, stream);
+
   stream << GetPosition();
 
   features::handlers::HandlerType handler_type = GetFeatureHandler()->Type();
@@ -90,8 +93,11 @@ void BaseFrame::Deserialize(std::istream & stream, serialization::SerializationC
 
   size_t map_id;
   READ_FROM_STREAM(map_id, stream);
-
   SetMap(context.map_id[map_id]);
+
+  size_t camera_id;
+  READ_FROM_STREAM(camera_id, stream);
+  SetCamera(context.cam_id[camera_id]);
 
   geometry::Pose pose;
   stream >> pose;

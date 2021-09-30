@@ -18,7 +18,7 @@ class KeyFrame : public BaseFrame {
  public:
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
   typedef std::vector<std::pair<Observation, Observation>> NewMapPoints;
-  KeyFrame() : BaseFrame(), covisibility_graph_(this) {}
+  KeyFrame() ;
 
   KeyFrame(TimePoint time_point,
            const std::string & filename,

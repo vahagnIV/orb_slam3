@@ -11,8 +11,8 @@ namespace orb_slam3 {
 namespace frame {
 
 KeyFrame::KeyFrame(TimePoint time_point,
-                   const std::string &filename,
-                   const SensorConstants *sensor_constants,
+                   const std::string & filename,
+                   const SensorConstants * sensor_constants,
                    size_t id,
                    std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler)
     : BaseFrame(time_point, filename, sensor_constants, id, feature_handler),
@@ -23,6 +23,8 @@ KeyFrame::KeyFrame(TimePoint time_point,
       kf_gba_(nullptr) {
 }
 
+KeyFrame::KeyFrame() : BaseFrame(), is_initialized_(true), covisibility_graph_(this), bad_flag_(false) {}
+
 void KeyFrame::SetBad() {
   bad_flag_ = true;
   assert(nullptr != map_);
@@ -31,7 +33,7 @@ void KeyFrame::SetBad() {
     messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameDeleted(this));
 }
 
-void KeyFrame::SetPoseGBA(const TMatrix33 &R, const TVector3D &T) {
+void KeyFrame::SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
   pose_gba_.R = R;
   pose_gba_.T = T;
 }
@@ -42,11 +44,11 @@ void KeyFrame::ApplyStaging() {
     messages::MessageProcessor::Instance().Enqueue(new messages::KeyFramePositionUpdated(this));
 }
 
-CovisibilityGraphNode &KeyFrame::GetCovisibilityGraph() {
+CovisibilityGraphNode & KeyFrame::GetCovisibilityGraph() {
   return covisibility_graph_;
 }
 
-const CovisibilityGraphNode &KeyFrame::GetCovisibilityGraph() const {
+const CovisibilityGraphNode & KeyFrame::GetCovisibilityGraph() const {
   return covisibility_graph_;
 }
 
@@ -63,14 +65,14 @@ void KeyFrame::Initialize() {
   InitializeImpl();
 }
 
-void KeyFrame::AddMapPoint(Observation &observation) {
+void KeyFrame::AddMapPoint(Observation & observation) {
   this->AddMapPointImpl(observation);
   observation.GetMapPoint()->AddObservation(observation);
   if (Settings::Get().MessageRequested(messages::OBSERVATION_ADDED))
     messages::MessageProcessor::Instance().Enqueue(new messages::ObservationAdded(observation));
 }
 
-void KeyFrame::EraseMapPoint(map::MapPoint *map_point) {
+void KeyFrame::EraseMapPoint(map::MapPoint * map_point) {
   Observation observation;
   if (map_point->GetObservation(this, observation)) {
     EraseMapPointImpl(observation);

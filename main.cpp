@@ -3,6 +3,7 @@
 #include <image_utils.h>
 #include <tracker.h>
 #include <settings.h>
+#include <fstream>
 //#include <main_utils/message_print_functions.h>
 #include <drawer.h>
 #include <json/json.hpp>
@@ -303,8 +304,10 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     auto result = tracker.Track(frame);
 
     if(i == 100){
-      std::ofstream my_file("step" + std::to_string(i) + ".bin");
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::ofstream my_file("step" + std::to_string(i) + ".bin", std::ios::binary);
       atlas->Serialize(my_file);
+      my_file.close();
       exit(0);
     }
 
@@ -409,7 +412,7 @@ int main(int argc, char * argv[]) {
   context.vocabulary = &voc;
   context.feature_extractor = new orb_slam3::features::ORBFeatureExtractor(512, 512, 100, 1.2, 10, 10, 2);
   auto atlas = new orb_slam3::map::Atlas;
-  std::ifstream ifstream("step100.bin");
+  std::ifstream ifstream("step100.bin", ios::in | ios::binary );
   atlas->Deserialize(ifstream, context);
 
   TestMonocularTum(voc, config["datasetPath"]);

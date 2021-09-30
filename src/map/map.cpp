@@ -78,16 +78,20 @@ void Map::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(mp_count, ostream);
   for (const auto mp: GetAllMapPoints()) {
     size_t mp_id = reinterpret_cast<size_t>(mp);
-    WRITE_TO_STREAM(mp_id,ostream);
+    WRITE_TO_STREAM(mp_id, ostream);
     mp->Serialize(ostream);
+  }
+
+  for (const auto mp: GetAllMapPoints()) {
     MapPoint::MapType observations = mp->Observations();
     size_t observation_size = observations.size();
     WRITE_TO_STREAM(observation_size, ostream);
-    for (auto obs: observations) {
+    for (auto & obs: observations) {
+      assert(map_points_.find(obs.second.GetMapPoint()) != map_points_.end());
+      assert(obs.second.GetKeyFrame() == obs.first);
       obs.second.Serialize(ostream);
     }
   }
-
 }
 
 void Map::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
@@ -99,30 +103,39 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
     auto kf = factories::KeyFrameFactory::Create(kf_type);
     kf->Deserialize(istream, context);
     context.kf_id[kf->Id()] = kf;
+    AddKeyFrame(kf);
   }
 
   size_t mp_count;
   READ_FROM_STREAM(mp_count, istream);
-  for (size_t i=0; i < mp_count; ++i) {
+
+  for (size_t i = 0; i < mp_count; ++i) {
     auto mp = new map::MapPoint();
     size_t mp_id;
     READ_FROM_STREAM(mp_id, istream);
     context.mp_id[mp_id] = mp;
     mp->Deserialize(istream, context);
+    AddMapPoint(mp);
+  }
 
+  for (size_t i = 0; i < mp_count; ++i) {
     size_t observation_size;
     READ_FROM_STREAM(observation_size, istream);
+    if (istream.eof())
+      std::cout << "Sream finished" << std::endl;
 
     for (size_t j = 0; j < observation_size; ++j) {
       frame::Observation observation;
       observation.Deserialize(istream, context);
     }
+  }
+
+  /*
+   * map::MapPoint * mp = map_points[i];
     mp->ComputeDistinctiveDescriptor(context.feature_extractor);
     mp->CalculateNormalStaging();
     mp->ApplyStaging();
-
-  }
-
+   * */
 
 }
 

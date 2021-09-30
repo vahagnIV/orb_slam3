@@ -37,7 +37,7 @@ MapPoint::MapPoint(TPoint3D point,
   ++counter_;
 }
 
-MapPoint::MapPoint() {
+MapPoint::MapPoint() : bad_flag_(false) {
 // TODO: Initialize fields
 }
 
@@ -45,7 +45,7 @@ MapPoint::~MapPoint() {
   --counter_;
 }
 
-bool MapPoint::GetObservation(const frame::KeyFrame *key_frame, frame::Observation &out_observation) const {
+bool MapPoint::GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const {
   auto it = observations_.find(key_frame);
   if (it != observations_.end()) {
     out_observation = it->second;
@@ -79,7 +79,7 @@ void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
   observations_.clear();
-  if(Settings::Get().MessageRequested(messages::MAP_CREATED))
+  if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointDeleted(this));
 }
 
@@ -194,7 +194,7 @@ void MapPoint::UnlockObservationsContainer() const {
   observation_mutex_.unlock();
 }
 
-void MapPoint::Serialize(std::ostream &ostream) const {
+void MapPoint::Serialize(std::ostream & ostream) const {
 
   WRITE_TO_STREAM(max_invariance_distance_, ostream);
   WRITE_TO_STREAM(min_invariance_distance_, ostream);
@@ -210,9 +210,11 @@ void MapPoint::Serialize(std::ostream &ostream) const {
   ostream.write((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
 }
 
-void MapPoint::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
-  READ_FROM_STREAM(max_invariance_distance_, istream);
-  READ_FROM_STREAM(min_invariance_distance_, istream);
+void MapPoint::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
+//  istream.rdbuf()
+  READ_FROM_STREAM(staging_max_invariance_distance_, istream);
+  READ_FROM_STREAM(staging_min_invariance_distance_, istream);
+  ApplyMinMaxInvDistanceStaging();
   size_t map_id;
   READ_FROM_STREAM(map_id, istream);
   map_ = context.map_id[map_id];

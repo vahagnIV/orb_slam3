@@ -159,7 +159,6 @@ add_library(orbslam SHARED
 
         debug/debug_utils.h
 
-        orb_vocabulary.h
         identifiable.h
         logging.h)
 

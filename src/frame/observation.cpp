@@ -15,8 +15,8 @@ Observation::Observation() : map_point_(nullptr), key_frame_(nullptr), feature_i
 
 }
 
-Observation::Observation(map::MapPoint *map_point, KeyFrame *key_frame, size_t feature_id) : map_point_(map_point),
-                                                                                             key_frame_(key_frame),
+Observation::Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id) : map_point_(map_point),
+                                                                                               key_frame_(key_frame),
                                                                                                feature_ids_({feature_id}) {
 }
 
@@ -103,6 +103,8 @@ g2o::RobustKernel * Observation::CreateRobustKernel() {
 }
 
 void Observation::Serialize(std::ostream & ostream) const {
+  assert(!map_point_->IsBad());
+
   size_t mp_id = reinterpret_cast<size_t>(map_point_);
   WRITE_TO_STREAM(mp_id, ostream);
   size_t kf_id = key_frame_->Id();
@@ -110,16 +112,22 @@ void Observation::Serialize(std::ostream & ostream) const {
   size_t feature_count = feature_ids_.size();
   WRITE_TO_STREAM(feature_count, ostream);
   ostream.write((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
+  if (feature_ids_[0] == 0)
+    std::cout << "Mp id: " << mp_id << " " << " Kf id: " << kf_id << std::endl;
 }
 
 void Observation::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
+  if (istream.eof())
+    std::cout << "Stttttttttttttream finished" << std::endl;
   size_t mp_id;
   READ_FROM_STREAM(mp_id, istream);
-  map::MapPoint *mp = context.mp_id[mp_id];
+  map::MapPoint * mp = context.mp_id[mp_id];
+  assert(nullptr != mp);
 
   size_t kf_id;
   READ_FROM_STREAM(kf_id, istream);
-  frame::KeyFrame *kf = context.kf_id[kf_id];
+  frame::KeyFrame * kf = context.kf_id[kf_id];
+  assert(nullptr != kf);
 
   size_t feature_count;
   READ_FROM_STREAM(feature_count, istream);
@@ -128,7 +136,7 @@ void Observation::Deserialize(std::istream & istream, serialization::Serializati
 
   map_point_ = mp;
   key_frame_ = kf;
-  mp->AddObservation(*this);
+//  mp->AddObservation(*this);
   key_frame_->AddMapPoint(*this);
 
 }
