@@ -20,6 +20,7 @@ class Frame : public BaseFrame {
         const SensorConstants * sensor_constants) : BaseFrame(time_point,
                                                               filename,
                                                               sensor_constants, ++next_id_) {}
+  Frame();
 
   virtual ~Frame() = default;
  public:

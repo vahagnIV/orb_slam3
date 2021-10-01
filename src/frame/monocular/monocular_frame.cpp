@@ -16,6 +16,7 @@
 #include "monocular_key_frame.h"
 #include <map/map.h>
 #include <debug/debug_utils.h>
+#include <serialization/serialization_context.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -44,6 +45,10 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
   }
 
   feature_handler_ = handler_factory->CreateFeatureHandler(features, feature_extractor);
+}
+
+MonocularFrame::MonocularFrame() {
+
 }
 
 bool MonocularFrame::Link(Frame * other) {
@@ -184,7 +189,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                     const std::unordered_map<size_t, TPoint3D> & points,
                                                     MonocularFrame * from_frame,
                                                     BaseFrame::MapPointSet & out_map_points) {
-  for (const auto & point : points) {
+  for (const auto & point: points) {
 //    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
 
     precision_t max_invariance_distance, min_invariance_distance;
@@ -287,7 +292,7 @@ void MonocularFrame::UpdateFromReferenceKeyFrame() {
     SetStagingPosition(reference_keyframe_->GetPositionWithLock());
     ApplyStaging();
     ClearMapPoints();
-    for(const auto & mp: reference_keyframe_->GetMapPointsWithLock()){
+    for (const auto & mp: reference_keyframe_->GetMapPointsWithLock()) {
       AddMapPoint(mp.second, mp.first);
     }
   }
@@ -354,16 +359,48 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
   return false;
 }
 
-const camera::ICamera *MonocularFrame::GetCamera() const {
+const camera::ICamera * MonocularFrame::GetCamera() const {
   return this->GetMonoCamera();
 }
 
 void MonocularFrame::SetCamera(const camera::ICamera * icamera) {
-  if(icamera->Type() != camera::CameraType::MONOCULAR)
+  if (icamera->Type() != camera::CameraType::MONOCULAR)
     throw std::runtime_error("Invalid camera for monocular frame");
 
   BaseMonocular::SetCamera(dynamic_cast<const camera::MonocularCamera *>(icamera));
 }
+
+void MonocularFrame::SerializeToStream(std::ostream & stream) const {
+  size_t reference_kf_id = reference_keyframe_->Id();
+  WRITE_TO_STREAM(reference_kf_id, stream);
+  size_t mp_count = GetMapPoints().size();
+  WRITE_TO_STREAM(mp_count, stream);
+  for (auto feature_mp: GetMapPoints()) {
+    WRITE_TO_STREAM(feature_mp.first, stream);
+    size_t mp_id = reinterpret_cast<size_t>(feature_mp.second);
+    WRITE_TO_STREAM(mp_id, stream);
+  }
+}
+
+void MonocularFrame::DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) {
+  size_t reference_kf_id;
+  READ_FROM_STREAM(reference_kf_id, stream);
+  frame::KeyFrame * rf_kf = context.kf_id[reference_kf_id];
+  if (rf_kf->Type() != Type())
+    throw std::runtime_error(
+        "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
+  reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
+  assert(nullptr != reference_keyframe_);
+  size_t mp_count;
+  READ_FROM_STREAM(mp_count, stream);
+  for (size_t i = 0; i < mp_count; ++i) {
+    size_t feature_id, mp_id;
+    READ_FROM_STREAM(feature_id, stream);
+    READ_FROM_STREAM(mp_id, stream);
+    AddMapPoint(context.mp_id[mp_id], feature_id);
+  }
+}
+
 }
 }
 }

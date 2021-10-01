@@ -18,6 +18,9 @@
 #include "local_mapper.h"
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 
 class Tracker : public Observer<frame::KeyFrame *>,
                 public Observable<UpdateMessage> {
@@ -33,16 +36,20 @@ class Tracker : public Observer<frame::KeyFrame *>,
   Tracker(orb_slam3::map::Atlas * atlas, LocalMapper * local_mapper);
 
   /*!
+   * Destructor
+   */
+  virtual ~Tracker();
+
+ public:
+  /*!
    * Processes the frame
    * @param frame the next frame received from the sensor
    * @return Tracking result
    */
   TrackingResult Track(frame::Frame * frame);
-  /*!
-   * Destructor
-   */
-  virtual ~Tracker();
-
+  void SaveState(std::ostream & ostream);
+  void LoadState(std::istream & istream, serialization::SerializationContext & context);
+  map::Atlas * GetAtlas() const;
   /// Helper member functions
  private:
   TrackingResult TrackInOkState(frame::Frame * frame);
@@ -61,15 +68,11 @@ class Tracker : public Observer<frame::KeyFrame *>,
 
  private:
   /// Helper member variables
-  int kf_counter = 0;
+  int kf_counter_ = 0;
   map::Atlas * atlas_;
   bool velocity_is_valid_;
 
   geometry::Pose velocity_;
-
-//  TVector3D velocity_;
-//  TMatrix33 angular_velocity_;
-
 
   frame::Frame * last_frame_;
   frame::KeyFrame * last_key_frame_;

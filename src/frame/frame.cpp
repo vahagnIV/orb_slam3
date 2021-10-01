@@ -5,3 +5,6 @@
 
 size_t orb_slam3::frame::Frame::next_id_ = 0;
 
+orb_slam3::frame::Frame::Frame() : BaseFrame() {
+
+}

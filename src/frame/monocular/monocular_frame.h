@@ -22,6 +22,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
                  const camera::MonocularCamera * camera,
                  const SensorConstants * sensor_constants,
                  const features::HandlerFactory * handler_factory);
+  MonocularFrame();
  public:
   // Frame
   FrameType Type() const override;
@@ -38,6 +39,8 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointsCount() const ;
   void UpdateFromReferenceKeyFrame() override;
+  virtual void SerializeToStream(std::ostream & stream) const override;
+  virtual void DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) override;
  public:
   /*!
    * Used for debugging

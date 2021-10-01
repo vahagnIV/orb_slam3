@@ -38,6 +38,63 @@ cv::DMatch ToCvMatch(const orb_slam3::features::Match & match) {
   return cv::DMatch(match.to_idx, match.from_idx, 0);
 }
 
+struct OrbSlam3System {
+  orb_slam3::Tracker * tracker;
+  orb_slam3::LocalMapper * local_mapper;
+  orb_slam3::LoopMergeDetector * loop_merge_detector;
+};
+
+void SaveStateToFile(const OrbSlam3System & system, const std::string & save_folder_name) {
+  static const std::string atlas_filename = "atlas.bin";
+  static const std::string tracker_filename = "tracker.bin";
+  boost::filesystem::path b_folder(save_folder_name);
+  if (!boost::filesystem::exists(b_folder))
+    boost::filesystem::create_directories(b_folder);
+
+  std::string atlas_filepath = (b_folder / atlas_filename).string();
+  std::string tracker_filepath = (b_folder / tracker_filename).string();
+
+  std::ofstream atlas_stream(atlas_filepath, std::ios::binary);
+  system.tracker->GetAtlas()->Serialize(atlas_stream);
+  atlas_stream.close();
+
+  std::ofstream tracker_stream(tracker_filepath, std::ios::binary);
+  system.tracker->SaveState(tracker_stream);
+  tracker_stream.close();
+}
+
+OrbSlam3System LoadFromFolder(const std::string & save_folder_name, orb_slam3::features::BowVocabulary * voc) {
+  static const std::string atlas_filename = "atlas.bin";
+  static const std::string tracker_filename = "tracker.bin";
+  boost::filesystem::path b_folder(save_folder_name);
+  std::string atlas_filepath = (b_folder / atlas_filename).string();
+  std::string tracker_filepath = (b_folder / tracker_filename).string();
+
+  if (!boost::filesystem::exists(atlas_filepath))
+    std::cerr << "Cannot restore the state. Atlas dump file does not exist. " << std::endl;
+
+  if (!boost::filesystem::exists(tracker_filepath))
+    std::cerr << "Cannot restore the state. Tracker dump file does not exist. " << std::endl;
+
+  auto atlas = new orb_slam3::map::Atlas;
+  orb_slam3::serialization::SerializationContext context;
+  context.vocabulary = voc;
+
+  std::ifstream atlas_stream(atlas_filepath, std::ios::binary);
+  atlas->Deserialize(atlas_stream, context);
+  orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(voc);
+  OrbSlam3System result;
+  orb_slam3::frame::IKeyFrameDatabase * database = handler_factory.CreateKeyFrameDatabase();
+  for (auto map: atlas->GetMaps())
+    for (auto kf: map->GetAllKeyFrames())
+      database->Append(kf);
+
+  result.local_mapper = new orb_slam3::LocalMapper(atlas, database);
+  result.tracker = new orb_slam3::Tracker(atlas, result.local_mapper);
+  result.loop_merge_detector = new orb_slam3::LoopMergeDetector(database, atlas);
+  return result;
+}
+
 orb_slam3::TImageGray8U FromCvMat(const cv::Mat & cv_mat) {
 
   orb_slam3::TImageGray8U eigen_mat;
@@ -111,7 +168,7 @@ void ReadImagesForMonocularTestTum(
 }
 
 template<typename T>
-void CreateDistortionModel(orb_slam3::camera::MonocularCamera *camera,
+void CreateDistortionModel(orb_slam3::camera::MonocularCamera * camera,
                            const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
   assert(false);
@@ -119,7 +176,7 @@ void CreateDistortionModel(orb_slam3::camera::MonocularCamera *camera,
 
 template<>
 void CreateDistortionModel<orb_slam3::camera::Barrel5>(
-    orb_slam3::camera::MonocularCamera *camera,
+    orb_slam3::camera::MonocularCamera * camera,
     const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
   auto distortion = new orb_slam3::camera::Barrel5();
@@ -135,7 +192,7 @@ void CreateDistortionModel<orb_slam3::camera::Barrel5>(
 
 template<>
 void CreateDistortionModel<orb_slam3::camera::FishEye>(
-    orb_slam3::camera::MonocularCamera *camera,
+    orb_slam3::camera::MonocularCamera * camera,
     const std::vector<orb_slam3::precision_t> distortion_coeffs) {
 
   auto distortion = new orb_slam3::camera::FishEye();
@@ -241,8 +298,6 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   }
 }
 
-
-
 void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                      orb_slam3::camera::MonocularCamera * camera,
                      const std::vector<std::string> & filenames,
@@ -303,7 +358,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, sensor_constants, &handler_factory);
     auto result = tracker.Track(frame);
 
-    if(i == 100){
+    if (i == 100) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       std::ofstream my_file("step" + std::to_string(i) + ".bin", std::ios::binary);
       atlas->Serialize(my_file);
@@ -412,7 +467,7 @@ int main(int argc, char * argv[]) {
   context.vocabulary = &voc;
   context.feature_extractor = new orb_slam3::features::ORBFeatureExtractor(512, 512, 100, 1.2, 10, 10, 2);
   auto atlas = new orb_slam3::map::Atlas;
-  std::ifstream ifstream("step100.bin", ios::in | ios::binary );
+  std::ifstream ifstream("step100.bin", ios::in | ios::binary);
   atlas->Deserialize(ifstream, context);
 
   TestMonocularTum(voc, config["datasetPath"]);
