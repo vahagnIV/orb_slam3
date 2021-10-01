@@ -10,6 +10,24 @@
 namespace orb_slam3 {
 namespace camera {
 
+MonocularCamera::MonocularCamera(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(fx_, istream);
+  SetFx(fx_);
+  READ_FROM_STREAM(fy_, istream);
+  SetFy(fy_);
+  READ_FROM_STREAM(cx_, istream);
+  READ_FROM_STREAM(cy_, istream);
+  READ_FROM_STREAM(width_, istream);
+  READ_FROM_STREAM(height_, istream);
+  DistortionModelType type;
+  READ_FROM_STREAM(type, istream);
+  camera::IDistortionModel *distortion_model = factories::DistortionModelFactory::Create(type,
+                                                                                         istream,
+                                                                                         context);
+  SetDistortionModel(distortion_model);
+  ComputeImageBounds();
+}
+
 void MonocularCamera::UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const {
   unprojected << (point.x() - Cx()) * fx_inv_, (point.y() - Cy()) * fy_inv_, 1;
 }
@@ -123,23 +141,6 @@ void MonocularCamera::Serialize(std::ostream & ostream) const {
   DistortionModelType type = distortion_model_->Type();
   WRITE_TO_STREAM(type, ostream);
   distortion_model_->Serialize(ostream);
-}
-
-void MonocularCamera::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-  READ_FROM_STREAM(fx_, istream);
-  SetFx(fx_);
-  READ_FROM_STREAM(fy_, istream);
-  SetFy(fy_);
-  READ_FROM_STREAM(cx_, istream);
-  READ_FROM_STREAM(cy_, istream);
-  READ_FROM_STREAM(width_, istream);
-  READ_FROM_STREAM(height_, istream);
-  DistortionModelType type;
-  READ_FROM_STREAM(type, istream);
-  camera::IDistortionModel *distortion_model = factories::DistortionModelFactory::Create(type);
-  distortion_model->Deserialize(istream, context);
-  SetDistortionModel(distortion_model);
-  ComputeImageBounds();
 }
 
 }

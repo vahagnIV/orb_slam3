@@ -8,11 +8,17 @@
 #include <camera/distortions/idistortion_model.h>
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
+
 namespace factories {
 
 class DistortionModelFactory {
  public:
-  static camera::IDistortionModel *Create(camera::DistortionModelType type);
+  static camera::IDistortionModel *Create(camera::DistortionModelType type,
+                                          std::istream &istream,
+                                          serialization::SerializationContext &context);
 };
 
 }

@@ -18,8 +18,9 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularKeyFrame::MonocularKeyFrame() {
-
+MonocularKeyFrame::MonocularKeyFrame(std::istream &istream, serialization::SerializationContext &context) :
+    KeyFrame(istream, context),
+    BaseMonocular(istream, context) {
 }
 
 MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->GetTimeCreated(),
@@ -460,12 +461,16 @@ int MonocularKeyFrame::GetScaleLevel(const map::MapPoint * map_point) const {
   return GetScaleLevel(observation);
 }
 
-int MonocularKeyFrame::GetScaleLevel(const Observation & observation) const {
+int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
   return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
-const camera::ICamera * MonocularKeyFrame::GetCamera() const {
+const camera::ICamera *MonocularKeyFrame::GetCamera() const {
   return this->GetMonoCamera();
+}
+
+void MonocularKeyFrame::SerializeToStream(std::ostream &stream) const {
+  BaseMonocular::SerializeToStream(stream);
 }
 
 }

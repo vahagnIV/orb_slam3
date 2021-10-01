@@ -8,11 +8,16 @@
 #include <frame/key_frame.h>
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 namespace factories {
 
 class KeyFrameFactory {
  public:
-  static frame::KeyFrame * Create(frame::FrameType & type);
+  static frame::KeyFrame *Create(frame::FrameType &type,
+                                 std::istream &istream,
+                                 serialization::SerializationContext &context);
 };
 
 }

@@ -34,6 +34,27 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
   Initialize();
 }
 
+ORBFeatureExtractor::ORBFeatureExtractor(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(image_width_, istream);
+  READ_FROM_STREAM(image_height_, istream);
+  READ_FROM_STREAM(features_, istream);
+  READ_FROM_STREAM(scale_factor_, istream);
+  size_t levels;
+  READ_FROM_STREAM(levels, istream);
+  READ_FROM_STREAM(init_threshold_FAST_, istream);
+  READ_FROM_STREAM(min_threshold_FAST_, istream);
+  scale_factors_.resize(levels);
+  inv_scale_factors_.resize(levels);
+  level_sigma2_.resize(levels);
+  inv_level_sigma2_.resize(levels);
+  image_pyramid_.resize(levels);
+  features_per_level_.resize(levels);
+  lapping_area_start_ = 0;
+  lapping_area_end_ = image_width_;
+  log_scale_factor_ = std::log(scale_factor_);
+  Initialize();
+}
+
 void ORBFeatureExtractor::Initialize() {
   scale_factors_[0] = precision_t(1);
   level_sigma2_[0] = precision_t(1);
@@ -849,11 +870,16 @@ unsigned int ORBFeatureExtractor::PredictScale(precision_t distance, precision_t
 }
 
 void ORBFeatureExtractor::Serialize(std::ostream & ostream) const {
-#warning implement this;
-}
 
-void ORBFeatureExtractor::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-#warning implement this;
+  WRITE_TO_STREAM(image_width_, ostream);
+  WRITE_TO_STREAM(image_height_, ostream);
+  WRITE_TO_STREAM(features_, ostream);
+  WRITE_TO_STREAM(scale_factor_, ostream);
+  size_t levels = scale_factors_.size();
+  WRITE_TO_STREAM(levels, ostream);
+  WRITE_TO_STREAM(init_threshold_FAST_, ostream);
+  WRITE_TO_STREAM(min_threshold_FAST_, ostream);
+
 }
 
 // const Eigen::Matrix<int, 256 * 2, 2> ORBFeatureExtractor::pattern_(

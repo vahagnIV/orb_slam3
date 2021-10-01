@@ -14,14 +14,11 @@ namespace handlers {
 
 class DBoW2Handler : public BaseFeatureHandler {
  public:
-  DBoW2Handler(Features && features,
-               const IFeatureExtractor * feature_extractor,
-               const BowVocabulary * vocabulary)
-      : BaseFeatureHandler(std::move(features), feature_extractor), vocabulary_(vocabulary) {}
+  DBoW2Handler(Features &&features,
+               const IFeatureExtractor *feature_extractor,
+               const BowVocabulary *vocabulary);
 
-  DBoW2Handler(const IFeatureExtractor * feature_extractor,
-               const BowVocabulary * vocabulary)
-      : BaseFeatureHandler(feature_extractor), vocabulary_(vocabulary) {}
+  DBoW2Handler(std::istream &istream, serialization::SerializationContext &context, const BowVocabulary *vocabulary);
 
   void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
                  FastMatches & out_matches,

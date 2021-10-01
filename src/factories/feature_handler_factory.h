@@ -18,7 +18,8 @@ namespace factories {
 class FeatureHandlerFactory {
  public:
   static std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
-                                                                        serialization::SerializationContext & context);
+                                                                        std::istream &istream,
+                                                                        serialization::SerializationContext &context);
 };
 
 }

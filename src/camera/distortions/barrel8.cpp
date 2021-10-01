@@ -9,6 +9,21 @@
 namespace orb_slam3 {
 namespace camera {
 
+Barrel8::Barrel8(): k1_(0), k2_(0), k3_(0), k4_(0), k5_(0), k6_(0), p1_(0), p2_(0) {
+
+}
+
+Barrel8::Barrel8(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(k1_, istream);
+  READ_FROM_STREAM(k2_, istream);
+  READ_FROM_STREAM(p1_, istream);
+  READ_FROM_STREAM(p2_, istream);
+  READ_FROM_STREAM(k3_, istream);
+  READ_FROM_STREAM(k4_, istream);
+  READ_FROM_STREAM(k5_, istream);
+  READ_FROM_STREAM(k6_, istream);
+}
+
 DistortionModelType Barrel8::Type() {
   return DistortionModelType::BARREL8;
 }
@@ -55,16 +70,6 @@ void Barrel8::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k6_, ostream);
 }
 
-void Barrel8::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
-  READ_FROM_STREAM(k1_, istream);
-  READ_FROM_STREAM(k2_, istream);
-  READ_FROM_STREAM(p1_, istream);
-  READ_FROM_STREAM(p2_, istream);
-  READ_FROM_STREAM(k3_, istream);
-  READ_FROM_STREAM(k4_, istream);
-  READ_FROM_STREAM(k5_, istream);
-  READ_FROM_STREAM(k6_, istream);
-}
 
 }
 }

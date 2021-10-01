@@ -54,12 +54,12 @@ class BaseFrame : public geometry::RigidObject {
 //    return stream;
 //  }
 
-  BaseFrame();
+  BaseFrame(std::istream &istream, serialization::SerializationContext &context);
   BaseFrame(TimePoint time_point,
-            const std::string & filename,
-            const SensorConstants * sensor_constants,
+            const std::string &filename,
+            const SensorConstants *sensor_constants,
             size_t id,
-            const std::shared_ptr<const features::handlers::BaseFeatureHandler> & feature_handler = nullptr);
+            const std::shared_ptr<const features::handlers::BaseFeatureHandler> &feature_handler = nullptr);
 
   ~BaseFrame() override = default;
  public:
@@ -89,7 +89,6 @@ class BaseFrame : public geometry::RigidObject {
   map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
   void Serialize(std::ostream & stream) const;
-  void Deserialize(std::istream & stream, serialization::SerializationContext & context);
  protected:
   virtual void SerializeToStream(std::ostream & stream) const {};
   virtual void DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) {};

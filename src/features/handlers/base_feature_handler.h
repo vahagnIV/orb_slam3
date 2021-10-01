@@ -25,11 +25,10 @@ class BaseFeatureHandler {
  public:
   virtual HandlerType Type() const = 0;
   BaseFeatureHandler(Features && features, const IFeatureExtractor * feature_extractor);
-  explicit BaseFeatureHandler(const features::IFeatureExtractor * feature_extractor);
+  BaseFeatureHandler(std::istream & istream, serialization::SerializationContext & context);
   virtual ~BaseFeatureHandler() = default;
  public:
   void Serialize(std::ostream & ostream) const;
-  void Deserialize(std::istream & istream, serialization::SerializationContext & context);
   virtual void Precompute(){}
  public:
   const Features & GetFeatures() const { return features_; }

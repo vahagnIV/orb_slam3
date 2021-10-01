@@ -10,13 +10,19 @@
 #include <features/ifeature_extractor.h>
 #include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
+#include <serialization/serialization_context.h>
 
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-BaseMonocular::BaseMonocular() : camera_(nullptr) {
-
+BaseMonocular::BaseMonocular(std::istream &stream, serialization::SerializationContext &context) {
+  size_t camera_id;
+  READ_FROM_STREAM(camera_id, stream);
+  camera::ICamera *icamera = context.cam_id[camera_id];
+  if (icamera->Type() != camera::CameraType::MONOCULAR)
+    throw std::runtime_error("Invalid camera for monocular frame");
+  SetCamera(dynamic_cast<camera::MonocularCamera *>(icamera));
 }
 
 BaseMonocular::BaseMonocular(const camera::MonocularCamera * camera)

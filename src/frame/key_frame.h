@@ -18,7 +18,7 @@ class KeyFrame : public BaseFrame {
  public:
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
   typedef std::vector<std::pair<Observation, Observation>> NewMapPoints;
-  KeyFrame() ;
+  KeyFrame(std::istream &stream, serialization::SerializationContext &context);
 
   KeyFrame(TimePoint time_point,
            const std::string & filename,
@@ -161,8 +161,7 @@ class KeyFrame : public BaseFrame {
   virtual int GetScaleLevel(const Observation & observation) const = 0;
 
  protected:
-  virtual void SerializeToStream(std::ostream & stream) const override;
-  virtual void DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) override;
+  void SerializeToStream(std::ostream & stream) const override;
 
  protected:
   virtual void InitializeImpl() = 0;

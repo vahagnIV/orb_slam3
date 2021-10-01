@@ -3,6 +3,7 @@
 //
 
 #include "base_feature_handler.h"
+#include <serialization/serialization_context.h>
 
 namespace orb_slam3 {
 namespace features {
@@ -12,35 +13,10 @@ BaseFeatureHandler::BaseFeatureHandler(Features && features, const IFeatureExtra
     : features_(features),
       feature_extractor_(feature_extractor) {}
 
-BaseFeatureHandler::BaseFeatureHandler(const features::IFeatureExtractor * feature_extractor) : feature_extractor_(
-    feature_extractor) {
-
-}
-
-void BaseFeatureHandler::Serialize(std::ostream & stream) const {
-#warning remember feature extractor id;
-  Eigen::Index features_width = GetFeatures().descriptors.cols();
-  Eigen::Index features_height = GetFeatures().descriptors.rows();
-  WRITE_TO_STREAM(features_width, stream);
-  WRITE_TO_STREAM(features_height, stream);
-  stream.write((char *) GetFeatures().descriptors.data(),
-               features_width * features_height * sizeof(decltype(GetFeatures().descriptors)::Scalar));
-  for (const auto & kp: GetFeatures().keypoints) {
-    WRITE_TO_STREAM(kp.level, stream);
-    WRITE_TO_STREAM(kp.size, stream);
-    WRITE_TO_STREAM(kp.angle, stream);
-    stream.write((char *) kp.pt.data(), kp.pt.size() * sizeof(decltype(kp.pt)::Scalar));
-  }
-
-  for (const auto & ukp: GetFeatures().undistorted_keypoints)
-    stream.write((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
-
-  for (const auto & ukp: GetFeatures().undistorted_and_unprojected_keypoints)
-    stream.write((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
-}
-
-void BaseFeatureHandler::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-#warning read feature extractor id;
+BaseFeatureHandler::BaseFeatureHandler(istream &istream, serialization::SerializationContext &context) {
+  size_t feature_extractor_id;
+  READ_FROM_STREAM(feature_extractor_id, istream);
+  feature_extractor_ = context.fe_id[feature_extractor_id];
   Eigen::Index features_width;
   Eigen::Index features_height;
   READ_FROM_STREAM(features_width, istream);
@@ -69,6 +45,29 @@ void BaseFeatureHandler::Deserialize(std::istream & istream, serialization::Seri
     istream.read((char *) uukp.data(), uukp.size() * sizeof(std::remove_reference<decltype(uukp)>::type::Scalar));
     features_.undistorted_and_unprojected_keypoints.emplace_back(uukp);
   }
+}
+
+void BaseFeatureHandler::Serialize(std::ostream &stream) const {
+  size_t feature_extractor_id = reinterpret_cast<size_t>(feature_extractor_);
+  WRITE_TO_STREAM(feature_extractor_id, stream);
+  Eigen::Index features_width = GetFeatures().descriptors.cols();
+  Eigen::Index features_height = GetFeatures().descriptors.rows();
+  WRITE_TO_STREAM(features_width, stream);
+  WRITE_TO_STREAM(features_height, stream);
+  stream.write((char *) GetFeatures().descriptors.data(),
+               features_width * features_height * sizeof(decltype(GetFeatures().descriptors)::Scalar));
+  for (const auto &kp: GetFeatures().keypoints) {
+    WRITE_TO_STREAM(kp.level, stream);
+    WRITE_TO_STREAM(kp.size, stream);
+    WRITE_TO_STREAM(kp.angle, stream);
+    stream.write((char *) kp.pt.data(), kp.pt.size() * sizeof(decltype(kp.pt)::Scalar));
+  }
+
+  for (const auto &ukp: GetFeatures().undistorted_keypoints)
+    stream.write((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
+
+  for (const auto &ukp: GetFeatures().undistorted_and_unprojected_keypoints)
+    stream.write((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
 }
 
 }

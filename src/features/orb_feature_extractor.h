@@ -26,6 +26,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
                       size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
+  ORBFeatureExtractor(std::istream & istream, serialization::SerializationContext & context);
   int Extract(const TImageGray8U & image, Features & out_features) const override;
   precision_t GetAcceptableSquareError(unsigned int level) const override;
   void ComputeInvariantDistances(const TPoint3D & point,
@@ -40,7 +41,6 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   precision_t GetLowThreshold() const override;
   FeatureExtractorType Type() const override;
   void Serialize(std::ostream & ostream) const override;
-  void Deserialize(std::istream & istream, serialization::SerializationContext & context) override;
   void Initialize();
 
  private:

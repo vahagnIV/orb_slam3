@@ -8,10 +8,12 @@
 namespace orb_slam3 {
 namespace factories {
 
-camera::ICamera * CameraFactory::CreateCamera(camera::CameraType type) {
+camera::ICamera * CameraFactory::CreateCamera(camera::CameraType type,
+                                              std::istream &istream,
+                                              serialization::SerializationContext &context) {
   switch (type) {
     case camera::CameraType::MONOCULAR:
-      return new camera::MonocularCamera();
+      return new camera::MonocularCamera(istream, context);
     default:
       return nullptr;
   }

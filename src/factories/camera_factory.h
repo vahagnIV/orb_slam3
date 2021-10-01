@@ -8,11 +8,16 @@
 #include "camera/icamera.h"
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 namespace factories {
 
 class CameraFactory {
  public:
-  static camera::ICamera * CreateCamera(camera::CameraType type);
+  static camera::ICamera *CreateCamera(camera::CameraType type,
+                                       std::istream &istream,
+                                       serialization::SerializationContext &context);
 };
 
 }

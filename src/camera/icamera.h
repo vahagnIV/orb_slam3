@@ -25,7 +25,6 @@ class ICamera {
                                ProjectionJacobianType & out_jacobian) const = 0;
   virtual const IDistortionModel * GetDistortionModel() const = 0;
   virtual void Serialize(std::ostream & ostream) const = 0;
-  virtual void Deserialize(std::istream & istream, serialization::SerializationContext & context) = 0;
   virtual ~ICamera() = default;
 
 };

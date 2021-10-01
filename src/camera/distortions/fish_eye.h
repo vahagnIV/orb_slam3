@@ -9,13 +9,16 @@
 #include "idistortion_model.h"
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 namespace camera {
 
 class FishEye : public IDistortionModel {
  public:
 
-  FishEye()
-      : k1_(0), k2_(0), k3_(0), k4_(0) {}
+  FishEye();
+  FishEye(std::istream &istream, serialization::SerializationContext &context);
   // IDistortion
 
   bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
@@ -35,7 +38,6 @@ class FishEye : public IDistortionModel {
   void SetK4(precision_t k4) noexcept { k4_ = k4; }
   void Serialize(std::ostream & ostream) const override;
   DistortionModelType Type() override;
-  void Deserialize(std::istream &istream, serialization::SerializationContext &context) override;
  protected:
   precision_t k1_, k2_, k3_, k4_;
 

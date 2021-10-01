@@ -5,6 +5,12 @@
 
 size_t orb_slam3::frame::Frame::next_id_ = 0;
 
-orb_slam3::frame::Frame::Frame() : BaseFrame() {
+namespace orb_slam3 {
+namespace frame {
 
+Frame::Frame(std::istream &stream, serialization::SerializationContext &context) : BaseFrame(stream, context) {
+
+}
+
+}
 }

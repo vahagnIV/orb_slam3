@@ -47,8 +47,25 @@ MonocularFrame::MonocularFrame(const TImageGray8U & image,
   feature_handler_ = handler_factory->CreateFeatureHandler(features, feature_extractor);
 }
 
-MonocularFrame::MonocularFrame() {
-
+MonocularFrame::MonocularFrame(std::istream &stream, serialization::SerializationContext &context)
+    : Frame(stream, context),
+      BaseMonocular(stream, context) {
+  size_t reference_kf_id;
+  READ_FROM_STREAM(reference_kf_id, stream);
+  frame::KeyFrame *rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
+  if (rf_kf->Type() != Type())
+    throw std::runtime_error(
+        "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
+  reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
+  assert(nullptr != reference_keyframe_);
+  size_t mp_count;
+  READ_FROM_STREAM(mp_count, stream);
+  for (size_t i = 0; i < mp_count; ++i) {
+    size_t feature_id, mp_id;
+    READ_FROM_STREAM(feature_id, stream);
+    READ_FROM_STREAM(mp_id, stream);
+    AddMapPoint(context.mp_id[mp_id], feature_id);
+  }
 }
 
 bool MonocularFrame::Link(Frame * other) {
@@ -371,7 +388,8 @@ void MonocularFrame::SetCamera(const camera::ICamera * icamera) {
 }
 
 void MonocularFrame::SerializeToStream(std::ostream & stream) const {
-  size_t reference_kf_id = reference_keyframe_->Id();
+  BaseMonocular::SerializeToStream(stream);
+  size_t reference_kf_id = reference_keyframe_ ? reference_keyframe_->Id() : 0;
   WRITE_TO_STREAM(reference_kf_id, stream);
   size_t mp_count = GetMapPoints().size();
   WRITE_TO_STREAM(mp_count, stream);
@@ -379,25 +397,6 @@ void MonocularFrame::SerializeToStream(std::ostream & stream) const {
     WRITE_TO_STREAM(feature_mp.first, stream);
     size_t mp_id = reinterpret_cast<size_t>(feature_mp.second);
     WRITE_TO_STREAM(mp_id, stream);
-  }
-}
-
-void MonocularFrame::DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) {
-  size_t reference_kf_id;
-  READ_FROM_STREAM(reference_kf_id, stream);
-  frame::KeyFrame * rf_kf = context.kf_id[reference_kf_id];
-  if (rf_kf->Type() != Type())
-    throw std::runtime_error(
-        "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
-  reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
-  assert(nullptr != reference_keyframe_);
-  size_t mp_count;
-  READ_FROM_STREAM(mp_count, stream);
-  for (size_t i = 0; i < mp_count; ++i) {
-    size_t feature_id, mp_id;
-    READ_FROM_STREAM(feature_id, stream);
-    READ_FROM_STREAM(mp_id, stream);
-    AddMapPoint(context.mp_id[mp_id], feature_id);
   }
 }
 

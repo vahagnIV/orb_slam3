@@ -92,6 +92,7 @@ add_library(orbslam SHARED
         factories/feature_handler_factory.cpp
         factories/distortion_model_factory.cpp
         factories/frame_factory.cpp
+        factories/feature_extractor_factory.cpp
 
         serialization/serialization_context.cpp
         serialization/serializer.cpp

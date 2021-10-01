@@ -9,13 +9,16 @@
 #include "idistortion_model.h"
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 namespace camera {
 
 class Barrel5 : public IDistortionModel {
  public:
   // IDistortion
-  Barrel5()
-      : k1_(0), k2_(0), p1_(0), p2_(0), k3_(0) {}
+  Barrel5();
+  Barrel5(std::istream &istream, serialization::SerializationContext &context);
   bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
   bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const override;
   void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const override;
@@ -34,7 +37,6 @@ class Barrel5 : public IDistortionModel {
   void SetK3(precision_t k3) noexcept { k3_ = k3; }
   void Serialize(std::ostream & ostream) const override;
   DistortionModelType Type() override;
-  void Deserialize(std::istream &istream, serialization::SerializationContext &context) override;
  protected:
   precision_t k1_, k2_, p1_, p2_, k3_;
 

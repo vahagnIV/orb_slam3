@@ -20,6 +20,7 @@ namespace map {
 class Atlas {
  public:
   Atlas();
+  Atlas(std::istream &istream, serialization::SerializationContext &context);
   ~Atlas();
 
   Map *GetCurrentMap();
@@ -29,7 +30,6 @@ class Atlas {
 
   void SetCurrentMap(map::Map *map);
   void Serialize(std::ostream &ostream) const;
-  void Deserialize(std::istream &istream, serialization::SerializationContext &context);
  private:
   Map *current_map_;
   std::unordered_set<map::Map *> maps_;

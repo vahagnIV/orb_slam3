@@ -49,7 +49,6 @@ class IFeatureExtractor {
   virtual precision_t GetHighThreshold() const = 0;
   virtual precision_t GetLowThreshold() const = 0;
   virtual void Serialize(std::ostream & ostream) const= 0;
-  virtual void Deserialize(std::istream & istream, serialization::SerializationContext & context) = 0;
 
   /*!
    * Virtual destructor

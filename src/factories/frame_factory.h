@@ -12,7 +12,9 @@ namespace factories {
 
 class FrameFactory {
  public:
-  static frame::Frame * Create(frame::FrameType & type);
+  static frame::Frame *Create(frame::FrameType &type,
+                              std::istream &istream,
+                              serialization::SerializationContext &context);
 };
 
 }

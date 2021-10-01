@@ -12,6 +12,7 @@
 #include <features/bow_vocabulary.h>
 #include <features/ifeature_extractor.h>
 #include <frame/sensor_constants.h>
+#include <features/ifeature_extractor.h>
 
 namespace orb_slam3 {
 namespace serialization {
@@ -22,6 +23,7 @@ struct SerializationContext {
   std::unordered_map<size_t, frame::KeyFrame *> kf_id;
   std::unordered_map<size_t, map::MapPoint *> mp_id;
   std::unordered_map<size_t, frame::SensorConstants *> sc_id;
+  std::unordered_map<size_t, features::IFeatureExtractor *> fe_id;
   features::BowVocabulary * vocabulary;
   features::IFeatureExtractor * feature_extractor;
 };

@@ -11,8 +11,19 @@ namespace orb_slam3 {
 namespace features {
 namespace handlers {
 
-void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
-                             FastMatches & out_matches,
+DBoW2Handler::DBoW2Handler(std::istream &istream,
+                           serialization::SerializationContext &context,
+                           const BowVocabulary *vocabulary)
+    : BaseFeatureHandler(istream, context), vocabulary_(vocabulary) {}
+
+DBoW2Handler::DBoW2Handler(Features &&features,
+                           const IFeatureExtractor *feature_extractor,
+                           const BowVocabulary *vocabulary) : BaseFeatureHandler(std::move(features),
+                                                                                 feature_extractor),
+                                                              vocabulary_(vocabulary) {}
+
+void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> &other,
+                             FastMatches &out_matches,
                              MatchingSeverity severity,
                              bool check_orientation) const {
 

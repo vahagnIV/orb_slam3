@@ -38,7 +38,7 @@ class MapPoint {
            precision_t min_invariance_distance,
            Map * map);
 
-  MapPoint();
+  MapPoint(std::istream &istream, serialization::SerializationContext &context);
 
   /*!
    * Adds frame to the map points observations
@@ -111,7 +111,6 @@ class MapPoint {
   void LockObservationsContainer() const;
   void UnlockObservationsContainer() const;
   void Serialize(std::ostream & ostream) const;
-  void Deserialize(std::istream &istream, serialization::SerializationContext &context);
  private:
   void ApplyStagingPosition();
   void ApplyNormalStaging();

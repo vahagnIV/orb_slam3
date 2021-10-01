@@ -37,8 +37,23 @@ MapPoint::MapPoint(TPoint3D point,
   ++counter_;
 }
 
-MapPoint::MapPoint() : bad_flag_(false) {
-// TODO: Initialize fields
+MapPoint::MapPoint(istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(staging_max_invariance_distance_, istream);
+  READ_FROM_STREAM(staging_min_invariance_distance_, istream);
+  ApplyMinMaxInvDistanceStaging();
+  size_t map_id;
+  READ_FROM_STREAM(map_id, istream);
+  map_ = context.map_id[map_id];
+  istream.read((char *) staging_position_.data(),
+               staging_position_.size() * sizeof(decltype(staging_position_)::Scalar));
+  istream.read((char *) normal_.data(), normal_.size() * sizeof(decltype(position_)::Scalar));
+  READ_FROM_STREAM(first_observed_frame_id_, istream);
+  READ_FROM_STREAM(visible_, istream);
+  READ_FROM_STREAM(found_, istream);
+  size_t descriptor_length;
+  READ_FROM_STREAM(descriptor_length, istream);
+  istream.read((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
+  ApplyStaging();
 }
 
 MapPoint::~MapPoint() {
@@ -208,27 +223,6 @@ void MapPoint::Serialize(std::ostream & ostream) const {
   size_t descriptor_length = descriptor_.size();
   WRITE_TO_STREAM(descriptor_length, ostream);
   ostream.write((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
-}
-
-void MapPoint::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-//  istream.rdbuf()
-  READ_FROM_STREAM(staging_max_invariance_distance_, istream);
-  READ_FROM_STREAM(staging_min_invariance_distance_, istream);
-  ApplyMinMaxInvDistanceStaging();
-  size_t map_id;
-  READ_FROM_STREAM(map_id, istream);
-  map_ = context.map_id[map_id];
-  istream.read((char *) staging_position_.data(),
-               staging_position_.size() * sizeof(decltype(staging_position_)::Scalar));
-  istream.read((char *) normal_.data(), normal_.size() * sizeof(decltype(position_)::Scalar));
-  READ_FROM_STREAM(first_observed_frame_id_, istream);
-  READ_FROM_STREAM(visible_, istream);
-  READ_FROM_STREAM(found_, istream);
-  size_t descriptor_length;
-  READ_FROM_STREAM(descriptor_length, istream);
-  istream.read((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
-  ApplyStaging();
-
 }
 
 }

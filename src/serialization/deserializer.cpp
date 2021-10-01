@@ -9,13 +9,13 @@ namespace orb_slam3 {
 namespace serialization {
 
 map::Atlas * Deserializer::Deserialize(std::istream & istream, SerializationContext & context) {
-  auto atlas = new map::Atlas();
-  size_t map_count;
-  READ_FROM_STREAM(map_count, istream);
-  for (size_t i = 0; i < map_count; ++i) {
-    atlas->SetCurrentMap(DeserializeMap(istream, context));
-  }
-  return atlas;
+//  auto atlas = new map::Atlas();
+//  size_t map_count;
+//  READ_FROM_STREAM(map_count, istream);
+//  for (size_t i = 0; i < map_count; ++i) {
+//    atlas->SetCurrentMap(DeserializeMap(istream, context));
+//  }
+//  return atlas;
 }
 
 map::Map * Deserializer::DeserializeMap(std::istream & istream, SerializationContext & context) {

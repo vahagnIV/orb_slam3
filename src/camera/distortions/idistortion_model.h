@@ -33,7 +33,6 @@ class IDistortionModel {
   virtual void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const = 0;
 
   virtual void Serialize(std::ostream &ostream) const = 0;
-  virtual void Deserialize(std::istream &istream, serialization::SerializationContext &context) = 0;
   virtual ~IDistortionModel() = default;
 
 };

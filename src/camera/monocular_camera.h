@@ -31,11 +31,8 @@ class MonocularCamera
       distortion_model_(nullptr) {
   }
 
-  MonocularCamera() :
-      width_(0),
-      height_(0),
-      distortion_model_(nullptr) {
-  }
+  MonocularCamera(std::istream &istream,
+                  serialization::SerializationContext &context);
   virtual ~MonocularCamera() { delete distortion_model_; }
 
  public: // ====  optimization =============
@@ -119,7 +116,6 @@ class MonocularCamera
   void SetCy(precision_t cy) noexcept { cy_ = cy; }
   CameraType Type() const override;
   void Serialize(std::ostream & ostream) const override;
-  void Deserialize(std::istream & istream, serialization::SerializationContext & context) override;
 
 #if DistCoeffsLength == 8
   inline const double & K4() noexcept { return _estimate[9] ; }

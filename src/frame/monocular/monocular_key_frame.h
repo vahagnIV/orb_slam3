@@ -24,7 +24,7 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
  public:
 
   /// Special member functions
-  MonocularKeyFrame();
+  MonocularKeyFrame(std::istream &istream, serialization::SerializationContext &context);
 
   void CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints & out_newly_created) const override;
   void FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,
@@ -68,7 +68,8 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   int GetScaleLevel(const map::MapPoint *map_point) const override;
   int GetScaleLevel(const Observation &observation) const override;
   const camera::ICamera *GetCamera() const override;
-  void SetCamera(const camera::ICamera * icamera) override;
+  void SetCamera(const camera::ICamera *icamera) override;
+  void SerializeToStream(std::ostream &stream) const override;
  private:
 
   int GetMapPointLevel(const map::MapPoint * map_point) const;

@@ -100,8 +100,7 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
   for (size_t i = 0; i < kf_count; ++i) {
     frame::FrameType kf_type;
     READ_FROM_STREAM(kf_type, istream);
-    auto kf = factories::KeyFrameFactory::Create(kf_type);
-    kf->Deserialize(istream, context);
+    auto kf = factories::KeyFrameFactory::Create(kf_type, istream, context);
     context.kf_id[kf->Id()] = kf;
     AddKeyFrame(kf);
   }
@@ -110,11 +109,10 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
   READ_FROM_STREAM(mp_count, istream);
 
   for (size_t i = 0; i < mp_count; ++i) {
-    auto mp = new map::MapPoint();
     size_t mp_id;
     READ_FROM_STREAM(mp_id, istream);
+    auto mp = new map::MapPoint(istream, context);
     context.mp_id[mp_id] = mp;
-    mp->Deserialize(istream, context);
     AddMapPoint(mp);
   }
 
@@ -123,8 +121,8 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
     READ_FROM_STREAM(observation_size, istream);
 
     for (size_t j = 0; j < observation_size; ++j) {
-      frame::Observation observation;
-      observation.Deserialize(istream, context);
+      frame::Observation observation(istream, context);
+      observation.GetKeyFrame()->AddMapPoint(observation);
     }
   }
 

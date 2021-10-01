@@ -8,8 +8,8 @@
 #include <frame/map_point_visibility_params.h>
 
 namespace orb_slam3 {
-
 namespace frame {
+
 class KeyFrame;
 
 class Frame : public BaseFrame {
@@ -20,7 +20,7 @@ class Frame : public BaseFrame {
         const SensorConstants * sensor_constants) : BaseFrame(time_point,
                                                               filename,
                                                               sensor_constants, ++next_id_) {}
-  Frame();
+  Frame(std::istream &stream, serialization::SerializationContext &context);
 
   virtual ~Frame() = default;
  public:

@@ -10,10 +10,14 @@ namespace orb_slam3 {
 namespace factories {
 
 std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::Create(features::handlers::HandlerType type,
-                                                                                      serialization::SerializationContext & context) {
+                                                                                      std::istream &istream,
+                                                                                      serialization::SerializationContext &context) {
   switch (type) {
-    case features::handlers::HandlerType::DBoW2:
-      return std::make_shared<features::handlers::DBoW2Handler>(context.feature_extractor, context.vocabulary);
+    case features::handlers::HandlerType::DBoW2: {
+      auto result = std::make_shared<features::handlers::DBoW2Handler>(istream, context, context.vocabulary);
+      result->Precompute();
+      return result;
+    }
     default:
       return nullptr;
   }

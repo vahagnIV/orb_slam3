@@ -76,12 +76,11 @@ OrbSlam3System LoadFromFolder(const std::string & save_folder_name, orb_slam3::f
   if (!boost::filesystem::exists(tracker_filepath))
     std::cerr << "Cannot restore the state. Tracker dump file does not exist. " << std::endl;
 
-  auto atlas = new orb_slam3::map::Atlas;
+  std::ifstream atlas_stream(atlas_filepath, std::ios::binary);
   orb_slam3::serialization::SerializationContext context;
   context.vocabulary = voc;
+  auto atlas = new orb_slam3::map::Atlas(atlas_stream, context);
 
-  std::ifstream atlas_stream(atlas_filepath, std::ios::binary);
-  atlas->Deserialize(atlas_stream, context);
   orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(voc);
   OrbSlam3System result;
   orb_slam3::frame::IKeyFrameDatabase * database = handler_factory.CreateKeyFrameDatabase();
@@ -304,13 +303,13 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                      const orb_slam3::frame::SensorConstants * sensor_constants,
                      const std::vector<std::chrono::system_clock::time_point> & timestamps) {
   orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(&voc);
-  const boost::filesystem::path dumb_dir("/data/slam_test");
-  orb_slam3::map::Atlas * atlas = new orb_slam3::map::Atlas();
+  OrbSlam3System system;
+  auto *atlas = new orb_slam3::map::Atlas();
   auto kf_database = handler_factory.CreateKeyFrameDatabase();
-  orb_slam3::LocalMapper local_mapper(atlas, kf_database);
-  orb_slam3::Tracker tracker(atlas, &local_mapper);
+  system.local_mapper = new orb_slam3::LocalMapper(atlas, kf_database);
+  system.tracker = new orb_slam3::Tracker(atlas, system.local_mapper);
 //  tracker.AddObserver(&local_mapper);
-  orb_slam3::LoopMergeDetector lp_detector(kf_database, atlas);
+  system.loop_merge_detector = new orb_slam3::LoopMergeDetector(kf_database, atlas);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_CREATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::TRACKING_INFO);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_CREATED);
@@ -329,7 +328,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
 //  local_mapper.AddObserver(&tracker);
 #ifdef MULTITHREADED
 #warning "MULTITHREDING IS ENABLED"
-  local_mapper.Start();
+  system.local_mapper->Start();
 #endif
   auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
       camera->Width(), camera->Height(),
@@ -355,14 +354,12 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
-    MF * frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, sensor_constants, &handler_factory);
-    auto result = tracker.Track(frame);
+    MF *frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, sensor_constants, &handler_factory);
+    auto result = system.tracker->Track(frame);
 
     if (i == 100) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      std::ofstream my_file("step" + std::to_string(i) + ".bin", std::ios::binary);
-      atlas->Serialize(my_file);
-      my_file.close();
+      SaveStateToFile(system, "save_state");
       exit(0);
     }
 
@@ -376,7 +373,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     }
 
     if (orb_slam3::TrackingResult::TRACKING_FAILED == result) {
-      std::cout << "============= " << local_mapper.GetQueueSize() << std::endl;
+      std::cout << "============= " << system.local_mapper->GetQueueSize() << std::endl;
       exit(1);
     }
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -462,13 +459,14 @@ int main(int argc, char * argv[]) {
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
+//  LoadFromFolder()
 
-  orb_slam3::serialization::SerializationContext context;
-  context.vocabulary = &voc;
-  context.feature_extractor = new orb_slam3::features::ORBFeatureExtractor(512, 512, 100, 1.2, 10, 10, 2);
-  auto atlas = new orb_slam3::map::Atlas;
-  std::ifstream ifstream("step100.bin", ios::in | ios::binary);
-  atlas->Deserialize(ifstream, context);
+//  orb_slam3::serialization::SerializationContext context;
+//  context.vocabulary = &voc;
+//  context.feature_extractor = new orb_slam3::features::ORBFeatureExtractor(512, 512, 100, 1.2, 10, 10, 2);
+//  auto atlas = new orb_slam3::map::Atlas;
+//  std::ifstream ifstream("step100.bin", ios::in | ios::binary);
+//  atlas->Deserialize(ifstream, context);
 
   TestMonocularTum(voc, config["datasetPath"]);
 //  TestLiveCamera(voc);

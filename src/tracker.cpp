@@ -401,8 +401,7 @@ void Tracker::LoadState(std::istream & istream, serialization::SerializationCont
   frame::FrameType type;
   READ_FROM_STREAM(type, istream);
 
-  last_frame_ = factories::FrameFactory::Create(type);
-  last_frame_->Deserialize(istream, context);
+  last_frame_ = factories::FrameFactory::Create(type, istream, context);
 
 }
 

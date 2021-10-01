@@ -9,10 +9,12 @@
 namespace orb_slam3 {
 namespace factories {
 
-frame::Frame * FrameFactory::Create(frame::FrameType & type) {
+frame::Frame *FrameFactory::Create(frame::FrameType &type,
+                                   std::istream &istream,
+                                   serialization::SerializationContext &context) {
   switch (type) {
     case frame::FrameType::MONOCULAR:
-      return new frame::monocular::MonocularFrame();
+      return new frame::monocular::MonocularFrame(istream, context);
     default:
       return nullptr;
 

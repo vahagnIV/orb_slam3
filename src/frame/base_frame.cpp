@@ -9,9 +9,45 @@
 namespace orb_slam3 {
 namespace frame {
 
-BaseFrame::BaseFrame()
-    : time_point_(), filename_(), sensor_constants_(nullptr), id_(0), feature_handler_(nullptr), map_(
-    nullptr) {
+BaseFrame::BaseFrame(std::istream &istream, serialization::SerializationContext &context) {
+  size_t time_created;
+  READ_FROM_STREAM(time_created, istream);
+  SetTimePoint(TimePoint::clock::from_time_t(time_created));
+
+  size_t kf_id;
+  READ_FROM_STREAM(kf_id, istream);
+  SetId(kf_id);
+
+  size_t filename_size;
+  READ_FROM_STREAM(filename_size, istream);
+  char * buffer = new char[filename_size];
+  istream.read(buffer, filename_size);
+  SetFilename(std::string(buffer, filename_size));
+  delete[] buffer;
+
+  size_t map_id;
+  READ_FROM_STREAM(map_id, istream);
+  SetMap(context.map_id[map_id]);
+
+  size_t sensor_constant_id;
+  READ_FROM_STREAM(sensor_constant_id, istream);
+  SetSensorConstants(context.sc_id[sensor_constant_id]);
+
+  geometry::Pose pose;
+  istream >> pose;
+  SetStagingPosition(pose);
+  ApplyStaging();
+
+  features::handlers::HandlerType handler_type;
+  READ_FROM_STREAM(handler_type, istream);
+  std::shared_ptr<features::handlers::BaseFeatureHandler>
+      handler = factories::FeatureHandlerFactory::Create(handler_type, istream, context);
+
+  SetFeatureHandler(handler);
+
+
+  // In case the frame has additional info to write
+  DeSerializeFromStream(istream, context);
 }
 
 BaseFrame::BaseFrame(TimePoint time_point,
@@ -62,9 +98,6 @@ void BaseFrame::Serialize(std::ostream & stream) const {
   assert(map_id > 0);
   WRITE_TO_STREAM(map_id, stream);
 
-  size_t camera_id = reinterpret_cast<size_t>(GetCamera());
-  WRITE_TO_STREAM(camera_id, stream);
-
   size_t sensor_constant_id = reinterpret_cast<size_t>(GetSensorConstants());
   WRITE_TO_STREAM(sensor_constant_id, stream);
 
@@ -76,53 +109,6 @@ void BaseFrame::Serialize(std::ostream & stream) const {
 
   // In case the frame has additional info to write
   SerializeToStream(stream);
-
-}
-
-void BaseFrame::Deserialize(std::istream & stream, serialization::SerializationContext & context) {
-  size_t time_created;
-  READ_FROM_STREAM(time_created, stream);
-  SetTimePoint(TimePoint::clock::from_time_t(time_created));
-
-  size_t kf_id;
-  READ_FROM_STREAM(kf_id, stream);
-  SetId(kf_id);
-
-  size_t filename_size;
-  READ_FROM_STREAM(filename_size, stream);
-  char * buffer = new char[filename_size];
-  stream.read(buffer, filename_size);
-  SetFilename(std::string(buffer, filename_size));
-  delete[] buffer;
-
-  size_t map_id;
-  READ_FROM_STREAM(map_id, stream);
-  SetMap(context.map_id[map_id]);
-
-  size_t camera_id;
-  READ_FROM_STREAM(camera_id, stream);
-  SetCamera(context.cam_id[camera_id]);
-
-  size_t sensor_constant_id;
-  READ_FROM_STREAM(sensor_constant_id, stream);
-  SetSensorConstants(context.sc_id[sensor_constant_id]);
-
-  geometry::Pose pose;
-  stream >> pose;
-  SetStagingPosition(pose);
-  ApplyStaging();
-
-  features::handlers::HandlerType handler_type;
-  READ_FROM_STREAM(handler_type, stream);
-  std::shared_ptr<features::handlers::BaseFeatureHandler>
-      handler = factories::FeatureHandlerFactory::Create(handler_type, context);
-  handler->Deserialize(stream, context);
-  handler->Precompute();
-  SetFeatureHandler(handler);
-
-
-  // In case the frame has additional info to write
-  DeSerializeFromStream(stream, context);
 
 }
 

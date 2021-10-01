@@ -11,24 +11,44 @@
 namespace orb_slam3 {
 namespace frame {
 
-Observation::Observation() : map_point_(nullptr), key_frame_(nullptr), feature_ids_() {
+Observation::Observation(istream &istream, serialization::SerializationContext &context) {
+  size_t mp_id;
+  READ_FROM_STREAM(mp_id, istream);
+  map::MapPoint *mp = context.mp_id[mp_id];
+  assert(nullptr != mp);
+
+  size_t kf_id;
+  READ_FROM_STREAM(kf_id, istream);
+  frame::KeyFrame *kf = context.kf_id[kf_id];
+  assert(nullptr != kf);
+
+  size_t feature_count;
+  READ_FROM_STREAM(feature_count, istream);
+  feature_ids_.resize(feature_count);
+  istream.read((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
+
+  map_point_ = mp;
+  key_frame_ = kf;
+}
+
+Observation::Observation(map::MapPoint *map_point, KeyFrame *key_frame, size_t feature_id) : map_point_(map_point),
+                                                                                             key_frame_(key_frame),
+                                                                                             feature_ids_({feature_id}) {
+}
+
+Observation::Observation() : map_point_(nullptr), key_frame_(nullptr) {
 
 }
 
-Observation::Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id) : map_point_(map_point),
-                                                                                               key_frame_(key_frame),
-                                                                                               feature_ids_({feature_id}) {
-}
-
-Observation::Observation(map::MapPoint * map_point,
-                         KeyFrame * key_frame,
+Observation::Observation(map::MapPoint *map_point,
+                         KeyFrame *key_frame,
                          size_t feature_id_left,
                          size_t feature_id_right) : map_point_(map_point),
                                                     key_frame_(key_frame),
                                                     feature_ids_({feature_id_left, feature_id_right}) {
 }
 
-Observation::Observation(const Observation & other)
+Observation::Observation(const Observation &other)
     : map_point_(other.map_point_), key_frame_(other.key_frame_), feature_ids_(other.feature_ids_) {
 
 }
@@ -114,27 +134,6 @@ void Observation::Serialize(std::ostream & ostream) const {
   ostream.write((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
   if (feature_ids_[0] == 0)
     std::cout << "Mp id: " << mp_id << " " << " Kf id: " << kf_id << std::endl;
-}
-
-void Observation::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-  size_t mp_id;
-  READ_FROM_STREAM(mp_id, istream);
-  map::MapPoint * mp = context.mp_id[mp_id];
-  assert(nullptr != mp);
-
-  size_t kf_id;
-  READ_FROM_STREAM(kf_id, istream);
-  frame::KeyFrame * kf = context.kf_id[kf_id];
-  assert(nullptr != kf);
-
-  size_t feature_count;
-  READ_FROM_STREAM(feature_count, istream);
-  feature_ids_.resize(feature_count);
-  istream.read((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
-
-  map_point_ = mp;
-  key_frame_ = kf;
-  key_frame_->AddMapPoint(*this);
 }
 
 }
