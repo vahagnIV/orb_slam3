@@ -69,10 +69,10 @@ void DBoW2Handler::Precompute() {
   const DescriptorSet & descriptors = GetFeatures().descriptors;
   current_descriptors.reserve(descriptors.rows());
   for (int i = 0; i < descriptors.rows(); ++i) {
-    current_descriptors.push_back(cv::Mat(1,
+    current_descriptors.emplace_back(1,
                                           descriptors.cols(),
                                           cv::DataType<DescriptorSet::Scalar>::type,
-                                          (void *) descriptors.row(i).data()));
+                                          (void *) descriptors.row(i).data());
   }
 
   vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);

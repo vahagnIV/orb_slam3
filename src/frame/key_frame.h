@@ -161,6 +161,10 @@ class KeyFrame : public BaseFrame {
   virtual int GetScaleLevel(const Observation & observation) const = 0;
 
  protected:
+  virtual void SerializeToStream(std::ostream & stream) const override;
+  virtual void DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) override;
+
+ protected:
   virtual void InitializeImpl() = 0;
   virtual void AddMapPointImpl(Observation & observation) = 0;
   virtual void EraseMapPointImpl(Observation & observation) = 0;

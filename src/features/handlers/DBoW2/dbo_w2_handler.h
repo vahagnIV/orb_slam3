@@ -28,7 +28,7 @@ class DBoW2Handler : public BaseFeatureHandler {
                  MatchingSeverity severity,
                  bool check_orientation) const override;
 
-  void Precompute();
+  void Precompute() override;
  public:
   const DBoW2::FeatureVector & GetFeatureVector() const;
   const DBoW2::BowVector & GetBowVector() const;

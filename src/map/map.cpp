@@ -121,8 +121,6 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
   for (size_t i = 0; i < mp_count; ++i) {
     size_t observation_size;
     READ_FROM_STREAM(observation_size, istream);
-    if (istream.eof())
-      std::cout << "Sream finished" << std::endl;
 
     for (size_t j = 0; j < observation_size; ++j) {
       frame::Observation observation;
@@ -130,12 +128,15 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
     }
   }
 
-  /*
-   * map::MapPoint * mp = map_points[i];
+  for (auto mp: GetAllMapPoints()) {
     mp->ComputeDistinctiveDescriptor(context.feature_extractor);
     mp->CalculateNormalStaging();
     mp->ApplyStaging();
-   * */
+  }
+
+  for(auto kf: GetAllKeyFrames()){
+    kf->GetCovisibilityGraph().Update();
+  }
 
 }
 

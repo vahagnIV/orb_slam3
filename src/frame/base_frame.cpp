@@ -109,7 +109,9 @@ void BaseFrame::Deserialize(std::istream & stream, serialization::SerializationC
   std::shared_ptr<features::handlers::BaseFeatureHandler>
       handler = factories::FeatureHandlerFactory::Create(handler_type, context);
   handler->Deserialize(stream, context);
+  handler->Precompute();
   SetFeatureHandler(handler);
+
 
   // In case the frame has additional info to write
   DeSerializeFromStream(stream, context);

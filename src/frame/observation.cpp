@@ -117,8 +117,6 @@ void Observation::Serialize(std::ostream & ostream) const {
 }
 
 void Observation::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
-  if (istream.eof())
-    std::cout << "Stttttttttttttream finished" << std::endl;
   size_t mp_id;
   READ_FROM_STREAM(mp_id, istream);
   map::MapPoint * mp = context.mp_id[mp_id];
@@ -136,9 +134,7 @@ void Observation::Deserialize(std::istream & istream, serialization::Serializati
 
   map_point_ = mp;
   key_frame_ = kf;
-//  mp->AddObservation(*this);
   key_frame_->AddMapPoint(*this);
-
 }
 
 }

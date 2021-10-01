@@ -83,5 +83,17 @@ void KeyFrame::EraseMapPoint(map::MapPoint * map_point) {
     assert(false);
 }
 
+void KeyFrame::SerializeToStream(std::ostream &stream) const {
+  WRITE_TO_STREAM(is_initial_, stream);
+  WRITE_TO_STREAM(is_initialized_, stream);
+  WRITE_TO_STREAM(bad_flag_, stream);
+}
+
+void KeyFrame::DeSerializeFromStream(std::istream &stream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(is_initial_, stream);
+  READ_FROM_STREAM(is_initialized_, stream);
+  READ_FROM_STREAM(bad_flag_, stream);
+}
+
 }
 }
