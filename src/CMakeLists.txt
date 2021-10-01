@@ -39,6 +39,7 @@ add_library(orbslam SHARED
         frame/observation.cpp
         frame/frame.cpp
         frame/database/DBoW2/dbo_w2_database.cpp
+        frame/sensor_constants.cpp
 
         camera/monocular_camera.cpp
         camera/distortions/barrel5.cpp

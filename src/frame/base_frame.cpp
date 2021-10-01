@@ -65,6 +65,9 @@ void BaseFrame::Serialize(std::ostream & stream) const {
   size_t camera_id = reinterpret_cast<size_t>(GetCamera());
   WRITE_TO_STREAM(camera_id, stream);
 
+  size_t sensor_constant_id = reinterpret_cast<size_t>(GetSensorConstants());
+  WRITE_TO_STREAM(sensor_constant_id, stream);
+
   stream << GetPosition();
 
   features::handlers::HandlerType handler_type = GetFeatureHandler()->Type();
@@ -90,6 +93,7 @@ void BaseFrame::Deserialize(std::istream & stream, serialization::SerializationC
   char * buffer = new char[filename_size];
   stream.read(buffer, filename_size);
   SetFilename(std::string(buffer, filename_size));
+  delete[] buffer;
 
   size_t map_id;
   READ_FROM_STREAM(map_id, stream);
@@ -98,6 +102,10 @@ void BaseFrame::Deserialize(std::istream & stream, serialization::SerializationC
   size_t camera_id;
   READ_FROM_STREAM(camera_id, stream);
   SetCamera(context.cam_id[camera_id]);
+
+  size_t sensor_constant_id;
+  READ_FROM_STREAM(sensor_constant_id, stream);
+  SetSensorConstants(context.sc_id[sensor_constant_id]);
 
   geometry::Pose pose;
   stream >> pose;

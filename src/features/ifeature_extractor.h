@@ -12,8 +12,12 @@
 #include "../typedefs.h"
 #include "features.h"
 #include "key_point.h"
+#include "feature_extractor_type.h"
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 namespace features {
 
 class IFeatureExtractor {
@@ -27,6 +31,8 @@ class IFeatureExtractor {
    */
   virtual int Extract(const TImageGray8U & image,
                       Features & out_features) const = 0;
+
+  virtual FeatureExtractorType Type() const = 0;
 
   virtual precision_t GetAcceptableSquareError(unsigned level) const = 0;
 
@@ -42,6 +48,8 @@ class IFeatureExtractor {
 
   virtual precision_t GetHighThreshold() const = 0;
   virtual precision_t GetLowThreshold() const = 0;
+  virtual void Serialize(std::ostream & ostream) const= 0;
+  virtual void Deserialize(std::istream & istream, serialization::SerializationContext & context) = 0;
 
   /*!
    * Virtual destructor

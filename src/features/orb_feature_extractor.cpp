@@ -10,7 +10,8 @@ namespace orb_slam3 {
 namespace features {
 const precision_t factorPI = (M_PI / 180.);
 ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
-                                         unsigned image_height, size_t features,
+                                         unsigned image_height,
+                                         size_t features,
                                          precision_t scale_factor,
                                          size_t levels,
                                          unsigned init_threshold_FAST,
@@ -30,21 +31,26 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
       features_per_level_(levels),
       lapping_area_start_(0),
       lapping_area_end_(image_width) {
+  Initialize();
+}
+
+void ORBFeatureExtractor::Initialize() {
   scale_factors_[0] = precision_t(1);
   level_sigma2_[0] = precision_t(1);
   inv_level_sigma2_[0] = precision_t(1);
   inv_scale_factors_[0] = precision_t(1);
   for (size_t i = 1; i < scale_factors_.size(); i++) {
-    scale_factors_[i] = scale_factors_[i - 1] * scale_factor;
+    scale_factors_[i] = scale_factors_[i - 1] * scale_factor_;
     inv_scale_factors_[i] = precision_t(1) / scale_factors_[i];
 
     level_sigma2_[i] = scale_factors_[i] * scale_factors_[i];
     inv_level_sigma2_[i] = precision_t(1) / level_sigma2_[i];
   }
 
-  precision_t factor = precision_t(1) / scale_factor;
+  size_t levels = scale_factors_.size();
+  precision_t factor = precision_t(1) / scale_factor_;
   precision_t number_of_desired_features_per_scale =
-      features * (1 - factor) / (1 - pow(factor, levels));
+      features_ * (1 - factor) / (1 - pow(factor, levels));
 
   size_t total_features = 0;
   for (size_t level = 0; level < scale_factors_.size() - 1; level++) {
@@ -53,9 +59,13 @@ ORBFeatureExtractor::ORBFeatureExtractor(unsigned image_width,
     total_features += features_per_level_[level];
     number_of_desired_features_per_scale *= factor;
   }
-  features_per_level_.back() = std::max(features - total_features, size_t(0));
+  features_per_level_.back() = std::max(features_ - total_features, size_t(0));
 
   AllocatePyramid();
+}
+
+FeatureExtractorType ORBFeatureExtractor::Type() const {
+  return ORBFE;
 }
 
 precision_t ORBFeatureExtractor::GetHighThreshold() const {
@@ -74,7 +84,7 @@ unsigned int ORBFeatureExtractor::ComputeDistance(const DescriptorType & d1, con
   unsigned dist = 0;
 
   for (unsigned i = 0; i < static_cast<unsigned>(d1.cols()) >> 2; ++i, ++pa, ++pb) {
-    unsigned v = *pa ^*pb;
+    unsigned v = *pa ^ *pb;
     v -= ((v >> 1) & 0x55555555);
     v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
     dist += (((v + (v >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24;
@@ -231,11 +241,11 @@ void ORBFeatureExtractor::ComputeKeyPointsOctTree(
 
         if (vKeysCell.empty()) {
           cv::FAST(image_pyramid_[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-               vKeysCell, min_threshold_FAST_, true);
+                   vKeysCell, min_threshold_FAST_, true);
         }
 
         if (!vKeysCell.empty()) {
-          for (auto & vit : vKeysCell) {
+          for (auto & vit: vKeysCell) {
             vit.pt.x += j * wCell;
             vit.pt.y += i * hCell;
             vToDistributeKeys.push_back(vit);
@@ -836,6 +846,14 @@ unsigned int ORBFeatureExtractor::PredictScale(precision_t distance, precision_t
     scale = scale_factors_.size() - 1;
 
   return scale;
+}
+
+void ORBFeatureExtractor::Serialize(std::ostream & ostream) const {
+#warning implement this;
+}
+
+void ORBFeatureExtractor::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
+#warning implement this;
 }
 
 // const Eigen::Matrix<int, 256 * 2, 2> ORBFeatureExtractor::pattern_(

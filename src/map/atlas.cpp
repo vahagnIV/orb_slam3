@@ -49,9 +49,14 @@ const std::unordered_set<map::Map *> & Atlas::GetMaps() const {
 void Atlas::Serialize(std::ostream & ostream) const {
 
   std::unordered_set<const camera::ICamera *> cameras;
+  std::unordered_set<const frame::SensorConstants *> sensor_constants;
+  std::unordered_set<const features::IFeatureExtractor *> feature_extractors;
+
   for (const auto map: maps_) {
     for (auto kf: map->GetAllKeyFrames()) {
       cameras.insert(kf->GetCamera());
+      sensor_constants.insert(kf->GetSensorConstants());
+      feature_extractors.insert(kf->GetFeatureHandler()->GetFeatureExtractor());
     }
   }
 
@@ -63,6 +68,21 @@ void Atlas::Serialize(std::ostream & ostream) const {
     size_t cam_id = reinterpret_cast<size_t>(camera);
     WRITE_TO_STREAM(cam_id, ostream);
     camera->Serialize(ostream);
+  }
+  size_t sensor_constant_count = sensor_constants.size();
+  WRITE_TO_STREAM(sensor_constant_count, ostream);
+  for (auto sensor_constant: sensor_constants) {
+    size_t sensor_constant_id = reinterpret_cast<size_t>(sensor_constant);
+    WRITE_TO_STREAM(sensor_constant_id, ostream);
+    sensor_constant->Serialize(ostream);
+  }
+
+  size_t feature_extractor_count = feature_extractors.size();
+  WRITE_TO_STREAM(feature_extractor_count, ostream);
+  for (auto feature_extractor: feature_extractors) {
+    features::FeatureExtractorType fe_type = feature_extractor->Type();
+    WRITE_TO_STREAM(fe_type, ostream);
+    feature_extractor->Serialize(ostream);
   }
 
   size_t map_count = GetMapCount();
@@ -76,7 +96,7 @@ void Atlas::Serialize(std::ostream & ostream) const {
 
 }
 
-void Atlas::Deserialize(std::istream &istream, serialization::SerializationContext &context) {
+void Atlas::Deserialize(std::istream & istream, serialization::SerializationContext & context) {
   size_t camera_count;
   READ_FROM_STREAM(camera_count, istream);
   for (size_t i = 0; i < camera_count; ++i) {
@@ -88,6 +108,24 @@ void Atlas::Deserialize(std::istream &istream, serialization::SerializationConte
     auto camera = factories::CameraFactory::CreateCamera(type);
     camera->Deserialize(istream, context);
     context.cam_id[cam_id] = camera;
+  }
+
+  size_t sensor_constant_count;
+  READ_FROM_STREAM(sensor_constant_count, istream);
+  for (size_t i = 0; i < sensor_constant_count; ++i) {
+    size_t sensor_constant_id;
+    READ_FROM_STREAM(sensor_constant_id, istream);
+    auto sensor_constant = new frame::SensorConstants;
+    context.sc_id[sensor_constant_id] = sensor_constant;
+    sensor_constant->Deserialize(istream, context);
+  }
+
+  size_t feature_extractor_count;
+  READ_FROM_STREAM(feature_extractor_count, istream);
+  for (size_t i = 0; i < feature_extractor_count; ++i) {
+    features::FeatureExtractorType fe_type;
+    READ_FROM_STREAM(fe_type, istream);
+#warning implement factory and deserialize
   }
 
   size_t map_count;

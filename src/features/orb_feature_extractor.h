@@ -38,6 +38,10 @@ class ORBFeatureExtractor : public IFeatureExtractor {
 
   precision_t GetHighThreshold() const override;
   precision_t GetLowThreshold() const override;
+  FeatureExtractorType Type() const override;
+  void Serialize(std::ostream & ostream) const override;
+  void Deserialize(std::istream & istream, serialization::SerializationContext & context) override;
+  void Initialize();
 
  private:
   class ExtractorNode {
