@@ -16,8 +16,41 @@ Features::Features(precision_t width, precision_t height)
                                    / height) {
 }
 
-Features::Features() : width_(0), height_(0) {
+Features::Features(std::istream &istream) {
+  READ_FROM_STREAM(width_, istream);
+  READ_FROM_STREAM(height_, istream);
+  grid_element_width_inv_ = static_cast<precision_t >(constants::FRAME_GRID_COLS)
+      / width_;
+  grid_element_height_inv_ = static_cast<precision_t >(constants::FRAME_GRID_ROWS)
+      / height_;
+  Eigen::Index features_width;
+  Eigen::Index features_height;
+  READ_FROM_STREAM(features_width, istream);
+  READ_FROM_STREAM(features_height, istream);
+  descriptors.resize(features_height, features_width);
 
+  istream.read((char *) descriptors.data(),
+               features_width * features_height * sizeof(decltype(descriptors)::Scalar));
+  for (Eigen::Index i = 0; i < features_height; ++i) {
+    features::KeyPoint kp;
+    READ_FROM_STREAM(kp.level, istream);
+    READ_FROM_STREAM(kp.size, istream);
+    READ_FROM_STREAM(kp.angle, istream);
+    istream.read((char *) kp.pt.data(), kp.pt.size() * sizeof(decltype(kp.pt)::Scalar));
+    keypoints.push_back(kp);
+  }
+
+  for (Eigen::Index i = 0; i < features_height; ++i) {
+    TPoint2D ukp;
+    istream.read((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
+    undistorted_keypoints.emplace_back(ukp);
+  }
+
+  for (Eigen::Index i = 0; i < features_height; ++i) {
+    TPoint3D uukp;
+    istream.read((char *) uukp.data(), uukp.size() * sizeof(std::remove_reference<decltype(uukp)>::type::Scalar));
+    undistorted_and_unprojected_keypoints.emplace_back(uukp);
+  }
 }
 
 void Features::ListFeaturesInArea(const TPoint2D & point,
@@ -103,20 +136,27 @@ bool Features::PosInGrid(const TPoint2D & kp,
 }
 
 std::ostream & operator<<(std::ostream & stream, const Features & features) {
-  size_t size = features.Size();
-  WRITE_TO_STREAM(size, stream);
-  stream.write((char *) features.descriptors.data(),
-               32 * features.descriptors.rows() * sizeof(decltype(features.descriptors)::Scalar));
+  WRITE_TO_STREAM(features.width_, stream);
+  WRITE_TO_STREAM(features.height_, stream);
 
-  for (auto & kp: features.keypoints) {
-    stream << kp;
+  Eigen::Index features_width = features.descriptors.cols();
+  Eigen::Index features_height = features.descriptors.rows();
+  WRITE_TO_STREAM(features_width, stream);
+  WRITE_TO_STREAM(features_height, stream);
+  stream.write((char *) features.descriptors.data(),
+               features_width * features_height * sizeof(decltype(features.descriptors)::Scalar));
+  for (const auto &kp: features.keypoints) {
+    WRITE_TO_STREAM(kp.level, stream);
+    WRITE_TO_STREAM(kp.size, stream);
+    WRITE_TO_STREAM(kp.angle, stream);
+    stream.write((char *) kp.pt.data(), kp.pt.size() * sizeof(decltype(kp.pt)::Scalar));
   }
-  for (auto ukp: features.undistorted_keypoints) {
-    stream.write((char *) ukp.data(), ukp.rows() * sizeof(decltype(ukp)::Scalar));
-  }
-  for (auto uukp: features.undistorted_and_unprojected_keypoints) {
-    stream.write((char *) uukp.data(), uukp.rows() * sizeof(decltype(uukp)::Scalar));
-  }
+
+  for (const auto &ukp: features.undistorted_keypoints)
+    stream.write((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
+
+  for (const auto &ukp: features.undistorted_and_unprojected_keypoints)
+    stream.write((char *) ukp.data(), ukp.size() * sizeof(std::remove_reference<decltype(ukp)>::type::Scalar));
   return stream;
 }
 

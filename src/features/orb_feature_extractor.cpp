@@ -527,8 +527,7 @@ void ORBFeatureExtractor::BuildImagePyramid(cv::Mat & image) const {
   }
 }
 
-int ORBFeatureExtractor::Extract(const TImageGray8U & img,
-                                 Features & out_features) const {
+int ORBFeatureExtractor::Extract(const TImageGray8U &img, Features &out_features, size_t feature_count) const {
   cv::Mat image(img.rows(), img.cols(), CV_8U, (void *) img.data());
   // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
   if (image.empty()) return -1;

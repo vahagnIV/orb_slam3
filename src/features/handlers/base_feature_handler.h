@@ -24,7 +24,8 @@ namespace handlers {
 class BaseFeatureHandler {
  public:
   virtual HandlerType Type() const = 0;
-  BaseFeatureHandler(Features && features, const IFeatureExtractor * feature_extractor);
+  BaseFeatureHandler(Features && features,
+                     const IFeatureExtractor * feature_extractor);
   BaseFeatureHandler(std::istream & istream, serialization::SerializationContext & context);
   virtual ~BaseFeatureHandler() = default;
  public:

@@ -22,29 +22,14 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularFrame::MonocularFrame(const TImageGray8U & image,
-                               TimePoint time_point,
-                               const std::string & filename,
-                               const features::IFeatureExtractor * feature_extractor,
-                               const camera::MonocularCamera * camera,
-                               const SensorConstants * sensor_constants,
-                               const features::HandlerFactory * handler_factory) : Frame(time_point,
-                                                                                         filename,
-                                                                                         sensor_constants),
-                                                                                   BaseMonocular(camera),
-                                                                                   reference_keyframe_(nullptr) {
-  features::Features features(camera->Width(), camera->Height());
-  feature_extractor->Extract(image, features);
-  features.AssignFeaturesToGrid();
-
-  features.undistorted_keypoints.resize(features.Size());
-  features.undistorted_and_unprojected_keypoints.resize(features.Size());
-  for (size_t i = 0; i < features.Size(); ++i) {
-    camera->UndistortPoint(features.keypoints[i].pt, features.undistorted_keypoints[i]);
-    camera->UnprojectAndUndistort(features.keypoints[i].pt, features.undistorted_and_unprojected_keypoints[i]);
-  }
-
-  feature_handler_ = handler_factory->CreateFeatureHandler(features, feature_extractor);
+MonocularFrame::MonocularFrame(TimePoint time_point,
+                               const std::string &filename,
+                               const camera::MonocularCamera *camera,
+                               const SensorConstants *sensor_constants,
+                               const std::shared_ptr<features::handlers::BaseFeatureHandler> &handler) :
+    Frame(time_point, filename, sensor_constants, handler),
+    BaseMonocular(camera),
+    reference_keyframe_(nullptr) {
 }
 
 MonocularFrame::MonocularFrame(std::istream &stream, serialization::SerializationContext &context)

@@ -41,13 +41,9 @@ BaseFrame::BaseFrame(std::istream &istream, serialization::SerializationContext 
   features::handlers::HandlerType handler_type;
   READ_FROM_STREAM(handler_type, istream);
   std::shared_ptr<features::handlers::BaseFeatureHandler>
-      handler = factories::FeatureHandlerFactory::Create(handler_type, istream, context);
+      handler = factories::FeatureHandlerFactory::Instance().Create(handler_type, istream, context);
 
   SetFeatureHandler(handler);
-
-
-  // In case the frame has additional info to write
-  DeSerializeFromStream(istream, context);
 }
 
 BaseFrame::BaseFrame(TimePoint time_point,

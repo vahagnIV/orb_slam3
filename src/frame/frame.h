@@ -15,11 +15,11 @@ class KeyFrame;
 class Frame : public BaseFrame {
 
  public:
-  Frame(TimePoint & time_point,
-        const std::string & filename,
-        const SensorConstants * sensor_constants) : BaseFrame(time_point,
-                                                              filename,
-                                                              sensor_constants, ++next_id_) {}
+  Frame(TimePoint &time_point,
+        const std::string &filename,
+        const SensorConstants *sensor_constants,
+        const std::shared_ptr<features::handlers::BaseFeatureHandler> &handler)
+      : BaseFrame(time_point, filename, sensor_constants, ++next_id_, handler) {}
   Frame(std::istream &stream, serialization::SerializationContext &context);
 
   virtual ~Frame() = default;

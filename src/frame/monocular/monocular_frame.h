@@ -15,13 +15,11 @@ namespace monocular {
 
 class MonocularFrame : public Frame, public BaseMonocular {
  public:
-  MonocularFrame(const TImageGray8U & image,
-                 TimePoint time_point,
+  MonocularFrame(TimePoint time_point,
                  const std::string & filename,
-                 const features::IFeatureExtractor * feature_extractor,
                  const camera::MonocularCamera * camera,
                  const SensorConstants * sensor_constants,
-                 const features::HandlerFactory * handler_factory);
+                 const std::shared_ptr<features::handlers::BaseFeatureHandler> & handler);
   MonocularFrame(std::istream & stream, serialization::SerializationContext & context);
  public:
   // Frame

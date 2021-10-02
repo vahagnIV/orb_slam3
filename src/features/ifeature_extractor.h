@@ -29,8 +29,9 @@ class IFeatureExtractor {
    * @param out_descriptors Descriptors
    * @return The number of extracted keypoints on success, -1 on fail.
    */
-  virtual int Extract(const TImageGray8U & image,
-                      Features & out_features) const = 0;
+  virtual int Extract(const TImageGray8U &image,
+                      Features &out_features,
+                      size_t feature_count) const = 0;
 
   virtual FeatureExtractorType Type() const = 0;
 

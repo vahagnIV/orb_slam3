@@ -20,11 +20,11 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   explicit MonocularKeyFrame(MonocularFrame * frame);
  public:
 
-  ~MonocularKeyFrame() override = default;
- public:
-
   /// Special member functions
   MonocularKeyFrame(std::istream &istream, serialization::SerializationContext &context);
+  ~MonocularKeyFrame() override = default;
+
+ public:
 
   void CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints & out_newly_created) const override;
   void FilterVisibleMapPoints(const BaseFrame::MapPointSet & map_points,

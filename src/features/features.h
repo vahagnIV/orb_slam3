@@ -27,7 +27,7 @@ typedef Eigen::Matrix<uint8_t, 1, 32, Eigen::RowMajor> DescriptorType;
 class Features {
  public:
   friend std::ostream & operator<<(std::ostream & stream, const Features & frame);
-  Features();
+  Features(std::istream & istream);
   Features(precision_t width, precision_t height);
 
   DescriptorSet descriptors;

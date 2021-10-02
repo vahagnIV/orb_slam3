@@ -24,8 +24,6 @@ struct SerializationContext {
   std::unordered_map<size_t, map::MapPoint *> mp_id;
   std::unordered_map<size_t, frame::SensorConstants *> sc_id;
   std::unordered_map<size_t, features::IFeatureExtractor *> fe_id;
-  features::BowVocabulary * vocabulary;
-  features::IFeatureExtractor * feature_extractor;
 };
 
 }

@@ -20,14 +20,15 @@ namespace features {
 
 class ORBFeatureExtractor : public IFeatureExtractor {
  public:
-  ORBFeatureExtractor(unsigned image_width, unsigned image_height,
+  ORBFeatureExtractor(unsigned image_width,
+                      unsigned image_height,
                       size_t features,
                       precision_t scale_factor,
                       size_t levels,
                       unsigned init_threshold_FAST,
                       unsigned min_threshold_FAST);
   ORBFeatureExtractor(std::istream & istream, serialization::SerializationContext & context);
-  int Extract(const TImageGray8U & image, Features & out_features) const override;
+  int Extract(const TImageGray8U &image, Features &out_features, size_t feature_count) const override;
   precision_t GetAcceptableSquareError(unsigned int level) const override;
   void ComputeInvariantDistances(const TPoint3D & point,
                                  const KeyPoint & key_point,

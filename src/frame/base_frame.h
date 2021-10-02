@@ -59,7 +59,7 @@ class BaseFrame : public geometry::RigidObject {
             const std::string &filename,
             const SensorConstants *sensor_constants,
             size_t id,
-            const std::shared_ptr<const features::handlers::BaseFeatureHandler> &feature_handler = nullptr);
+            const std::shared_ptr<const features::handlers::BaseFeatureHandler> &feature_handler);
 
   ~BaseFrame() override = default;
  public:

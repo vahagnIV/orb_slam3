@@ -25,6 +25,8 @@
 #include <features/factories/dbo_w2_handler_factory.h>
 #include <loop_merge_detector.h>
 #include <serialization/serialization_context.h>
+#include <factories/frame_factory.h>
+#include <factories/feature_handler_factory.h>
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -33,7 +35,7 @@ const size_t LEVELS = 8;
 const size_t INIT_THRESHOLD = 20;
 const size_t MIN_THRESHOLD = 7;
 
-cv::DMatch ToCvMatch(const orb_slam3::features::Match & match) {
+cv::DMatch ToCvMatch(const orb_slam3::features::Match &match) {
 
   return cv::DMatch(match.to_idx, match.from_idx, 0);
 }
@@ -63,7 +65,7 @@ void SaveStateToFile(const OrbSlam3System & system, const std::string & save_fol
   tracker_stream.close();
 }
 
-OrbSlam3System LoadFromFolder(const std::string & save_folder_name, orb_slam3::features::BowVocabulary * voc) {
+OrbSlam3System LoadFromFolder(const std::string &save_folder_name) {
   static const std::string atlas_filename = "atlas.bin";
   static const std::string tracker_filename = "tracker.bin";
   boost::filesystem::path b_folder(save_folder_name);
@@ -78,12 +80,12 @@ OrbSlam3System LoadFromFolder(const std::string & save_folder_name, orb_slam3::f
 
   std::ifstream atlas_stream(atlas_filepath, std::ios::binary);
   orb_slam3::serialization::SerializationContext context;
-  context.vocabulary = voc;
   auto atlas = new orb_slam3::map::Atlas(atlas_stream, context);
 
-  orb_slam3::features::factories::DBoW2HandlerFactory handler_factory(voc);
   OrbSlam3System result;
-  orb_slam3::frame::IKeyFrameDatabase * database = handler_factory.CreateKeyFrameDatabase();
+
+  orb_slam3::frame::IKeyFrameDatabase *database =
+      orb_slam3::factories::FeatureHandlerFactory::Instance().CreateKeyFrameDatabase(context.kf_id.begin()->second->GetFeatureHandler()->Type());
   for (auto map: atlas->GetMaps())
     for (auto kf: map->GetAllKeyFrames())
       database->Append(kf);
@@ -277,14 +279,18 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::logging::RetrieveLogger()->info("processing frame {}", i);
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
-    MF * frame =
-        new MF(eigen_image,
-               std::chrono::system_clock::now(),
+    static const orb_slam3::features::handlers::HandlerType
+        handler_type = orb_slam3::features::handlers::HandlerType::DBoW2;
+
+    MF *frame =
+        new MF(std::chrono::system_clock::now(),
                image_path,
-               feature_extractor,
                camera,
                &constants,
-               &handler_factory);
+               orb_slam3::factories::FeatureHandlerFactory::Instance().Create(handler_type,
+                                                                              eigen_image,
+                                                                              camera,
+                                                                              feature_extractor));
 
     auto result = tracker.Track(frame);
     if (orb_slam3::TrackingResult::OK == result)
@@ -354,7 +360,16 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
-    MF *frame = new MF(eigen, timestamps[i], filenames[i], fe, camera, sensor_constants, &handler_factory);
+    static const orb_slam3::features::handlers::HandlerType
+        kHandlerType = orb_slam3::features::handlers::HandlerType::DBoW2;
+    MF *frame = new MF(timestamps[i],
+                       filenames[i],
+                       camera,
+                       sensor_constants,
+                       orb_slam3::factories::FeatureHandlerFactory::Instance().Create(kHandlerType,
+                                                                                      eigen,
+                                                                                      camera,
+                                                                                      feature_extractor));
     auto result = system.tracker->Track(frame);
 
     if (i == 100) {
@@ -459,7 +474,8 @@ int main(int argc, char * argv[]) {
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
-//  LoadFromFolder()
+  OrbSlam3System system = LoadFromFolder("save_state");
+  system.local_mapper->Start();
 
 //  orb_slam3::serialization::SerializationContext context;
 //  context.vocabulary = &voc;
