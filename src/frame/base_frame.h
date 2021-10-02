@@ -24,42 +24,19 @@ class SerializationContext;
 namespace map {
 class MapPoint;
 class Map;
+class Atlas;
 }
 
 namespace frame {
 
 class BaseFrame : public geometry::RigidObject {
  public:
-//  friend std::ostream & operator<<(std::ostream & stream, const BaseFrame * frame) {
-//    frame->SerializeToStream(stream);
-//    stream << frame->GetPosition();
-//    stream << frame->GetInversePosition();
-//    size_t size = frame->filename_.length();
-//    stream.write((char *) &size, sizeof(size));
-//    stream.write(frame->filename_.data(), size);
-//    return stream;
-//  }
-//
-//  friend std::istream & operator>>(std::istream & stream, BaseFrame * frame) {
-//    frame->DeSerializeFromStream(stream);
-//    geometry::Pose position;
-//    stream >> position;
-//    frame->SetStagingPosition(position);
-//    frame->ApplyStaging();
-//    stream >> position; // CHECK IF COINCIDES WITH THE inverse?
-//    size_t filename_length;
-//    stream.read((char *) &filename_length, sizeof(filename_length));
-//    std::string filename(filename_length, ' ');
-//    stream.read(const_cast<char *>(filename.data()), filename_length);
-//    return stream;
-//  }
-
   BaseFrame(std::istream &istream, serialization::SerializationContext &context);
   BaseFrame(TimePoint time_point,
-            const std::string &filename,
+            std::string filename,
             const SensorConstants *sensor_constants,
             size_t id,
-            const std::shared_ptr<const features::handlers::BaseFeatureHandler> &feature_handler);
+            map::Atlas * atlas);
 
   ~BaseFrame() override = default;
  public:
@@ -81,17 +58,16 @@ class BaseFrame : public geometry::RigidObject {
   size_t Id() const { return id_; }
 
   TimePoint GetTimeCreated() const { return time_point_; }
-  const features::IFeatureExtractor * GetFeatureExtractor() const { return feature_handler_->GetFeatureExtractor(); }
   const std::string & GetFilename() const { return filename_; }
   const std::shared_ptr<const features::handlers::BaseFeatureHandler> & GetFeatureHandler() const { return feature_handler_; }
 
   virtual void SetMap(map::Map * map) { map_ = map; }
   map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
+  map::Atlas * GetAtlas() const { return atlas_; }
   void Serialize(std::ostream & stream) const;
  protected:
   virtual void SerializeToStream(std::ostream & stream) const {};
-  virtual void DeSerializeFromStream(std::istream & stream, serialization::SerializationContext & context) {};
 
  protected:
   TimePoint time_point_;
@@ -100,6 +76,7 @@ class BaseFrame : public geometry::RigidObject {
   size_t id_;
   std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler_;
   map::Map * map_;
+  map::Atlas * atlas_;
 };
 
 }

@@ -6,6 +6,7 @@
 #include "monocular_frame.h"
 #include <map/map_point.h>
 #include <map/map.h>
+#include <map/atlas.h>
 #include <logging.h>
 #include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/iterators/projection_search_iterator.h>
@@ -27,9 +28,10 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->GetFilename(),
                                                                         frame->GetSensorConstants(),
                                                                         frame->Id(),
-                                                                        frame->GetFeatureHandler()),
+                                                                        frame->GetAtlas()),
                                                                BaseMonocular(*frame),
                                                                map_points_mutex_() {
+  SetFeatureHandler(frame->GetFeatureHandler());
   SetStagingPosition(frame->GetPosition());
   ApplyStaging();
   SetMap(frame->GetMap());
@@ -188,7 +190,7 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
   IteratorType end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
   typedef features::matching::SNNMatcher<IteratorType> MatcherType;
   MatcherType::MatchMapType matches;
-  MatcherType matcher(1.0, GetFeatureExtractor()->GetLowThreshold());
+  MatcherType matcher(1.0, GetMap()->GetAtlas()->GetFeatureExtractor()->GetLowThreshold());
   matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), matches);
 
   for (auto & match: matches) {
@@ -199,7 +201,7 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
     TPoint2D projected;
     GetMonoCamera()->ProjectAndDistort(GetPosition().Transform(match.first->GetPosition()), projected);
     precision_t error = (original_point - projected).squaredNorm();
-    if (error / GetFeatureExtractor()->GetAcceptableSquareError(key_point.level)
+    if (error / GetMap()->GetAtlas()->GetFeatureExtractor()->GetAcceptableSquareError(key_point.level)
         > 5.99)
       continue;
 
@@ -244,7 +246,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
                                       GetSensorConstants()->max_allowed_discrepancy,
                                       -1,
                                       visible_map_point,
-                                      GetFeatureExtractor()))
+                                      GetMap()->GetAtlas()->GetFeatureExtractor()))
         out_visibles.push_back(visible_map_point);
     }
   }
@@ -365,11 +367,11 @@ int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
                                                      map_point->GetMaxInvarianceDistance() / 1.2);
 }
 
-void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
-                                               const geometry::Sim3Transformation & relative_transformation,
-                                               const geometry::Pose & mp_local_transformation,
-                                               std::list<MapPointVisibilityParams> & out_visibles,
-                                               precision_t radius_multiplier) const {
+void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet &map_points,
+                                               const geometry::Sim3Transformation &relative_transformation,
+                                               const geometry::Pose &mp_local_transformation,
+                                               precision_t radius_multiplier,
+                                               std::list<MapPointVisibilityParams> &out_visibles) const {
   MapPointVisibilityParams tmp;
   geometry::Pose pose = GetPosition();
   geometry::Pose inverse_pose = pose.GetInversePose();
@@ -396,7 +398,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
                                     radius_multiplier,
                                     -1,
                                     tmp,
-                                    GetFeatureExtractor()));
+                                    GetMap()->GetAtlas()->GetFeatureExtractor()));
     out_visibles.push_back(tmp);
   }
 }
@@ -410,7 +412,7 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   ProjectionSearchIterator end(visibles.end(), visibles.end(), &feature_handler_->GetFeatures());
   TMatcher matcher(0.9, 50);
   TMatcher::MatchMapType matches;
-  matcher.MatchWithIterators(begin, end, GetFeatureExtractor(), matches);
+  matcher.MatchWithIterators(begin, end, GetMap()->GetAtlas()->GetFeatureExtractor(), matches);
   std::cout << "Match count: " << matches.size() << std::endl;
   if (matches.size() < 50)
     return 0;
@@ -432,7 +434,7 @@ void MonocularKeyFrame::InitializeImpl() {
     if (mp.second->IsBad())
       continue;
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
-    mp.second->ComputeDistinctiveDescriptor(GetFeatureHandler()->GetFeatureExtractor());
+    mp.second->ComputeDistinctiveDescriptor();
     mp.second->CalculateNormalStaging();
     mp.second->ApplyStaging();
   }

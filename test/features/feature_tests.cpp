@@ -3,12 +3,14 @@
 //
 
 #include "feature_tests.h"
-#include "../../src/features/features.h"
+#include <features/features.h>
+#include "test_utils.h"
+
 namespace orb_slam3 {
 namespace test {
 
-TEST_F(FeatureTests, ListFeaturesInAreaReturnsCorrectIndices){
-  auto camera = new camera::MonocularCamera (640, 480);
+TEST_F(FeatureTests, ListFeaturesInAreaReturnsCorrectIndices) {
+  auto camera = new camera::MonocularCamera(640, 480);
   camera->SetFx(800);
   camera->SetFy(800);
   camera->SetCx(320);
@@ -40,13 +42,25 @@ TEST_F(FeatureTests, ListFeaturesInAreaReturnsCorrectIndices){
   system_under_test.ListFeaturesInArea(TPoint2D {190, 80}, 10, 0, 2, result);
   ASSERT_EQ(1, result.size());
   result.clear();
-  system_under_test.ListFeaturesInArea(TPoint2D {190, 80}, 10, 1, 2, result);
+  system_under_test.ListFeaturesInArea(TPoint2D{190, 80}, 10, 1, 2, result);
   ASSERT_EQ(0, result.size());
 
   result.clear();
-  system_under_test.ListFeaturesInArea(TPoint2D {190, 80}, 100, 0, 2, result);
+  system_under_test.ListFeaturesInArea(TPoint2D{190, 80}, 100, 0, 2, result);
   ASSERT_EQ(2, result.size());
   delete camera;
+}
+
+TEST_F(FeatureTests, FeatureDeserializationWorksCorrectly) {
+  features::Features features(100, 200);
+  features.descriptors.resize(100, 30);
+  for (int i = 0; i < 100; ++i) {
+    features::KeyPoint key_point(GenerateRandom2DPoint(0, 150, 0, 250), 1, 23, 5);
+    features.keypoints.push_back(key_point);
+
+    features.undistorted_keypoints.push_back(GenerateRandom2DPoint(0, 150, 0, 250));
+
+  }
 }
 
 }

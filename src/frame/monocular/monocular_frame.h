@@ -7,7 +7,6 @@
 #include <frame/frame.h>
 #include "base_monocular.h"
 #include "monocular_key_frame.h"
-#include <features/factories/handler_factory.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -15,12 +14,17 @@ namespace monocular {
 
 class MonocularFrame : public Frame, public BaseMonocular {
  public:
-  MonocularFrame(TimePoint time_point,
-                 const std::string & filename,
-                 const camera::MonocularCamera * camera,
-                 const SensorConstants * sensor_constants,
-                 const std::shared_ptr<features::handlers::BaseFeatureHandler> & handler);
+  MonocularFrame(map::Atlas *atlas,
+                 features::handlers::HandlerType handler_type,
+                 size_t feature_count,
+                 TImageGray8U &image,
+                 TimePoint time_point,
+                 const std::string &filename,
+                 const camera::MonocularCamera *camera,
+                 const SensorConstants *sensor_constants);
+
   MonocularFrame(std::istream & stream, serialization::SerializationContext & context);
+
  public:
   // Frame
   FrameType Type() const override;

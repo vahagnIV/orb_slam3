@@ -11,6 +11,7 @@
 // == orb-slam3 ===
 #include "ifeature_extractor.h"
 
+
 namespace orb_slam3 {
 namespace features {
 
@@ -22,7 +23,6 @@ class ORBFeatureExtractor : public IFeatureExtractor {
  public:
   ORBFeatureExtractor(unsigned image_width,
                       unsigned image_height,
-                      size_t features,
                       precision_t scale_factor,
                       size_t levels,
                       unsigned init_threshold_FAST,
@@ -61,7 +61,8 @@ class ORBFeatureExtractor : public IFeatureExtractor {
  private:
   void AllocatePyramid();
   void BuildImagePyramid(cv::Mat & image) const;
-  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint>> & out_all_keypoints) const;
+  void ComputeKeyPointsOctTree(std::vector<std::vector<features::KeyPoint> > &out_all_keypoints,
+                               size_t features) const;
   void DistributeOctTree(const std::vector<cv::KeyPoint> & vToDistributeKeys,
                          const int & minX,
                          const int & maxX,
@@ -85,7 +86,6 @@ class ORBFeatureExtractor : public IFeatureExtractor {
   unsigned image_width_;
   unsigned image_height_;
 
-  unsigned features_;
   precision_t scale_factor_;
   precision_t log_scale_factor_;
   unsigned init_threshold_FAST_;
@@ -99,7 +99,7 @@ class ORBFeatureExtractor : public IFeatureExtractor {
 
   mutable std::vector<cv::Mat> image_pyramid_;
   // std::vector<TImageGray> image_pyramid_;
-  std::vector<int> features_per_level_;
+
 
   // const static Eigen::Matrix<int, 256 * 2, 2> pattern_;
   const static std::vector<cv::Point> pattern_;

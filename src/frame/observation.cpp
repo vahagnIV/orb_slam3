@@ -7,6 +7,7 @@
 #include "monocular/monocular_key_frame.h"
 #include <serialization/serialization_context.h>
 #include <map/map_point.h>
+#include <map/atlas.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -70,7 +71,7 @@ optimization::edges::BABinaryEdge * Observation::CreateBinaryEdge() const {
     edge->setMeasurement(kp.pt);
     precision_t
         information_coefficient =
-        1. / monocular_key_frame->GetFeatureExtractor()->GetAcceptableSquareError(kp.level);
+        1. / monocular_key_frame->GetMap()->GetAtlas()->GetFeatureExtractor()->GetAcceptableSquareError(kp.level);
     edge->setInformation(Eigen::Matrix2d::Identity() * information_coefficient);
     return edge;
   }

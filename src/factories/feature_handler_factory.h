@@ -11,6 +11,10 @@
 
 namespace orb_slam3 {
 
+namespace map{
+class Atlas;
+}
+
 namespace serialization {
 class SerializationContext;
 }
@@ -19,24 +23,28 @@ namespace factories {
 
 class FeatureHandlerFactory {
  public:
-  static FeatureHandlerFactory &Instance();
-  std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
-                                                                 std::istream &istream,
-                                                                 serialization::SerializationContext &context);
+  FeatureHandlerFactory(features::handlers::HandlerType type, map::Atlas * atlas);
 
-  std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
-                                                                 const TImageGray8U &image,
-                                                                 camera::ICamera *camera,
-                                                                 const features::IFeatureExtractor *feature_extractor);
-  frame::IKeyFrameDatabase *CreateKeyFrameDatabase(features::handlers::HandlerType type);
+  static std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
+                                                                        std::istream &istream,
+                                                                        serialization::SerializationContext &context);
+
+  static std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
+                                                                        const TImageGray8U &image,
+                                                                        const camera::ICamera *camera,
+                                                                        const features::IFeatureExtractor *feature_extractor,
+                                                                        size_t feature_count);
+
+  static frame::IKeyFrameDatabase *CreateKeyFrameDatabase(features::handlers::HandlerType type);
+
   ~FeatureHandlerFactory();
- private:
-  FeatureHandlerFactory();
- private:
-  void LoadBowVocabulary();
- private:
 
-  features::BowVocabulary *bow_vocabulary_;
+ private:
+  static void LoadBowVocabulary();
+ private:
+  static features::BowVocabulary *bow_vocabulary_;
+  features::handlers::HandlerType handler_type_;
+  map::Atlas * atlas_;
 
 };
 

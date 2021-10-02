@@ -6,6 +6,7 @@
 #include "map_point.h"
 #include <frame/key_frame.h>
 #include <map/map.h>
+#include <map/atlas.h>
 #include <settings.h>
 #include <messages/messages.h>
 #include <utility>
@@ -103,7 +104,7 @@ void MapPoint::SetMap(map::Map * map) {
   map_ = map;
 }
 
-void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor) {
+void MapPoint::ComputeDistinctiveDescriptor() {
 
   std::vector<features::DescriptorType> descriptors;
   for (const auto & observation: observations_) {
@@ -114,7 +115,7 @@ void MapPoint::ComputeDistinctiveDescriptor(const features::IFeatureExtractor * 
   for (size_t i = 0; i < N; ++i) {
     distances[i][i] = 0;
     for (size_t j = i + 1; j < N; ++j) {
-      distances[i][j] = feature_extractor->ComputeDistance(descriptors[i], descriptors[j]);
+      distances[i][j] = GetMap()->GetAtlas()->GetFeatureExtractor()->ComputeDistance(descriptors[i], descriptors[j]);
       distances[j][i] = distances[i][j];
     }
   }

@@ -15,15 +15,19 @@
 #include <features/ifeature_extractor.h>
 
 namespace orb_slam3 {
+namespace map {
+class Atlas;
+}
 namespace serialization {
 
 struct SerializationContext {
-  std::unordered_map<size_t, camera::ICamera*> cam_id;
+  std::unordered_map<size_t, camera::ICamera *> cam_id;
   std::unordered_map<size_t, map::Map *> map_id;
   std::unordered_map<size_t, frame::KeyFrame *> kf_id;
   std::unordered_map<size_t, map::MapPoint *> mp_id;
   std::unordered_map<size_t, frame::SensorConstants *> sc_id;
-  std::unordered_map<size_t, features::IFeatureExtractor *> fe_id;
+  map::Atlas *atlas;
+
 };
 
 }

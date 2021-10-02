@@ -11,14 +11,11 @@
 
 namespace orb_slam3 {
 namespace factories {
+features::BowVocabulary *FeatureHandlerFactory::bow_vocabulary_ = nullptr;
 
-FeatureHandlerFactory::FeatureHandlerFactory() : bow_vocabulary_(nullptr) {
+FeatureHandlerFactory::FeatureHandlerFactory(features::handlers::HandlerType type, map::Atlas *atlas)
+: handler_type_(type), atlas_(atlas) {
 
-}
-
-FeatureHandlerFactory &FeatureHandlerFactory::Instance() {
-  static FeatureHandlerFactory instance;
-  return instance;
 }
 
 FeatureHandlerFactory::~FeatureHandlerFactory() {
@@ -61,19 +58,20 @@ std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::C
   }
 }
 std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::Create(features::handlers::HandlerType type,
-                                                                                      const TImageGray8U & image,
-                                                                                      camera::ICamera * camera,
-                                                                                      const features::IFeatureExtractor *feature_extractor) {
+                                                                                      const TImageGray8U &image,
+                                                                                      const camera::ICamera *camera,
+                                                                                      const features::IFeatureExtractor *feature_extractor,
+                                                                                      size_t feature_count) {
   switch (type) {
     case features::handlers::HandlerType::DBoW2: {
       LoadBowVocabulary();
       features::Features features(image.cols(), image.rows());
 
-      feature_extractor->Extract(image, features, 0);
+      feature_extractor->Extract(image, features, feature_count);
       features.AssignFeaturesToGrid();
 
-      if(camera->Type() == camera::CameraType::MONOCULAR) {
-        auto mono_cam = dynamic_cast<camera::MonocularCamera *>(camera);
+      if (camera->Type() == camera::CameraType::MONOCULAR) {
+        auto mono_cam = dynamic_cast<const camera::MonocularCamera *>(camera);
         features.undistorted_keypoints.resize(features.Size());
         features.undistorted_and_unprojected_keypoints.resize(features.Size());
         for (size_t i = 0; i < features.Size(); ++i) {

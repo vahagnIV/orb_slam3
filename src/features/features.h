@@ -8,9 +8,6 @@
 // === stl ===
 #include <memory>
 
-// === Eigen ===
-#include <Eigen/Eigen>
-
 // == orb-slam3 ===
 #include "typedefs.h"
 #include "constants.h"
@@ -44,9 +41,6 @@ class Features {
                           std::vector<size_t> & out_idx) const;
 
   void AssignFeaturesToGrid();
-
-  void SetWidth(precision_t width);
-  void SetHeight(precision_t height);
  private:
   bool PosInGrid(const TPoint2D & kp,
                  size_t & posX,

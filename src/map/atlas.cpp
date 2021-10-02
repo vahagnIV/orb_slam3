@@ -13,11 +13,20 @@
 namespace orb_slam3 {
 namespace map {
 
-Atlas::Atlas() : current_map_(nullptr) {
+Atlas::Atlas(features::IFeatureExtractor *feature_extractor, frame::IKeyFrameDatabase *keyframe_database)
+    : current_map_(nullptr),
+      maps_(),
+      feature_extractor_(feature_extractor),
+      key_frame_database_(keyframe_database) {
 
 }
 
 Atlas::Atlas(std::istream &istream, serialization::SerializationContext &context) : current_map_(nullptr) {
+  context.atlas = this;
+  features::FeatureExtractorType fe_type;
+  READ_FROM_STREAM(fe_type, istream);
+  feature_extractor_ = factories::FeatureExtractorFactory::Create(fe_type, istream, context);
+
   size_t camera_count;
   READ_FROM_STREAM(camera_count, istream);
   for (size_t i = 0; i < camera_count; ++i) {
@@ -40,23 +49,10 @@ Atlas::Atlas(std::istream &istream, serialization::SerializationContext &context
     sensor_constant->Deserialize(istream, context);
   }
 
-  size_t feature_extractor_count;
-  READ_FROM_STREAM(feature_extractor_count, istream);
-  for (size_t i = 0; i < feature_extractor_count; ++i) {
-    features::FeatureExtractorType fe_type;
-    READ_FROM_STREAM(fe_type, istream);
-    size_t fe_id;
-    READ_FROM_STREAM(fe_id, istream);
-    features::IFeatureExtractor *feature_extractor = factories::FeatureExtractorFactory::Create(fe_type,
-                                                                                                istream,
-                                                                                                context);
-    context.fe_id[fe_id] = feature_extractor;
-  }
-
   size_t map_count;
   READ_FROM_STREAM(map_count, istream);
   for (size_t i = 0; i < map_count; ++i) {
-    auto map = new map::Map();
+    auto map = new map::Map(this);
     size_t map_id;
     READ_FROM_STREAM(map_id, istream);
     context.map_id[map_id] = map;
@@ -73,14 +69,14 @@ Map *Atlas::GetCurrentMap() {
 }
 
 void Atlas::CreateNewMap() {
-  current_map_ = new Map();
+  current_map_ = new Map(this);
   if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapCreated(current_map_));
   maps_.insert(current_map_);
 }
 
 Atlas::~Atlas() {
-
+  delete feature_extractor_;
 }
 
 void Atlas::SetCurrentMap(map::Map * map) {
@@ -98,15 +94,17 @@ const std::unordered_set<map::Map *> & Atlas::GetMaps() const {
 
 void Atlas::Serialize(std::ostream & ostream) const {
 
+  features::FeatureExtractorType fe_type = feature_extractor_->Type();
+  WRITE_TO_STREAM(fe_type, ostream);
+  feature_extractor_->Serialize(ostream);
+
   std::unordered_set<const camera::ICamera *> cameras;
   std::unordered_set<const frame::SensorConstants *> sensor_constants;
-  std::unordered_set<const features::IFeatureExtractor *> feature_extractors;
 
   for (const auto map: maps_) {
     for (auto kf: map->GetAllKeyFrames()) {
       cameras.insert(kf->GetCamera());
       sensor_constants.insert(kf->GetSensorConstants());
-      feature_extractors.insert(kf->GetFeatureHandler()->GetFeatureExtractor());
     }
   }
 
@@ -127,16 +125,6 @@ void Atlas::Serialize(std::ostream & ostream) const {
     sensor_constant->Serialize(ostream);
   }
 
-  size_t feature_extractor_count = feature_extractors.size();
-  WRITE_TO_STREAM(feature_extractor_count, ostream);
-  for (auto feature_extractor: feature_extractors) {
-    features::FeatureExtractorType fe_type = feature_extractor->Type();
-    WRITE_TO_STREAM(fe_type, ostream);
-    size_t fe_id = reinterpret_cast<size_t>(feature_extractor);
-    WRITE_TO_STREAM(fe_id, ostream);
-    feature_extractor->Serialize(ostream);
-  }
-
   size_t map_count = GetMapCount();
   WRITE_TO_STREAM(map_count, ostream);
 
@@ -145,7 +133,14 @@ void Atlas::Serialize(std::ostream & ostream) const {
     WRITE_TO_STREAM(map_id, ostream);
     map->Serialize(ostream);
   }
+}
 
+const features::IFeatureExtractor *Atlas::GetFeatureExtractor() const {
+  return feature_extractor_;
+}
+
+frame::IKeyFrameDatabase *Atlas::GetKeyframeDatabase() const {
+  return key_frame_database_;
 }
 
 }

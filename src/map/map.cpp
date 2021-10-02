@@ -4,6 +4,7 @@
 
 // == orb-slam3 ===
 #include "map.h"
+#include "atlas.h"
 #include <frame/key_frame.h>
 #include <map/map_point.h>
 #include <serialization/serialization_context.h>
@@ -12,15 +13,19 @@
 namespace orb_slam3 {
 namespace map {
 
-void Map::AddKeyFrame(frame::KeyFrame * key_frame) {
+Map::Map(Atlas *atlas) : atlas_(atlas) {
+
+}
+
+void Map::AddKeyFrame(frame::KeyFrame *key_frame) {
   key_frames_.insert(key_frame);
 }
 
-void Map::EraseKeyFrame(frame::KeyFrame * key_frame) {
+void Map::EraseKeyFrame(frame::KeyFrame *key_frame) {
   key_frames_.erase(key_frame);
 }
 
-void Map::AddMapPoint(MapPoint * map_point) {
+void Map::AddMapPoint(MapPoint *map_point) {
   map_points_.insert(map_point);
 }
 
@@ -127,15 +132,19 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
   }
 
   for (auto mp: GetAllMapPoints()) {
-    mp->ComputeDistinctiveDescriptor(context.fe_id.begin()->second);
+    mp->ComputeDistinctiveDescriptor();
     mp->CalculateNormalStaging();
     mp->ApplyStaging();
   }
 
-  for(auto kf: GetAllKeyFrames()){
+  for (auto kf: GetAllKeyFrames()) {
     kf->GetCovisibilityGraph().Update();
   }
 
+}
+
+Atlas *Map::GetAtlas() const {
+  return atlas_;
 }
 
 }

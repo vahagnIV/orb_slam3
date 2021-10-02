@@ -125,7 +125,7 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
       map_point->AddObservation(key_frame_obs);
       map_point->AddObservation(neighbour_obs);
 
-      map_point->ComputeDistinctiveDescriptor(key_frame->GetFeatureExtractor());
+      map_point->ComputeDistinctiveDescriptor();
       map_point->CalculateNormalStaging();
       map_point->ApplyStaging();
       key_frame->AddMapPoint(key_frame_obs);
@@ -284,7 +284,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   frame->ListMapPoints(mps);
   for (auto mp:mps) {
     if (!mp->IsBad()) {
-      mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
+      mp->ComputeDistinctiveDescriptor();
       mp->CalculateNormalStaging();
       mp->ApplyStaging();
     }
@@ -366,7 +366,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       if (!mp->IsBad()) {
         mp->CalculateNormalStaging();
         mp->ApplyStaging();
-        mp->ComputeDistinctiveDescriptor(kf->GetFeatureExtractor());
+        mp->ComputeDistinctiveDescriptor();
       }
     }
   }

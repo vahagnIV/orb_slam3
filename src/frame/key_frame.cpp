@@ -14,8 +14,8 @@ KeyFrame::KeyFrame(TimePoint time_point,
                    const std::string & filename,
                    const SensorConstants * sensor_constants,
                    size_t id,
-                   std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler)
-    : BaseFrame(time_point, filename, sensor_constants, id, feature_handler),
+                   map::Atlas * atlas)
+    : BaseFrame(time_point, filename, sensor_constants, id, atlas),
       is_initialized_(false),
       covisibility_graph_(this),
       is_initial_(false),

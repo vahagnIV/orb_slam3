@@ -6,6 +6,8 @@
 #include <serialization/serialization_context.h>
 #include <factories/feature_handler_factory.h>
 
+#include <utility>
+
 namespace orb_slam3 {
 namespace frame {
 
@@ -41,22 +43,23 @@ BaseFrame::BaseFrame(std::istream &istream, serialization::SerializationContext 
   features::handlers::HandlerType handler_type;
   READ_FROM_STREAM(handler_type, istream);
   std::shared_ptr<features::handlers::BaseFeatureHandler>
-      handler = factories::FeatureHandlerFactory::Instance().Create(handler_type, istream, context);
+      handler = factories::FeatureHandlerFactory::Create(handler_type, istream, context);
 
   SetFeatureHandler(handler);
 }
 
 BaseFrame::BaseFrame(TimePoint time_point,
-                     const std::string & filename,
+                     std::string  filename,
                      const SensorConstants * sensor_constants,
                      size_t id,
-                     const std::shared_ptr<const features::handlers::BaseFeatureHandler> & feature_handler) :
+                     map::Atlas * atlas) :
     time_point_(time_point),
-    filename_(filename),
+    filename_(std::move(filename)),
     sensor_constants_(sensor_constants),
     id_(id),
-    feature_handler_(feature_handler),
-    map_(nullptr) {}
+    feature_handler_(nullptr),
+    map_(nullptr),
+    atlas_(atlas){}
 
 void BaseFrame::SetTimePoint(TimePoint time_point) {
   time_point_ = time_point;

@@ -9,7 +9,7 @@
 #include <vector>
 
 // == orb-slam3 ===
-#include "../typedefs.h"
+#include "typedefs.h"
 #include "features.h"
 #include "key_point.h"
 #include "feature_extractor_type.h"
@@ -18,6 +18,7 @@ namespace orb_slam3 {
 namespace serialization {
 class SerializationContext;
 }
+
 namespace features {
 
 class IFeatureExtractor {

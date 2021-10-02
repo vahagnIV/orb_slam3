@@ -18,8 +18,8 @@ class Frame : public BaseFrame {
   Frame(TimePoint &time_point,
         const std::string &filename,
         const SensorConstants *sensor_constants,
-        const std::shared_ptr<features::handlers::BaseFeatureHandler> &handler)
-      : BaseFrame(time_point, filename, sensor_constants, ++next_id_, handler) {}
+        map::Atlas * atlas)
+      : BaseFrame(time_point, filename, sensor_constants, ++next_id_, atlas) {}
   Frame(std::istream &stream, serialization::SerializationContext &context);
 
   virtual ~Frame() = default;

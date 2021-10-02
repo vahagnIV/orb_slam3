@@ -107,7 +107,7 @@ class MapPoint {
 
   bool GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const;
 
-  void ComputeDistinctiveDescriptor(const features::IFeatureExtractor * feature_extractor);
+  void ComputeDistinctiveDescriptor();
   void LockObservationsContainer() const;
   void UnlockObservationsContainer() const;
   void Serialize(std::ostream & ostream) const;

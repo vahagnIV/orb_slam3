@@ -12,8 +12,8 @@
 #include <debug/debug_utils.h>
 namespace orb_slam3 {
 
-LoopMergeDetector::LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database, map::Atlas * atlas) :
-    key_frame_database_(key_frame_database), atlas_(atlas) {
+LoopMergeDetector::LoopMergeDetector(map::Atlas * atlas) :
+    atlas_(atlas) {
 }
 
 void LoopMergeDetector::RunIteration() {
@@ -21,12 +21,12 @@ void LoopMergeDetector::RunIteration() {
   while (GetUpdateQueue().try_dequeue(message)) {
     auto map = message.frame->GetMap();
     if (map->GetAllKeyFrames().size() < 7) {
-      key_frame_database_->Append(message.frame);
+      map->GetAtlas()->GetKeyframeDatabase()->Append(message.frame);
       return;
     }
 
     frame::IKeyFrameDatabase::KeyFrameSet merge_candidates, loop_candidates;
-    key_frame_database_->DetectNBestCandidates(message.frame,
+    map->GetAtlas()->GetKeyframeDatabase()->DetectNBestCandidates(message.frame,
                                                loop_candidates,
                                                merge_candidates,
                                                constants::MAX_NUMBER_OF_MATCH_CANDIDATES);
@@ -189,8 +189,8 @@ bool LoopMergeDetector::DetectLoopOrMerge(const frame::KeyFrame * key_frame,
   key_frame->FilterVisibleMapPoints(map_points,
                                     out_sim3_transformation,
                                     pose,
-                                    visible_map_points,
-                                    8);
+                                    8,
+                                    visible_map_points);
   if (visible_map_points.size() < constants::LM_MIN_NUMBER_OF_VISIBLES)
     return false;
 

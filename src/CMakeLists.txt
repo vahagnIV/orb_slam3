@@ -1,6 +1,7 @@
 find_package(g2o REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 # Temporaty for the time being we use opencv for ORB feature extraction
 find_package(OpenCV REQUIRED)
@@ -55,7 +56,6 @@ add_library(orbslam SHARED
         features/handlers/base_feature_handler.cpp
         features/matching/validators/orientation_validator.cpp
         features/handlers/DBoW2/dbo_w2_handler.cpp
-        features/factories/dbo_w2_handler_factory.cpp
 
         messages/message_type.cpp
         messages/base_message.cpp
@@ -95,8 +95,6 @@ add_library(orbslam SHARED
         factories/feature_extractor_factory.cpp
 
         serialization/serialization_context.cpp
-        serialization/serializer.cpp
-        serialization/deserializer.cpp
 
         optimization/edges/se3_project_xyz_pose.cpp
         optimization/edges/se3_project_xyz_pose_only.cpp
@@ -176,4 +174,6 @@ target_link_libraries(orbslam
         Eigen3::Eigen
         ${OpenCV_LIBS}
         DBoW2
+        ${Boost_FILESYSTEM_LIBRARY}
+        ${Boost_SYSTEM_LIBRARY}
         pthread) #

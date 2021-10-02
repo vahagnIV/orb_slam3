@@ -15,21 +15,32 @@
 #include <src/features/handlers/DBoW2/bow_to_iterator.h>
 #include "monocular_key_frame.h"
 #include <map/map.h>
+#include <map/atlas.h>
 #include <debug/debug_utils.h>
 #include <serialization/serialization_context.h>
+#include <factories/feature_handler_factory.h>
 
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularFrame::MonocularFrame(TimePoint time_point,
+MonocularFrame::MonocularFrame(map::Atlas *atlas,
+                               features::handlers::HandlerType handler_type,
+                               size_t feature_count,
+                               TImageGray8U &image,
+                               TimePoint time_point,
                                const std::string &filename,
                                const camera::MonocularCamera *camera,
-                               const SensorConstants *sensor_constants,
-                               const std::shared_ptr<features::handlers::BaseFeatureHandler> &handler) :
-    Frame(time_point, filename, sensor_constants, handler),
+                               const SensorConstants *sensor_constants) :
+    Frame(time_point, filename, sensor_constants, atlas),
     BaseMonocular(camera),
     reference_keyframe_(nullptr) {
+  auto feature_handler = factories::FeatureHandlerFactory::Create(handler_type,
+                                                                  image,
+                                                                  camera,
+                                                                  atlas->GetFeatureExtractor(),
+                                                                  feature_count);
+  SetFeatureHandler(feature_handler);
 }
 
 MonocularFrame::MonocularFrame(std::istream &stream, serialization::SerializationContext &context)
@@ -169,7 +180,7 @@ bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
           &from_frame->feature_handler_->GetFeatures(),
           100);
 
-  matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), out_matches);
+  matcher.MatchWithIterators(begin, end, GetAtlas()->GetFeatureExtractor(), out_matches);
   logging::RetrieveLogger()->debug("Orientation validator discarded {} matches",
                                    features::matching::OrientationValidator
                                        (feature_handler_->GetFeatures().keypoints,
@@ -195,7 +206,7 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 //    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
 
     precision_t max_invariance_distance, min_invariance_distance;
-    feature_handler_->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
+    GetAtlas()->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
                                                                        feature_handler_->GetFeatures().keypoints[point.first],
                                                                        max_invariance_distance,
                                                                        min_invariance_distance);
@@ -251,7 +262,7 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
                                     radius_multiplier,
                                     -1,
                                     map_point,
-                                    GetFeatureExtractor())) {
+                                    GetAtlas()->GetFeatureExtractor())) {
 
       out_filetered_map_points.push_back(map_point);
     }
@@ -322,7 +333,7 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
                                     radius_multiplier,
                                     last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
                                     vmp,
-                                    GetFeatureExtractor())) {
+                                    GetAtlas()->GetFeatureExtractor())) {
       vmp.map_point = mp.second;
       out_visibles.push_back(vmp);
     }

@@ -160,17 +160,5 @@ std::ostream & operator<<(std::ostream & stream, const Features & features) {
   return stream;
 }
 
-void Features::SetWidth(precision_t width) {
-  width_ = width;
-  grid_element_width_inv_ = static_cast<precision_t >(constants::FRAME_GRID_COLS)
-      / width_;
-}
-
-void Features::SetHeight(precision_t height) {
-  height_ = height;
-  grid_element_height_inv_ = static_cast<precision_t >(constants::FRAME_GRID_ROWS)
-      / height_;
-}
-
 }
 }

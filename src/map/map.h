@@ -22,25 +22,30 @@ class SerializationContext;
 
 namespace map {
 
+class Atlas;
 class MapPoint;
 
 class Map {
  public:
-  friend std::ostream & operator << (std::ostream & stream, const Map * map_point);
-  void AddKeyFrame(frame::KeyFrame * key_frame);
-  void EraseKeyFrame(frame::KeyFrame * key_frame);
-  void SetInitialKeyFrame(frame::KeyFrame * frame);
-  void AddMapPoint(MapPoint * map_point);
-  void EraseMapPoint(MapPoint * map_point);
+  Map(Atlas *atlas);
+ public:
+  friend std::ostream &operator<<(std::ostream &stream, const Map *map_point);
+  void AddKeyFrame(frame::KeyFrame *key_frame);
+  void EraseKeyFrame(frame::KeyFrame *key_frame);
+  void SetInitialKeyFrame(frame::KeyFrame *frame);
+  void AddMapPoint(MapPoint *map_point);
+  void EraseMapPoint(MapPoint *map_point);
   std::unordered_set<MapPoint *> GetAllMapPoints() const;
   std::unordered_set<frame::KeyFrame *> GetAllKeyFrames() const;
   size_t GetSize() const { return key_frames_.size(); }
   void Serialize(std::ostream & ostream) const;
-  void Deserialize(std::istream & istream, serialization::SerializationContext & context);
+  void Deserialize(std::istream &istream, serialization::SerializationContext &context);
+  Atlas *GetAtlas() const;
  private:
   std::unordered_set<frame::KeyFrame *> key_frames_;
   frame::KeyFrame * initial_keyframe_;
   std::unordered_set<MapPoint *> map_points_;
+  Atlas *atlas_;
 
 };
 }

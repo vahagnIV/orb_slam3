@@ -13,7 +13,7 @@ namespace orb_slam3 {
 class LoopMergeDetector : public PositionObserver {
 
  public:
-  LoopMergeDetector(frame::IKeyFrameDatabase * key_frame_database, map::Atlas * atlas);
+  LoopMergeDetector(map::Atlas *atlas);
   void RunIteration();
  private:
   enum DetectionResult {
@@ -31,7 +31,7 @@ class LoopMergeDetector : public PositionObserver {
  private:
   static bool Intersect(const KeyFrameSet & bow_candidate_neighbours, const KeyFrameSet & key_frame_neighbours);
   static void FindMapPointMatches(const frame::KeyFrame * current_key_frame,
-                                  const LoopMergeDetector::KeyFrameSet & loop_neighbours,
+                                  const KeyFrameSet & loop_neighbours,
                                   MapPointMatches & out_matches);
   static void ListSurroundingWindow(const frame::KeyFrame * key_frame,
                                     frame::IKeyFrameDatabase::KeyFrameSet & out_window);
@@ -39,7 +39,6 @@ class LoopMergeDetector : public PositionObserver {
                                std::unordered_set<map::MapPoint *> & out_mps);
   static void SearchAndFuse();
  private:
-  frame::IKeyFrameDatabase * key_frame_database_;
   map::Atlas * atlas_;
 
 };

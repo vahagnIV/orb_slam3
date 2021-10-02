@@ -9,6 +9,7 @@
 #include "logging.h"
 #include <map/map.h>
 #include <map/map_point.h>
+#include <map/atlas.h>
 
 namespace orb_slam3 {
 namespace debug {
@@ -271,7 +272,7 @@ void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
       key_point.angle = kp.angle;
     } else {
       key_point.octave =
-          frame1->GetFeatureExtractor()->PredictScale(local_coords.norm(), mp->GetMaxInvarianceDistance() / 1.2);
+          frame1->GetMap()->GetAtlas()->GetFeatureExtractor()->PredictScale(local_coords.norm(), mp->GetMaxInvarianceDistance() / 1.2);
     }
     out_key_points.push_back(key_point);
   }

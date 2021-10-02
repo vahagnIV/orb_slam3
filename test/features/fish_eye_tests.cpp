@@ -24,11 +24,12 @@ TEST_F(FishEyeTests, DistorAndUndistortCompensate){
   camera->SetFy(190.9733070521226);
   camera->SetCx(254.93170605935475);
   camera->SetCy(256.8974428996504);
-  auto distortion_model = camera->CreateDistortionModel<camera::FishEye >();
+  auto distortion_model = new camera::FishEye ();
   distortion_model->SetK1(0.0034823894022493434);
   distortion_model->SetK2(0.0007150348452162257);
   distortion_model->SetK3(-0.0020532361418706202);
   distortion_model->SetK4(0.00020293673591811182);
+  camera->SetDistortionModel(distortion_model);
 
 
   cv::Mat distortion_coeffs(1,4,CV_32F);
