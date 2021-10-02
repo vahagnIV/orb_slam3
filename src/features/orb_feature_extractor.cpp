@@ -68,6 +68,7 @@ void ORBFeatureExtractor::Initialize() {
     inv_level_sigma2_[i] = precision_t(1) / level_sigma2_[i];
   }
 
+#warning move this to the extract function
   size_t levels = scale_factors_.size();
   precision_t factor = precision_t(1) / scale_factor_;
   precision_t number_of_desired_features_per_scale =
