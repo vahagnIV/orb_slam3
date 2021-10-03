@@ -54,12 +54,52 @@ TEST_F(FeatureTests, ListFeaturesInAreaReturnsCorrectIndices) {
 TEST_F(FeatureTests, FeatureDeserializationWorksCorrectly) {
   features::Features features(100, 200);
   features.descriptors.resize(100, 30);
+  for (decltype(features.descriptors)::Index i = 0; i < features.descriptors.rows(); ++i) {
+    for (decltype(features.descriptors)::Index j = 0; j < features.descriptors.cols(); ++j) {
+      features.descriptors(i, j) = static_cast<unsigned char>(rand()  % 0xFF);
+    }
+  }
   for (int i = 0; i < 100; ++i) {
-    features::KeyPoint key_point(GenerateRandom2DPoint(0, 150, 0, 250), 1, 23, 5);
+    features::KeyPoint key_point(GenerateRandom2DPoint(0, 0, 150, 250), 1, 23, 5);
     features.keypoints.push_back(key_point);
 
-    features.undistorted_keypoints.push_back(GenerateRandom2DPoint(0, 150, 0, 250));
+    features.undistorted_keypoints.push_back(GenerateRandom2DPoint(0, 0, 150, 250));
+    features.undistorted_and_unprojected_keypoints.push_back(GenerateRandom3DPoint(0, 0, 0, 10, 20, 30));
 
+  }
+  std::stringstream stream(std::ios::binary | std::ios::in | std::ios::out);
+  stream << features;
+
+  stream.seekp(0);
+
+  features::Features features2(stream);
+
+  ASSERT_EQ(features.image_width, features2.image_width);
+  ASSERT_EQ(features.image_height, features2.image_height);
+  ASSERT_EQ(0, (features.descriptors - features2.descriptors).cwiseAbs().sum());
+  ASSERT_EQ(features.keypoints.size(), features2.keypoints.size());
+  for (size_t i = 0; i < features.keypoints.size(); ++i) {
+    const features::KeyPoint &kp1 = features.keypoints[i];
+    const features::KeyPoint &kp2 = features2.keypoints[i];
+    ASSERT_EQ(kp1.angle, kp2.angle);
+    ASSERT_EQ(kp1.size, kp2.size);
+    ASSERT_EQ(kp1.level, kp2.level);
+    ASSERT_EQ(kp1.X(), kp2.X());
+    ASSERT_EQ(kp1.Y(), kp2.Y());
+  }
+  for (size_t i = 0; i < features.keypoints.size(); ++i) {
+    const TPoint2D &ukp1 = features.undistorted_keypoints[i];
+    const TPoint2D &ukp2 = features2.undistorted_keypoints[i];
+    ASSERT_EQ(ukp1.x(), ukp2.x());
+    ASSERT_EQ(ukp1.y(), ukp2.y());
+  }
+
+  for (size_t i = 0; i < features.undistorted_and_unprojected_keypoints.size(); ++i) {
+    const TPoint3D &ukp1 = features.undistorted_and_unprojected_keypoints[i];
+    const TPoint3D &ukp2 = features2.undistorted_and_unprojected_keypoints[i];
+    ASSERT_EQ(ukp1.x(), ukp2.x());
+    ASSERT_EQ(ukp1.y(), ukp2.y());
+    ASSERT_EQ(ukp1.z(), ukp2.z());
   }
 }
 

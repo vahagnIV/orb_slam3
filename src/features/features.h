@@ -31,24 +31,24 @@ class Features {
   std::vector<KeyPoint> keypoints;
   std::vector<HomogenousPoint> undistorted_and_unprojected_keypoints;
   std::vector<TPoint2D> undistorted_keypoints;
-  std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
+  precision_t image_width;
+  precision_t image_height;
 
+  std::vector<size_t> grid[constants::FRAME_GRID_COLS][constants::FRAME_GRID_ROWS];
   size_t Size() const { return keypoints.size(); }
+
   void ListFeaturesInArea(const TPoint2D & point,
                           const size_t & window_size,
                           const int & minLevel,
                           const int & maxLevel,
                           std::vector<size_t> & out_idx) const;
-
   void AssignFeaturesToGrid();
  private:
+
   bool PosInGrid(const TPoint2D & kp,
                  size_t & posX,
                  size_t & posY) const;
-
  private:
-  precision_t width_;
-  precision_t height_;
   precision_t grid_element_width_inv_;
   precision_t grid_element_height_inv_;
 
