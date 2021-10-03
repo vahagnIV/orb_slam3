@@ -18,10 +18,9 @@
 
 namespace orb_slam3 {
 
-LocalMapper::LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database)
+LocalMapper::LocalMapper(map::Atlas * atlas)
     : atlas_(atlas),
-      thread_(nullptr),
-      key_frame_database_(key_frame_database) {}
+      thread_(nullptr) {}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -346,7 +345,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
     }
 
     if (redundan_observations > map_points.size() * 0.9) {
-      key_frame_database_->Erase(kf);
+      atlas_->GetKeyframeDatabase()->Erase(kf);
       kf->LockMapPointContainer();
       for (auto mp: map_points) {
         if (mp->IsBad())

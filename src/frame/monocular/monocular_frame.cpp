@@ -49,11 +49,16 @@ MonocularFrame::MonocularFrame(std::istream &stream, serialization::Serializatio
   size_t reference_kf_id;
   READ_FROM_STREAM(reference_kf_id, stream);
   frame::KeyFrame *rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
-  if (rf_kf->Type() != Type())
-    throw std::runtime_error(
-        "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
-  reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
-  assert(nullptr != reference_keyframe_);
+  if(rf_kf) {
+    if (rf_kf->Type() != Type())
+      throw std::runtime_error(
+          "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
+    reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
+    assert(nullptr != reference_keyframe_);
+  }
+  else{
+    reference_keyframe_ = nullptr;
+  }
   size_t mp_count;
   READ_FROM_STREAM(mp_count, stream);
   for (size_t i = 0; i < mp_count; ++i) {

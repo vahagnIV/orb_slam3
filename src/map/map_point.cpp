@@ -51,6 +51,7 @@ MapPoint::MapPoint(istream &istream, serialization::SerializationContext &contex
   READ_FROM_STREAM(first_observed_frame_id_, istream);
   READ_FROM_STREAM(visible_, istream);
   READ_FROM_STREAM(found_, istream);
+  READ_FROM_STREAM(bad_flag_, istream);
   size_t descriptor_length;
   READ_FROM_STREAM(descriptor_length, istream);
   istream.read((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
@@ -221,6 +222,7 @@ void MapPoint::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(first_observed_frame_id_, ostream);
   WRITE_TO_STREAM(visible_, ostream);
   WRITE_TO_STREAM(found_, ostream);
+  WRITE_TO_STREAM(bad_flag_, ostream);
   size_t descriptor_length = descriptor_.size();
   WRITE_TO_STREAM(descriptor_length, ostream);
   ostream.write((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));

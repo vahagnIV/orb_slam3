@@ -9,6 +9,8 @@
 #include <serialization/serialization_context.h>
 #include <factories/camera_factory.h>
 #include <factories/feature_extractor_factory.h>
+#include <factories/feature_handler_factory.h>
+#include <frame/database/ikey_frame_database.h>
 
 namespace orb_slam3 {
 namespace map {
@@ -23,6 +25,11 @@ Atlas::Atlas(features::IFeatureExtractor *feature_extractor, frame::IKeyFrameDat
 
 Atlas::Atlas(std::istream &istream, serialization::SerializationContext &context) : current_map_(nullptr) {
   context.atlas = this;
+
+  frame::KeyframeDatabaseType kf_db_type;
+  READ_FROM_STREAM(kf_db_type, istream);
+  key_frame_database_ = factories::FeatureHandlerFactory::CreateKeyFrameDatabase(kf_db_type, istream, context);
+
   features::FeatureExtractorType fe_type;
   READ_FROM_STREAM(fe_type, istream);
   feature_extractor_ = factories::FeatureExtractorFactory::Create(fe_type, istream, context);
@@ -93,6 +100,10 @@ const std::unordered_set<map::Map *> & Atlas::GetMaps() const {
 }
 
 void Atlas::Serialize(std::ostream & ostream) const {
+
+  frame::KeyframeDatabaseType kf_db_type = key_frame_database_->Type();
+  WRITE_TO_STREAM(kf_db_type, ostream);
+  key_frame_database_->Serialize(ostream);
 
   features::FeatureExtractorType fe_type = feature_extractor_->Type();
   WRITE_TO_STREAM(fe_type, ostream);

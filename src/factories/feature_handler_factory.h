@@ -35,7 +35,9 @@ class FeatureHandlerFactory {
                                                                         const features::IFeatureExtractor *feature_extractor,
                                                                         size_t feature_count);
 
-  static frame::IKeyFrameDatabase *CreateKeyFrameDatabase(features::handlers::HandlerType type);
+  static frame::IKeyFrameDatabase *CreateKeyFrameDatabase(frame::KeyframeDatabaseType type,
+                                                          std::istream &istream,
+                                                          serialization::SerializationContext &contex);
 
   ~FeatureHandlerFactory();
 

@@ -91,11 +91,13 @@ std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::C
 
 
 }
-frame::IKeyFrameDatabase *FeatureHandlerFactory::CreateKeyFrameDatabase(features::handlers::HandlerType type) {
+frame::IKeyFrameDatabase *FeatureHandlerFactory::CreateKeyFrameDatabase(frame::KeyframeDatabaseType type,
+                                                                        std::istream &istream,
+                                                                        serialization::SerializationContext &contex) {
   switch (type) {
-    case features::handlers::HandlerType::DBoW2: {
+    case frame::KeyframeDatabaseType::DBoW2DB: {
       LoadBowVocabulary();
-      return new frame::DBoW2Database(bow_vocabulary_);
+      return new frame::DBoW2Database(istream, contex);
     }
     default:
       return nullptr;

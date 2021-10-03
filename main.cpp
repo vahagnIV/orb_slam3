@@ -26,6 +26,7 @@
 #include <serialization/serialization_context.h>
 #include <factories/frame_factory.h>
 #include <factories/feature_handler_factory.h>
+#include <frame/database/DBoW2/dbo_w2_database.h>
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -83,13 +84,7 @@ OrbSlam3System LoadFromFolder(const std::string &save_folder_name) {
 
   OrbSlam3System result;
 
-  orb_slam3::frame::IKeyFrameDatabase *database =
-      orb_slam3::factories::FeatureHandlerFactory::CreateKeyFrameDatabase(context.kf_id.begin()->second->GetFeatureHandler()->Type());
-  for (auto map: atlas->GetMaps())
-    for (auto kf: map->GetAllKeyFrames())
-      database->Append(kf);
-
-  result.local_mapper = new orb_slam3::LocalMapper(atlas, database);
+  result.local_mapper = new orb_slam3::LocalMapper(atlas);
   result.tracker = new orb_slam3::Tracker(atlas, result.local_mapper);
 
   std::ifstream tracker_stream(tracker_filepath, std::ios::binary);
@@ -241,7 +236,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   constants.sim3_optimization_huber_delta = std::sqrt(10.);
 
   orb_slam3::map::Atlas *atlas = new orb_slam3::map::Atlas(nullptr, nullptr);
-  orb_slam3::LocalMapper local_mapper(atlas, nullptr);// TODO fix
+  orb_slam3::LocalMapper local_mapper(atlas);// TODO fix
   orb_slam3::Tracker tracker(atlas, &local_mapper);
 
   //local_mapper.AddObserver(&tracker);
@@ -309,13 +304,11 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
       camera->Width(), camera->Height(),
       SCALE_FACTOR, LEVELS,
       INIT_THRESHOLD, MIN_THRESHOLD);
-  auto kf_database =
-      orb_slam3::factories::FeatureHandlerFactory::CreateKeyFrameDatabase(orb_slam3::features::handlers::HandlerType::DBoW2);
-
+  auto kf_database = new orb_slam3::frame::DBoW2Database(&voc);
   OrbSlam3System system;
   auto *atlas = new orb_slam3::map::Atlas(feature_extractor, kf_database);
 
-  system.local_mapper = new orb_slam3::LocalMapper(atlas, kf_database);
+  system.local_mapper = new orb_slam3::LocalMapper(atlas);
   system.tracker = new orb_slam3::Tracker(atlas, system.local_mapper);
 //  tracker.AddObserver(&local_mapper);
   system.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
@@ -369,11 +362,11 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
                        sensor_constants);
     auto result = system.tracker->Track(frame);
 
-    if (i == 100) {
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      SaveStateToFile(system, "save_state");
-      exit(0);
-    }
+//    if (i == 100) {
+//      std::this_thread::sleep_for(std::chrono::seconds(2));
+//      SaveStateToFile(system, "save_state");
+//      exit(0);
+//    }
 
     if (orb_slam3::TrackingResult::OK == result) {
       feature_count = NFEATURES2;
@@ -471,7 +464,7 @@ int main(int argc, char * argv[]) {
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
-  OrbSlam3System system = LoadFromFolder("save_state");
+//  OrbSlam3System system = LoadFromFolder("save_state");
 //  system.local_mapper->Start();
 
 //  orb_slam3::serialization::SerializationContext context;
