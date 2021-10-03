@@ -472,6 +472,7 @@ const camera::ICamera *MonocularKeyFrame::GetCamera() const {
 }
 
 void MonocularKeyFrame::SerializeToStream(std::ostream &stream) const {
+  KeyFrame::SerializeToStream(stream);
   BaseMonocular::SerializeToStream(stream);
 }
 

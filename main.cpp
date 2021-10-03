@@ -77,7 +77,7 @@ OrbSlam3System LoadFromFolder(const std::string &save_folder_name) {
   if (!boost::filesystem::exists(tracker_filepath))
     std::cerr << "Cannot restore the state. Tracker dump file does not exist. " << std::endl;
 
-  std::ifstream atlas_stream(atlas_filepath, std::ios::binary);
+  std::ifstream atlas_stream(atlas_filepath, std::ios::in | std::ios::binary);
   orb_slam3::serialization::SerializationContext context;
   auto atlas = new orb_slam3::map::Atlas(atlas_stream, context);
 
@@ -91,6 +91,9 @@ OrbSlam3System LoadFromFolder(const std::string &save_folder_name) {
 
   result.local_mapper = new orb_slam3::LocalMapper(atlas, database);
   result.tracker = new orb_slam3::Tracker(atlas, result.local_mapper);
+
+  std::ifstream tracker_stream(tracker_filepath, std::ios::binary);
+  result.tracker->LoadState(tracker_stream, context);
   result.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
   return result;
 }
@@ -468,7 +471,7 @@ int main(int argc, char * argv[]) {
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
-//  OrbSlam3System system = LoadFromFolder("save_state");
+  OrbSlam3System system = LoadFromFolder("save_state");
 //  system.local_mapper->Start();
 
 //  orb_slam3::serialization::SerializationContext context;

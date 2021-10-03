@@ -11,7 +11,7 @@
 namespace orb_slam3 {
 namespace frame {
 
-BaseFrame::BaseFrame(std::istream &istream, serialization::SerializationContext &context) {
+BaseFrame::BaseFrame(std::istream &istream, serialization::SerializationContext &context) : atlas_(context.atlas) {
   size_t time_created;
   READ_FROM_STREAM(time_created, istream);
   SetTimePoint(TimePoint::clock::from_time_t(time_created));
