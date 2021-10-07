@@ -158,8 +158,10 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   in_out_transformation.T = trans_vertex->estimate().translation();
   in_out_transformation.s = trans_vertex->estimate().scale();
   in_out_transformation.print();
+#ifndef MULTITHREADED
   cv::imshow("projected matches", debug::DrawMapPointMatches(to_frame, from_frame, matches));
   cv::waitKey();
+#endif
   return optimizer.edges().size() / 2;
 
 }

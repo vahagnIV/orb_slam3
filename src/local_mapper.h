@@ -15,10 +15,11 @@
 #include <frame/database/ikey_frame_database.h>
 
 namespace orb_slam3 {
+class LoopMergeDetector;
 
 class LocalMapper {
  public:
-  explicit LocalMapper(map::Atlas * atlas);
+  LocalMapper(map::Atlas * atlas, LoopMergeDetector * loop_mege_detector);
   ~LocalMapper();
  public:
   void Start();
@@ -52,6 +53,7 @@ class LocalMapper {
   std::atomic_bool cancelled_;
   std::thread * thread_;
   bool accept_key_frames_;
+  LoopMergeDetector * loop_merge_detector_;
 };
 
 }

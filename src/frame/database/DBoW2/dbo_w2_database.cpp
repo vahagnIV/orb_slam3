@@ -52,6 +52,7 @@ void DBoW2Database::Serialize(ostream &ostream) const {
 void DBoW2Database::Append(KeyFrame *keyframe) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
+  std::unique_lock<std::mutex> lock(mutex_);
   for (auto wf: feature_handler->GetWordFrequencies()) {
     assert(wf.first < inverted_file_.size());
     inverted_file_[wf.first][keyframe] = wf.second;
@@ -185,6 +186,7 @@ void DBoW2Database::DetectRelocCandidates(const BaseFrame * keyframe,
 void DBoW2Database::Erase(KeyFrame * key_frame) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(key_frame->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
+  std::unique_lock<std::mutex> lock(mutex_);
   for (auto wid: feature_handler->GetBowVector()) {
     assert(wid.first < inverted_file_.size());
     inverted_file_[wid.first].erase(key_frame);

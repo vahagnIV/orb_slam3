@@ -482,7 +482,6 @@ void ORBFeatureExtractor::DistributeOctTree(
 
   // Retain the best point in each node
 
-#warning  check features_ == nFeatures
   out_map_points.reserve(nFeatures);
   for (std::list<ExtractorNode>::iterator lit = lNodes.begin();
        lit != lNodes.end(); lit++) {

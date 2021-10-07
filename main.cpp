@@ -84,12 +84,12 @@ OrbSlam3System LoadFromFolder(const std::string &save_folder_name) {
 
   OrbSlam3System result;
 
-  result.local_mapper = new orb_slam3::LocalMapper(atlas);
+  result.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
+  result.local_mapper = new orb_slam3::LocalMapper(atlas, result.loop_merge_detector);
   result.tracker = new orb_slam3::Tracker(atlas, result.local_mapper);
 
   std::ifstream tracker_stream(tracker_filepath, std::ios::binary);
   result.tracker->LoadState(tracker_stream, context);
-  result.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
   return result;
 }
 
@@ -236,7 +236,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   constants.sim3_optimization_huber_delta = std::sqrt(10.);
 
   orb_slam3::map::Atlas *atlas = new orb_slam3::map::Atlas(nullptr, nullptr);
-  orb_slam3::LocalMapper local_mapper(atlas);// TODO fix
+  orb_slam3::LocalMapper local_mapper(atlas, nullptr);// TODO fix
   orb_slam3::Tracker tracker(atlas, &local_mapper);
 
   //local_mapper.AddObserver(&tracker);
@@ -288,8 +288,11 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
     if (orb_slam3::TrackingResult::OK == result)
       feature_count = NFEATURES2;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    if (orb_slam3::TrackingResult::TRACKING_FAILED == result)
+    if (orb_slam3::TrackingResult::TRACKING_FAILED == result) {
+      std::this_thread::sleep_for(std::chrono::seconds(2));
       exit(1);
+
+    }
     //std::cout << i << std::endl;
     if (cv::waitKey(10) == 27) break;
   }
@@ -308,10 +311,11 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   OrbSlam3System system;
   auto *atlas = new orb_slam3::map::Atlas(feature_extractor, kf_database);
 
-  system.local_mapper = new orb_slam3::LocalMapper(atlas);
+  system.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
+  system.loop_merge_detector->Start();
+  system.local_mapper = new orb_slam3::LocalMapper(atlas, system.loop_merge_detector);
   system.tracker = new orb_slam3::Tracker(atlas, system.local_mapper);
 //  tracker.AddObserver(&local_mapper);
-  system.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_CREATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::TRACKING_INFO);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_CREATED);
@@ -379,6 +383,7 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
 
     if (orb_slam3::TrackingResult::TRACKING_FAILED == result) {
       std::cout << "============= " << system.local_mapper->GetQueueSize() << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(2));
       exit(1);
     }
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));

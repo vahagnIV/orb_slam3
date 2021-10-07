@@ -53,6 +53,7 @@ class DBoW2Database : public IKeyFrameDatabase {
                                              size_t count);
  private:
   std::vector<std::map<KeyFrame *, std::size_t> > inverted_file_;
+  mutable std::mutex mutex_;
 
 };
 

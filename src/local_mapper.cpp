@@ -18,9 +18,10 @@
 
 namespace orb_slam3 {
 
-LocalMapper::LocalMapper(map::Atlas * atlas)
+LocalMapper::LocalMapper(map::Atlas * atlas, LoopMergeDetector * loop_mege_detector)
     : atlas_(atlas),
-      thread_(nullptr) {}
+      thread_(nullptr),
+      loop_merge_detector_(loop_mege_detector) {}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -227,11 +228,9 @@ void LocalMapper::RunIteration() {
       Optimize(key_frame);
       KeyFrameCulling(key_frame);
     }
-//    if (!message.frame->IsBad())
-//      NotifyObservers(message);
-    //TODO: Remove this line in multithreading
-//    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
-//    NotifyObservers(message.frame);
+    if (loop_merge_detector_)
+      loop_merge_detector_->Process(key_frame);
+
     accept_key_frames_ = true;
   }
 }
@@ -281,7 +280,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
 
   frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);
-  for (auto mp:mps) {
+  for (auto mp: mps) {
     if (!mp->IsBad()) {
       mp->ComputeDistinctiveDescriptor();
       mp->CalculateNormalStaging();
@@ -335,10 +334,10 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
         map::MapPoint::MapType observations = mp->Observations();
         long no_obs =
             std::count_if(observations.begin(),
-                       observations.end(),
-                       [&scale_level](const map::MapPoint::MapType::value_type &obs) {
-                         return obs.second.GetKeyFrame()->GetScaleLevel(obs.second) < scale_level + 1;
-                       }) - 1;
+                          observations.end(),
+                          [&scale_level](const map::MapPoint::MapType::value_type & obs) {
+                            return obs.second.GetKeyFrame()->GetScaleLevel(obs.second) < scale_level + 1;
+                          }) - 1;
         if (no_obs > 3l)
           ++redundan_observations;
       }
@@ -361,7 +360,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       kf->SetBad();
       kf->UnlockMapPointContainer();
     }
-    for (auto mp : map_points) {
+    for (auto mp: map_points) {
       if (!mp->IsBad()) {
         mp->CalculateNormalStaging();
         mp->ApplyStaging();

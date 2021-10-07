@@ -5,17 +5,23 @@
 #ifndef ORB_SLAM3_SRC_LOOP_MERGE_DETECTOR_H_
 #define ORB_SLAM3_SRC_LOOP_MERGE_DETECTOR_H_
 
-#include "position_observer.h"
 #include <frame/database/ikey_frame_database.h>
 #include <map/atlas.h>
+#include <concurrentqueue/concurrentqueue.h>
 namespace orb_slam3 {
 
-class LoopMergeDetector : public PositionObserver {
+class LoopMergeDetector {
 
  public:
-  LoopMergeDetector(map::Atlas *atlas);
+  LoopMergeDetector(map::Atlas * atlas);
   void RunIteration();
+  ~LoopMergeDetector();
+ public:
+  void Start();
+  void Stop();
+  void Process(frame::KeyFrame * key_frame);
  private:
+  void Run();
   enum DetectionResult {
     LoopDetected = 1,
     MergeDetected = 2,
@@ -37,9 +43,11 @@ class LoopMergeDetector : public PositionObserver {
                                     frame::IKeyFrameDatabase::KeyFrameSet & out_window);
   static void ListAllMapPoints(const frame::IKeyFrameDatabase::KeyFrameSet & key_frames,
                                std::unordered_set<map::MapPoint *> & out_mps);
-  static void SearchAndFuse();
  private:
   map::Atlas * atlas_;
+  bool canceled_;
+  moodycamel::ConcurrentQueue<frame::KeyFrame *> queue_;
+  std::thread * thread_;
 
 };
 
