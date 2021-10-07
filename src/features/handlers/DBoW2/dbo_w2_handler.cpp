@@ -11,8 +11,19 @@ namespace orb_slam3 {
 namespace features {
 namespace handlers {
 
-void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
-                             FastMatches & out_matches,
+DBoW2Handler::DBoW2Handler(std::istream &istream,
+                           serialization::SerializationContext &context,
+                           const BowVocabulary *vocabulary)
+    : BaseFeatureHandler(istream, context), vocabulary_(vocabulary) {}
+
+DBoW2Handler::DBoW2Handler(Features &&features,
+                           const IFeatureExtractor *feature_extractor,
+                           const BowVocabulary *vocabulary) : BaseFeatureHandler(std::move(features),
+                                                                                 feature_extractor),
+                                                              vocabulary_(vocabulary) {}
+
+void DBoW2Handler::FastMatch(const std::shared_ptr<const BaseFeatureHandler> &other,
+                             FastMatches &out_matches,
                              MatchingSeverity severity,
                              bool check_orientation) const {
 
@@ -69,10 +80,10 @@ void DBoW2Handler::Precompute() {
   const DescriptorSet & descriptors = GetFeatures().descriptors;
   current_descriptors.reserve(descriptors.rows());
   for (int i = 0; i < descriptors.rows(); ++i) {
-    current_descriptors.push_back(cv::Mat(1,
+    current_descriptors.emplace_back(1,
                                           descriptors.cols(),
                                           cv::DataType<DescriptorSet::Scalar>::type,
-                                          (void *) descriptors.row(i).data()));
+                                          (void *) descriptors.row(i).data());
   }
 
   vocabulary_->transform(current_descriptors, bow_vector_, feature_vector_, 4);
@@ -89,8 +100,9 @@ const DBoW2::BowVector & DBoW2Handler::GetBowVector() const {
   return bow_vector_;
 }
 
-void DBoW2Handler::Serialize(ostream & stream) const {
 
+HandlerType DBoW2Handler::Type() const {
+  return HandlerType::DBoW2;
 }
 
 }

@@ -7,7 +7,6 @@
 #include <frame/frame.h>
 #include "base_monocular.h"
 #include "monocular_key_frame.h"
-#include <features/factories/handler_factory.h>
 
 namespace orb_slam3 {
 namespace frame {
@@ -15,13 +14,17 @@ namespace monocular {
 
 class MonocularFrame : public Frame, public BaseMonocular {
  public:
-  MonocularFrame(const TImageGray8U & image,
+  MonocularFrame(map::Atlas *atlas,
+                 features::handlers::HandlerType handler_type,
+                 size_t feature_count,
+                 TImageGray8U &image,
                  TimePoint time_point,
-                 const std::string & filename,
-                 const features::IFeatureExtractor * feature_extractor,
-                 const camera::MonocularCamera * camera,
-                 const SensorConstants * sensor_constants,
-                 const features::HandlerFactory * handler_factory);
+                 const std::string &filename,
+                 const camera::MonocularCamera *camera,
+                 const SensorConstants *sensor_constants);
+
+  MonocularFrame(std::istream & stream, serialization::SerializationContext & context);
+
  public:
   // Frame
   FrameType Type() const override;
@@ -38,15 +41,15 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points) override;
   size_t GetMapPointsCount() const ;
   void UpdateFromReferenceKeyFrame() override;
+  virtual void SerializeToStream(std::ostream & stream) const override;
  public:
   /*!
    * Used for debugging
    * @return a map of bad map points only
    */
   BaseMonocular::MonocularMapPoints GetBadMapPoints() const;
- protected:
-  void SerializeToStream(std::ostream & stream) const override;
-
+  const camera::ICamera * GetCamera() const override;
+  void SetCamera(const camera::ICamera * icamera) override;
  private:
   bool ComputeMatchesForLinking(MonocularFrame * from_frame, std::unordered_map<size_t, size_t> & out_matches) const;
   void InitializeMapPointsFromMatches(const std::unordered_map<std::size_t, std::size_t> & matches,

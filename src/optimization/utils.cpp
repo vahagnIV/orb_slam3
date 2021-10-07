@@ -8,6 +8,7 @@
 
 #include <g2o/solvers/dense/linear_solver_dense.h>
 #include <map/map_point.h>
+#include <map/atlas.h>
 #include <frame/monocular/monocular_frame.h>
 
 namespace orb_slam3 {
@@ -112,7 +113,8 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
   const features::Features & from_features = from_frame->GetFeatureHandler()->GetFeatures();
 
   int id_counter = 0;
-  auto transformation_vertex = CreateSim3Vertex(in_out_transformation, to_frame->GetCamera(), from_frame->GetCamera());
+  auto transformation_vertex = CreateSim3Vertex(in_out_transformation, to_frame->GetMonoCamera(),
+                                                from_frame->GetMonoCamera());
   transformation_vertex->_fix_scale = false;
   transformation_vertex->setId(id_counter);
 
@@ -151,7 +153,7 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
     from_mp_vertex->setFixed(true);
 
     auto from_to_edge = CreateEdge<g2o::EdgeSim3ProjectXYZ>(to_features,
-                                                            to_frame->GetFeatureExtractor(),
+                                                            to_frame->GetMap()->GetAtlas()->GetFeatureExtractor(),
                                                             to_features.undistorted_keypoints[to_feature_id],
                                                             to_features.keypoints[to_feature_id].level,
                                                             to_frame->GetSensorConstants()->sim3_optimization_huber_delta);
@@ -180,11 +182,11 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
       TPoint3D virtual_point = sim3_transformation_inverse.Transform(from_pose.Transform(to_mp->GetPosition()));
       if (virtual_point.z() <= 0)
         continue;
-      from_frame->GetCamera()->ProjectPoint(virtual_point, measurement);*/
+      from_frame->GetMonoCamera()->ProjectPoint(virtual_point, measurement);*/
     }
 
     auto to_from_edge = CreateEdge<g2o::EdgeInverseSim3ProjectXYZ>(from_features,
-                                                                   from_frame->GetFeatureExtractor(),
+                                                                   from_frame->GetMap()->GetAtlas()->GetFeatureExtractor(),
                                                                    measurement,
                                                                    level,
                                                                    from_frame->GetSensorConstants()->sim3_optimization_huber_delta);

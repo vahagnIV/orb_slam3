@@ -13,43 +13,43 @@
 #include "sensor_constants.h"
 #include "map_point_visibility_params.h"
 #include <features/handlers/base_feature_handler.h>
+#include <camera/icamera.h>
 
 namespace orb_slam3 {
+
+namespace serialization{
+class SerializationContext;
+}
 
 namespace map {
 class MapPoint;
 class Map;
+class Atlas;
 }
 
 namespace frame {
 
 class BaseFrame : public geometry::RigidObject {
  public:
-  friend std::ostream & operator<<(std::ostream & stream, const BaseFrame * frame) {
-    frame->SerializeToStream(stream);
-    stream << frame->GetPosition();
-    stream << frame->GetInversePosition();
-    size_t size = frame->filename_.length();
-    stream.write((char *) &size, sizeof(size));
-    stream.write(frame->filename_.data(), size);
-    return stream;
-  }
-
+  BaseFrame(std::istream &istream, serialization::SerializationContext &context);
   BaseFrame(TimePoint time_point,
-            const std::string & filename,
-            const SensorConstants * sensor_constants,
+            std::string filename,
+            const SensorConstants *sensor_constants,
             size_t id,
-            const std::shared_ptr<const features::handlers::BaseFeatureHandler> & feature_handler = nullptr) :
-      time_point_(time_point),
-      filename_(filename),
-      sensor_constants_(sensor_constants),
-      id_(id),
-      feature_handler_(feature_handler),
-      map_(nullptr) {}
+            map::Atlas * atlas);
+
   ~BaseFrame() override = default;
+ public:
+  void SetTimePoint(TimePoint time_point);
+  void SetFilename(const std::string & filename);
+  void SetSensorConstants(const SensorConstants * constants);
+  void SetId(size_t id);
+  void SetFeatureHandler(const std::shared_ptr<const features::handlers::BaseFeatureHandler> & handler);
 
  public:
   typedef std::unordered_set<map::MapPoint *> MapPointSet;
+  virtual const camera::ICamera * GetCamera() const = 0;
+  virtual void SetCamera(const camera::ICamera * icamera) = 0;
 
   virtual FrameType Type() const = 0;
   virtual void ListMapPoints(MapPointSet & out_map_points) const = 0;
@@ -58,23 +58,25 @@ class BaseFrame : public geometry::RigidObject {
   size_t Id() const { return id_; }
 
   TimePoint GetTimeCreated() const { return time_point_; }
-  const features::IFeatureExtractor * GetFeatureExtractor() const { return feature_handler_->GetFeatureExtractor(); }
   const std::string & GetFilename() const { return filename_; }
   const std::shared_ptr<const features::handlers::BaseFeatureHandler> & GetFeatureHandler() const { return feature_handler_; }
 
   virtual void SetMap(map::Map * map) { map_ = map; }
   map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
+  map::Atlas * GetAtlas() const { return atlas_; }
+  void Serialize(std::ostream & stream) const;
  protected:
-  virtual void SerializeToStream(std::ostream & stream) const = 0;
+  virtual void SerializeToStream(std::ostream & stream) const {};
 
  protected:
-  const TimePoint time_point_;
-  const std::string filename_;
+  TimePoint time_point_;
+  std::string filename_;
   const SensorConstants * sensor_constants_;
   size_t id_;
   std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler_;
   map::Map * map_;
+  map::Atlas * atlas_;
 };
 
 }

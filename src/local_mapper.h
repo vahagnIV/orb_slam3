@@ -18,7 +18,7 @@ namespace orb_slam3 {
 
 class LocalMapper {
  public:
-  explicit LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database);
+  explicit LocalMapper(map::Atlas * atlas);
   ~LocalMapper();
  public:
   void Start();
@@ -52,7 +52,6 @@ class LocalMapper {
   std::atomic_bool cancelled_;
   std::thread * thread_;
   bool accept_key_frames_;
-  frame::IKeyFrameDatabase * key_frame_database_;
 };
 
 }

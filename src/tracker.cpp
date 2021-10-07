@@ -12,6 +12,8 @@
 #include <frame/key_frame.h>
 #include <optimization/bundle_adjustment.h>
 #include <map/map_point.h>
+#include <serialization/serialization_context.h>
+#include <factories/frame_factory.h>
 
 #include "local_mapper.h"
 #include "debug/debug_utils.h"
@@ -28,11 +30,15 @@ Tracker::Tracker(orb_slam3::map::Atlas * atlas, LocalMapper * local_mapper)
       last_frame_(nullptr),
       state_(NOT_INITIALIZED),
       local_mapper_(local_mapper) {
-  kf_counter = 1000;
+  kf_counter_ = 1000;
 }
 
 Tracker::~Tracker() {
-  delete atlas_;
+//  delete atlas_;
+}
+
+map::Atlas * Tracker::GetAtlas() const {
+  return atlas_;
 }
 
 frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
@@ -99,7 +105,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   last_frame_->UpdateFromReferenceKeyFrame();
 
   assert(OK == state_);
-  ++kf_counter;
+  ++kf_counter_;
 
   std::list<frame::MapPointVisibilityParams> frame_visibles;
   bool tracked = (TrackWithMotionModel(frame, frame_visibles) || TrackWithReferenceKeyFrame(frame));
@@ -211,7 +217,7 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   std::unordered_set<map::MapPoint *> ref_kf_all_tracked_map_points;
   reference_keyframe_->ListMapPoints(ref_kf_all_tracked_map_points);
   std::unordered_set<map::MapPoint *> filtered_tracked_map_points;
-  for (auto tracked_map_point : ref_kf_all_tracked_map_points) {
+  for (auto tracked_map_point: ref_kf_all_tracked_map_points) {
     if (tracked_map_point->GetObservationCount() >= min_observation_count) {
       filtered_tracked_map_points.insert(tracked_map_point);
     }
@@ -228,9 +234,9 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   return local_mapper_accepts_key_frame;
   /*std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);
-  bool need = kf_counter >= 4;// && m.size() > 40;
+  bool need = kf_counter_ >= 4;// && m.size() > 40;
   if (need)
-    kf_counter = 0;
+    kf_counter_ = 0;
 
   return need;*/
 }
@@ -281,7 +287,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
       mp->SetStagingMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
       mp->SetStagingMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
       mp->SetStagingPosition(pose);
-      mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
+      mp->ComputeDistinctiveDescriptor();
       mp->CalculateNormalStaging();
       mp->ApplyStaging();
     }
@@ -356,6 +362,47 @@ void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
   geometry::Pose pose = velocity_ * last_frame_->GetPosition();
   frame->SetStagingPosition(pose);
   frame->ApplyStaging();
+}
+
+void Tracker::SaveState(std::ostream & ostream) {
+  WRITE_TO_STREAM(kf_counter_, ostream);
+  WRITE_TO_STREAM(velocity_is_valid_, ostream);
+  ostream << velocity_;
+  size_t last_kf_frame_id = last_key_frame_->Id();
+  size_t reference_kf_frame_id = reference_keyframe_->Id();
+  WRITE_TO_STREAM(last_kf_frame_id, ostream);
+  WRITE_TO_STREAM(reference_kf_frame_id, ostream);
+  WRITE_TO_STREAM(state_, ostream);
+  size_t current_map_id = reinterpret_cast<size_t>(atlas_->GetCurrentMap());
+  WRITE_TO_STREAM(current_map_id, ostream);
+
+  frame::FrameType type = last_frame_->Type();
+  WRITE_TO_STREAM(type, ostream);
+
+  last_frame_->Serialize(ostream);
+}
+
+void Tracker::LoadState(std::istream & istream, serialization::SerializationContext & context) {
+  READ_FROM_STREAM(kf_counter_, istream);
+  READ_FROM_STREAM(velocity_is_valid_, istream);
+  istream >> velocity_;
+
+  size_t last_kf_frame_id, reference_kf_frame_id;
+  READ_FROM_STREAM(last_kf_frame_id, istream);
+  READ_FROM_STREAM(reference_kf_frame_id, istream);
+  last_key_frame_ = context.kf_id[last_kf_frame_id];
+  reference_keyframe_ = context.kf_id[reference_kf_frame_id];
+  READ_FROM_STREAM(state_, istream);
+  size_t current_map_id;
+  READ_FROM_STREAM(current_map_id, istream);
+
+  atlas_->SetCurrentMap(context.map_id[current_map_id]);
+
+  frame::FrameType type;
+  READ_FROM_STREAM(type, istream);
+
+  last_frame_ = factories::FrameFactory::Create(type, istream, context);
+
 }
 
 }  // namespace orb_slam3

@@ -16,11 +16,12 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
 
   friend class MonocularFrame;
 
-  /// Special member functions
  private:
   explicit MonocularKeyFrame(MonocularFrame * frame);
-
  public:
+
+  /// Special member functions
+  MonocularKeyFrame(std::istream &istream, serialization::SerializationContext &context);
   ~MonocularKeyFrame() override = default;
 
  public:
@@ -42,7 +43,6 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
  public:
   MonocularMapPoints GetMapPointsWithLock() const;
  protected:
-  void SerializeToStream(std::ostream & stream) const override;
   void InitializeImpl() override;
  public:
   map::MapPoint * EraseMapPoint(size_t feature_id) override;
@@ -52,11 +52,11 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
   bool FindSim3Transformation(const MapPointMatches & map_point_matches,
                               const KeyFrame * loop_candidate,
                               geometry::Sim3Transformation & out_transormation) const override;
-  void FilterVisibleMapPoints(const MapPointSet & map_points,
-                              const geometry::Sim3Transformation & relative_transformation,
-                              const geometry::Pose & mp_local_transformation,
-                              std::list<MapPointVisibilityParams> & out_visibles,
-                              precision_t radius_multiplier) const override;
+  void FilterVisibleMapPoints(const MapPointSet &map_points,
+                              const geometry::Sim3Transformation &relative_transformation,
+                              const geometry::Pose &mp_local_transformation,
+                              precision_t radius_multiplier,
+                              std::list<MapPointVisibilityParams> &out_visibles) const override;
   size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
                                   const KeyFrame * relative_kf,
                                   geometry::Sim3Transformation & in_out_transformation) const override;
@@ -67,6 +67,9 @@ class MonocularKeyFrame : public KeyFrame, public BaseMonocular {
                              std::list<Observation> & out_local_matches) const override;
   int GetScaleLevel(const map::MapPoint *map_point) const override;
   int GetScaleLevel(const Observation &observation) const override;
+  const camera::ICamera *GetCamera() const override;
+  void SetCamera(const camera::ICamera *icamera) override;
+  void SerializeToStream(std::ostream &stream) const override;
  private:
 
   int GetMapPointLevel(const map::MapPoint * map_point) const;

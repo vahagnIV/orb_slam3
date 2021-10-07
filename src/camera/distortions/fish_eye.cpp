@@ -10,7 +10,21 @@
 namespace orb_slam3 {
 namespace camera {
 
-bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint & distorted) const {
+FishEye::FishEye() : k1_(0), k2_(0), k3_(0), k4_(0) {
+}
+
+FishEye::FishEye(std::istream &istream, serialization::SerializationContext &context) {
+  READ_FROM_STREAM(k1_, istream);
+  READ_FROM_STREAM(k2_, istream);
+  READ_FROM_STREAM(k3_, istream);
+  READ_FROM_STREAM(k4_, istream);
+}
+
+DistortionModelType FishEye::Type() {
+  return DistortionModelType::FISHEYE;
+}
+
+bool FishEye::DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const {
 
   /*ACHTUNG: NOT TESTED*/
 
@@ -39,19 +53,19 @@ bool FishEye::DistortPoint(const HomogenousPoint & undistorted, HomogenousPoint 
 }
 
 bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint & undistorted) const {
-  std::vector<cv::Point2d> point(1), undistorted_point;
-  point[0] = cv::Point2d(distorted.x(), distorted.y());
-
-  cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
-  cv::Mat K = R.clone();
-  cv::fisheye::undistortPoints(point,
-                               undistorted_point,
-                               K,
-                               cv::Mat(1, 4, CV_64F, (void *) (estimate_->data() + 4)),
-                               R,
-                               K);
-  undistorted << undistorted_point[0].x, undistorted_point[0].y, 1;
-  return true;
+//  std::vector<cv::Point2d> point(1), undistorted_point;
+//  point[0] = cv::Point2d(distorted.x(), distorted.y());
+//
+//  cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
+//  cv::Mat K = R.clone();
+//  cv::fisheye::undistortPoints(point,
+//                               undistorted_point,
+//                               K,
+//                               cv::Mat(1, 4, CV_64F, (void *) (estimate_->data() + 4)),
+//                               R,
+//                               K);
+//  undistorted << undistorted_point[0].x, undistorted_point[0].y, 1;
+//  return true;
 
   double theta_d = std::sqrt(distorted.x() * distorted.x() + distorted.y() * distorted.y());
   theta_d = std::min(M_PI_2, std::max(-M_PI_2, theta_d));
@@ -122,6 +136,13 @@ void FishEye::ComputeJacobian(const TPoint2D & point,
 
 //  out_jacobian(1, 0) = (Dthetad * y * x / (r2 * (r2 + 1)) - thetad * y * x / r3);
   out_jacobian(1, 1) = (Dthetad * y2 / (r2 * (r2 + 1)) + thetad * x2 / r3);
+}
+
+void FishEye::Serialize(std::ostream & ostream) const {
+  WRITE_TO_STREAM(k1_, ostream);
+  WRITE_TO_STREAM(k2_, ostream);
+  WRITE_TO_STREAM(k3_, ostream);
+  WRITE_TO_STREAM(k4_, ostream);
 }
 
 }

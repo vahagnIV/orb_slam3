@@ -11,7 +11,7 @@
 // == orb-slam3 ===
 #include "../typedefs.h"
 #include "../features/key_point.h"
-#include "idistortion_model.h"
+#include "src/camera/distortions/idistortion_model.h"
 #include "icamera.h"
 
 namespace orb_slam3 {
@@ -22,42 +22,20 @@ namespace camera {
 #endif
 
 class MonocularCamera
-    : public ICamera, protected g2o::BaseVertex<DISTORTION_MODEL_PARAMS_MAX + CAMERA_PARAMS_COUNT, Eigen::VectorXd> {
+    : public ICamera {
  public:
 
-  typedef decltype(_estimate)::Scalar Scalar;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   MonocularCamera(unsigned width, unsigned height) :
       width_(width),
       height_(height),
       distortion_model_(nullptr) {
-
-    setEstimate(Eigen::Matrix<double, DISTORTION_MODEL_PARAMS_MAX + 4, 1>::Zero());
   }
+
+  MonocularCamera(std::istream &istream,
+                  serialization::SerializationContext &context);
   virtual ~MonocularCamera() { delete distortion_model_; }
 
  public: // ====  optimization =============
-
-  bool read(std::istream & /*is*/) override {
-    assert(!"Read is not Implemented yet");
-    return false;
-  }
-
-  bool write(std::ostream & /*os*/) const override {
-    assert(!"Write is not Implemented yet");
-    return false;
-  }
-
-  void setToOriginImpl() override {
-    assert(!"Set to Origin is not Implemented yet");
-  }
-
-  void oplusImpl(const double * update) override {
-    Eigen::VectorXd::ConstMapType v(update, MonocularCamera::Dimension);
-    this->_estimate += v;
-    fx_inv_ = _estimate[0] ? 1 / _estimate[0] : 1;
-    fx_inv_ = _estimate[1] ? 1 / _estimate[1] : 1;
-  }
 
   TMatrix33 K() const {
     TMatrix33 K;
@@ -69,16 +47,8 @@ class MonocularCamera
 
  public:
 
-  template<typename TDistortionModel>
-  TDistortionModel * CreateDistortionModel() {
-    if (DISTORTION_MODEL_PARAMS_MAX < TDistortionModel::DistrortionSize + CAMERA_PARAMS_COUNT) {
-      throw std::runtime_error("Please increase DISTORTION_MODEL_PARAMS_MAX and rebuild the program...");
-    }
-
-    delete distortion_model_;
-    TDistortionModel * model = new TDistortionModel(&_estimate);
+  void SetDistortionModel(IDistortionModel * model) {
     distortion_model_ = model;
-    return model;
   }
 
   const IDistortionModel * GetDistortionModel() const override {
@@ -99,13 +69,16 @@ class MonocularCamera
    * Width of the image
    * @return unsigned
    */
-  unsigned Width() const { return width_; }
+  inline unsigned Width() const { return width_; }
 
   /*!
    * Height of the image
    * @return
    */
-  unsigned Height() const { return height_; }
+  inline unsigned Height() const { return height_; }
+
+  inline void SetWidth(unsigned width) { width_ = width; }
+  inline void SetHeight(unsigned height) { height_ = height; }
 
   inline const precision_t & ImageBoundMinX() const { return min_X_; }
   inline const precision_t & ImageBoundMinY() const { return min_Y_; }
@@ -124,23 +97,25 @@ class MonocularCamera
   void ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const;
   bool UnprojectAndUndistort(const TPoint2D & point, HomogenousPoint & unprojected) const;
 
-  inline const Scalar & Fx() const noexcept { return this->_estimate[0]; }
-  inline const Scalar & Fy() const noexcept { return this->_estimate[1]; }
-  inline const Scalar & Cx() const noexcept { return this->_estimate[2]; }
-  inline const Scalar & Cy() const noexcept { return this->_estimate[3]; }
-  inline const Scalar & FxInv() const noexcept { return fx_inv_; }
-  inline const Scalar & FyInv() const noexcept { return fy_inv_; }
+  inline const precision_t & Fx() const noexcept { return fx_; }
+  inline const precision_t & Fy() const noexcept { return fy_; }
+  inline const precision_t & Cx() const noexcept { return cx_; }
+  inline const precision_t & Cy() const noexcept { return cy_; }
+  inline const precision_t & FxInv() const noexcept { return fx_inv_; }
+  inline const precision_t & FyInv() const noexcept { return fy_inv_; }
 
-  void SetFx(Scalar fx) noexcept {
-    _estimate[0] = fx;
+  void SetFx(precision_t fx) noexcept {
+    fx_ = fx;
     fx_inv_ = fx ? 1 / fx : 0;
   }
-  void SetFy(Scalar fy) noexcept {
-    _estimate[1] = fy;
+  void SetFy(precision_t fy) noexcept {
+    fy_ = fy;
     fy_inv_ = fy ? 1 / fy : 1;
   }
-  void SetCx(Scalar cx) noexcept { _estimate[2] = cx; }
-  void SetCy(Scalar cy) noexcept { _estimate[3] = cy; }
+  void SetCx(precision_t cx) noexcept { cx_ = cx; }
+  void SetCy(precision_t cy) noexcept { cy_ = cy; }
+  CameraType Type() const override;
+  void Serialize(std::ostream & ostream) const override;
 
 #if DistCoeffsLength == 8
   inline const double & K4() noexcept { return _estimate[9] ; }
@@ -157,8 +132,9 @@ class MonocularCamera
  protected:
   unsigned width_;
   unsigned height_;
-  double min_X_, max_X_, min_Y_, max_Y_;
-  double fx_inv_, fy_inv_;
+  precision_t min_X_, max_X_, min_Y_, max_Y_;
+  precision_t fx_inv_, fy_inv_;
+  precision_t fx_, fy_, cx_, cy_;
   IDistortionModel * distortion_model_;
 
 };

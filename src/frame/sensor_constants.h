@@ -8,6 +8,9 @@
 #include <typedefs.h>
 
 namespace orb_slam3 {
+namespace serialization {
+class SerializationContext;
+}
 namespace frame {
 
 struct SensorConstants {
@@ -20,6 +23,8 @@ struct SensorConstants {
   unsigned min_number_of_edges_sim3_opt;
   precision_t sim3_optimization_threshold;
   precision_t sim3_optimization_huber_delta;
+  void Serialize(std::ostream & ostream) const;
+  void Deserialize(std::istream & istream, serialization::SerializationContext & context);
 
 };
 

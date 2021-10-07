@@ -8,6 +8,9 @@
 #include <frame/database/ikey_frame_database.h>
 #include <features/bow_vocabulary.h>
 namespace orb_slam3 {
+namespace serialization{
+class SerializationContext;
+}
 
 namespace features {
 namespace handlers {
@@ -20,6 +23,7 @@ namespace frame {
 class DBoW2Database : public IKeyFrameDatabase {
  public:
   DBoW2Database(const features::BowVocabulary * vocabulary);
+  DBoW2Database(std::istream & istream, serialization::SerializationContext & context);
  public:
   void Append(KeyFrame * keyframe) override;
   void DetectNBestCandidates(const BaseFrame * keyframe,
@@ -28,6 +32,8 @@ class DBoW2Database : public IKeyFrameDatabase {
                              size_t count) const override;
   void DetectRelocCandidates(const BaseFrame * keyframe, KeyFrameSet & out_reloc_candidates) const override;
   void Erase(KeyFrame * key_frame) override;
+  KeyframeDatabaseType Type() const override;
+  void Serialize(ostream &ostream) const override;
  private:
   typedef std::unordered_map<KeyFrame *, size_t> WordSharingKeyFrameMap;
   typedef std::unordered_map<KeyFrame *, precision_t> ScoreKeyFrameMap;

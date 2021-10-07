@@ -23,7 +23,8 @@ class KeyFrame;
 class Observation {
  public:
   Observation();
-  Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_ids);
+  Observation(std::istream &istream, serialization::SerializationContext &context);
+  Observation(map::MapPoint *map_point, KeyFrame *key_frame, size_t feature_ids);
   Observation(map::MapPoint * map_point, KeyFrame * key_frame, size_t feature_id_left, size_t feature_id_right);
   Observation(const Observation & other);
 
@@ -66,13 +67,13 @@ class Observation {
   size_t GetFeatureId() const;
   size_t GetLeftFeatureId() const;
   size_t GetRightFeatureId() const;
-  friend std::ostream & operator<<(std::ostream & stream, const Observation & map_point);
 
   /*!
    * Creates a robust kernel for optimization
    * @return The pointer for the newly created kernel
    */
   virtual g2o::RobustKernel * CreateRobustKernel();
+  void Serialize(std::ostream & ostream) const;
 
  protected:
   bool IsMonocular() const;

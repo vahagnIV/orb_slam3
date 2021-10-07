@@ -15,35 +15,58 @@
 #include <src/features/handlers/DBoW2/bow_to_iterator.h>
 #include "monocular_key_frame.h"
 #include <map/map.h>
+#include <map/atlas.h>
 #include <debug/debug_utils.h>
+#include <serialization/serialization_context.h>
+#include <factories/feature_handler_factory.h>
 
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularFrame::MonocularFrame(const TImageGray8U & image,
+MonocularFrame::MonocularFrame(map::Atlas *atlas,
+                               features::handlers::HandlerType handler_type,
+                               size_t feature_count,
+                               TImageGray8U &image,
                                TimePoint time_point,
-                               const std::string & filename,
-                               const features::IFeatureExtractor * feature_extractor,
-                               const camera::MonocularCamera * camera,
-                               const SensorConstants * sensor_constants,
-                               const features::HandlerFactory * handler_factory) : Frame(time_point,
-                                                                                         filename,
-                                                                                         sensor_constants),
-                                                                                   BaseMonocular(camera),
-                                                                                   reference_keyframe_(nullptr) {
-  features::Features features(camera->Width(), camera->Height());
-  feature_extractor->Extract(image, features);
-  features.AssignFeaturesToGrid();
+                               const std::string &filename,
+                               const camera::MonocularCamera *camera,
+                               const SensorConstants *sensor_constants) :
+    Frame(time_point, filename, sensor_constants, atlas),
+    BaseMonocular(camera),
+    reference_keyframe_(nullptr) {
+  auto feature_handler = factories::FeatureHandlerFactory::Create(handler_type,
+                                                                  image,
+                                                                  camera,
+                                                                  atlas->GetFeatureExtractor(),
+                                                                  feature_count);
+  SetFeatureHandler(feature_handler);
+}
 
-  features.undistorted_keypoints.resize(features.Size());
-  features.undistorted_and_unprojected_keypoints.resize(features.Size());
-  for (size_t i = 0; i < features.Size(); ++i) {
-    camera->UndistortPoint(features.keypoints[i].pt, features.undistorted_keypoints[i]);
-    camera->UnprojectAndUndistort(features.keypoints[i].pt, features.undistorted_and_unprojected_keypoints[i]);
+MonocularFrame::MonocularFrame(std::istream &stream, serialization::SerializationContext &context)
+    : Frame(stream, context),
+      BaseMonocular(stream, context) {
+  size_t reference_kf_id;
+  READ_FROM_STREAM(reference_kf_id, stream);
+  frame::KeyFrame *rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
+  if(rf_kf) {
+    if (rf_kf->Type() != Type())
+      throw std::runtime_error(
+          "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
+    reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
+    assert(nullptr != reference_keyframe_);
   }
-
-  feature_handler_ = handler_factory->CreateFeatureHandler(features, feature_extractor);
+  else{
+    reference_keyframe_ = nullptr;
+  }
+  size_t mp_count;
+  READ_FROM_STREAM(mp_count, stream);
+  for (size_t i = 0; i < mp_count; ++i) {
+    size_t feature_id, mp_id;
+    READ_FROM_STREAM(feature_id, stream);
+    READ_FROM_STREAM(mp_id, stream);
+    AddMapPoint(context.mp_id[mp_id], feature_id);
+  }
 }
 
 bool MonocularFrame::Link(Frame * other) {
@@ -57,7 +80,7 @@ bool MonocularFrame::Link(Frame * other) {
   if (!ComputeMatchesForLinking(from_frame, matches))
     return false;
 
-  geometry::TwoViewReconstructor reconstructor(200, GetCamera()->FxInv());
+  geometry::TwoViewReconstructor reconstructor(200, GetMonoCamera()->FxInv());
   std::unordered_map<size_t, TPoint3D> points;
   geometry::Pose pose;
   if (!reconstructor.Reconstruct(feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints,
@@ -162,7 +185,7 @@ bool MonocularFrame::ComputeMatchesForLinking(MonocularFrame * from_frame,
           &from_frame->feature_handler_->GetFeatures(),
           100);
 
-  matcher.MatchWithIterators(begin, end, feature_handler_->GetFeatureExtractor(), out_matches);
+  matcher.MatchWithIterators(begin, end, GetAtlas()->GetFeatureExtractor(), out_matches);
   logging::RetrieveLogger()->debug("Orientation validator discarded {} matches",
                                    features::matching::OrientationValidator
                                        (feature_handler_->GetFeatures().keypoints,
@@ -184,11 +207,11 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
                                                     const std::unordered_map<size_t, TPoint3D> & points,
                                                     MonocularFrame * from_frame,
                                                     BaseFrame::MapPointSet & out_map_points) {
-  for (const auto & point : points) {
+  for (const auto & point: points) {
 //    std::cout << point.second.x() << " " << point.second.y() << " " << point.second.z() << std::endl;
 
     precision_t max_invariance_distance, min_invariance_distance;
-    feature_handler_->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
+    GetAtlas()->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
                                                                        feature_handler_->GetFeatures().keypoints[point.first],
                                                                        max_invariance_distance,
                                                                        min_invariance_distance);
@@ -244,7 +267,7 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
                                     radius_multiplier,
                                     -1,
                                     map_point,
-                                    GetFeatureExtractor())) {
+                                    GetAtlas()->GetFeatureExtractor())) {
 
       out_filetered_map_points.push_back(map_point);
     }
@@ -287,7 +310,7 @@ void MonocularFrame::UpdateFromReferenceKeyFrame() {
     SetStagingPosition(reference_keyframe_->GetPositionWithLock());
     ApplyStaging();
     ClearMapPoints();
-    for(const auto & mp: reference_keyframe_->GetMapPointsWithLock()){
+    for (const auto & mp: reference_keyframe_->GetMapPointsWithLock()) {
       AddMapPoint(mp.second, mp.first);
     }
   }
@@ -315,7 +338,7 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
                                     radius_multiplier,
                                     last_frame->feature_handler_->GetFeatures().keypoints[mp.first].level,
                                     vmp,
-                                    GetFeatureExtractor())) {
+                                    GetAtlas()->GetFeatureExtractor())) {
       vmp.map_point = mp.second;
       out_visibles.push_back(vmp);
     }
@@ -354,41 +377,29 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
   return false;
 }
 
-void MonocularFrame::SerializeToStream(std::ostream & stream) const {
-  throw std::runtime_error("Not implemented");
+const camera::ICamera * MonocularFrame::GetCamera() const {
+  return this->GetMonoCamera();
 }
 
-/*bool MonocularFrame::Relocalize(frame::KeyFrameDatabase * key_frame_database, orb_slam3::map::Map * map) {
-  ComputeBow();
-  std::vector<frame::KeyFrame *>
-      candidate_key_frames = key_frame_database->DetectRelocalizationCandidates(this, map);
-  if (candidate_key_frames.empty()) {
-    return false;
+void MonocularFrame::SetCamera(const camera::ICamera * icamera) {
+  if (icamera->Type() != camera::CameraType::MONOCULAR)
+    throw std::runtime_error("Invalid camera for monocular frame");
+
+  BaseMonocular::SetCamera(dynamic_cast<const camera::MonocularCamera *>(icamera));
+}
+
+void MonocularFrame::SerializeToStream(std::ostream & stream) const {
+  BaseMonocular::SerializeToStream(stream);
+  size_t reference_kf_id = reference_keyframe_ ? reference_keyframe_->Id() : 0;
+  WRITE_TO_STREAM(reference_kf_id, stream);
+  size_t mp_count = GetMapPoints().size();
+  WRITE_TO_STREAM(mp_count, stream);
+  for (auto feature_mp: GetMapPoints()) {
+    WRITE_TO_STREAM(feature_mp.first, stream);
+    size_t mp_id = reinterpret_cast<size_t>(feature_mp.second);
+    WRITE_TO_STREAM(mp_id, stream);
   }
-  size_t number_of_candidate_key_frames = candidate_key_frames.size();
-
-  std::unordered_map<size_t, size_t> out_map_point_matches;
-
-  std::vector<bool> vbDiscarded;
-  vbDiscarded.resize(number_of_candidate_key_frames);
-
-  int nCandidates = 0;
-
-  for (int i = 0; i < number_of_candidate_key_frames; ++i) {
-    frame::KeyFrame * candidate_key_frame = candidate_key_frames[i];
-    assert(candidate_key_frame->Type() == MONOCULAR);
-    auto base_mono_key_frame = dynamic_cast<BaseMonocular *>(candidate_key_frame);
-    SearchByBow(base_mono_key_frame, out_map_point_matches, GetFeatureExtractor(),
-                false, true);
-
-    std::vector<MLPnPsolver *> vpMLPnPsolvers;
-    vpMLPnPsolvers.resize(number_of_candidate_key_frames);
-  }
-
-
-  //TODO: implement
-  return false;
-}*/
+}
 
 }
 }

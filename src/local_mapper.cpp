@@ -18,10 +18,9 @@
 
 namespace orb_slam3 {
 
-LocalMapper::LocalMapper(map::Atlas * atlas, frame::IKeyFrameDatabase * key_frame_database)
+LocalMapper::LocalMapper(map::Atlas * atlas)
     : atlas_(atlas),
-      thread_(nullptr),
-      key_frame_database_(key_frame_database) {}
+      thread_(nullptr) {}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -125,7 +124,7 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
       map_point->AddObservation(key_frame_obs);
       map_point->AddObservation(neighbour_obs);
 
-      map_point->ComputeDistinctiveDescriptor(key_frame->GetFeatureExtractor());
+      map_point->ComputeDistinctiveDescriptor();
       map_point->CalculateNormalStaging();
       map_point->ApplyStaging();
       key_frame->AddMapPoint(key_frame_obs);
@@ -284,7 +283,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
   frame->ListMapPoints(mps);
   for (auto mp:mps) {
     if (!mp->IsBad()) {
-      mp->ComputeDistinctiveDescriptor(frame->GetFeatureExtractor());
+      mp->ComputeDistinctiveDescriptor();
       mp->CalculateNormalStaging();
       mp->ApplyStaging();
     }
@@ -346,7 +345,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
     }
 
     if (redundan_observations > map_points.size() * 0.9) {
-      key_frame_database_->Erase(kf);
+      atlas_->GetKeyframeDatabase()->Erase(kf);
       kf->LockMapPointContainer();
       for (auto mp: map_points) {
         if (mp->IsBad())
@@ -366,7 +365,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       if (!mp->IsBad()) {
         mp->CalculateNormalStaging();
         mp->ApplyStaging();
-        mp->ComputeDistinctiveDescriptor(kf->GetFeatureExtractor());
+        mp->ComputeDistinctiveDescriptor();
       }
     }
   }

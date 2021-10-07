@@ -10,11 +10,13 @@
 #include "typedefs.h"
 
 namespace orb_slam3{
-namespace constants{
+namespace constants {
+
+const std::string BOW_VOCABULARY_FILE_PATH = "BOW_VOCABULARY_FILE_PATH";
 
 const int MINIMAL_FEATURE_COUNT_PER_FRAME_MONOCULAR = 100;
-const size_t FRAME_GRID_ROWS  = 48;
-const size_t FRAME_GRID_COLS  = 64;
+const size_t FRAME_GRID_ROWS = 48;
+const size_t FRAME_GRID_COLS = 64;
 
 /*!
  * Delta for the robust Huber kernel used for optimization in monocular frame

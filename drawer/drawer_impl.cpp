@@ -116,7 +116,7 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   // Camera matrix
   glm::mat4 View = glm::lookAt(
       glm::vec3(4, 3, -3), // Camera is at (4,3,-3), in World Space
-      glm::vec3(0, 0, 0), // and looks at the origin
+      glm::vec3(2, 0, 0), // and looks at the origin
       glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
   );
   // Model matrix : an identity matrix (model will be at the origin)
@@ -174,10 +174,11 @@ void DrawerImpl::Convert(const geometry::Pose & pose, glm::mat4 & out_mat) {
 }
 
 void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float result[]) const {
-  static const TVector3D bottom_left_init{-0.5, -0.5, 0};
-  static const TVector3D top_left_init{-0.5, 0.5, 0};
-  static const TVector3D top_right_init{0.5, 0.5, 0};
-  static const TVector3D bottom_right_init{0.5, -0.5, 0};
+  static const float rectangle_size = 0.15;
+  static const TVector3D bottom_left_init{-rectangle_size, -rectangle_size, 0};
+  static const TVector3D top_left_init{-rectangle_size, rectangle_size, 0};
+  static const TVector3D top_right_init{rectangle_size, rectangle_size, 0};
+  static const TVector3D bottom_right_init{rectangle_size, -rectangle_size, 0};
 
   geometry::Pose inverse = pose.GetInversePose();
 

@@ -13,6 +13,7 @@
 #include "edges/se3_project_xyz_pose_only.h"
 #include <logging.h>
 #include <map/map_point.h>
+#include <map/atlas.h>
 
 #include <debug/debug_utils.h>
 
@@ -42,7 +43,7 @@ void OptimizePose(MonocularFrame * frame) {
     size_t feature_id = mp_id.first;
     if (map_point->IsBad())
       continue;
-    auto edge = new edges::SE3ProjectXYZPoseOnly(map_point, feature_id, frame->GetCamera(), map_point->GetPosition());
+    auto edge = new edges::SE3ProjectXYZPoseOnly(map_point, feature_id, frame->GetMonoCamera(), map_point->GetPosition());
     edge->setId(++max_id);
     edge->setVertex(0, frame_vertex);
 
@@ -50,7 +51,7 @@ void OptimizePose(MonocularFrame * frame) {
     edge->setMeasurement(features.keypoints[feature_id].pt);
     precision_t
         information_coefficient =
-        1. / frame->GetFeatureExtractor()->GetAcceptableSquareError(features.keypoints[feature_id].level);
+        1. / frame->GetAtlas()->GetFeatureExtractor()->GetAcceptableSquareError(features.keypoints[feature_id].level);
 
     edge->setInformation(Eigen::Matrix2d::Identity() * information_coefficient);
 

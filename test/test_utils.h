@@ -19,6 +19,8 @@ double DoubleRand(double fMin, double fMax);
 
 TPoint2D GenerateRandom2DPoint(double min_x, double min_y, double max_x, double max_y);
 
+TPoint3D GenerateRandom3DPoint(double min_x, double min_y, double min_z, double max_x, double max_y, double max_z);
+
 HomogenousPoint GenerateRandomHomogenousPoint(double max_x, double max_y);
 
 void GenerateRandomSubsets(const size_t min,

@@ -1,0 +1,20 @@
+//
+// Created by vahagn on 29.09.21.
+//
+
+#ifndef ORB_SLAM3_SRC_CAMERA_DISTORTIONS_DISTORTION_MODEL_TYPE_H_
+#define ORB_SLAM3_SRC_CAMERA_DISTORTIONS_DISTORTION_MODEL_TYPE_H_
+
+namespace orb_slam3 {
+namespace camera {
+
+enum DistortionModelType {
+  BARREL5,
+  BARREL8,
+  FISHEYE
+};
+
+}
+}
+
+#endif //ORB_SLAM3_SRC_CAMERA_DISTORTIONS_DISTORTION_MODEL_TYPE_H_

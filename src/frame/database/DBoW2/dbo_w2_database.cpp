@@ -4,15 +4,52 @@
 
 #include "dbo_w2_database.h"
 #include <features/handlers/DBoW2/dbo_w2_handler.h>
+#include <serialization/serialization_context.h>
 
 namespace orb_slam3 {
 namespace frame {
 
-DBoW2Database::DBoW2Database(const features::BowVocabulary * vocabulary) : inverted_file_(vocabulary->size()) {
+DBoW2Database::DBoW2Database(const features::BowVocabulary *vocabulary) : inverted_file_(vocabulary->size()) {
 
 }
 
-void DBoW2Database::Append(KeyFrame * keyframe) {
+DBoW2Database::DBoW2Database(istream &istream, serialization::SerializationContext &context) {
+  size_t inverted_file_size;
+  READ_FROM_STREAM(inverted_file_size, istream);
+  inverted_file_.resize(inverted_file_size);
+  for (size_t i = 0; i < inverted_file_size; ++i) {
+    size_t inv_map_size;
+    READ_FROM_STREAM(inv_map_size, istream);
+    while (inv_map_size--) {
+      size_t kf_id;
+      decltype(inverted_file_)::value_type::mapped_type index;
+      READ_FROM_STREAM(kf_id, istream);
+      READ_FROM_STREAM(index, istream);
+      inverted_file_[i][context.kf_id[kf_id]] = index;
+    }
+  }
+}
+
+
+KeyframeDatabaseType DBoW2Database::Type() const {
+  return DBoW2DB;
+}
+
+void DBoW2Database::Serialize(ostream &ostream) const {
+  size_t inverted_file_size = inverted_file_.size();
+  WRITE_TO_STREAM(inverted_file_size, ostream);
+  for (const auto &inv_map: inverted_file_) {
+    size_t inv_map_size = inv_map.size();
+    WRITE_TO_STREAM(inv_map_size, ostream);
+    for (const auto &kv: inv_map) {
+      size_t kf_id = reinterpret_cast<size_t>(kv.first);
+      WRITE_TO_STREAM(kf_id, ostream);
+      WRITE_TO_STREAM(kv.second, ostream);
+    }
+  }
+}
+
+void DBoW2Database::Append(KeyFrame *keyframe) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
   for (auto wf: feature_handler->GetWordFrequencies()) {

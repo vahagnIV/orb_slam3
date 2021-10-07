@@ -19,6 +19,9 @@
 namespace orb_slam3 {
 #define CAMERA_PARAMS_COUNT 4
 #define WRITE_TO_STREAM(num, stream) stream.write((char *)(&num), sizeof(num));
+#define READ_FROM_STREAM(num, stream) stream.read((char *)(&num), sizeof(num));
+//#define READ_FROM_STREAM(num, stream) num = 0; for(unsigned i =0; i < sizeof(num); ++i ) num |= stream.read() << 8 * i;
+//#define READ_FROM_STREAM(num, stream) num = 0; ;
 typedef double precision_t;
 
 typedef Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> TImageGray8U;

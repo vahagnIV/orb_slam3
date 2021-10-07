@@ -10,10 +10,20 @@
 #include <features/ifeature_extractor.h>
 #include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
+#include <serialization/serialization_context.h>
 
 namespace orb_slam3 {
 namespace frame {
 namespace monocular {
+
+BaseMonocular::BaseMonocular(std::istream &stream, serialization::SerializationContext &context) {
+  size_t camera_id;
+  READ_FROM_STREAM(camera_id, stream);
+  camera::ICamera *icamera = context.cam_id[camera_id];
+  if (icamera->Type() != camera::CameraType::MONOCULAR)
+    throw std::runtime_error("Invalid camera for monocular frame");
+  SetCamera(dynamic_cast<camera::MonocularCamera *>(icamera));
+}
 
 BaseMonocular::BaseMonocular(const camera::MonocularCamera * camera)
     : camera_(camera) {}
@@ -21,6 +31,10 @@ BaseMonocular::BaseMonocular(const camera::MonocularCamera * camera)
 BaseMonocular::BaseMonocular(const BaseMonocular & other)
     : map_points_(other.map_points_),
       camera_(other.camera_) {}
+
+void BaseMonocular::SetCamera(const camera::MonocularCamera * camera) {
+  camera_ = camera;
+}
 
 void BaseMonocular::ListMapPoints(std::unordered_set<map::MapPoint *> & out_map_points) const {
   MapToSet(map_points_, out_map_points);
@@ -45,12 +59,10 @@ void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
 
 map::MapPoint * BaseMonocular::GetMapPoint(size_t feature_id) const {
   auto it = map_points_.find(feature_id);
-  if(it == map_points_.end())
+  if (it == map_points_.end())
     return nullptr;
   return it->second;
 }
-
-
 
 map::MapPoint * BaseMonocular::EraseMapPoint(size_t feature_id) {
   assert(map_points_.find(feature_id) != map_points_.end());
@@ -95,8 +107,8 @@ bool BaseMonocular::PointVisible(const TPoint3D & mp_local_coords,
     return false;
   }
 
-  this->GetCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
-  if (!this->GetCamera()->IsInFrustum(out_map_point.position)) {
+  this->GetMonoCamera()->ProjectAndDistort(mp_local_coords, out_map_point.position);
+  if (!this->GetMonoCamera()->IsInFrustum(out_map_point.position)) {
     return false;
   }
 

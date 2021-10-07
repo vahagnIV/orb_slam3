@@ -7,6 +7,7 @@
 
 #include <features/features.h>
 #include <features/ifeature_extractor.h>
+#include "handler_type.h"
 
 namespace orb_slam3 {
 namespace features {
@@ -21,27 +22,28 @@ enum MatchingSeverity {
 
 namespace handlers {
 class BaseFeatureHandler {
-  friend std::ostream & operator<<(std::ostream & stream, const BaseFeatureHandler * handler);
  public:
-  BaseFeatureHandler(Features && features, const IFeatureExtractor * feature_extractor)
-      : features_(features),
-        feature_extractor_(feature_extractor) {}
+  virtual HandlerType Type() const = 0;
+  BaseFeatureHandler(Features && features,
+                     const IFeatureExtractor * feature_extractor);
+  BaseFeatureHandler(std::istream & istream, serialization::SerializationContext & context);
   virtual ~BaseFeatureHandler() = default;
-
+ public:
+  void Serialize(std::ostream & ostream) const;
+  virtual void Precompute(){}
  public:
   const Features & GetFeatures() const { return features_; }
   const IFeatureExtractor * GetFeatureExtractor() const { return feature_extractor_; }
+
  public:
   virtual void FastMatch(const std::shared_ptr<const BaseFeatureHandler> & other,
                          FastMatches & out_matches,
                          MatchingSeverity severity,
                          bool check_orientation) const = 0;
 
- protected:
-  virtual void Serialize(std::ostream & stream) const = 0;
 
  private:
-  const Features features_;
+  Features features_;
   const IFeatureExtractor * feature_extractor_;
 
 };

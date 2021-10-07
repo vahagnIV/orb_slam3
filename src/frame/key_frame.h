@@ -18,12 +18,13 @@ class KeyFrame : public BaseFrame {
  public:
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
   typedef std::vector<std::pair<Observation, Observation>> NewMapPoints;
+  KeyFrame(std::istream &stream, serialization::SerializationContext &context);
 
   KeyFrame(TimePoint time_point,
            const std::string & filename,
            const SensorConstants * sensor_constants,
            size_t id,
-           std::shared_ptr<const features::handlers::BaseFeatureHandler> feature_handler);
+           map::Atlas * atlas);
 
   virtual ~KeyFrame() = default;
 
@@ -145,19 +146,22 @@ class KeyFrame : public BaseFrame {
    * @param out_visibles
    * @param radius_multiplier
    */
-  virtual void FilterVisibleMapPoints(const MapPointSet & map_points,
-                                      const geometry::Sim3Transformation & relative_transformation,
-                                      const geometry::Pose & mp_local_transformation,
-                                      std::list<MapPointVisibilityParams> & out_visibles,
-                                      precision_t radius_multiplier) const = 0;
+  virtual void FilterVisibleMapPoints(const MapPointSet &map_points,
+                                      const geometry::Sim3Transformation &relative_transformation,
+                                      const geometry::Pose &mp_local_transformation,
+                                      precision_t radius_multiplier,
+                                      std::list<MapPointVisibilityParams> &out_visibles) const = 0;
 
   virtual size_t AdjustSim3Transformation(std::list<MapPointVisibilityParams> & visibles,
                                           const KeyFrame * relative_kf,
                                           geometry::Sim3Transformation & in_out_transformation) const = 0;
   void ApplyStaging();
 
-  virtual int GetScaleLevel(const map::MapPoint *map_point) const = 0;
-  virtual int GetScaleLevel(const Observation &observation) const = 0;
+  virtual int GetScaleLevel(const map::MapPoint * map_point) const = 0;
+  virtual int GetScaleLevel(const Observation & observation) const = 0;
+
+ protected:
+  void SerializeToStream(std::ostream & stream) const override;
 
  protected:
   virtual void InitializeImpl() = 0;
