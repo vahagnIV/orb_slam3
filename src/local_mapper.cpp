@@ -144,8 +144,12 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
+
   if (fixed_keyframes.size() < 2 && fixed_keyframes.size() == local_keyframes.size())
     return;
+
+  for (auto & kf: fixed_keyframes)
+    local_keyframes.erase(kf);
 
   std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
   optimization::LocalBundleAdjustment(local_keyframes,
@@ -168,8 +172,8 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 
 }
 
-void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
-                                      frame::KeyFrame::MapPointSet & local_map_points,
+void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *> & local_keyframes,
+                                      const frame::BaseFrame::MapPointSet & local_map_points,
                                       std::unordered_set<frame::KeyFrame *> & out_fixed) {
   size_t number_of_fixed = 0;
   for (auto keyframe: local_keyframes) {
@@ -197,12 +201,10 @@ void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & lo
     if (nullptr != earliest_keyframe) {
       ++number_of_fixed;
       out_fixed.insert(earliest_keyframe);
-      local_keyframes.erase(earliest_keyframe);
     }
     if (number_of_fixed < 2 && nullptr != second_eraliset_keyframe) {
       ++number_of_fixed;
       out_fixed.insert(second_eraliset_keyframe);
-      local_keyframes.erase(second_eraliset_keyframe);
     }
   }
 }
@@ -235,11 +237,12 @@ void LocalMapper::RunIteration() {
   }
 }
 
-void LocalMapper::AddToqueue(frame::KeyFrame * key_frame) {
+void LocalMapper::AddToQueue(frame::KeyFrame * key_frame) {
   new_key_frames_.enqueue(key_frame);
 }
 
-void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out) {
+void LocalMapper::ListCovisiblesOfCovisibles(const frame::KeyFrame * frame,
+                                             std::unordered_set<frame::KeyFrame *> & out) {
   std::unordered_set<frame::KeyFrame *> covisibles =
       frame->GetCovisibilityGraph().GetCovisibleKeyFrames(frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
   for (auto kf: covisibles) {

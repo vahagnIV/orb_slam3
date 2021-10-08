@@ -183,7 +183,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
     last_key_frame_ = keyframe;
-    local_mapper_->AddToqueue(keyframe);
+    local_mapper_->AddToQueue(keyframe);
   }
 #ifndef MULTITHREADED
   local_mapper_->RunIteration();
@@ -295,8 +295,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
-    local_mapper_->AddToqueue(initial_key_frame);
-    local_mapper_->AddToqueue(current_key_frame);
+    local_mapper_->AddToQueue(initial_key_frame);
+    local_mapper_->AddToQueue(current_key_frame);
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
 

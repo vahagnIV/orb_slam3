@@ -10,6 +10,19 @@
 #include <concurrentqueue/concurrentqueue.h>
 namespace orb_slam3 {
 
+enum DetectionType {
+  LoopDetected = 1,
+  MergeDetected = 2,
+  Empty = 0
+};
+
+struct DetectionResult {
+  DetectionType type;
+  frame::KeyFrame * keyframe;
+  frame::KeyFrame * candidate;
+  geometry::Sim3Transformation transformation;
+};
+
 class LoopMergeDetector {
 
  public:
@@ -22,11 +35,7 @@ class LoopMergeDetector {
   void Process(frame::KeyFrame * key_frame);
  private:
   void Run();
-  enum DetectionResult {
-    LoopDetected = 1,
-    MergeDetected = 2,
-    Empty = 0
-  };
+
  private:
   typedef std::unordered_set<frame::KeyFrame *> KeyFrameSet;
   typedef std::vector<std::pair<map::MapPoint *, map::MapPoint *>> MapPointMatches;
