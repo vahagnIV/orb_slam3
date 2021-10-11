@@ -10,6 +10,7 @@
 
 //TODO: remove in production
 #include <debug/debug_utils.h>
+#include <local_mapper.h>
 namespace orb_slam3 {
 
 LoopMergeDetector::LoopMergeDetector(map::Atlas * atlas) :
@@ -150,6 +151,12 @@ void LoopMergeDetector::RunIteration() {
         if (loop_candidate->IsBad()) continue;
         geometry::Sim3Transformation transformation;
         if (DetectLoopOrMerge(key_frame, key_frame_neighbours, loop_candidate, transformation)) {
+          DetectionResult result
+              {.type = DetectionType::LoopDetected,
+                  .keyframe = key_frame,
+                  .candidate = loop_candidate,
+                  .transformation = transformation};
+          local_mapper_->AddToLMDetectionQueue(result);
           // TODO: merge
           return;
         }
@@ -160,11 +167,15 @@ void LoopMergeDetector::RunIteration() {
   }
 }
 
-bool LoopMergeDetector::Intersect(const KeyFrameSet & bow_candidate_neighbours,
-                                  const KeyFrameSet & key_frame_neighbours) {
+void LoopMergeDetector::SetLocalMapper(LocalMapper *local_mapper) {
+  local_mapper_ = local_mapper;
+}
+
+bool LoopMergeDetector::Intersect(const KeyFrameSet &bow_candidate_neighbours,
+                                  const KeyFrameSet &key_frame_neighbours) {
   return std::any_of(bow_candidate_neighbours.begin(),
                      bow_candidate_neighbours.end(),
-                     [&key_frame_neighbours](frame::KeyFrame * key_frame) {
+                     [&key_frame_neighbours](frame::KeyFrame *key_frame) {
                        return key_frame_neighbours.find(key_frame) != key_frame_neighbours.end();
                      });
 }

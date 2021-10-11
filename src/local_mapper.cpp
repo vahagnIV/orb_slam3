@@ -21,7 +21,9 @@ namespace orb_slam3 {
 LocalMapper::LocalMapper(map::Atlas * atlas, LoopMergeDetector * loop_mege_detector)
     : atlas_(atlas),
       thread_(nullptr),
-      loop_merge_detector_(loop_mege_detector) {}
+      loop_merge_detector_(loop_mege_detector) {
+  loop_merge_detector_->SetLocalMapper(this);
+}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -145,11 +147,11 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
 
-  if (fixed_keyframes.size() < 2 && fixed_keyframes.size() == local_keyframes.size())
-    return;
-
   for (auto & kf: fixed_keyframes)
     local_keyframes.erase(kf);
+
+  if (fixed_keyframes.size() < 2 && fixed_keyframes.size() == local_keyframes.size())
+    return;
 
   std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
   optimization::LocalBundleAdjustment(local_keyframes,
@@ -209,36 +211,42 @@ void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *
   }
 }
 
-bool LocalMapper::CheckNewKeyFrames() const {
-  bool new_keyframes = new_key_frames_.size_approx() > 0;
-  return new_keyframes;
-}
 
 void LocalMapper::RunIteration() {
-  frame::KeyFrame * key_frame;
-  while (new_key_frames_.try_dequeue(key_frame)) {
-    accept_key_frames_ = false;
-    ProcessNewKeyFrame(key_frame);
 
-    MapPointCulling(key_frame);
-    CreateNewMapPoints(key_frame);
+  while (!cancelled_) {
+    if (!loop_merge_detection_queue_.Empty()) {
+      accept_key_frames_ = false;
+      new_key_frames_.Clear();
 
-    if (!CheckNewKeyFrames()) {
-      FuseMapPoints(key_frame);
+
+    } else if (!new_key_frames_.Empty()) {
+      frame::KeyFrame *key_frame;
+      key_frame = new_key_frames_.Front();
+      new_key_frames_.Pop();
+      accept_key_frames_ = false;
+      ProcessNewKeyFrame(key_frame);
+
+      MapPointCulling(key_frame);
+      CreateNewMapPoints(key_frame);
+
+      if (new_key_frames_.Empty()) {
+        FuseMapPoints(key_frame);
+      }
+      if (new_key_frames_.Empty()) {
+        Optimize(key_frame);
+        KeyFrameCulling(key_frame);
+      }
+      if (loop_merge_detector_)
+        loop_merge_detector_->Process(key_frame);
+
+      accept_key_frames_ = true;
     }
-    if (!CheckNewKeyFrames()) {
-      Optimize(key_frame);
-      KeyFrameCulling(key_frame);
-    }
-    if (loop_merge_detector_)
-      loop_merge_detector_->Process(key_frame);
-
-    accept_key_frames_ = true;
   }
 }
 
 void LocalMapper::AddToQueue(frame::KeyFrame * key_frame) {
-  new_key_frames_.enqueue(key_frame);
+  new_key_frames_.Push(key_frame);
 }
 
 void LocalMapper::ListCovisiblesOfCovisibles(const frame::KeyFrame * frame,
@@ -376,8 +384,8 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::SetBad(map::MapPoint * map_point) {
   map::MapPoint::MapType observations = map_point->Observations();
-  for (auto & obs: observations) {
-    frame::KeyFrame * last_key_frame = obs.second.GetKeyFrame();
+  for (auto &obs: observations) {
+    frame::KeyFrame *last_key_frame = obs.second.GetKeyFrame();
     last_key_frame->LockMapPointContainer();
     last_key_frame->EraseMapPoint(map_point);
     last_key_frame->UnlockMapPointContainer();
@@ -385,6 +393,10 @@ void LocalMapper::SetBad(map::MapPoint * map_point) {
   map_point->SetBad();
   map_point->GetMap()->EraseMapPoint(map_point);
 
+}
+
+void LocalMapper::AddToLMDetectionQueue(DetectionResult &detection_result) {
+  loop_merge_detection_queue_.Push(detection_result);
 }
 
 }

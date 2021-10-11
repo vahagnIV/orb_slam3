@@ -14,6 +14,7 @@
 #include "map/atlas.h"
 #include <frame/database/ikey_frame_database.h>
 #include "loop_merge_detector.h"
+#include "utils/thread_safe_queue.h"
 
 namespace orb_slam3 {
 //class LoopMergeDetector;
@@ -52,17 +53,16 @@ class LocalMapper {
   void AddToQueue(frame::KeyFrame * key_frame);
 
   /*!
-   * Returns an approximate size of local mapper's queue
-   * @return The approximate size of the queue
+   * Returns the size of local mapper's queue
+   * @return The size of the queue
    */
-  size_t GetQueueSize() const { return new_key_frames_.size_approx(); }
+  size_t GetQueueSize() const { return new_key_frames_.Size(); }
 
-  void ProcessDetection(const DetectionResult & detection_result);
+  void AddToLMDetectionQueue(DetectionResult &detection_result);
  private:
   void Run();
   void MapPointCulling(frame::KeyFrame * keyframe);
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
-  bool CheckNewKeyFrames() const;
   void CreateNewMapPoints(frame::KeyFrame * key_frame);
   void KeyFrameCulling(frame::KeyFrame * keyframe);
 
@@ -100,22 +100,23 @@ class LocalMapper {
    * @param old_mp The old map point
    * @param new_mp The new map point
    */
-  static void ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp);
+  static void ReplaceMapPoint(map::MapPoint *old_mp, map::MapPoint *new_mp);
 
   /*!
    * Set bad flag of the map point and remove it from everywhere
    * @param map_point
    */
-  static void SetBad(map::MapPoint * map_point);
+  static void SetBad(map::MapPoint *map_point);
 
  private:
-  moodycamel::BlockingConcurrentQueue<frame::KeyFrame *> new_key_frames_;
+  utils::ThreadSafeQueue<frame::KeyFrame *> new_key_frames_;
+  utils::ThreadSafeQueue<DetectionResult> loop_merge_detection_queue_;
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
-  map::Atlas * atlas_;
+  map::Atlas *atlas_;
   std::atomic_bool cancelled_;
-  std::thread * thread_;
+  std::thread *thread_;
   bool accept_key_frames_;
-  LoopMergeDetector * loop_merge_detector_;
+  LoopMergeDetector *loop_merge_detector_;
 };
 
 }

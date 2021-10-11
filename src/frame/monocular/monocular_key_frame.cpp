@@ -299,60 +299,6 @@ void MonocularKeyFrame::FindMatchingMapPoints(const KeyFrame * other,
 
 }
 
-bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches & map_point_matches,
-                                               const KeyFrame * loop_candidate,
-                                               geometry::Sim3Transformation & out_transormation) const {
-  std::vector<std::pair<TPoint3D, TPoint3D>> matched_points(map_point_matches.size());
-  std::vector<std::pair<TPoint2D, TPoint2D>> matched_point_projections(map_point_matches.size());
-  auto mono_loop_cand = dynamic_cast<const MonocularKeyFrame *>(loop_candidate);
-  assert(nullptr != mono_loop_cand);
-
-  const geometry::Pose kf_pose = GetPosition();
-  const geometry::Pose loop_candidate_pose = loop_candidate->GetPosition();
-
-  std::transform(map_point_matches.begin(),
-                 map_point_matches.end(),
-                 matched_points.begin(),
-                 [&kf_pose, &loop_candidate_pose](const std::pair<map::MapPoint *, map::MapPoint *> & pair) {
-                   return std::pair<TPoint3D, TPoint3D>(kf_pose.Transform(pair.first->GetPosition()),
-                                                        loop_candidate_pose.Transform(pair.second->GetPosition()));
-                 });
-
-  const camera::MonocularCamera * local_camera = GetMonoCamera();
-  const camera::MonocularCamera
-      * loop_candidate_camera = mono_loop_cand->GetMonoCamera();
-
-  std::transform(matched_points.begin(),
-                 matched_points.end(),
-                 matched_point_projections.begin(),
-                 [& local_camera, &loop_candidate_camera]
-                     (const std::pair<TPoint3D, TPoint3D> & match) {
-                   TPoint2D local_projection, loop_candidate_projection;
-                   local_camera->ProjectAndDistort(match.first, local_projection);
-                   loop_candidate_camera->ProjectAndDistort(match.second,
-                                                            loop_candidate_projection);
-                   return std::make_pair(local_projection, loop_candidate_projection);
-                 });
-
-  std::vector<std::pair<precision_t, precision_t>> errors;
-  for (const auto & mps: map_point_matches) {
-    const auto & local_mp = mps.first;
-    const auto & remote_mp = mps.second;
-
-    precision_t error1, error2;
-
-    error1 = 9.210 * GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(GetMapPointLevel(local_mp));
-    error2 =
-        9.210
-            * loop_candidate->GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(mono_loop_cand->GetMapPointLevel(
-                remote_mp));
-    errors.emplace_back(error1, error2);
-  }
-  geometry::RANSACSim3Solver
-      solver(&matched_points, &matched_point_projections, local_camera, loop_candidate_camera, &errors, 300);
-  return solver(out_transormation);
-}
-
 int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
   auto obs = map_point->Observations();
   const auto mp_obs = obs.find(const_cast<MonocularKeyFrame * const>(this));
@@ -426,6 +372,60 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   assert(nullptr != mono_rel_kf);
 
   return optimization::OptimizeSim3(this, mono_rel_kf, in_out_transformation, matches, levels);
+}
+
+bool MonocularKeyFrame::FindSim3Transformation(const KeyFrame::MapPointMatches & map_point_matches,
+                                               const KeyFrame * loop_candidate,
+                                               geometry::Sim3Transformation & out_transormation) const {
+  std::vector<std::pair<TPoint3D, TPoint3D>> matched_points(map_point_matches.size());
+  std::vector<std::pair<TPoint2D, TPoint2D>> matched_point_projections(map_point_matches.size());
+  auto mono_loop_cand = dynamic_cast<const MonocularKeyFrame *>(loop_candidate);
+  assert(nullptr != mono_loop_cand);
+
+  const geometry::Pose kf_pose = GetPosition();
+  const geometry::Pose loop_candidate_pose = loop_candidate->GetPosition();
+
+  std::transform(map_point_matches.begin(),
+                 map_point_matches.end(),
+                 matched_points.begin(),
+                 [&kf_pose, &loop_candidate_pose](const std::pair<map::MapPoint *, map::MapPoint *> & pair) {
+                   return std::pair<TPoint3D, TPoint3D>(kf_pose.Transform(pair.first->GetPosition()),
+                                                        loop_candidate_pose.Transform(pair.second->GetPosition()));
+                 });
+
+  const camera::MonocularCamera * local_camera = GetMonoCamera();
+  const camera::MonocularCamera
+      * loop_candidate_camera = mono_loop_cand->GetMonoCamera();
+
+  std::transform(matched_points.begin(),
+                 matched_points.end(),
+                 matched_point_projections.begin(),
+                 [& local_camera, &loop_candidate_camera]
+                     (const std::pair<TPoint3D, TPoint3D> & match) {
+                   TPoint2D local_projection, loop_candidate_projection;
+                   local_camera->ProjectAndDistort(match.first, local_projection);
+                   loop_candidate_camera->ProjectAndDistort(match.second,
+                                                            loop_candidate_projection);
+                   return std::make_pair(local_projection, loop_candidate_projection);
+                 });
+
+  std::vector<std::pair<precision_t, precision_t>> errors;
+  for (const auto & mps: map_point_matches) {
+    const auto & local_mp = mps.first;
+    const auto & remote_mp = mps.second;
+
+    precision_t error1, error2;
+
+    error1 = 9.210 * GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(GetMapPointLevel(local_mp));
+    error2 =
+        9.210
+            * loop_candidate->GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(mono_loop_cand->GetMapPointLevel(
+                remote_mp));
+    errors.emplace_back(error1, error2);
+  }
+  geometry::RANSACSim3Solver
+      solver(&matched_points, &matched_point_projections, local_camera, loop_candidate_camera, &errors, 300);
+  return solver(out_transormation);
 }
 
 void MonocularKeyFrame::InitializeImpl() {

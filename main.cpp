@@ -298,24 +298,7 @@ void StartForLiveCamera(orb_slam3::features::BowVocabulary & voc,
   }
 }
 
-void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
-                     orb_slam3::camera::MonocularCamera * camera,
-                     const std::vector<std::string> & filenames,
-                     const orb_slam3::frame::SensorConstants * sensor_constants,
-                     const std::vector<std::chrono::system_clock::time_point> & timestamps) {
-  auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
-      camera->Width(), camera->Height(),
-      SCALE_FACTOR, LEVELS,
-      INIT_THRESHOLD, MIN_THRESHOLD);
-  auto kf_database = new orb_slam3::frame::DBoW2Database(&voc);
-  OrbSlam3System system;
-  auto *atlas = new orb_slam3::map::Atlas(feature_extractor, kf_database);
-
-  system.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
-  system.loop_merge_detector->Start();
-  system.local_mapper = new orb_slam3::LocalMapper(atlas, system.loop_merge_detector);
-  system.tracker = new orb_slam3::Tracker(atlas, system.local_mapper);
-//  tracker.AddObserver(&local_mapper);
+void SetSettings() {
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_CREATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::TRACKING_INFO);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_CREATED);
@@ -326,22 +309,26 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_DELETED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_POSITION_UPDATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_GEOMETRY_UPDATED);
-  /*bool cancellation_token = true;
-  std::thread message_processor_thread(PrintMessages, std::ref(cancellation_token));*/
+}
+
+void RunDataset(OrbSlam3System system,
+                orb_slam3::camera::MonocularCamera *camera,
+                const std::vector<std::string> &filenames,
+                const orb_slam3::frame::SensorConstants *sensor_constants,
+                const std::vector<std::chrono::system_clock::time_point> &timestamps,
+                size_t initial_frame_id) {
+
+  SetSettings();
   orb_slam3::drawer::DrawerImpl drawer(1024, 768);
   drawer.Start();
-//  local_mapper.AddObserver(&lp_detector);
-//  local_mapper.AddObserver(&tracker);
 #ifdef MULTITHREADED
 #warning "MULTITHREDING IS ENABLED"
   system.local_mapper->Start();
 #endif
 
-  orb_slam3::features::IFeatureExtractor * fe = feature_extractor;
   std::chrono::system_clock::time_point last = std::chrono::system_clock::now();
-  const std::chrono::system_clock::duration fps(50000000);
-  size_t feature_count = NFEATURES1;
-  for (size_t i = 0; i < filenames.size(); ++i) {
+  size_t feature_count = initial_frame_id == 0 ? NFEATURES1 : NFEATURES1;
+  for (size_t i = initial_frame_id; i < filenames.size(); ++i) {
 
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
 
@@ -352,21 +339,21 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
     last = now;
 
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
-    orb_slam3::TImageGray8U eigen = FromCvMat(image);
+    orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     static const orb_slam3::features::handlers::HandlerType
         kHandlerType = orb_slam3::features::handlers::HandlerType::DBoW2;
-    MF *frame = new MF(atlas,
+    MF *frame = new MF(system.tracker->GetAtlas(),
                        kHandlerType,
                        feature_count,
-                       eigen,
+                       eigen_image,
                        timestamps[i],
                        filenames[i],
                        camera,
                        sensor_constants);
     auto result = system.tracker->Track(frame);
 
-//    if (i == 100) {
+//    if (i == 2000) {
 //      std::this_thread::sleep_for(std::chrono::seconds(2));
 //      SaveStateToFile(system, "save_state");
 //      exit(0);
@@ -394,7 +381,17 @@ void StartForDataSet(orb_slam3::features::BowVocabulary & voc,
   }
 }
 
-void TestLiveCamera(orb_slam3::features::BowVocabulary & voc) {
+void StartForDataSet(orb_slam3::features::BowVocabulary &voc,
+                     orb_slam3::camera::MonocularCamera *camera,
+                     const std::vector<std::string> &filenames,
+                     const orb_slam3::frame::SensorConstants *sensor_constants,
+                     const std::vector<std::chrono::system_clock::time_point> &timestamps) {
+
+//  tracker.AddObserver(&local_mapper);
+
+}
+
+void TestLiveCamera(orb_slam3::features::BowVocabulary &voc) {
 
   typedef orb_slam3::camera::Barrel5 KANNALABRANDT5;
 
@@ -441,7 +438,21 @@ void TestMonocularTum(orb_slam3::features::BowVocabulary & voc, const std::strin
   std::vector<std::chrono::system_clock::time_point> timestamps;
   ReadImagesForMonocularTestTum(dataPath, filenames, timestamps);
 
-  StartForDataSet(voc, camera, filenames, &constants, timestamps);
+  auto feature_extractor = new orb_slam3::features::ORBFeatureExtractor(
+      camera->Width(), camera->Height(),
+      SCALE_FACTOR, LEVELS,
+      INIT_THRESHOLD, MIN_THRESHOLD);
+  auto kf_database = new orb_slam3::frame::DBoW2Database(&voc);
+  OrbSlam3System system;
+  auto *atlas = new orb_slam3::map::Atlas(feature_extractor, kf_database);
+
+  system.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
+  system.loop_merge_detector->Start();
+  system.local_mapper = new orb_slam3::LocalMapper(atlas, system.loop_merge_detector);
+  system.tracker = new orb_slam3::Tracker(atlas, system.local_mapper);
+
+  RunDataset(system, camera, filenames, &constants, timestamps, 0u);
+//  StartForDataSet(voc, camera, filenames, &constants, timestamps);
 }
 
 void LoadBowVocabulary(orb_slam3::features::BowVocabulary & voc, const std::string & path) {
@@ -469,8 +480,9 @@ int main(int argc, char * argv[]) {
 
   orb_slam3::features::BowVocabulary voc;
   LoadBowVocabulary(voc, config["vocabularyFilePath"]);
-//  OrbSlam3System system = LoadFromFolder("save_state");
-//  system.local_mapper->Start();
+  OrbSlam3System system = LoadFromFolder("save_state");
+  system.local_mapper->Start();
+
 
 //  orb_slam3::serialization::SerializationContext context;
 //  context.vocabulary = &voc;

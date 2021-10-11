@@ -9,6 +9,7 @@
 #include <map/atlas.h>
 #include <concurrentqueue/concurrentqueue.h>
 namespace orb_slam3 {
+class LocalMapper;
 
 enum DetectionType {
   LoopDetected = 1,
@@ -25,6 +26,7 @@ struct DetectionResult {
 
 class LoopMergeDetector {
 
+  friend class LocalMapper;
  public:
   LoopMergeDetector(map::Atlas * atlas);
   void RunIteration();
@@ -43,6 +45,7 @@ class LoopMergeDetector {
                                 frame::IKeyFrameDatabase::KeyFrameSet & current_neighbourhood,
                                 frame::KeyFrame * candidate_keyframe,
                                 geometry::Sim3Transformation & out_sim3_transformation);
+  void SetLocalMapper(LocalMapper * local_mapper);
  private:
   static bool Intersect(const KeyFrameSet & bow_candidate_neighbours, const KeyFrameSet & key_frame_neighbours);
   static void FindMapPointMatches(const frame::KeyFrame * current_key_frame,
@@ -57,6 +60,7 @@ class LoopMergeDetector {
   bool canceled_;
   moodycamel::ConcurrentQueue<frame::KeyFrame *> queue_;
   std::thread * thread_;
+  LocalMapper * local_mapper_;
 
 };
 
