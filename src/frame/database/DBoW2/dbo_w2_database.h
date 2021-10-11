@@ -6,7 +6,7 @@
 #define ORB_SLAM3_SRC_FRAME_DATABASE_DBOW2_D_BO_W_2_DATABASE_H_
 
 #include <frame/database/ikey_frame_database.h>
-#include <features/bow_vocabulary.h>
+#include <src/features/bow/bow_vocabulary.h>
 namespace orb_slam3 {
 namespace serialization{
 class SerializationContext;

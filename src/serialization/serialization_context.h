@@ -9,7 +9,7 @@
 #include <typedefs.h>
 #include <camera/icamera.h>
 #include <map/map.h>
-#include <features/bow_vocabulary.h>
+#include <src/features/bow/bow_vocabulary.h>
 #include <features/ifeature_extractor.h>
 #include <frame/sensor_constants.h>
 #include <features/ifeature_extractor.h>

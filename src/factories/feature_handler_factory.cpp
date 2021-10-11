@@ -8,48 +8,27 @@
 #include "features/handlers/DBoW2/dbo_w2_handler.h"
 #include <serialization/serialization_context.h>
 #include <frame/database/DBoW2/dbo_w2_database.h>
+#include <src/features/bow/dbo_w2_vocabulary.h>
 
 namespace orb_slam3 {
 namespace factories {
-features::BowVocabulary *FeatureHandlerFactory::bow_vocabulary_ = nullptr;
 
-FeatureHandlerFactory::FeatureHandlerFactory(features::handlers::HandlerType type, map::Atlas *atlas)
-: handler_type_(type), atlas_(atlas) {
+FeatureHandlerFactory::FeatureHandlerFactory(features::handlers::HandlerType type, map::Atlas * atlas)
+    : handler_type_(type), atlas_(atlas) {
 
 }
 
 FeatureHandlerFactory::~FeatureHandlerFactory() {
-  delete bow_vocabulary_;
-}
-
-void FeatureHandlerFactory::LoadBowVocabulary() {
-  if (bow_vocabulary_)
-    return;
-
-  const char *val = std::getenv(constants::BOW_VOCABULARY_FILE_PATH.c_str());
-  if (nullptr == val) {
-    std::stringstream ss;
-    ss << "Could not find the environment variable " << constants::BOW_VOCABULARY_FILE_PATH;
-    throw std::runtime_error(ss.str());
-  }
-  std::string bow_vocabulary_file_path(val);
-  if (!boost::filesystem::exists(bow_vocabulary_file_path)) {
-    std::stringstream ss;
-    ss << "Error while loading bow vocabulary " << bow_vocabulary_file_path << ". No such file or directory.";
-    throw std::runtime_error(ss.str());
-  }
-  bow_vocabulary_ = new orb_slam3::features::BowVocabulary;
-  bow_vocabulary_->loadFromTextFile(bow_vocabulary_file_path);
-
 }
 
 std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::Create(features::handlers::HandlerType type,
-                                                                                      std::istream &istream,
-                                                                                      serialization::SerializationContext &context) {
+                                                                                      std::istream & istream,
+                                                                                      serialization::SerializationContext & context) {
   switch (type) {
     case features::handlers::HandlerType::DBoW2: {
-      LoadBowVocabulary();
-      auto result = std::make_shared<features::handlers::DBoW2Handler>(istream, context, bow_vocabulary_);
+      auto result = std::make_shared<features::handlers::DBoW2Handler>(istream,
+                                                                       context,
+                                                                       features::utils::DBoW2Vocabulary::Instance().GetVocabulary());
       result->Precompute();
       return result;
     }
@@ -58,13 +37,13 @@ std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::C
   }
 }
 std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::Create(features::handlers::HandlerType type,
-                                                                                      const TImageGray8U &image,
-                                                                                      const camera::ICamera *camera,
-                                                                                      const features::IFeatureExtractor *feature_extractor,
+                                                                                      const TImageGray8U & image,
+                                                                                      const camera::ICamera * camera,
+                                                                                      const features::IFeatureExtractor * feature_extractor,
                                                                                       size_t feature_count) {
   switch (type) {
     case features::handlers::HandlerType::DBoW2: {
-      LoadBowVocabulary();
+
       features::Features features(image.cols(), image.rows());
 
       feature_extractor->Extract(image, features, feature_count);
@@ -81,7 +60,7 @@ std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::C
       }
       auto result = std::make_shared<features::handlers::DBoW2Handler>(std::move(features),
                                                                        feature_extractor,
-                                                                       bow_vocabulary_);
+                                                                       features::utils::DBoW2Vocabulary::Instance().GetVocabulary());
       result->Precompute();
       return result;
     }
@@ -89,19 +68,6 @@ std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::C
       return nullptr;
   }
 
-
-}
-frame::IKeyFrameDatabase *FeatureHandlerFactory::CreateKeyFrameDatabase(frame::KeyframeDatabaseType type,
-                                                                        std::istream &istream,
-                                                                        serialization::SerializationContext &contex) {
-  switch (type) {
-    case frame::KeyframeDatabaseType::DBoW2DB: {
-      LoadBowVocabulary();
-      return new frame::DBoW2Database(istream, contex);
-    }
-    default:
-      return nullptr;
-  }
 }
 
 }

@@ -10,6 +10,7 @@
 #include <factories/camera_factory.h>
 #include <factories/feature_extractor_factory.h>
 #include <factories/feature_handler_factory.h>
+#include <factories/keyframe_database_factory.h>
 #include <frame/database/ikey_frame_database.h>
 
 namespace orb_slam3 {
@@ -28,7 +29,7 @@ Atlas::Atlas(std::istream &istream, serialization::SerializationContext &context
 
   frame::KeyframeDatabaseType kf_db_type;
   READ_FROM_STREAM(kf_db_type, istream);
-  key_frame_database_ = factories::FeatureHandlerFactory::CreateKeyFrameDatabase(kf_db_type, istream, context);
+  key_frame_database_ = factories::KeyframeDatabaseFactory::CreateKeyFrameDatabase(kf_db_type, istream, context);
 
   features::FeatureExtractorType fe_type;
   READ_FROM_STREAM(fe_type, istream);
@@ -124,14 +125,14 @@ void Atlas::Serialize(std::ostream & ostream) const {
   for (auto camera: cameras) {
     camera::CameraType cam_type = camera->Type();
     WRITE_TO_STREAM(cam_type, ostream);
-    size_t cam_id = reinterpret_cast<size_t>(camera);
+    auto cam_id = reinterpret_cast<size_t>(camera);
     WRITE_TO_STREAM(cam_id, ostream);
     camera->Serialize(ostream);
   }
   size_t sensor_constant_count = sensor_constants.size();
   WRITE_TO_STREAM(sensor_constant_count, ostream);
   for (auto sensor_constant: sensor_constants) {
-    size_t sensor_constant_id = reinterpret_cast<size_t>(sensor_constant);
+    auto sensor_constant_id = reinterpret_cast<size_t>(sensor_constant);
     WRITE_TO_STREAM(sensor_constant_id, ostream);
     sensor_constant->Serialize(ostream);
   }
@@ -140,7 +141,7 @@ void Atlas::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(map_count, ostream);
 
   for (const auto map: maps_) {
-    size_t map_id = reinterpret_cast<size_t>(map);
+    auto map_id = reinterpret_cast<size_t>(map);
     WRITE_TO_STREAM(map_id, ostream);
     map->Serialize(ostream);
   }

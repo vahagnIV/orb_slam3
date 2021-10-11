@@ -42,7 +42,7 @@ void DBoW2Database::Serialize(ostream &ostream) const {
     size_t inv_map_size = inv_map.size();
     WRITE_TO_STREAM(inv_map_size, ostream);
     for (const auto &kv: inv_map) {
-      size_t kf_id = reinterpret_cast<size_t>(kv.first);
+      size_t kf_id = kv.first->Id();
       WRITE_TO_STREAM(kf_id, ostream);
       WRITE_TO_STREAM(kv.second, ostream);
     }

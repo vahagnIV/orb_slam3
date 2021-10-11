@@ -21,6 +21,7 @@ namespace orb_slam3 {
 LocalMapper::LocalMapper(map::Atlas * atlas, LoopMergeDetector * loop_mege_detector)
     : atlas_(atlas),
       thread_(nullptr),
+      accept_key_frames_(true),
       loop_merge_detector_(loop_mege_detector) {
   loop_merge_detector_->SetLocalMapper(this);
 }
@@ -216,11 +217,10 @@ void LocalMapper::RunIteration() {
 
   while (!cancelled_) {
     if (!loop_merge_detection_queue_.Empty()) {
-      accept_key_frames_ = false;
-      new_key_frames_.Clear();
-
-
-    } else if (!new_key_frames_.Empty()) {
+//      accept_key_frames_ = false;
+//      new_key_frames_.Clear();
+    }
+    else if (!new_key_frames_.Empty()) {
       frame::KeyFrame *key_frame;
       key_frame = new_key_frames_.Front();
       new_key_frames_.Pop();
@@ -242,6 +242,7 @@ void LocalMapper::RunIteration() {
 
       accept_key_frames_ = true;
     }
+    std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }
 }
 
