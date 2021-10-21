@@ -56,6 +56,9 @@ MapPoint::MapPoint(istream &istream, serialization::SerializationContext &contex
   READ_FROM_STREAM(descriptor_length, istream);
   istream.read((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
   ApplyStaging();
+  if (Settings::Get().MessageRequested(messages::MAP_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::MapPointCreated(this));
+  ++counter_;
 }
 
 MapPoint::~MapPoint() {

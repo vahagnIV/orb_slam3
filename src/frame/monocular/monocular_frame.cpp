@@ -65,7 +65,9 @@ MonocularFrame::MonocularFrame(std::istream &stream, serialization::Serializatio
     size_t feature_id, mp_id;
     READ_FROM_STREAM(feature_id, stream);
     READ_FROM_STREAM(mp_id, stream);
-    AddMapPoint(context.mp_id[mp_id], feature_id);
+    auto mp = context.mp_id[mp_id];
+    if(mp)
+      AddMapPoint(context.mp_id[mp_id], feature_id);
   }
 }
 

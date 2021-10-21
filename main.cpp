@@ -371,11 +371,11 @@ void RunDataset(OrbSlam3System system,
                         sensor_constants);
     auto result = system.tracker->Track(frame);
 
-    if (i == 2000) {
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      SaveStateToFile(system, "save_state");
-      exit(0);
-    }
+//    if (i == 2000) {
+//      std::this_thread::sleep_for(std::chrono::seconds(2));
+//      SaveStateToFile(system, "save_state");
+//      exit(0);
+//    }
 
     if (orb_slam3::TrackingResult::OK == result) {
       feature_count = NFEATURES2;
@@ -478,7 +478,7 @@ void ResumeMonocularTum(const std::string & save_path, const std::string & dataP
       INIT_THRESHOLD, MIN_THRESHOLD);
 
   orb_slam3::frame::SensorConstants sensor_constants = GetSensorConstants();
-  RunDataset(system, camera, filenames, &sensor_constants, timestamps, 2000);
+  RunDataset(system, camera, filenames, &sensor_constants, timestamps, 2001);
 }
 
 void LoadBowVocabulary(orb_slam3::features::BowVocabulary & voc, const std::string & path) {
@@ -508,9 +508,10 @@ int main(int argc, char * argv[]) {
 
 //  system.local_mapper->Start();
 
+  SetSettings();
   ResumeMonocularTum("save_state", config["datasetPath"]);
 
-  TestMonocularTum(config["datasetPath"]);
+//  TestMonocularTum(config["datasetPath"]);
 //  TestLiveCamera(voc);
 
   return 0;

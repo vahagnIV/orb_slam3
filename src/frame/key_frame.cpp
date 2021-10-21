@@ -23,6 +23,8 @@ KeyFrame::KeyFrame(TimePoint time_point,
       is_initial_(false),
       bad_flag_(false),
       kf_gba_(nullptr) {
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(this));
 }
 
 KeyFrame::KeyFrame(std::istream & stream, serialization::SerializationContext & context) : BaseFrame(stream, context),
@@ -30,6 +32,8 @@ KeyFrame::KeyFrame(std::istream & stream, serialization::SerializationContext & 
   READ_FROM_STREAM(is_initial_, stream);
   READ_FROM_STREAM(is_initialized_, stream);
   READ_FROM_STREAM(bad_flag_, stream);
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(this));
 }
 
 void KeyFrame::SetBad() {

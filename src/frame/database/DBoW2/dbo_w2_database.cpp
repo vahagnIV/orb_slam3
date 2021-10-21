@@ -28,6 +28,7 @@ DBoW2Database::DBoW2Database(istream &istream, serialization::SerializationConte
       inverted_file_[i][context.kf_id[kf_id]] = index;
     }
   }
+  std::cout << "Loaded" << std::endl;
 }
 
 

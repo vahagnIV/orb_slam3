@@ -80,8 +80,7 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   keyframe->Initialize();
-  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
-    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(keyframe));
+
 
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ListMapPoints(map_points);
@@ -217,6 +216,7 @@ void LocalMapper::RunIteration() {
 
   while (!cancelled_) {
     if (!loop_merge_detection_queue_.Empty()) {
+      loop_merge_detection_queue_.Clear();
 //      accept_key_frames_ = false;
 //      new_key_frames_.Clear();
     }

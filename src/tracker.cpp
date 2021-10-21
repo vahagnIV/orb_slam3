@@ -225,8 +225,15 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   bool few_tracked_points =
       tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio
           && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
-  if (!few_tracked_points
-      || (!more_than_max_frames_passed && !(more_than_min_frames_passed && local_mapper_accepts_key_frame))) {
+  if (!few_tracked_points) {
+    std::cout << "Tracked map points count: " << tracked_points_count << std::endl;
+    std::cout << "filtered_tracked_map_points.size(): " << filtered_tracked_map_points.size() << std::endl;
+    std::cout << "th_ref_ratio: " << th_ref_ratio << std::endl;
+    std::cout << "MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT: " << MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT << std::endl;
+    std::cout << "NeedNewKeyfrane !few_tracked points" << std::endl;
+    return false;
+  }
+  if (!more_than_max_frames_passed && !more_than_min_frames_passed) {
     std::cout << "NeedNewKeyFrame = false1" << std::endl;
     return false;
   }
