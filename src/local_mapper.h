@@ -65,6 +65,8 @@ class LocalMapper {
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
   void CreateNewMapPoints(frame::KeyFrame * key_frame);
   void KeyFrameCulling(frame::KeyFrame * keyframe);
+  void CorrectLoop(DetectionResult & detection_result);
+  void MergeMaps(DetectionResult & detection_result);
 
  private:
   /*!
@@ -113,7 +115,7 @@ class LocalMapper {
   utils::ThreadSafeQueue<DetectionResult> loop_merge_detection_queue_;
   std::unordered_set<map::MapPoint *> recently_added_map_points_;
   map::Atlas *atlas_;
-  std::atomic_bool cancelled_;
+  std::atomic_bool cancelled_{};
   std::thread *thread_;
   bool accept_key_frames_;
   LoopMergeDetector *loop_merge_detector_;

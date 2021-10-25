@@ -81,7 +81,6 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   keyframe->Initialize();
 
-
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ListMapPoints(map_points);
   for (auto mp: map_points) {
@@ -211,17 +210,26 @@ void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *
   }
 }
 
-
 void LocalMapper::RunIteration() {
 
   while (!cancelled_) {
     if (!loop_merge_detection_queue_.Empty()) {
+      switch (loop_merge_detection_queue_.Front().type) {
+        case DetectionType::LoopDetected:
+          CorrectLoop(loop_merge_detection_queue_.Front());
+          break;
+        case DetectionType::MergeDetected:
+          MergeMaps(loop_merge_detection_queue_.Front());
+          break;
+        default:
+          loop_merge_detection_queue_.Pop();
+          break;
+      }
       loop_merge_detection_queue_.Clear();
 //      accept_key_frames_ = false;
 //      new_key_frames_.Clear();
-    }
-    else if (!new_key_frames_.Empty()) {
-      frame::KeyFrame *key_frame;
+    } else if (!new_key_frames_.Empty()) {
+      frame::KeyFrame * key_frame;
       key_frame = new_key_frames_.Front();
       new_key_frames_.Pop();
       accept_key_frames_ = false;
@@ -244,6 +252,10 @@ void LocalMapper::RunIteration() {
     }
     std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }
+}
+
+void LocalMapper::MergeMaps(DetectionResult & detection_result) {
+
 }
 
 void LocalMapper::AddToQueue(frame::KeyFrame * key_frame) {
@@ -385,8 +397,8 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::SetBad(map::MapPoint * map_point) {
   map::MapPoint::MapType observations = map_point->Observations();
-  for (auto &obs: observations) {
-    frame::KeyFrame *last_key_frame = obs.second.GetKeyFrame();
+  for (auto & obs: observations) {
+    frame::KeyFrame * last_key_frame = obs.second.GetKeyFrame();
     last_key_frame->LockMapPointContainer();
     last_key_frame->EraseMapPoint(map_point);
     last_key_frame->UnlockMapPointContainer();
@@ -396,8 +408,39 @@ void LocalMapper::SetBad(map::MapPoint * map_point) {
 
 }
 
-void LocalMapper::AddToLMDetectionQueue(DetectionResult &detection_result) {
+void LocalMapper::AddToLMDetectionQueue(DetectionResult & detection_result) {
   loop_merge_detection_queue_.Push(detection_result);
+}
+
+void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
+  /*std::unordered_set<map::MapPoint *> current_mps, candidate_mps;
+  detection_result.keyframe->ListMapPoints(current_mps);
+  detection_result.candidate->ListMapPoints(candidate_mps);
+  frame::KeyFrame::MapPointMatches matches;
+  detection_result.keyframe->FindMatchingMapPoints(detection_result.candidate, matches);
+  std::ofstream tt("coords");
+  for (auto match: matches) {
+    auto local_mp = match.first;
+    auto other_mp = match.second;
+
+    TPoint3D local_mp_position = detection_result.keyframe->GetPosition().Transform(local_mp->GetPosition());
+    TPoint3D other_mp_position = detection_result.candidate->GetPosition().Transform(other_mp->GetPosition());
+    tt
+        << detection_result.transformation.Transform(local_mp_position)
+        << std::endl;
+    tt << other_mp_position << std::endl<< std::endl;
+
+    tt
+        << detection_result.transformation.Transform(other_mp_position)
+        << std::endl;
+   tt << local_mp_position << std::endl<< std::endl<< std::endl<< std::endl;
+  }
+  tt.close();*/
+  auto current_covisible_keyframes = detection_result.keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  for (auto covisible_kf: current_covisible_keyframes) {
+
+  }
+
 }
 
 }
