@@ -437,7 +437,9 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   }
   tt.close();*/
   auto current_covisible_keyframes = detection_result.keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  std::unordered_set<map::MapPoint*> map_points;
   for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->ListMapPoints(map_points);
 
   }
 

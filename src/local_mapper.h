@@ -118,7 +118,7 @@ class LocalMapper {
   std::atomic_bool cancelled_{};
   std::thread *thread_;
   bool accept_key_frames_;
-  LoopMergeDetector *loop_merge_detector_;
+  LoopMergeDetector * loop_merge_detector_;
 };
 
 }
