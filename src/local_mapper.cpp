@@ -15,6 +15,7 @@
 
 // TODO: remove this in multithreading
 #include <loop_merge_detector.h>
+#include <fstream>
 
 namespace orb_slam3 {
 
@@ -436,12 +437,42 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
    tt << local_mp_position << std::endl<< std::endl<< std::endl<< std::endl;
   }
   tt.close();*/
+#warning Does not work
+
+  std::ofstream tt("test.txt");
   auto current_covisible_keyframes = detection_result.keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
-  std::unordered_set<map::MapPoint*> map_points;
+  geometry::Sim3Transformation SG1 = detection_result.transformation * detection_result.candidate->GetPosition();
+
+  geometry::Pose keyframe_pose_inverse = detection_result.keyframe->GetInversePosition();
+
+  geometry::Pose corrected_keyframe_pose(SG1.R, SG1.T / SG1.s);
+  std::unordered_set<map::MapPoint *> map_points;
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ListMapPoints(map_points);
+    covisible_kf->SetStagingPosition(covisible_kf->GetPosition() * keyframe_pose_inverse * corrected_keyframe_pose);
+
+    covisible_kf->GetPosition().print(tt);
+    tt << std::endl << std::endl;
+    covisible_kf->GetStagingPosition().print(tt);
+    tt << std::endl << std::endl << std::endl << std::endl << std::endl;
 
   }
+
+  geometry::Sim3Transformation global_sim3 = keyframe_pose_inverse * detection_result.transformation
+      * detection_result.candidate->GetPosition();
+  for (auto mp: map_points) {
+    mp->SetStagingPosition(global_sim3.Transform(mp->GetPosition()));
+  }
+
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->ApplyStaging();
+    FuseMapPoints(covisible_kf);
+  }
+  for (auto mp: map_points) {
+    mp->ApplyStaging();
+  }
+
+
 
 }
 

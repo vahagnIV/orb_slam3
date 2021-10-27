@@ -17,8 +17,8 @@ Sim3Transformation Sim3Transformation::GetInverse() const {
   return Sim3Transformation{.R = R.transpose(), .T = -R.transpose() * T * s_inv, .s = s_inv};
 }
 
-void Sim3Transformation::print() const {
-  std::cout << "s: " << s << "\nR: \n" << R << "\nT: \n" << T << std::endl;
+void Sim3Transformation::print(std::ostream & stream) const {
+  stream << "s: " << s << "\nR: \n" << R << "\nT: \n" << T << std::endl;
 }
 
 std::ostream & operator<<(std::ostream & stream, const Sim3Transformation & p) {

@@ -21,7 +21,7 @@ struct Sim3Transformation {
 
   friend std::ostream & operator<<(std::ostream & stream, const Sim3Transformation & p);
 
-  void print() const;
+  void print(std::ostream & stream=std::cout) const;
 
   TMatrix33 R;
   TVector3D T;
