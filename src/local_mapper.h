@@ -95,7 +95,7 @@ class LocalMapper {
    * i.e. pass all observation of one to the other and remove the first one.
    * @param frame The keyframe which map points to consider
    */
-  static void FuseMapPoints(frame::KeyFrame * frame);
+  static void FuseMapPoints(frame::KeyFrame * frame, bool use_staging=false);
 
   /*!
    * Replace the old map point with the new one everywhere

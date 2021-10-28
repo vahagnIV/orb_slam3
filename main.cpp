@@ -509,9 +509,9 @@ int main(int argc, char * argv[]) {
 //  system.local_mapper->Start();
 
   SetSettings();
-  ResumeMonocularTum("save_state", config["datasetPath"]);
-
-//  TestMonocularTum(config["datasetPath"]);
+//  ResumeMonocularTum("save_state", config["datasetPath"]);
+//
+  TestMonocularTum(config["datasetPath"]);
 //  TestLiveCamera(voc);
 
   return 0;

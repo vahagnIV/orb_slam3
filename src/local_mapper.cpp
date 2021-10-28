@@ -240,7 +240,7 @@ void LocalMapper::RunIteration() {
       CreateNewMapPoints(key_frame);
 
       if (new_key_frames_.Empty()) {
-        FuseMapPoints(key_frame);
+        FuseMapPoints(key_frame, false);
       }
       if (new_key_frames_.Empty()) {
         Optimize(key_frame);
@@ -277,7 +277,7 @@ void LocalMapper::ListCovisiblesOfCovisibles(const frame::KeyFrame * frame,
   }
 }
 
-void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
+void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
   std::unordered_set<frame::KeyFrame *> second_neighbours;
   ListCovisiblesOfCovisibles(frame, second_neighbours);
   frame->LockMapPointContainer();
@@ -286,7 +286,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
     kf->ListMapPoints(map_points);
 
     std::list<frame::MapPointVisibilityParams> visibles;
-    frame->FilterVisibleMapPoints(map_points, visibles, false);
+    frame->FilterVisibleMapPoints(map_points, visibles, use_staging);
     std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_mps;
     std::list<frame::Observation> local_mps;
     frame->MatchVisibleMapPoints(visibles, matched_mps, local_mps);
@@ -463,16 +463,55 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   for (auto mp: map_points) {
     mp->SetStagingPosition(global_sim3.Transform(mp->GetPosition()));
   }
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->ApplyStaging();
+  }
+
+
 
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ApplyStaging();
-    FuseMapPoints(covisible_kf);
   }
   for (auto mp: map_points) {
+    mp->CalculateNormalStaging();
     mp->ApplyStaging();
   }
 
+  frame::BaseFrame::MapPointSet candidate_map_points;
+  detection_result.candidate->ListMapPoints(candidate_map_points);
+  for(auto candidate_neighbour: detection_result.candidate->GetCovisibilityGraph().GetCovisibleKeyFrames()){
+    candidate_neighbour->ListMapPoints(candidate_map_points);
+  }
 
+
+  for (auto covisible_kf: current_covisible_keyframes) {
+    std::list<frame::MapPointVisibilityParams> visibles;
+    covisible_kf->FilterVisibleMapPoints(candidate_map_points, visibles, true);
+    std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_map_points;
+    std::list<frame::Observation> local_matches;
+    covisible_kf->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
+    for(auto match: matched_map_points){
+      if(match.first->GetObservationCount() > match.second->GetObservationCount())
+        ReplaceMapPoint(match.first, match.second);
+      else
+        ReplaceMapPoint(match.second, match.first);
+    }
+    for(auto local_match: local_matches){
+      covisible_kf->AddMapPoint(local_match);
+    }
+  }
+
+  for (auto mp: map_points) {
+    mp->CalculateNormalStaging();
+    mp->ApplyStaging();
+  }
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->GetCovisibilityGraph().Update();
+  }
+
+
+
+  loop_merge_detection_queue_.Clear();
 
 }
 
