@@ -39,7 +39,7 @@ struct Pose {
   friend std::ostream & operator<<(std::ostream & stream, const Pose & p);
   friend std::istream & operator>>(std::istream & stream, const Pose & p);
 
-  void print() const;
+  void print(std::ostream & stream = std::cout) const;
 
   TMatrix33 R;
   TVector3D T;

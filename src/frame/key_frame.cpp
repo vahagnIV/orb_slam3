@@ -4,6 +4,8 @@
 
 #include "key_frame.h"
 #include <map/map.h>
+#include <map/atlas.h>
+#include <frame/database/ikey_frame_database.h>
 #include <settings.h>
 #include <messages/messages.h>
 
@@ -21,13 +23,17 @@ KeyFrame::KeyFrame(TimePoint time_point,
       is_initial_(false),
       bad_flag_(false),
       kf_gba_(nullptr) {
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(this));
 }
 
-KeyFrame::KeyFrame(std::istream &stream, serialization::SerializationContext &context) : BaseFrame(stream, context),
-                                                                                         covisibility_graph_(this) {
+KeyFrame::KeyFrame(std::istream & stream, serialization::SerializationContext & context) : BaseFrame(stream, context),
+                                                                                           covisibility_graph_(this) {
   READ_FROM_STREAM(is_initial_, stream);
   READ_FROM_STREAM(is_initialized_, stream);
   READ_FROM_STREAM(bad_flag_, stream);
+  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
+    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(this));
 }
 
 void KeyFrame::SetBad() {
@@ -36,6 +42,7 @@ void KeyFrame::SetBad() {
   map_->EraseKeyFrame(this);
   if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_DELETED))
     messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameDeleted(this));
+  atlas_->GetKeyframeDatabase()->Erase(this);
 }
 
 void KeyFrame::SetPoseGBA(const TMatrix33 & R, const TVector3D & T) {
@@ -88,7 +95,7 @@ void KeyFrame::EraseMapPoint(map::MapPoint * map_point) {
     assert(false);
 }
 
-void KeyFrame::SerializeToStream(std::ostream &stream) const {
+void KeyFrame::SerializeToStream(std::ostream & stream) const {
   WRITE_TO_STREAM(is_initial_, stream);
   WRITE_TO_STREAM(is_initialized_, stream);
   WRITE_TO_STREAM(bad_flag_, stream);

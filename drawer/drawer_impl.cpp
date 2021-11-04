@@ -20,7 +20,7 @@ DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
     thread_(nullptr),
     error_(),
     cancellation_token_(false),
-    scale_(3.){
+    scale_(4.){
 
 }
 

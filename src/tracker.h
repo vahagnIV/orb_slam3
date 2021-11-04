@@ -18,6 +18,7 @@
 #include "local_mapper.h"
 
 namespace orb_slam3 {
+
 namespace serialization {
 class SerializationContext;
 }

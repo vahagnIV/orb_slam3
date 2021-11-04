@@ -28,6 +28,7 @@ DBoW2Database::DBoW2Database(istream &istream, serialization::SerializationConte
       inverted_file_[i][context.kf_id[kf_id]] = index;
     }
   }
+  std::cout << "Loaded" << std::endl;
 }
 
 
@@ -42,7 +43,7 @@ void DBoW2Database::Serialize(ostream &ostream) const {
     size_t inv_map_size = inv_map.size();
     WRITE_TO_STREAM(inv_map_size, ostream);
     for (const auto &kv: inv_map) {
-      size_t kf_id = reinterpret_cast<size_t>(kv.first);
+      size_t kf_id = kv.first->Id();
       WRITE_TO_STREAM(kf_id, ostream);
       WRITE_TO_STREAM(kv.second, ostream);
     }
@@ -52,6 +53,7 @@ void DBoW2Database::Serialize(ostream &ostream) const {
 void DBoW2Database::Append(KeyFrame *keyframe) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(keyframe->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
+  std::unique_lock<std::mutex> lock(mutex_);
   for (auto wf: feature_handler->GetWordFrequencies()) {
     assert(wf.first < inverted_file_.size());
     inverted_file_[wf.first][keyframe] = wf.second;
@@ -185,6 +187,7 @@ void DBoW2Database::DetectRelocCandidates(const BaseFrame * keyframe,
 void DBoW2Database::Erase(KeyFrame * key_frame) {
   auto feature_handler = dynamic_cast<const features::handlers::DBoW2Handler *>(key_frame->GetFeatureHandler().get());
   assert(nullptr != feature_handler);
+  std::unique_lock<std::mutex> lock(mutex_);
   for (auto wid: feature_handler->GetBowVector()) {
     assert(wid.first < inverted_file_.size());
     inverted_file_[wid.first].erase(key_frame);

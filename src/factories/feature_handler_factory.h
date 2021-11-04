@@ -6,12 +6,12 @@
 #define ORB_SLAM3_SRC_FACTORIES_FEATURE_HANDLER_FACTORY_H_
 
 #include <features/handlers/base_feature_handler.h>
-#include <features/bow_vocabulary.h>
+#include <src/features/bow/bow_vocabulary.h>
 #include <frame/database/ikey_frame_database.h>
 
 namespace orb_slam3 {
 
-namespace map{
+namespace map {
 class Atlas;
 }
 
@@ -26,25 +26,20 @@ class FeatureHandlerFactory {
   FeatureHandlerFactory(features::handlers::HandlerType type, map::Atlas * atlas);
 
   static std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
-                                                                        std::istream &istream,
-                                                                        serialization::SerializationContext &context);
+                                                                        std::istream & istream,
+                                                                        serialization::SerializationContext & context);
 
   static std::shared_ptr<features::handlers::BaseFeatureHandler> Create(features::handlers::HandlerType type,
-                                                                        const TImageGray8U &image,
-                                                                        const camera::ICamera *camera,
-                                                                        const features::IFeatureExtractor *feature_extractor,
+                                                                        const TImageGray8U & image,
+                                                                        const camera::ICamera * camera,
+                                                                        const features::IFeatureExtractor * feature_extractor,
                                                                         size_t feature_count);
 
-  static frame::IKeyFrameDatabase *CreateKeyFrameDatabase(frame::KeyframeDatabaseType type,
-                                                          std::istream &istream,
-                                                          serialization::SerializationContext &contex);
+
 
   ~FeatureHandlerFactory();
 
  private:
-  static void LoadBowVocabulary();
- private:
-  static features::BowVocabulary *bow_vocabulary_;
   features::handlers::HandlerType handler_type_;
   map::Atlas * atlas_;
 

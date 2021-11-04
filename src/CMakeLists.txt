@@ -11,7 +11,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 
 if (OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} ")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
@@ -56,6 +56,7 @@ add_library(orbslam SHARED
         features/handlers/base_feature_handler.cpp
         features/matching/validators/orientation_validator.cpp
         features/handlers/DBoW2/dbo_w2_handler.cpp
+        features/bow/dbo_w2_vocabulary.cpp
 
         messages/message_type.cpp
         messages/base_message.cpp
@@ -93,6 +94,7 @@ add_library(orbslam SHARED
         factories/distortion_model_factory.cpp
         factories/frame_factory.cpp
         factories/feature_extractor_factory.cpp
+        factories/keyframe_database_factory.cpp
 
         serialization/serialization_context.cpp
 
@@ -139,7 +141,7 @@ add_library(orbslam SHARED
         features/matching/imatcher.h
         features/matching/second_nearest_neighbor_matcher.hpp
         features/match.h
-        features/bow_vocabulary.h
+        features/bow/bow_vocabulary.h
         features/handlers/DBoW2/bow_to_iterator.h
         features/handlers/DBoW2/bow_to_pointee.h
         features/matching/validators/orientation_validator.h

@@ -5,22 +5,23 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_FRAME_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_FRAME_H_
 #include "base_frame.h"
-#include <frame/map_point_visibility_params.h>
+#include "map_point_visibility_params.h"
 
 namespace orb_slam3 {
-namespace frame {
+class Tracker;
 
+namespace frame {
 class KeyFrame;
 
 class Frame : public BaseFrame {
-
+  friend class ::orb_slam3::Tracker;
  public:
-  Frame(TimePoint &time_point,
-        const std::string &filename,
-        const SensorConstants *sensor_constants,
+  Frame(TimePoint & time_point,
+        const std::string & filename,
+        const SensorConstants * sensor_constants,
         map::Atlas * atlas)
       : BaseFrame(time_point, filename, sensor_constants, ++next_id_, atlas) {}
-  Frame(std::istream &stream, serialization::SerializationContext &context);
+  Frame(std::istream & stream, serialization::SerializationContext & context);
 
   virtual ~Frame() = default;
  public:

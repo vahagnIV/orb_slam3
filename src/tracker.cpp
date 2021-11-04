@@ -183,7 +183,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
     last_key_frame_ = keyframe;
-    local_mapper_->AddToqueue(keyframe);
+    local_mapper_->AddToQueue(keyframe);
   }
 #ifndef MULTITHREADED
   local_mapper_->RunIteration();
@@ -225,8 +225,15 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   bool few_tracked_points =
       tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio
           && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
-  if (!few_tracked_points
-      || (!more_than_max_frames_passed && !(more_than_min_frames_passed && local_mapper_accepts_key_frame))) {
+  if (!few_tracked_points) {
+    std::cout << "Tracked map points count: " << tracked_points_count << std::endl;
+    std::cout << "filtered_tracked_map_points.size(): " << filtered_tracked_map_points.size() << std::endl;
+    std::cout << "th_ref_ratio: " << th_ref_ratio << std::endl;
+    std::cout << "MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT: " << MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT << std::endl;
+    std::cout << "NeedNewKeyfrane !few_tracked points" << std::endl;
+    return false;
+  }
+  if (!more_than_max_frames_passed && !more_than_min_frames_passed) {
     std::cout << "NeedNewKeyFrame = false1" << std::endl;
     return false;
   }
@@ -295,8 +302,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
-    local_mapper_->AddToqueue(initial_key_frame);
-    local_mapper_->AddToqueue(current_key_frame);
+    local_mapper_->AddToQueue(initial_key_frame);
+    local_mapper_->AddToQueue(current_key_frame);
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});
 
@@ -402,6 +409,7 @@ void Tracker::LoadState(std::istream & istream, serialization::SerializationCont
   READ_FROM_STREAM(type, istream);
 
   last_frame_ = factories::FrameFactory::Create(type, istream, context);
+  frame::Frame::next_id_ = last_frame_->Id() + 1;
 
 }
 

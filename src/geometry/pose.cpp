@@ -45,8 +45,8 @@ Pose & Pose::operator=(const Pose & other) {
   return *this;
 }
 
-void Pose::print() const {
-  std::cout << R << std::endl << T << std::endl;
+void Pose::print(std::ostream & stream) const {
+  stream << R << std::endl << T << std::endl;
 }
 
 TVector3D Pose::Transform(const TPoint3D & point) const {

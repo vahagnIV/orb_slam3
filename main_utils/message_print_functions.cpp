@@ -16,8 +16,8 @@ void PrintTrackingInfo(const orb_slam3::messages::BaseMessage * message) {
 
   std::cout << "Received Position update Message" << std::endl;
   std::cout << "Time " << FormatTimePoint(tracking_info->time_point) << std::endl;
-  tracking_info->position.print();
-  tracking_info->velocity.print();
+  tracking_info->position.print(std::cout);
+  tracking_info->velocity.print(std::cout);
 }
 
 void PrintKeyFrameCreated(const orb_slam3::messages::BaseMessage * message) {
@@ -29,7 +29,7 @@ void PrintKeyFrameCreated(const orb_slam3::messages::BaseMessage * message) {
   std::cout << "Id: " << kf_created->id << std::endl;
   std::cout << "Map Id: " << kf_created->map_id << std::endl;
   std::cout << "Position: " << std::endl;
-  kf_created->position.print();
+  kf_created->position.print(std::cout);
 }
 
 void PrintKeyFrameDeleted(const orb_slam3::messages::BaseMessage * message) {

@@ -6,7 +6,7 @@
 #define ORB_SLAM3_SRC_FEATURES_DRIVERS_DBOW2_D_BO_W_2_DRIVER_H_
 
 #include <features/handlers/base_feature_handler.h>
-#include <features/bow_vocabulary.h>
+#include <src/features/bow/bow_vocabulary.h>
 
 namespace orb_slam3 {
 namespace features {

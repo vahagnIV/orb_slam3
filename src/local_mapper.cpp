@@ -15,12 +15,17 @@
 
 // TODO: remove this in multithreading
 #include <loop_merge_detector.h>
+#include <fstream>
 
 namespace orb_slam3 {
 
-LocalMapper::LocalMapper(map::Atlas * atlas)
+LocalMapper::LocalMapper(map::Atlas * atlas, LoopMergeDetector * loop_mege_detector)
     : atlas_(atlas),
-      thread_(nullptr) {}
+      thread_(nullptr),
+      accept_key_frames_(true),
+      loop_merge_detector_(loop_mege_detector) {
+  loop_merge_detector_->SetLocalMapper(this);
+}
 
 LocalMapper::~LocalMapper() {
   Stop();
@@ -76,8 +81,6 @@ void LocalMapper::MapPointCulling(frame::KeyFrame * keyframe) {
 
 void LocalMapper::ProcessNewKeyFrame(frame::KeyFrame * keyframe) {
   keyframe->Initialize();
-  if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
-    messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(keyframe));
 
   frame::KeyFrame::MapPointSet map_points;
   keyframe->ListMapPoints(map_points);
@@ -143,6 +146,10 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
   for (auto keyframe: local_keyframes) keyframe->ListMapPoints(local_map_points);
   local_keyframes.insert(frame);
   FilterFixedKeyFames(local_keyframes, local_map_points, fixed_keyframes);
+
+  for (auto & kf: fixed_keyframes)
+    local_keyframes.erase(kf);
+
   if (fixed_keyframes.size() < 2 && fixed_keyframes.size() == local_keyframes.size())
     return;
 
@@ -167,8 +174,8 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 
 }
 
-void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & local_keyframes,
-                                      frame::KeyFrame::MapPointSet & local_map_points,
+void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *> & local_keyframes,
+                                      const frame::BaseFrame::MapPointSet & local_map_points,
                                       std::unordered_set<frame::KeyFrame *> & out_fixed) {
   size_t number_of_fixed = 0;
   for (auto keyframe: local_keyframes) {
@@ -196,51 +203,68 @@ void LocalMapper::FilterFixedKeyFames(std::unordered_set<frame::KeyFrame *> & lo
     if (nullptr != earliest_keyframe) {
       ++number_of_fixed;
       out_fixed.insert(earliest_keyframe);
-      local_keyframes.erase(earliest_keyframe);
     }
     if (number_of_fixed < 2 && nullptr != second_eraliset_keyframe) {
       ++number_of_fixed;
       out_fixed.insert(second_eraliset_keyframe);
-      local_keyframes.erase(second_eraliset_keyframe);
     }
   }
-}
-
-bool LocalMapper::CheckNewKeyFrames() const {
-  bool new_keyframes = new_key_frames_.size_approx() > 0;
-  return new_keyframes;
 }
 
 void LocalMapper::RunIteration() {
-  frame::KeyFrame * key_frame;
-  while (new_key_frames_.try_dequeue(key_frame)) {
-    accept_key_frames_ = false;
-    ProcessNewKeyFrame(key_frame);
 
-    MapPointCulling(key_frame);
-    CreateNewMapPoints(key_frame);
+  while (!cancelled_) {
+    if (!loop_merge_detection_queue_.Empty()) {
+      switch (loop_merge_detection_queue_.Front().type) {
+        case DetectionType::LoopDetected:
+          CorrectLoop(loop_merge_detection_queue_.Front());
+          break;
+        case DetectionType::MergeDetected:
+          MergeMaps(loop_merge_detection_queue_.Front());
+          break;
+        default:
+          loop_merge_detection_queue_.Pop();
+          break;
+      }
+      loop_merge_detection_queue_.Clear();
+//      accept_key_frames_ = false;
+//      new_key_frames_.Clear();
+    } else if (!new_key_frames_.Empty()) {
+      frame::KeyFrame * key_frame;
+      key_frame = new_key_frames_.Front();
+      new_key_frames_.Pop();
+      accept_key_frames_ = false;
+      ProcessNewKeyFrame(key_frame);
 
-    if (!CheckNewKeyFrames()) {
-      FuseMapPoints(key_frame);
+      MapPointCulling(key_frame);
+      CreateNewMapPoints(key_frame);
+
+      if (new_key_frames_.Empty()) {
+        FuseMapPoints(key_frame, false);
+      }
+      if (new_key_frames_.Empty()) {
+        Optimize(key_frame);
+        KeyFrameCulling(key_frame);
+      }
+      if (loop_merge_detector_)
+        loop_merge_detector_->Process(key_frame);
+
+      accept_key_frames_ = true;
     }
-    if (!CheckNewKeyFrames()) {
-      Optimize(key_frame);
-      KeyFrameCulling(key_frame);
-    }
-//    if (!message.frame->IsBad())
-//      NotifyObservers(message);
-    //TODO: Remove this line in multithreading
-//    (dynamic_cast<LoopMergeDetector *>(*(observers_.begin())))->RunIteration();
-//    NotifyObservers(message.frame);
-    accept_key_frames_ = true;
+    std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }
 }
 
-void LocalMapper::AddToqueue(frame::KeyFrame * key_frame) {
-  new_key_frames_.enqueue(key_frame);
+void LocalMapper::MergeMaps(DetectionResult & detection_result) {
+
 }
 
-void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unordered_set<frame::KeyFrame *> & out) {
+void LocalMapper::AddToQueue(frame::KeyFrame * key_frame) {
+  new_key_frames_.Push(key_frame);
+}
+
+void LocalMapper::ListCovisiblesOfCovisibles(const frame::KeyFrame * frame,
+                                             std::unordered_set<frame::KeyFrame *> & out) {
   std::unordered_set<frame::KeyFrame *> covisibles =
       frame->GetCovisibilityGraph().GetCovisibleKeyFrames(frame->GetSensorConstants()->number_of_keyframe_to_search_lm);
   for (auto kf: covisibles) {
@@ -253,7 +277,7 @@ void LocalMapper::ListCovisiblesOfCovisibles(frame::KeyFrame * frame, std::unord
   }
 }
 
-void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
+void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
   std::unordered_set<frame::KeyFrame *> second_neighbours;
   ListCovisiblesOfCovisibles(frame, second_neighbours);
   frame->LockMapPointContainer();
@@ -262,7 +286,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
     kf->ListMapPoints(map_points);
 
     std::list<frame::MapPointVisibilityParams> visibles;
-    frame->FilterVisibleMapPoints(map_points, visibles, false);
+    frame->FilterVisibleMapPoints(map_points, visibles, use_staging);
     std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_mps;
     std::list<frame::Observation> local_mps;
     frame->MatchVisibleMapPoints(visibles, matched_mps, local_mps);
@@ -281,7 +305,7 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame) {
 
   frame::KeyFrame::MapPointSet mps;
   frame->ListMapPoints(mps);
-  for (auto mp:mps) {
+  for (auto mp: mps) {
     if (!mp->IsBad()) {
       mp->ComputeDistinctiveDescriptor();
       mp->CalculateNormalStaging();
@@ -335,10 +359,10 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
         map::MapPoint::MapType observations = mp->Observations();
         long no_obs =
             std::count_if(observations.begin(),
-                       observations.end(),
-                       [&scale_level](const map::MapPoint::MapType::value_type &obs) {
-                         return obs.second.GetKeyFrame()->GetScaleLevel(obs.second) < scale_level + 1;
-                       }) - 1;
+                          observations.end(),
+                          [&scale_level](const map::MapPoint::MapType::value_type & obs) {
+                            return obs.second.GetKeyFrame()->GetScaleLevel(obs.second) < scale_level + 1;
+                          }) - 1;
         if (no_obs > 3l)
           ++redundan_observations;
       }
@@ -361,7 +385,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
       kf->SetBad();
       kf->UnlockMapPointContainer();
     }
-    for (auto mp : map_points) {
+    for (auto mp: map_points) {
       if (!mp->IsBad()) {
         mp->CalculateNormalStaging();
         mp->ApplyStaging();
@@ -382,6 +406,112 @@ void LocalMapper::SetBad(map::MapPoint * map_point) {
   }
   map_point->SetBad();
   map_point->GetMap()->EraseMapPoint(map_point);
+
+}
+
+void LocalMapper::AddToLMDetectionQueue(DetectionResult & detection_result) {
+  loop_merge_detection_queue_.Push(detection_result);
+}
+
+void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
+  /*std::unordered_set<map::MapPoint *> current_mps, candidate_mps;
+  detection_result.keyframe->ListMapPoints(current_mps);
+  detection_result.candidate->ListMapPoints(candidate_mps);
+  frame::KeyFrame::MapPointMatches matches;
+  detection_result.keyframe->FindMatchingMapPoints(detection_result.candidate, matches);
+  std::ofstream tt("coords");
+  for (auto match: matches) {
+    auto local_mp = match.first;
+    auto other_mp = match.second;
+
+    TPoint3D local_mp_position = detection_result.keyframe->GetPosition().Transform(local_mp->GetPosition());
+    TPoint3D other_mp_position = detection_result.candidate->GetPosition().Transform(other_mp->GetPosition());
+    tt
+        << detection_result.transformation.Transform(local_mp_position)
+        << std::endl;
+    tt << other_mp_position << std::endl<< std::endl;
+
+    tt
+        << detection_result.transformation.Transform(other_mp_position)
+        << std::endl;
+   tt << local_mp_position << std::endl<< std::endl<< std::endl<< std::endl;
+  }
+  tt.close();*/
+#warning Does not work
+
+  std::ofstream tt("test.txt");
+  auto current_covisible_keyframes = detection_result.keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
+  geometry::Sim3Transformation SG1 = detection_result.transformation * detection_result.candidate->GetPosition();
+
+  geometry::Pose keyframe_pose_inverse = detection_result.keyframe->GetInversePosition();
+
+  geometry::Pose corrected_keyframe_pose(SG1.R, SG1.T / SG1.s);
+  std::unordered_set<map::MapPoint *> map_points;
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->ListMapPoints(map_points);
+    covisible_kf->SetStagingPosition(covisible_kf->GetPosition() * keyframe_pose_inverse * corrected_keyframe_pose);
+
+    covisible_kf->GetPosition().print(tt);
+    tt << std::endl << std::endl;
+    covisible_kf->GetStagingPosition().print(tt);
+    tt << std::endl << std::endl << std::endl << std::endl << std::endl;
+
+  }
+
+  geometry::Sim3Transformation global_sim3 = keyframe_pose_inverse * detection_result.transformation
+      * detection_result.candidate->GetPosition();
+  for (auto mp: map_points) {
+    mp->SetStagingPosition(global_sim3.Transform(mp->GetPosition()));
+  }
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->ApplyStaging();
+  }
+
+
+
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->ApplyStaging();
+  }
+  for (auto mp: map_points) {
+    mp->CalculateNormalStaging();
+    mp->ApplyStaging();
+  }
+
+  frame::BaseFrame::MapPointSet candidate_map_points;
+  detection_result.candidate->ListMapPoints(candidate_map_points);
+  for(auto candidate_neighbour: detection_result.candidate->GetCovisibilityGraph().GetCovisibleKeyFrames()){
+    candidate_neighbour->ListMapPoints(candidate_map_points);
+  }
+
+
+  for (auto covisible_kf: current_covisible_keyframes) {
+    std::list<frame::MapPointVisibilityParams> visibles;
+    covisible_kf->FilterVisibleMapPoints(candidate_map_points, visibles, true);
+    std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_map_points;
+    std::list<frame::Observation> local_matches;
+    covisible_kf->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
+    for(auto match: matched_map_points){
+      if(match.first->GetObservationCount() > match.second->GetObservationCount())
+        ReplaceMapPoint(match.first, match.second);
+      else
+        ReplaceMapPoint(match.second, match.first);
+    }
+    for(auto local_match: local_matches){
+      covisible_kf->AddMapPoint(local_match);
+    }
+  }
+
+  for (auto mp: map_points) {
+    mp->CalculateNormalStaging();
+    mp->ApplyStaging();
+  }
+  for (auto covisible_kf: current_covisible_keyframes) {
+    covisible_kf->GetCovisibilityGraph().Update();
+  }
+
+
+
+  loop_merge_detection_queue_.Clear();
 
 }
 
