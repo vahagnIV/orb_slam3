@@ -16,6 +16,7 @@ class MapPointGeometryUpdated : public BaseMessage {
   MapPointGeometryUpdated(const map::MapPoint * map_point);
   MessageType Type() const override;
   TPoint3D position;
+  size_t id;
 
 };
 

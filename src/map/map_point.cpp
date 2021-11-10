@@ -181,6 +181,9 @@ void MapPoint::ApplyStaging() {
   ApplyStagingPosition();
   ApplyNormalStaging();
   ApplyMinMaxInvDistanceStaging();
+  if(Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)){
+    messages::MessageProcessor::Instance().Enqueue(new messages::MapPointGeometryUpdated(this));
+  }
 }
 
 const MapPoint::MapType MapPoint::Observations() const { /// TODO change prototype

@@ -7,7 +7,7 @@
 namespace orb_slam3 {
 namespace messages {
 
-MapPointGeometryUpdated::MapPointGeometryUpdated(const map::MapPoint * map_point) : position(map_point->GetPosition()) {
+MapPointGeometryUpdated::MapPointGeometryUpdated(const map::MapPoint * map_point) : position(map_point->GetPosition()), id((size_t)map_point) {
 
 }
 

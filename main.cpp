@@ -336,7 +336,7 @@ void RunDataset(OrbSlam3System system,
                 const std::vector<std::chrono::system_clock::time_point> & timestamps,
                 size_t initial_frame_id) {
 
-  SetSettings();
+//  SetSettings();
   orb_slam3::drawer::DrawerImpl drawer(1024, 768);
   drawer.Start();
 #ifdef MULTITHREADED
