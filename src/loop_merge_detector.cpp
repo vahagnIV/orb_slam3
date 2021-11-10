@@ -109,6 +109,7 @@ void LoopMergeDetector::RunIteration() {
             mp->SetStagingMinInvarianceDistance(
                 mp->GetMinInvarianceDistance() / 0.8 * G21.s);
             mp->CalculateNormalStaging();
+            mp->ApplyStaging();
           }
 
           for (auto keyframe: key_frame->GetMap()->GetAllKeyFrames()) {

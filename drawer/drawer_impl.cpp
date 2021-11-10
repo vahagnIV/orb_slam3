@@ -20,7 +20,7 @@ DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
     thread_(nullptr),
     error_(),
     cancellation_token_(false),
-    scale_(4.){
+    scale_(4.) {
 
 }
 
@@ -95,6 +95,9 @@ void DrawerImpl::WorkThread() {
       case messages::MessageType::KEYFRAME_POSITION_UPDATED:
         KeyFramePositionUpdated(Extract<messages::KeyFramePositionUpdated>(message));
         break;
+      case messages::MessageType::MAP_POINT_GEOMETRY_UPDATED:
+        MapPointGeometryUpdated(Extract<messages::MapPointGeometryUpdated>(message));
+        break;
     }
     delete message;
   }
@@ -126,7 +129,6 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   transformation_matrix_ = Projection * View * Model; // Remember, matrix multiplication is the other way around
   GLuint MatrixID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "MVP");
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &transformation_matrix_[0][0]);
-
 
   ShaderRepository::UseColor(ColorRepository::Green());
 
@@ -223,23 +225,35 @@ void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
 
 }
 
-void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted *message) {
+void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
   graph_.DeleteNode(message->id);
 }
 
-void DrawerImpl::MapPointDeleted(messages::MapPointDeleted *message) {
+void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
   graph_.DeleteNode(message->id);
 }
 
-void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated *message) {
+void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated * message) {
   auto node = dynamic_cast<KeyFrameNode *>(graph_.GetNode(message->id));
   // TODO: This issue arises because monocular keyframe's constructor raises this event
   // TODO: before raising kf creted event.
-  if(nullptr == node)
+  if (nullptr == node)
     return;
   CreatePositionRectangle(message->position, node->vertices);
   glBindBuffer(GL_ARRAY_BUFFER, node->vertex_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(node->vertices), node->vertices, GL_STATIC_DRAW);
+}
+
+void DrawerImpl::MapPointGeometryUpdated(messages::MapPointGeometryUpdated * message) {
+  auto node = dynamic_cast<MapPointNode *>(graph_.GetNode(message->id));
+  if(nullptr == node)
+    return;
+  float buffer[] = {static_cast<float>(message->position.x() / scale_),
+                    static_cast<float>(message->position.y() / scale_),
+                    static_cast<float>(message->position.z() / scale_)};
+
+  glBindBuffer(GL_ARRAY_BUFFER, node->buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
 }
 
 }
