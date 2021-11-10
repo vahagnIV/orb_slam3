@@ -450,12 +450,6 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ListMapPoints(map_points);
     covisible_kf->SetStagingPosition(covisible_kf->GetPosition() * keyframe_pose_inverse * corrected_keyframe_pose);
-
-    covisible_kf->GetPosition().print(tt);
-    tt << std::endl << std::endl;
-    covisible_kf->GetStagingPosition().print(tt);
-    tt << std::endl << std::endl << std::endl << std::endl << std::endl;
-
   }
 
   geometry::Sim3Transformation global_sim3 = keyframe_pose_inverse * detection_result.transformation
@@ -466,9 +460,6 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ApplyStaging();
   }
-
-
-
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ApplyStaging();
   }
@@ -502,7 +493,10 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   }
 
   for (auto mp: map_points) {
+    if(mp->IsBad())
+      continue;
     mp->CalculateNormalStaging();
+    mp->ComputeDistinctiveDescriptor();
     mp->ApplyStaging();
   }
   for (auto covisible_kf: current_covisible_keyframes) {

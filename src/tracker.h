@@ -62,6 +62,7 @@ class Tracker : public Observer<frame::KeyFrame *>,
   bool TrackWithReferenceKeyFrame(frame::Frame * frame);
   void ReplaceLastFrame(frame::Frame * frame);
   bool NeedNewKeyFrame(frame::Frame * frame);
+  void StartNewMap(frame::Frame * frame);
 
  private:
   static frame::KeyFrame * ListLocalKeyFrames(frame::Frame * current_frame,
