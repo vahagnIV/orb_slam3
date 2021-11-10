@@ -386,15 +386,15 @@ void RunDataset(OrbSlam3System system,
 //      map_stream << atlas->GetCurrentMap();
     }
 
-    if (orb_slam3::TrackingResult::TRACKING_FAILED == result) {
-      std::cout << "============= " << system.local_mapper->GetQueueSize() << std::endl;
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      exit(1);
-    }
+//    if (orb_slam3::TrackingResult::TRACKING_FAILED == result) {
+//      std::cout << "============= " << system.local_mapper->GetQueueSize() << std::endl;
+//      std::this_thread::sleep_for(std::chrono::seconds(2));
+//      exit(4);
+//    }
 //    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 //    cv::imshow("im", image);
 
-    cv::waitKey(1);
+//    cv::waitKey(1);
 
   }
 }

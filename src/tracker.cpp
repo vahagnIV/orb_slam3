@@ -88,19 +88,18 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
 }
 
-TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
+void Tracker::StartNewMap(frame::Frame * frame) {
+  atlas_->CreateNewMap();
+  frame->SetIdentity();
+  state_ = FIRST_IMAGE;
+  frame->SetMap(atlas_->GetCurrentMap());
+  ReplaceLastFrame(frame);
+  this->last_key_frame_ = nullptr;
+  this->reference_keyframe_ = nullptr;
+  this->velocity_is_valid_ = false;
+}
 
-//  if (frame->Id() == 50) {
-//    atlas_->CreateNewMap();
-//    frame->SetIdentity();
-//    state_ = FIRST_IMAGE;
-//    frame->SetMap(atlas_->GetCurrentMap());
-//    ReplaceLastFrame(frame);
-//    this->last_key_frame_ = nullptr;
-//    this->reference_keyframe_ = nullptr;
-//    this->velocity_is_valid_ = false;
-//    return TrackingResult::OK;
-//  }
+TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   last_frame_->UpdateFromReferenceKeyFrame();
 
@@ -115,6 +114,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     // TODO: go to relocalization
     velocity_is_valid_ = false;
     delete frame;
+    state_ = LOST;
     return TrackingResult::TRACKING_FAILED;
   }
 
@@ -156,8 +156,9 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->SearchInVisiblePoints(visible_map_points);
 
   frame->OptimizePose();
-  if (frame->GetMapPointsCount() < 20)
+  if (frame->GetMapPointsCount() < 20) {
     return TrackingResult::TRACKING_FAILED;
+  }
   frame->SetMap(atlas_->GetCurrentMap());
   ComputeVelocity(frame, last_frame_);
 
@@ -314,7 +315,11 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 #endif
 
   } else {
-    delete frame;
+    if (frame->Id() - last_frame_->Id() >= 40)
+      StartNewMap(frame);
+    else
+      delete frame;
+
     return TrackingResult::LINKING_FAILED;
   }
 
@@ -352,6 +357,12 @@ TrackingResult Tracker::Track(frame::Frame * frame) {
     }
     case OK: {
       res = TrackInOkState(frame);
+      break;
+    }
+    case LOST: {
+      StartNewMap(frame);
+      state_ = FIRST_IMAGE;
+      res = TrackingResult::OK;
       break;
     }
     default: {
