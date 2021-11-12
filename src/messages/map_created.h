@@ -5,6 +5,8 @@
 #ifndef ORB_SLAM3_SRC_MESSAGES_MAP_CREATED_H_
 #define ORB_SLAM3_SRC_MESSAGES_MAP_CREATED_H_
 
+#include <vector>
+
 #include "base_message.h"
 #include <map/map.h>
 
@@ -14,8 +16,11 @@ namespace messages {
 class MapCreated : public BaseMessage {
  public:
   MapCreated(map::Map * map);
+  MapCreated(const std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
+
   MessageType Type() const override;
-  const size_t map;
+  size_t map;
 
 };
 

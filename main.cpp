@@ -28,6 +28,9 @@
 #include <factories/feature_handler_factory.h>
 #include <frame/database/DBoW2/dbo_w2_database.h>
 #include <factories/keyframe_database_factory.h>
+#include <odometry_publisher.h>
+#include <ros_common.h>
+
 
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
@@ -337,8 +340,8 @@ void RunDataset(OrbSlam3System system,
                 size_t initial_frame_id) {
 
 //  SetSettings();
-  orb_slam3::drawer::DrawerImpl drawer(1024, 768);
-  drawer.Start();
+
+
 #ifdef MULTITHREADED
 #warning "MULTITHREDING IS ENABLED"
   system.local_mapper->Start();
@@ -497,9 +500,11 @@ void LoadConfig(nlohmann::json & config) {
 void initialize() {
   orb_slam3::drawer::Initialize();
   orb_slam3::logging::Initialize();
+
 }
 
 int main(int argc, char * argv[]) {
+
   initialize();
   nlohmann::json config;
   LoadConfig(config);
@@ -509,6 +514,12 @@ int main(int argc, char * argv[]) {
 //  system.local_mapper->Start();
 
   SetSettings();
+  //  orb_slam3::drawer::DrawerImpl drawer(1024, 768);
+//  drawer.Start();
+
+  orb_slam3::ros_publisher::Initialize(argc, argv);
+  auto ros_publisher = orb_slam3::ros_publisher::CreatePublisher("orb_slam3");
+  ros_publisher->Start();
 //  ResumeMonocularTum("save_state", config["datasetPath"]);
 //
   TestMonocularTum(config["datasetPath"]);

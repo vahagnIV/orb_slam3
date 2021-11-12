@@ -5,18 +5,17 @@
 #ifndef ORB_SLAM3_ROS_SRC_ODOMETRY_PUBLISHER_SRC_ODOMETRY_PUBLISHER_H_
 #define ORB_SLAM3_ROS_SRC_ODOMETRY_PUBLISHER_SRC_ODOMETRY_PUBLISHER_H_
 
-#include <ros/ros.h>
-
 namespace orb_slam3 {
+namespace ros_publisher {
 
 class OdometryPublisher {
  public:
-  OdometryPublisher(ros::NodeHandle & n);
- private:
-
-
+  virtual void Start() = 0;
+  virtual void Stop() = 0;
+  virtual ~OdometryPublisher() = default;
 };
 
+}
 }
 
 #endif //ORB_SLAM3_ROS_SRC_ODOMETRY_PUBLISHER_SRC_ODOMETRY_PUBLISHER_H_

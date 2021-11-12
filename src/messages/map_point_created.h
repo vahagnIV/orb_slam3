@@ -14,10 +14,12 @@ namespace messages {
 class MapPointCreated : public BaseMessage {
  public:
   MapPointCreated(const map::MapPoint * map_point);
+  MapPointCreated(const std::vector<uint8_t> & out_serialized);
   MessageType Type() const override;
-  const size_t id;
-  const TPoint3D position;
-  const size_t map_id;
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
+  size_t id;
+  TPoint3D position;
+  size_t map_id;
 
 };
 

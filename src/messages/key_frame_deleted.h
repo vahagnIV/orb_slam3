@@ -13,8 +13,10 @@ namespace messages {
 class KeyFrameDeleted : public BaseMessage {
  public:
   KeyFrameDeleted(const frame::KeyFrame * key_frame);
+  KeyFrameDeleted(const std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
   MessageType Type() const override;
-  const size_t id;
+  size_t id;
 };
 
 }

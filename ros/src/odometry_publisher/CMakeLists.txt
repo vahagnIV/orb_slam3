@@ -10,6 +10,7 @@ project(odometry_publisher)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -117,13 +118,12 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  include
 )
 
 ## Declare a C++ library
-message("asdasdasd")
-message(${CMAKE_CURRENT_LIST_DIR})
- add_library(${PROJECT_NAME}
-         ${CMAKE_CURRENT_LIST_DIR}/src/odometry_publisher.cpp
+add_library(${PROJECT_NAME}
+        ${CMAKE_CURRENT_LIST_DIR}/src/odometry_publisher_impl.cpp ${CMAKE_CURRENT_LIST_DIR}/src/ros_common.cpp
  )
 
 ## Add cmake target dependencies of the library
@@ -196,6 +196,10 @@ message(${CMAKE_CURRENT_LIST_DIR})
 #############
 ## Testing ##
 #############
+
+
+target_include_directories(${PROJECT_NAME} INTERFACE include)
+target_link_libraries(${PROJECT_NAME} orbslam ${catkin_LIBRARIES})
 
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_odometry_publisher.cpp)

@@ -14,9 +14,11 @@ namespace messages {
 class ObservationDeleted : public BaseMessage {
  public:
   ObservationDeleted(const frame::Observation & observation);
+  ObservationDeleted(const std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
   MessageType Type() const override;
-  const size_t frame_id;
-  const size_t map_point_id;
+  size_t frame_id;
+  size_t map_point_id;
 };
 
 }

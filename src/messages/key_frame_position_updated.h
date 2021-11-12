@@ -12,9 +12,11 @@ namespace messages {
 class KeyFramePositionUpdated : public BaseMessage {
  public:
   KeyFramePositionUpdated(const frame::KeyFrame * keyframe);
+  KeyFramePositionUpdated(const std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
   size_t id;
   MessageType Type() const override;
-  const geometry::Pose position;
+  geometry::Pose position;
 
 };
 }
