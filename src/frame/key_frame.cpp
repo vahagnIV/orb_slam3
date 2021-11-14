@@ -13,16 +13,21 @@ namespace orb_slam3 {
 namespace frame {
 
 KeyFrame::KeyFrame(TimePoint time_point,
-                   const std::string & filename,
-                   const SensorConstants * sensor_constants,
+                   const std::string &filename,
+                   const SensorConstants *sensor_constants,
                    size_t id,
-                   map::Atlas * atlas)
+                   map::Atlas *atlas,
+                   map::Map *map,
+                   const geometry::Pose &pose)
     : BaseFrame(time_point, filename, sensor_constants, id, atlas),
       is_initialized_(false),
       covisibility_graph_(this),
       is_initial_(false),
       bad_flag_(false),
       kf_gba_(nullptr) {
+  SetStagingPosition(pose);
+  RigidObject::ApplyStaging();
+  SetMap(map);
   if (Settings::Get().MessageRequested(messages::MessageType::KEYFRAME_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::KeyFrameCreated(this));
 }

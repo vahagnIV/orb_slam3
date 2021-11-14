@@ -21,10 +21,12 @@ class KeyFrame : public BaseFrame {
   KeyFrame(std::istream &stream, serialization::SerializationContext &context);
 
   KeyFrame(TimePoint time_point,
-           const std::string & filename,
-           const SensorConstants * sensor_constants,
+           const std::string &filename,
+           const SensorConstants *sensor_constants,
            size_t id,
-           map::Atlas * atlas);
+           map::Atlas *atlas,
+           map::Map *map,
+           const geometry::Pose &pose);
 
   virtual ~KeyFrame() = default;
 

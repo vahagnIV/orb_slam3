@@ -514,7 +514,7 @@ int main(int argc, char * argv[]) {
 //  system.local_mapper->Start();
 
   SetSettings();
-  //  orb_slam3::drawer::DrawerImpl drawer(1024, 768);
+//    orb_slam3::drawer::DrawerImpl drawer(1024, 768);
 //  drawer.Start();
 
   orb_slam3::ros_publisher::Initialize(argc, argv);
