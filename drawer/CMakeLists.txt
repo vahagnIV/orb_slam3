@@ -13,9 +13,13 @@ add_library(drawer SHARED
         shaders/color_repository.cpp
         map_point_node.cpp
         key_frame_node.cpp)
+
 target_link_libraries(drawer
         ${OpenGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         ${GLFW3_LIBRARY}
         orbslam)
-target_include_directories(orbslam INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+
+target_include_directories(orbslam PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
