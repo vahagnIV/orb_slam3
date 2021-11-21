@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   message_generation
+  image_transport
 )
 
 ## System dependencies are found with CMake's conventions
@@ -123,7 +124,9 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-        ${CMAKE_CURRENT_LIST_DIR}/src/odometry_publisher_impl.cpp ${CMAKE_CURRENT_LIST_DIR}/src/ros_common.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/odometry_publisher_impl.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/ros_common.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/image_publisher_impl.cpp
  )
 
 ## Add cmake target dependencies of the library

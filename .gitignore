@@ -5,3 +5,7 @@
 /DBoW2/CMakeFiles/
 /DBoW2/lib/
 /cmake-build-release/
+/ros/build/
+/ros/devel/
+/ros/src/CMakeLists.txt
+/ros/.catkin_workspace

@@ -346,7 +346,7 @@ void RunDataset(OrbSlam3System system,
 #warning "MULTITHREDING IS ENABLED"
   system.local_mapper->Start();
 #endif
-
+  auto image_publisher = orb_slam3::ros_publisher::CreateImagePublisher("OrbImage");
   std::chrono::system_clock::time_point last = std::chrono::system_clock::now();
   size_t feature_count = initial_frame_id == 0 ? NFEATURES1 : NFEATURES1;
   for (size_t i = initial_frame_id; i < filenames.size(); ++i) {
@@ -361,16 +361,18 @@ void RunDataset(OrbSlam3System system,
 
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
+    std::vector<uint8_t> img_vect(eigen_image.data(), eigen_image.data() + eigen_image.size());
+    image_publisher->Publish(img_vect, eigen_image.cols(), eigen_image.rows());
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     static const orb_slam3::features::handlers::HandlerType
         kHandlerType = orb_slam3::features::handlers::HandlerType::DBoW2;
-    MF * frame = new MF(system.tracker->GetAtlas(),
-                        kHandlerType,
-                        feature_count,
-                        eigen_image,
-                        timestamps[i],
-                        filenames[i],
-                        camera,
+    MF *frame = new MF(system.tracker->GetAtlas(),
+                       kHandlerType,
+                       feature_count,
+                       eigen_image,
+                       timestamps[i],
+                       filenames[i],
+                       camera,
                         sensor_constants);
     auto result = system.tracker->Track(frame);
 
@@ -518,7 +520,7 @@ int main(int argc, char * argv[]) {
 //  drawer.Start();
 
   orb_slam3::ros_publisher::Initialize(argc, argv);
-  auto ros_publisher = orb_slam3::ros_publisher::CreatePublisher("orb_slam3");
+  auto ros_publisher = orb_slam3::ros_publisher::CreateOdometryPublisher("orb_slam3");
   ros_publisher->Start();
 //  ResumeMonocularTum("save_state", config["datasetPath"]);
 //

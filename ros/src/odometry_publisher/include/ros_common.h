@@ -7,12 +7,14 @@
 
 #include <string>
 #include <odometry_publisher.h>
+#include <image_publisher.h>
 
 namespace orb_slam3 {
 namespace ros_publisher {
 
-void Initialize(int argc, char * argv[]);
-OdometryPublisher * CreatePublisher(const std::string & topic_name);
+void Initialize(int argc, char *argv[]);
+OdometryPublisher *CreateOdometryPublisher(const std::string &topic_name);
+ImagePublisher *CreateImagePublisher(const std::string &topic_name);
 
 }
 }
