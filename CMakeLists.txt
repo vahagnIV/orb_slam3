@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 project(orb_slam3)
 
 set(CMAKE_CXX_STANDARD 11)
-message("${PROJECT_SOURCE_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 find_package(OpenCV REQUIRED)
@@ -10,7 +9,7 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(g2o REQUIRED)
 
 add_definitions(-DMULTITHREADED)
-
+set(CMAKE_INSTALL_PREFIX "/home/vahagn/tmp/slam-test-install")
 enable_testing()
 include_directories(external ${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(src)
