@@ -3,6 +3,7 @@
 //
 
 #include "observation_deleted.h"
+#include "serialization_utils.h"
 #include <frame/key_frame.h>
 #include <map/map_point.h>
 
@@ -13,8 +14,22 @@ ObservationDeleted::ObservationDeleted(const frame::Observation & observation) :
 
 }
 
+ObservationDeleted::ObservationDeleted(const std::vector<uint8_t> & serialized) {
+  INIT_DESERIALIZATION(serialized);
+  COPY_FROM(source, frame_id);
+  COPY_FROM(source, map_point_id);
+
+}
+
 MessageType ObservationDeleted::Type() const {
   return OBSERVATION_DELETED;
 }
+
+void ObservationDeleted::Serialize(std::vector<uint8_t> & out_serialized) const {
+  INIT_SERIALIZATION(out_serialized, sizeof(frame_id) + sizeof(map_point_id));
+  COPY_TO(dest, frame_id);
+  COPY_TO(dest, map_point_id);
+}
+
 }
 }

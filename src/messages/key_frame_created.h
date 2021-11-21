@@ -14,11 +14,13 @@ namespace messages {
 class KeyFrameCreated : public BaseMessage {
  public:
   KeyFrameCreated(const frame::KeyFrame * key_frame);
+  KeyFrameCreated(const std::vector<uint8_t> & serialized);
   MessageType Type() const override;
-  const size_t id;
-  const size_t map_id;
-  const geometry::Pose position;
-  static const MessageType type;
+  size_t id;
+  size_t map_id;
+  geometry::Pose position;
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
+
 
 };
 

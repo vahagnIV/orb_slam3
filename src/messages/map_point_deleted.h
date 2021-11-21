@@ -13,6 +13,8 @@ namespace messages {
 class MapPointDeleted : public BaseMessage{
  public:
   MapPointDeleted(const map::MapPoint * map_point);
+  MapPointDeleted(std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
   MessageType Type() const override;
   size_t id;
 

@@ -224,6 +224,9 @@ void DisplayTrackingInfo(const frame::Frame * frame,
       break;
     case 'b':mode ^= 8;
       break;
+    case 'q':
+      exit(0);
+      break;
 
   }
 

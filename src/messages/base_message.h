@@ -6,6 +6,7 @@
 #define ORB_SLAM3_SRC_MESSAGES_BASE_MESSAGE_H_
 
 #include <atomic>
+#include <vector>
 
 #include "message_type.h"
 
@@ -19,6 +20,7 @@ class BaseMessage {
  public:
   std::size_t Nonce() const;
   virtual MessageType Type() const = 0;
+  virtual void Serialize(std::vector<uint8_t> & out_serialized) const = 0;
  private:
   std::size_t nonce_;
  private:

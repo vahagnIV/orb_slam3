@@ -14,6 +14,8 @@ namespace messages {
 class MapPointGeometryUpdated : public BaseMessage {
  public:
   MapPointGeometryUpdated(const map::MapPoint * map_point);
+  MapPointGeometryUpdated(const std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
   MessageType Type() const override;
   TPoint3D position;
   size_t id;

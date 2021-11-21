@@ -28,12 +28,12 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->GetFilename(),
                                                                         frame->GetSensorConstants(),
                                                                         frame->Id(),
-                                                                        frame->GetAtlas()),
+                                                                        frame->GetAtlas(),
+                                                                        frame->GetMap(),
+                                                                        frame->GetPosition()),
                                                                BaseMonocular(*frame),
                                                                map_points_mutex_() {
   SetFeatureHandler(frame->GetFeatureHandler());
-  SetStagingPosition(frame->GetPosition());
-  ApplyStaging();
   SetMap(frame->GetMap());
 }
 

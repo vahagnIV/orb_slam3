@@ -72,6 +72,7 @@ add_library(orbslam SHARED
         messages/key_frame_position_updated.cpp
         messages/key_frame_covisibility_updated.cpp
         messages/map_point_geometry_updated.cpp
+        messages/serialization_utils.cpp
 
         map/map_point.cpp
         map/map.cpp

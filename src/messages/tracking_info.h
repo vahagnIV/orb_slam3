@@ -16,10 +16,12 @@ class TrackingInfo : public BaseMessage {
   TrackingInfo(const geometry::Pose & pose,
                const TimePoint time_point,
                const geometry::Pose & velocity);
+  TrackingInfo(const std::vector<uint8_t> & serialized);
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
   MessageType Type() const override;
-  const geometry::Pose position;
-  const TimePoint time_point;
-  const geometry::Pose & velocity;
+  geometry::Pose position;
+  TimePoint time_point;
+  geometry::Pose velocity;
 };
 
 }

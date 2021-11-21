@@ -16,9 +16,11 @@ namespace messages {
 class KeyFrameCovisibilityUpdated : public BaseMessage {
  public:
   KeyFrameCovisibilityUpdated(size_t kf_id, const std::vector<frame::KeyFrame *> & covisibles);
+  KeyFrameCovisibilityUpdated(const std::vector<uint8_t> & serialized);
   MessageType Type() const override;
-  const size_t kf_id;
-  const std::vector<size_t> connected_key_frames;
+  void Serialize(std::vector<uint8_t> & out_serialized) const override;
+  size_t kf_id;
+  std::vector<size_t> connected_key_frames;
  private:
   static std::vector<size_t> ToVector(const std::vector<frame::KeyFrame *> & covisibles);
 
