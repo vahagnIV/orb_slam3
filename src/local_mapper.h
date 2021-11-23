@@ -10,7 +10,7 @@
 
 // === orb-slam3 ===
 #include "position_observer.h"
-#include "observable.h"
+#include <observable.h>
 #include "map/atlas.h"
 #include <frame/database/ikey_frame_database.h>
 #include "loop_merge_detector.h"

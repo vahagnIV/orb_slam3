@@ -5,6 +5,10 @@
 #ifndef ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_VALIDATORS_ORIENTATION_VALIDATOR_H_
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FEATURES_MATCHING_VALIDATORS_ORIENTATION_VALIDATOR_H_
 
+// === stl ===
+#include <unordered_map>
+
+// === orb_slam3 ===
 #include <features/features.h>
 
 namespace orb_slam3 {

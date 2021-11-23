@@ -9,6 +9,7 @@
 #include <serialization/serialization_context.h>
 #include <frame/database/DBoW2/dbo_w2_database.h>
 #include <src/features/bow/dbo_w2_vocabulary.h>
+#include <camera/monocular_camera.h>
 
 namespace orb_slam3 {
 namespace factories {

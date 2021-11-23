@@ -30,6 +30,7 @@
 #include <factories/keyframe_database_factory.h>
 #include <odometry_publisher.h>
 #include <ros_common.h>
+#include <camera/monocular_camera.h>
 
 
 const size_t NFEATURES1 = 7500;

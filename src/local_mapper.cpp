@@ -414,32 +414,7 @@ void LocalMapper::AddToLMDetectionQueue(DetectionResult & detection_result) {
 }
 
 void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
-  /*std::unordered_set<map::MapPoint *> current_mps, candidate_mps;
-  detection_result.keyframe->ListMapPoints(current_mps);
-  detection_result.candidate->ListMapPoints(candidate_mps);
-  frame::KeyFrame::MapPointMatches matches;
-  detection_result.keyframe->FindMatchingMapPoints(detection_result.candidate, matches);
-  std::ofstream tt("coords");
-  for (auto match: matches) {
-    auto local_mp = match.first;
-    auto other_mp = match.second;
 
-    TPoint3D local_mp_position = detection_result.keyframe->GetPosition().Transform(local_mp->GetPosition());
-    TPoint3D other_mp_position = detection_result.candidate->GetPosition().Transform(other_mp->GetPosition());
-    tt
-        << detection_result.transformation.Transform(local_mp_position)
-        << std::endl;
-    tt << other_mp_position << std::endl<< std::endl;
-
-    tt
-        << detection_result.transformation.Transform(other_mp_position)
-        << std::endl;
-   tt << local_mp_position << std::endl<< std::endl<< std::endl<< std::endl;
-  }
-  tt.close();*/
-#warning Does not work
-
-  std::ofstream tt("test.txt");
   auto current_covisible_keyframes = detection_result.keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
   geometry::Sim3Transformation SG1 = detection_result.transformation * detection_result.candidate->GetPosition();
 

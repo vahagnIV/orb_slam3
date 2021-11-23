@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(orb_slam3)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 find_package(OpenCV REQUIRED)
@@ -9,19 +9,23 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(g2o REQUIRED)
 
 add_definitions(-DMULTITHREADED)
-set(CMAKE_INSTALL_PREFIX "/home/vahagn/tmp/slam-test-install")
+
 enable_testing()
 include_directories(external ${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(src)
 add_subdirectory(test)
 add_subdirectory(drawer)
-add_subdirectory(ros/src)
+#add_subdirectory(ros/src)
 
-add_executable(test_p main.cpp main_utils/message_print_functions.cpp )
+#add_executable(test_p main.cpp main_utils/message_print_functions.cpp )
 
-target_link_libraries(test_p orbslam
-        ${Boost_FILESYSTEM_LIBRARY}
-        ${g2o_LIBRARIES}
-        ${Boost_SYSTEM_LIBRARY}
-        odometry_publisher
-        drawer)
+find_package(OpenCV REQUIRED)
+
+#target_link_libraries(test_p orbslam
+#        ${Boost_FILESYSTEM_LIBRARY}
+#        ${g2o_LIBRARIES}
+#        ${Boost_SYSTEM_LIBRARY}
+#        odometry_publisher
+#        DBoW2
+#        ${OpenCV_LIBS}
+#        drawer)

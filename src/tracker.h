@@ -10,12 +10,11 @@
 #include <unordered_set>
 
 // == orb-slam3 ===
-#include "frame/frame.h"
-#include "map/atlas.h"
-#include "observable.h"
-#include "position_observer.h"
-#include "tracking_result.h"
-#include "local_mapper.h"
+#include <frame/frame.h>
+#include <map/atlas.h>
+#include <position_observer.h>
+#include <tracking_result.h>
+#include <local_mapper.h>
 
 namespace orb_slam3 {
 
@@ -23,8 +22,7 @@ namespace serialization {
 class SerializationContext;
 }
 
-class Tracker : public Observer<frame::KeyFrame *>,
-                public Observable<UpdateMessage> {
+class Tracker{
  public:
   enum State {
     NOT_INITIALIZED,

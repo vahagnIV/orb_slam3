@@ -172,11 +172,13 @@ target_include_directories(orbslam PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 
-target_link_libraries(orbslam
+
+target_link_libraries(orbslam PUBLIC Eigen3::Eigen)
+
+target_link_libraries(orbslam PRIVATE
         g2o::core
         g2o::solver_cholmod
         g2o::types_sba
-        g2o::opengl_helper
         g2o::types_sim3
         Eigen3::Eigen
         ${OpenCV_LIBS}
@@ -192,12 +194,23 @@ install(FILES constants.h
         logging.h
         loop_merge_detector.h
         observer.h
+        observable.h
         position_observer.h
         settings.h
         tracker.h
         tracking_result.h
         typedefs.h
         DESTINATION include/${PROJECT_NAME})
+
+
+install(FILES
+        ../external/concurrentqueue/blockingconcurrentqueue.h
+        ../external/concurrentqueue/concurrentqueue.h
+        DESTINATION include/concurrentqueue)
+
+install(FILES
+        ../external/json/json.hpp
+        DESTINATION include/json)
 
 install(FILES
         camera/icamera.h

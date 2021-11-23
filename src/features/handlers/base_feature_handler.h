@@ -5,6 +5,10 @@
 #ifndef ORB_SLAM3_SRC_FRAME_I_FEATURE_DRIVER_H_
 #define ORB_SLAM3_SRC_FRAME_I_FEATURE_DRIVER_H_
 
+// === stl ====
+#include <unordered_map>
+
+// === orb_slam3 ====
 #include <features/features.h>
 #include <features/ifeature_extractor.h>
 #include "handler_type.h"
