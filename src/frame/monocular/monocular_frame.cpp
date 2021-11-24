@@ -102,13 +102,13 @@ bool MonocularFrame::Link(Frame * other) {
     } else
       ++it;
   }
-  cv::imshow("Linking",
-             debug::DrawMatches(GetFilename(),
-                                other->GetFilename(),
-                                matches,
-                                feature_handler_->GetFeatures(),
-                                from_frame->feature_handler_->GetFeatures()));
-  cv::waitKey();
+//  cv::imshow("Linking",
+//             debug::DrawMatches(GetFilename(),
+//                                other->GetFilename(),
+//                                matches,
+//                                feature_handler_->GetFeatures(),
+//                                from_frame->feature_handler_->GetFeatures()));
+//  cv::waitKey();
 
   this->SetStagingPosition(pose);
   this->ApplyStaging();
@@ -149,11 +149,11 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
 
   OptimizePose();
 
-  cv::imshow("TWRKF", debug::DrawMatches(GetFilename(),
-                                         reference_keyframe->GetFilename(),
-                                         matches,
-                                         feature_handler_->GetFeatures(),
-                                         reference_kf->feature_handler_->GetFeatures()));
+//  cv::imshow("TWRKF", debug::DrawMatches(GetFilename(),
+//                                         reference_keyframe->GetFilename(),
+//                                         matches,
+//                                         feature_handler_->GetFeatures(),
+//                                         reference_kf->feature_handler_->GetFeatures()));
 
   return matches.size() >= 10;
 }

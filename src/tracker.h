@@ -49,6 +49,7 @@ class Tracker{
   void SaveState(std::ostream & ostream);
   void LoadState(std::istream & istream, serialization::SerializationContext & context);
   map::Atlas * GetAtlas() const;
+  State GetState() const;
   /// Helper member functions
  private:
   TrackingResult TrackInOkState(frame::Frame * frame);

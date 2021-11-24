@@ -41,6 +41,10 @@ map::Atlas * Tracker::GetAtlas() const {
   return atlas_;
 }
 
+Tracker::State Tracker::GetState() const {
+  return state_;
+}
+
 frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
                                               std::unordered_set<frame::KeyFrame *> & out_local_keyframes) {
   out_local_keyframes.clear();
