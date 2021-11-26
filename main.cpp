@@ -32,7 +32,6 @@
 #include <ros_common.h>
 #include <camera/monocular_camera.h>
 
-
 const size_t NFEATURES1 = 7500;
 const size_t NFEATURES2 = 1500;
 orb_slam3::precision_t SCALE_FACTOR = 1.2;
@@ -347,7 +346,7 @@ void RunDataset(OrbSlam3System system,
 #warning "MULTITHREDING IS ENABLED"
   system.local_mapper->Start();
 #endif
-  auto image_publisher = orb_slam3::ros_publisher::CreateImagePublisher("OrbImage");
+//  auto image_publisher = orb_slam3::ros_publisher::CreateImagePublisher("OrbImage");
   std::chrono::system_clock::time_point last = std::chrono::system_clock::now();
   size_t feature_count = initial_frame_id == 0 ? NFEATURES1 : NFEATURES1;
   for (size_t i = initial_frame_id; i < filenames.size(); ++i) {
@@ -363,17 +362,17 @@ void RunDataset(OrbSlam3System system,
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
     orb_slam3::TImageGray8U eigen_image = FromCvMat(image);
     std::vector<uint8_t> img_vect(eigen_image.data(), eigen_image.data() + eigen_image.size());
-    image_publisher->Publish(img_vect, eigen_image.cols(), eigen_image.rows());
+//    image_publisher->Publish(img_vect, eigen_image.cols(), eigen_image.rows());
     typedef orb_slam3::frame::monocular::MonocularFrame MF;
     static const orb_slam3::features::handlers::HandlerType
         kHandlerType = orb_slam3::features::handlers::HandlerType::DBoW2;
-    MF *frame = new MF(system.tracker->GetAtlas(),
-                       kHandlerType,
-                       feature_count,
-                       eigen_image,
-                       timestamps[i],
-                       filenames[i],
-                       camera,
+    MF * frame = new MF(system.tracker->GetAtlas(),
+                        kHandlerType,
+                        feature_count,
+                        eigen_image,
+                        timestamps[i],
+                        filenames[i],
+                        camera,
                         sensor_constants);
     auto result = system.tracker->Track(frame);
 
@@ -517,12 +516,12 @@ int main(int argc, char * argv[]) {
 //  system.local_mapper->Start();
 
   SetSettings();
-//    orb_slam3::drawer::DrawerImpl drawer(1024, 768);
-//  drawer.Start();
+  orb_slam3::drawer::DrawerImpl drawer(1024, 768);
+  drawer.Start();
 
-  orb_slam3::ros_publisher::Initialize(argc, argv);
-  auto ros_publisher = orb_slam3::ros_publisher::CreateOdometryPublisher("orb_slam3");
-  ros_publisher->Start();
+//  orb_slam3::ros_publisher::Initialize(argc, argv);
+//  auto ros_publisher = orb_slam3::ros_publisher::CreateOdometryPublisher("orb_slam3");
+//  ros_publisher->Start();
 //  ResumeMonocularTum("save_state", config["datasetPath"]);
 //
   TestMonocularTum(config["datasetPath"]);
