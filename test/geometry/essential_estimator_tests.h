@@ -5,6 +5,7 @@
 #ifndef ORB_SLAM3_TEST_GEOMETRY_ESSENTIAL_ESTIMATOR_TESTS_H_
 #define ORB_SLAM3_TEST_GEOMETRY_ESSENTIAL_ESTIMATOR_TESTS_H_
 #include <gtest/gtest.h>
+#include <camera/monocular_camera.h>
 
 namespace orb_slam3 {
 namespace test {

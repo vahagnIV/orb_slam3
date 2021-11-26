@@ -9,7 +9,7 @@
 #include <g2o/core/base_vertex.h>
 
 // == orb-slam3 ===
-#include "src/typedefs.h"
+#include <typedefs.h>
 #include "distortion_model_type.h"
 
 namespace orb_slam3 {

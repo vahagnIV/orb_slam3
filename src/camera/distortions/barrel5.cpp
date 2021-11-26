@@ -4,7 +4,6 @@
 
 // == orb-slam3 ===
 #include "barrel5.h"
-#include <opencv2/opencv.hpp>
 
 namespace orb_slam3 {
 namespace camera {

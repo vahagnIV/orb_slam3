@@ -8,9 +8,10 @@
 #include <map/map_point.h>
 #include <frame/map_point_visibility_params.h>
 #include <features/ifeature_extractor.h>
-#include <features/handlers/DBoW2/bow_to_iterator.h>
 #include <features/matching/second_nearest_neighbor_matcher.hpp>
 #include <serialization/serialization_context.h>
+#include <ostream>
+#include <istream>
 
 namespace orb_slam3 {
 namespace frame {

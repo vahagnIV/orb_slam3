@@ -10,6 +10,7 @@
 #include <map/map_point.h>
 #include <map/atlas.h>
 #include <frame/monocular/monocular_frame.h>
+#include <camera/monocular_camera.h>
 
 namespace orb_slam3 {
 namespace optimization {

@@ -11,7 +11,6 @@
 // == orb-slam3 ===
 #include "typedefs.h"
 #include "constants.h"
-#include <camera/monocular_camera.h>
 #include "key_point.h"
 
 namespace orb_slam3 {

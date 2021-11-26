@@ -5,7 +5,6 @@
 
 // == orb-slam3 ===
 #include "fish_eye.h"
-#include <opencv2/opencv.hpp>
 
 namespace orb_slam3 {
 namespace camera {

@@ -10,6 +10,7 @@
 #include <map/map.h>
 #include <map/map_point.h>
 #include <map/atlas.h>
+#include <camera/monocular_camera.h>
 
 namespace orb_slam3 {
 namespace debug {

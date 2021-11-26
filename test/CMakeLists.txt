@@ -6,6 +6,8 @@ if (result)
     message(FATAL_ERROR "CMake step for googletest failed: ${result}")
 endif ()
 find_package(GTest)
+find_package(OpenCV)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 execute_process(COMMAND ${CMAKE_COMMAND} --build .
         RESULT_VARIABLE result
@@ -39,7 +41,7 @@ set(ALL_TEST_SOURCE_FILES
         test_utils.cpp
         test_utils.h)
 add_executable(orb_slam_unit_tests ${ALL_TEST_SOURCE_FILES})
-target_link_libraries(orb_slam_unit_tests orbslam gmock gmock_main)
+target_link_libraries(orb_slam_unit_tests orbslam gmock gmock_main DBoW2 ${OpenCV_LIBS})
 
 gtest_add_tests(TARGET orb_slam_unit_tests
         SOURCES ${ALL_TEST_SOURCE_FILES}

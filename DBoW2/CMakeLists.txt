@@ -38,3 +38,38 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 add_library(DBoW2 SHARED ${SRCS_DBOW2} ${SRCS_DUTILS})
 target_link_libraries(DBoW2 ${OpenCV_LIBS})
 
+include(CMakePackageConfigHelpers)
+
+install(TARGETS DBoW2 DESTINATION lib EXPORT DBoW2Target)
+install(FILES DBoW2/BowVector.h 
+	DBoW2/FClass.h 
+	DBoW2/FeatureVector.h 
+	DBoW2/FORB.h 
+	DBoW2/ScoringObject.h 
+	DBoW2/TemplatedVocabulary.h DESTINATION include/DBoW2)
+
+install(FILES DBoW2/DUtils/Random.h 
+	DBoW2/DUtils/Timestamp.h DESTINATION include/DBoW2/DUtils)
+
+install(EXPORT DBoW2Target
+	FILE DBoW2Target.cmake
+	DESTINATION lib/cmake/DBoW2)
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+        "${CMAKE_CURRENT_BINARY_DIR}/DBoW2Config.cmake"
+        INSTALL_DESTINATION "lib/cmake/DBoW2"
+        NO_SET_AND_CHECK_MACRO
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO
+        )
+
+
+write_basic_package_version_file(
+	"${CMAKE_CURRENT_BINARY_DIR}/DBoW2ConfigVersion.cmake"
+        VERSION "${VERSION_MAJOR}.${VERSION_MINOR}"
+        COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/DBoW2Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/DBoW2ConfigVersion.cmake
+        DESTINATION lib/cmake/DBoW2      )

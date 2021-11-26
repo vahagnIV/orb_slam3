@@ -24,6 +24,11 @@ namespace features {
 class IFeatureExtractor;
 }
 
+namespace serialization {
+class SerializationContext;
+}
+
+
 namespace map {
 class MapPoint;
 }

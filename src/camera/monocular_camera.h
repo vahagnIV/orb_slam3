@@ -9,10 +9,10 @@
 #include <g2o/core/base_vertex.h>
 
 // == orb-slam3 ===
-#include "../typedefs.h"
-#include "../features/key_point.h"
-#include "src/camera/distortions/idistortion_model.h"
-#include "icamera.h"
+#include <typedefs.h>
+#include <features/key_point.h>
+#include <camera/distortions/idistortion_model.h>
+#include <camera/icamera.h>
 
 namespace orb_slam3 {
 namespace camera {
