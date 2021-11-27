@@ -206,7 +206,13 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
   CreatePositionRectangle(message->position, kf_node->vertices);
 
   // TODO: Use memory manager to reuse this memory
-  glGenBuffers(1, &kf_node->vertex_buffer_id);
+  if(vertex_buffers_.empty()) {
+    glGenBuffers(1, &kf_node->vertex_buffer_id);
+  }
+  else{
+    kf_node->vertex_buffer_id = vertex_buffers_.top();
+    vertex_buffers_.pop();
+  }
   glBindBuffer(GL_ARRAY_BUFFER, kf_node->vertex_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(kf_node->vertices), kf_node->vertices, GL_STATIC_DRAW);
   graph_.AddNode(kf_node);
@@ -214,7 +220,13 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
 
 void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
   auto mp_node = new MapPointNode(message->id);
-  glGenBuffers(1, &mp_node->buffer_id);
+  if (buffers_.empty()) {
+    glGenBuffers(1, &mp_node->buffer_id);
+  }
+  else{
+    mp_node->buffer_id = buffers_.top();
+    buffers_.pop();
+  }
   float buffer[] = {static_cast<float>(message->position.x() / scale_),
                     static_cast<float>(message->position.y() / scale_),
                     static_cast<float>(message->position.z() / scale_)};
@@ -226,10 +238,16 @@ void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
 }
 
 void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
+  auto kf_node = dynamic_cast<KeyFrameNode*>( graph_.GetNode(message->id));
+  if (kf_node)
+    vertex_buffers_.push(kf_node->vertex_buffer_id);
   graph_.DeleteNode(message->id);
 }
 
 void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
+  auto mp_node = dynamic_cast<MapPointNode*>( graph_.GetNode(message->id));
+  if (mp_node)
+    buffers_.push(mp_node->buffer_id);
   graph_.DeleteNode(message->id);
 }
 

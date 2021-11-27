@@ -210,12 +210,13 @@ void DisplayTrackingInfo(const frame::Frame * frame,
                                      dynamic_cast<const M *>(last_frame));
   }
 
-  std::cout << "Frame Position after SLMP " << std::endl;
-  frame->GetPosition().print();
+//  std::cout << "Frame Position after SLMP " << std::endl;
+//  frame->GetPosition().print();
   logging::RetrieveLogger()->debug("SLMP Local mp count {}", local_map_points_except_current.size());
   cv::imshow("After SLMP", image);
 
   key = cv::waitKey(time_to_wait);
+  image.release();
   switch (key) {
     case 'c':time_to_wait = (int) !time_to_wait;
       break;
@@ -231,10 +232,10 @@ void DisplayTrackingInfo(const frame::Frame * frame,
 
   }
 
-  std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
-  for (auto mp: current_map->GetAllMapPoints()) {
-    ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
-  }
+//  std::ofstream ostream("mps/" + std::to_string(frame->Id()) + ".txt");
+//  for (auto mp: current_map->GetAllMapPoints()) {
+//    ostream << mp->GetPosition().x() << "," << mp->GetPosition().y() << "," << mp->GetPosition().z() << std::endl;
+//  }
 }
 
 cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,

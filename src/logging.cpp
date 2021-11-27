@@ -20,10 +20,10 @@ const std::string LOGGER_NAME = "logger";
 //  logger = spdlog::stdout_color_mt(LOGGER_NAME);
 //  logger->set_level(spdlog::level::debug);
 //}
-void Initialize() {
+void Initialize(spdlog::level::level_enum level) {
 //  spdlog::rotating_logger_st(LOGGER_NAME, "log.txt", 10 * 1024 * 1024, 10)->set_level(spdlog::level::debug);
 //  spdlog::get(LOGGER_NAME)->flush_on(spdlog::level::debug);
-  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
+  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(level);
 //  spdlog::stdout_color_mt(LOGGER_NAME)->set_level(spdlog::level::debug);
 }
 

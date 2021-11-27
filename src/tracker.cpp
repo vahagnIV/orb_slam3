@@ -52,6 +52,8 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   current_frame->ListMapPoints(frame_map_points);
   std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
   for (auto & map_point: frame_map_points) {
+    if(map_point->IsBad())
+      continue;
     for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.second.GetKeyFrame()];
   }
 
@@ -231,18 +233,18 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
       tracked_points_count < filtered_tracked_map_points.size() * th_ref_ratio
           && tracked_points_count > MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT;
   if (!few_tracked_points) {
-    std::cout << "Tracked map points count: " << tracked_points_count << std::endl;
-    std::cout << "filtered_tracked_map_points.size(): " << filtered_tracked_map_points.size() << std::endl;
-    std::cout << "th_ref_ratio: " << th_ref_ratio << std::endl;
-    std::cout << "MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT: " << MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT << std::endl;
-    std::cout << "NeedNewKeyfrane !few_tracked points" << std::endl;
+//    std::cout << "Tracked map points count: " << tracked_points_count << std::endl;
+//    std::cout << "filtered_tracked_map_points.size(): " << filtered_tracked_map_points.size() << std::endl;
+//    std::cout << "th_ref_ratio: " << th_ref_ratio << std::endl;
+//    std::cout << "MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT: " << MIN_ACCEPTABLE_TRACKED_MAP_POINTS_COUNT << std::endl;
+//    std::cout << "NeedNewKeyfrane !few_tracked points" << std::endl;
     return false;
   }
   if (!more_than_max_frames_passed && !more_than_min_frames_passed) {
-    std::cout << "NeedNewKeyFrame = false1" << std::endl;
+//    std::cout << "NeedNewKeyFrame = false1" << std::endl;
     return false;
   }
-  std::cout << "NeedNewKeyFrame = " << local_mapper_accepts_key_frame << std::endl;
+//  std::cout << "NeedNewKeyFrame = " << local_mapper_accepts_key_frame << std::endl;
   return local_mapper_accepts_key_frame;
   /*std::unordered_set<map::MapPoint *> m;
   frame->ListMapPoints(m);

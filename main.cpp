@@ -28,8 +28,6 @@
 #include <factories/feature_handler_factory.h>
 #include <frame/database/DBoW2/dbo_w2_database.h>
 #include <factories/keyframe_database_factory.h>
-#include <odometry_publisher.h>
-#include <ros_common.h>
 #include <camera/monocular_camera.h>
 
 const size_t NFEATURES1 = 7500;
@@ -501,7 +499,7 @@ void LoadConfig(nlohmann::json & config) {
 
 void initialize() {
   orb_slam3::drawer::Initialize();
-  orb_slam3::logging::Initialize();
+  orb_slam3::logging::Initialize(spdlog::level::level_enum::critical);
 
 }
 

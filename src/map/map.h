@@ -8,6 +8,7 @@
 // == stl =====
 #include <unordered_set>
 #include <ostream>
+#include <mutex>
 
 
 namespace orb_slam3 {
@@ -46,6 +47,7 @@ class Map {
   frame::KeyFrame * initial_keyframe_;
   std::unordered_set<MapPoint *> map_points_;
   Atlas *atlas_;
+  mutable std::mutex map_points_mutex_;
 
 };
 }

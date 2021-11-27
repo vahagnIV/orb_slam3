@@ -69,6 +69,8 @@ class DrawerImpl {
   glm::mat4 transformation_matrix_;
   GLuint position_vertex_buffer_id_;
   precision_t scale_;
+  std::stack<GLuint> buffers_;
+  std::stack<GLuint> vertex_buffers_;
 
 };
 

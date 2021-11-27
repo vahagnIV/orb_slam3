@@ -63,7 +63,7 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
                            std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> & out_observations_to_delete,
                            bool * stop_flag) {
   g2o::SparseOptimizer optimizer;
-  optimizer.setVerbose(true);
+//  optimizer.setVerbose(true);
   InitializeOptimizer<g2o::LinearSolverEigen>(optimizer);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;

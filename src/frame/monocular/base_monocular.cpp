@@ -54,7 +54,7 @@ size_t BaseMonocular::GetMapPointsCount() const {
 }
 
 void BaseMonocular::AddMapPoint(map::MapPoint * map_point, size_t feature_id) {
-  assert(!MapPointExists(map_point));
+//  assert(!MapPointExists(map_point));
   map_points_[feature_id] = map_point;
 }
 

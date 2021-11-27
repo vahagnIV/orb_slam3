@@ -316,6 +316,13 @@ void MonocularFrame::UpdateFromReferenceKeyFrame() {
       AddMapPoint(mp.second, mp.first);
     }
   }
+  else{
+    for(auto mp: map_points_){
+      if(mp.second->GetReplaced()){
+        map_points_[mp.first] = mp.second->GetReplaced();
+      }
+    }
+  }
 }
 
 void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
