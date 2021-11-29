@@ -89,6 +89,7 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::MapPoi
 }
 
 bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
+  std::cout << "TWRKF" << std::endl;
   frame->SetStagingPosition(reference_keyframe_->GetPosition());
   frame->ApplyStaging();
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
@@ -114,7 +115,6 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   std::list<frame::MapPointVisibilityParams> frame_visibles;
   bool tracked = (TrackWithMotionModel(frame, frame_visibles) || TrackWithReferenceKeyFrame(frame));
-//  bool tracked =TrackWithReferenceKeyFrame(frame);
 
   if (!tracked) {
     // TODO: go to relocalization
@@ -161,8 +161,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 
   frame->SearchInVisiblePoints(visible_map_points);
 
-  frame->OptimizePose();
-  if (frame->GetMapPointsCount() < 20) {
+  if (frame->OptimizePose() && frame->GetMapPointsCount() < 20) {
     return TrackingResult::TRACKING_FAILED;
   }
   frame->SetMap(atlas_->GetCurrentMap());
@@ -262,8 +261,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
   frame->SetMap(atlas_->GetCurrentMap());
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
-    std::cout << "Position after linking " << std::endl;
-    frame->GetPosition().print();
+//    std::cout << "Position after linking " << std::endl;
+//    frame->GetPosition().print();
 
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
     initial_key_frame->SetInitial(true);
@@ -281,8 +280,8 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->ListMapPoints(map_points);
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
-    std::cout << "Position after linking BA " << std::endl;
-    current_key_frame->GetPosition().print();
+//    std::cout << "Position after linking BA " << std::endl;
+//    current_key_frame->GetPosition().print();
 
     std::vector<precision_t> depths;
     for (auto mp: map_points) depths.push_back(mp->GetPosition().z());

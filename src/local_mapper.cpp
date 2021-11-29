@@ -16,6 +16,7 @@
 // TODO: remove this in multithreading
 #include <loop_merge_detector.h>
 #include <fstream>
+#include "profiler.h"
 
 namespace orb_slam3 {
 
@@ -213,6 +214,7 @@ void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *
 
 void LocalMapper::RunIteration() {
 
+  size_t iteration_cycle = 0;
   while (!cancelled_) {
     if (!loop_merge_detection_queue_.Empty()) {
       switch (loop_merge_detection_queue_.Front().type) {
@@ -230,21 +232,40 @@ void LocalMapper::RunIteration() {
 //      accept_key_frames_ = false;
 //      new_key_frames_.Clear();
     } else if (!new_key_frames_.Empty()) {
+
       frame::KeyFrame * key_frame;
       key_frame = new_key_frames_.Front();
       new_key_frames_.Pop();
       accept_key_frames_ = false;
-      ProcessNewKeyFrame(key_frame);
 
+      Profiler::Start("ProcessNewKeyFrame");
+      ProcessNewKeyFrame(key_frame);
+      Profiler::End("ProcessNewKeyFrame");
+
+      Profiler::Start("MapPointCulling");
       MapPointCulling(key_frame);
+      Profiler::End("MapPointCulling");
+
+      Profiler::Start("CreateNewMapPoints");
       CreateNewMapPoints(key_frame);
+      Profiler::End("CreateNewMapPoints");
 
       if (new_key_frames_.Empty()) {
+        Profiler::Start("FuseMapPoints");
         FuseMapPoints(key_frame, false);
+        Profiler::End("FuseMapPoints");
       }
       if (new_key_frames_.Empty()) {
+        Profiler::Start("Optimize");
         Optimize(key_frame);
+        Profiler::End("Optimize");
+        Profiler::Start("KeyFrameCulling");
         KeyFrameCulling(key_frame);
+        Profiler::End("KeyFrameCulling");
+      }
+
+      if(++iteration_cycle % 100 == 0){
+        Profiler::PrintProfiles();
       }
       if (loop_merge_detector_)
         loop_merge_detector_->Process(key_frame);

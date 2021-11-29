@@ -147,15 +147,8 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
     AddMapPoint(map_point->second, match.first);
   }
 
-  OptimizePose();
+  return OptimizePose() && GetMapPointsCount() >=10;
 
-//  cv::imshow("TWRKF", debug::DrawMatches(GetFilename(),
-//                                         reference_keyframe->GetFilename(),
-//                                         matches,
-//                                         feature_handler_->GetFeatures(),
-//                                         reference_kf->feature_handler_->GetFeatures()));
-
-  return matches.size() >= 10;
 }
 
 size_t MonocularFrame::GetMapPointsCount() const {
@@ -245,9 +238,12 @@ bool MonocularFrame::IsValid() const {
   return feature_handler_->GetFeatures().Size() > 0;
 }
 
-void MonocularFrame::OptimizePose() {
-  optimization::OptimizePose(this);
-  this->ApplyStaging();
+bool MonocularFrame::OptimizePose() {
+  if(optimization::OptimizePose(this)) {
+    this->ApplyStaging();
+    return true;
+  }
+  return false;
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
@@ -375,7 +371,8 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
     FilterFromLastFrame(last_frame, out_visibles, radius);
     SearchInVisiblePoints(out_visibles, 0.9);
     if (GetMapPointsCount() >= 20) {
-      OptimizePose();
+      if(!OptimizePose())
+        return false;
       if (GetMapPointsCount() >= 10) {
         ApplyStaging();
         return true;

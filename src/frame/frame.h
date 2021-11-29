@@ -70,7 +70,7 @@ class Frame : public BaseFrame {
   /*!
    * Optimizes the frame pose by minimizing the Map point projection error.
    */
-  virtual void OptimizePose() = 0;
+  virtual bool OptimizePose() = 0;
 
   /*!
    * Return the number of map points in the frame

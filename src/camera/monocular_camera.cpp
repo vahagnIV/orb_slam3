@@ -110,6 +110,8 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
   projected << x * z_inv, y * z_inv;
   distortion_model_->ComputeJacobian(projected, distortion_jacobian);
   out_jacobian = distortion_jacobian * projection_jacobian;
+  if(out_jacobian.array().isNaN().any())
+    throw std::runtime_error("Error from monocam");
 }
 
 void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const {

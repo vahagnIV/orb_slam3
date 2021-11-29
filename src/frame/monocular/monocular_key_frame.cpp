@@ -359,7 +359,7 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   TMatcher matcher(0.9, 50);
   TMatcher::MatchMapType matches;
   matcher.MatchWithIterators(begin, end, GetMap()->GetAtlas()->GetFeatureExtractor(), matches);
-  std::cout << "Match count: " << matches.size() << std::endl;
+//  std::cout << "Match count: " << matches.size() << std::endl;
   if (matches.size() < 50)
     return 0;
 

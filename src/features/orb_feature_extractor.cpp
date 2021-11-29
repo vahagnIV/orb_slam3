@@ -652,6 +652,10 @@ void ORBFeatureExtractor::ExtractorNode::DivideNode(ExtractorNode & n1,
 }
 
 precision_t ORBFeatureExtractor::GetAcceptableSquareError(unsigned int level) const {
+  if(level >= level_sigma2_.size()) {
+    std::cout << "asdasdas" << std::endl;
+    return 0;
+  }
   return level_sigma2_[level];
 }
 /*

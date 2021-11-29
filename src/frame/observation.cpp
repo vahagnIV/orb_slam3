@@ -133,8 +133,8 @@ void Observation::Serialize(std::ostream & ostream) const {
   size_t feature_count = feature_ids_.size();
   WRITE_TO_STREAM(feature_count, ostream);
   ostream.write((char *) feature_ids_.data(), sizeof(decltype(feature_ids_)::value_type) * feature_count);
-  if (feature_ids_[0] == 0)
-    std::cout << "Mp id: " << mp_id << " " << " Kf id: " << kf_id << std::endl;
+//  if (feature_ids_[0] == 0)
+//    std::cout << "Mp id: " << mp_id << " " << " Kf id: " << kf_id << std::endl;
 }
 
 }
