@@ -33,7 +33,7 @@ MapPoint::MapPoint(TPoint3D point,
   SetStagingMaxInvarianceDistance(max_invariance_distance);
   ApplyStaging();
   map_->AddMapPoint(this);
-  if (Settings::Get().MessageRequested(messages::MAP_CREATED))
+  if (Settings::Get().MessageRequested(messages::MAP_POINT_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointCreated(this));
   ++counter_;
 }
@@ -146,7 +146,9 @@ void MapPoint::CalculateNormalStaging() {
     auto normal = frame_id_pair.first->GetNormalFromStaging(staging_position_);
     staging_normal_ += normal;
   }
+//  staging_normal_ = GetPosition() - staging_normal_;
   staging_normal_.normalize();
+//  staging_normal_ += GetPosition();
 }
 
 void MapPoint::SetStagingPosition(const TPoint3D & position) {

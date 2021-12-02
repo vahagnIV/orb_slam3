@@ -18,7 +18,9 @@ class MapPointNode : public Node {
  public:
   MapPointNode(size_t id);
   void Draw() const override;
-  GLuint buffer_id;
+  GLuint point_buffer_id;
+  GLuint normal_buffer_id;
+
 
 };
 

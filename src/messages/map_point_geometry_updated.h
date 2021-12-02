@@ -18,6 +18,7 @@ class MapPointGeometryUpdated : public BaseMessage {
   void Serialize(std::vector<uint8_t> & out_serialized) const override;
   MessageType Type() const override;
   TPoint3D position;
+  TPoint3D normal;
   size_t id;
 
 };

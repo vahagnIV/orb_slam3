@@ -8,8 +8,10 @@
 namespace orb_slam3 {
 namespace messages {
 
-MapPointGeometryUpdated::MapPointGeometryUpdated(const map::MapPoint * map_point)
-    : position(map_point->GetPosition()), id((size_t) map_point) {
+MapPointGeometryUpdated::MapPointGeometryUpdated(const map::MapPoint *map_point)
+    : position(map_point->GetPosition()),
+      normal(map_point->GetNormal() + map_point->GetPosition()),
+      id((size_t) map_point){
 
 }
 
@@ -17,6 +19,7 @@ MapPointGeometryUpdated::MapPointGeometryUpdated(const std::vector<uint8_t> & se
   INIT_DESERIALIZATION(serialized);
   COPY_FROM(source, id);
   DeSerializePoint(source, position);
+  DeSerializePoint(source, normal);
 }
 
 MessageType MapPointGeometryUpdated::Type() const {
@@ -27,6 +30,7 @@ void MapPointGeometryUpdated::Serialize(std::vector<uint8_t> & out_serialized) c
   INIT_SERIALIZATION(out_serialized, sizeof(id) + POINT_SIZE);
   COPY_TO(dest, id);
   SerializePoint(position, dest);
+  SerializePoint(normal, dest);
 }
 
 }

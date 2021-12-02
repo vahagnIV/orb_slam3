@@ -59,13 +59,13 @@ void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) c
 
 TVector3D MonocularKeyFrame::GetNormal(const TPoint3D & point) const {
   TPoint3D normal = GetInversePosition().T - point;
-  normal.normalize();
+//  normal.normalize();
   return normal;
 }
 
 TVector3D MonocularKeyFrame::GetNormalFromStaging(const TPoint3D & point) const {
   TPoint3D normal = GetStagingPosition().GetInversePose().T - point;
-  normal.normalize();
+//  normal.normalize();
   return normal;
 }
 

@@ -226,18 +226,36 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
 
 void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
   auto mp_node = new MapPointNode(message->id);
-  if (buffers_.empty()) {
-    glGenBuffers(1, &mp_node->buffer_id);
+  if (point_buffers_.empty()) {
+    glGenBuffers(1, &mp_node->point_buffer_id);
   } else {
-    mp_node->buffer_id = buffers_.top();
-    buffers_.pop();
+    mp_node->point_buffer_id = point_buffers_.top();
+    point_buffers_.pop();
   }
   float buffer[] = {static_cast<float>(message->position.x() / scale_),
                     static_cast<float>(message->position.y() / scale_),
                     static_cast<float>(message->position.z() / scale_)};
 
-  glBindBuffer(GL_ARRAY_BUFFER, mp_node->buffer_id);
+  glBindBuffer(GL_ARRAY_BUFFER, mp_node->point_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+
+  if (line_buffers_.empty()) {
+    glGenBuffers(1, &mp_node->normal_buffer_id);
+  } else {
+    mp_node->normal_buffer_id = line_buffers_.top();
+    line_buffers_.pop();
+  }
+
+  float normal_buffer[] = {static_cast<float>(message->position.x() / scale_),
+                           static_cast<float>(message->position.y() / scale_),
+                           static_cast<float>(message->position.z() / scale_),
+                           static_cast<float>(message->position.x() / scale_),
+                           static_cast<float>(message->position.y() / scale_),
+                           static_cast<float>(message->position.z() / scale_)};
+
+  glBindBuffer(GL_ARRAY_BUFFER, mp_node->normal_buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(normal_buffer), normal_buffer, GL_STATIC_DRAW);
+
   graph_.AddNode(mp_node);
 
 }
@@ -252,7 +270,7 @@ void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
 void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
   auto mp_node = dynamic_cast<MapPointNode *>( graph_.GetNode(message->id));
   if (mp_node)
-    buffers_.push(mp_node->buffer_id);
+    point_buffers_.push(mp_node->point_buffer_id);
   graph_.DeleteNode(message->id);
 }
 
@@ -275,8 +293,19 @@ void DrawerImpl::MapPointGeometryUpdated(messages::MapPointGeometryUpdated * mes
                     static_cast<float>(message->position.y() / scale_),
                     static_cast<float>(message->position.z() / scale_)};
 
-  glBindBuffer(GL_ARRAY_BUFFER, node->buffer_id);
+  glBindBuffer(GL_ARRAY_BUFFER, node->point_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+
+  float normal_buffer[6] = {static_cast<float>(message->position.x() / scale_),
+                           static_cast<float>(message->position.y() / scale_),
+                           static_cast<float>(message->position.z() / scale_),
+                           static_cast<float>(message->normal.x() / scale_),
+                           static_cast<float>(message->normal.y() / scale_),
+                           static_cast<float>(message->normal.z() / scale_)};
+
+  glBindBuffer(GL_ARRAY_BUFFER, node->normal_buffer_id);
+//  glVertexPointer(2, GL_FLOAT, 0, normal_buffer);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(normal_buffer), normal_buffer, GL_STATIC_DRAW);
 }
 
 }

@@ -34,7 +34,7 @@ bool Initialize() {
     getchar();
     return false;
   }
-
+  glFrontFace(GL_CCW);
   return true;
 }
 
