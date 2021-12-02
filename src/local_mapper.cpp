@@ -246,6 +246,9 @@ void LocalMapper::RunIteration() {
       MapPointCulling(key_frame);
       Profiler::End("MapPointCulling");
 
+      if(key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames().empty())
+        return;
+
       Profiler::Start("CreateNewMapPoints");
       CreateNewMapPoints(key_frame);
       Profiler::End("CreateNewMapPoints");
@@ -264,7 +267,7 @@ void LocalMapper::RunIteration() {
         Profiler::End("KeyFrameCulling");
       }
 
-      if(++iteration_cycle % 100 == 0){
+      if (++iteration_cycle % 100 == 0) {
         Profiler::PrintProfiles();
       }
       if (loop_merge_detector_)
@@ -466,10 +469,9 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
 
   frame::BaseFrame::MapPointSet candidate_map_points;
   detection_result.candidate->ListMapPoints(candidate_map_points);
-  for(auto candidate_neighbour: detection_result.candidate->GetCovisibilityGraph().GetCovisibleKeyFrames()){
+  for (auto candidate_neighbour: detection_result.candidate->GetCovisibilityGraph().GetCovisibleKeyFrames()) {
     candidate_neighbour->ListMapPoints(candidate_map_points);
   }
-
 
   for (auto covisible_kf: current_covisible_keyframes) {
     std::list<frame::MapPointVisibilityParams> visibles;
@@ -477,19 +479,22 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_map_points;
     std::list<frame::Observation> local_matches;
     covisible_kf->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
-    for(auto match: matched_map_points){
-      if(match.first->GetObservationCount() > match.second->GetObservationCount())
+    std::cout << "Found " << matched_map_points.size() << "Matches" << std::endl;
+    for (auto match: matched_map_points) {
+      if(match.first->IsBad() || match.second->IsBad())
+        continue;
+      if (match.first->GetObservationCount() > match.second->GetObservationCount())
         ReplaceMapPoint(match.first, match.second);
       else
         ReplaceMapPoint(match.second, match.first);
     }
-    for(auto local_match: local_matches){
+    for (auto local_match: local_matches) {
       covisible_kf->AddMapPoint(local_match);
     }
   }
 
   for (auto mp: map_points) {
-    if(mp->IsBad())
+    if (mp->IsBad())
       continue;
     mp->CalculateNormalStaging();
     mp->ComputeDistinctiveDescriptor();
@@ -499,9 +504,28 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     covisible_kf->GetCovisibilityGraph().Update();
   }
 
-
-
   loop_merge_detection_queue_.Clear();
+
+  std::cout << "Runnning GBA " << std::endl;
+  std::unordered_set<frame::KeyFrame *> all_keyframes =
+      detection_result.candidate->GetMap()->GetAllKeyFrames();
+  std::unordered_set<map::MapPoint *> all_map_point = detection_result.candidate->GetMap()->GetAllMapPoints();
+  std::unordered_set<frame::KeyFrame *> fixed_key_frames;
+  this->FilterFixedKeyFames(all_keyframes, all_map_point, fixed_key_frames);
+
+  for(auto fkf: fixed_key_frames)
+    all_keyframes.erase(fkf);
+
+  std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
+  optimization::LocalBundleAdjustment(all_keyframes, fixed_key_frames, all_map_point, observations_to_delete, nullptr);
+  for (auto & obs_to_delete: observations_to_delete) {
+    obs_to_delete.second->EraseMapPoint(obs_to_delete.first);
+    if (obs_to_delete.first->GetObservationCount() == 1) {
+      SetBad(obs_to_delete.first);
+    }
+//    detection_result.candidate->GetMap()->EraseMapPoint(obs_to_delete.first);
+
+  }
 
 }
 

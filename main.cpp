@@ -352,9 +352,16 @@ void RunDataset(OrbSlam3System system,
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
 
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    if (i > 0)
-      std::this_thread::sleep_for(
-          (timestamps[i] - timestamps[i - 1]) - (now - last));
+    if (i > 0) {
+
+//      std::cout<<"Delta timestamp " << (timestamps[i] - timestamps[i - 1]).count() << std::endl;
+//      std::cout<<"Delta npw: " << (now-last).count() << std::endl;
+      if(now - last < timestamps[i] - timestamps[i - 1]) {
+//        std::cout << "waiting" << std::endl;
+        std::this_thread::sleep_for(
+            (timestamps[i] - timestamps[i - 1]) - (now - last));
+      }
+    }
     last = now;
 
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);

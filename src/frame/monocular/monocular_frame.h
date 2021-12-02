@@ -64,8 +64,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points, precision_t matcher_snn_threshold);
  public:
   // MonocularFame
- private:
-  MonocularKeyFrame * reference_keyframe_;
+
 
 };
 

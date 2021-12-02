@@ -154,7 +154,7 @@ void MapPoint::SetStagingPosition(const TPoint3D & position) {
 }
 
 void MapPoint::ApplyStagingPosition() {
-  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  std::unique_lock<std::shared_mutex> lock(position_mutex_);
   position_ = staging_position_;
 }
 
@@ -164,7 +164,7 @@ void MapPoint::ApplyNormalStaging() {
 }
 
 const TPoint3D & MapPoint::GetPositionWithLock() const {
-  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return position_;
 }
 const TVector3D & MapPoint::GetNormalWithLock() const {
@@ -196,7 +196,7 @@ size_t MapPoint::GetObservationCount() const {
 }
 
 const TPoint3D & MapPoint::GetPosition() const {
-  std::unique_lock<std::recursive_mutex> lock(position_mutex_);
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return position_;
 }
 

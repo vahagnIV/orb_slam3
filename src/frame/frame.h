@@ -100,6 +100,11 @@ class Frame : public BaseFrame {
    * corresponding keyframe is optimized.
    */
   virtual void UpdateFromReferenceKeyFrame() = 0;
+
+  void SetreferenceKeyFrame(KeyFrame * reference_keyframe);
+ protected:
+  KeyFrame * reference_keyframe_;
+  geometry::Pose relative_position_;
  private:
   static size_t next_id_;
 

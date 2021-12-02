@@ -133,6 +133,13 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(frame, local_keyframes);
   if (reference_keyframe)
     reference_keyframe_ = reference_keyframe;
+  else {
+    velocity_is_valid_ = false;
+    delete frame;
+    state_ = LOST;
+    return TrackingResult::TRACKING_FAILED;
+  }
+
 
   frame::Frame::MapPointSet current_frame_map_points, local_map_points_except_current;
   frame->ListMapPoints(current_frame_map_points);
@@ -188,6 +195,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   //TODO: Add keyframe if necessary
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
+    frame->SetreferenceKeyFrame(keyframe);
     last_key_frame_ = keyframe;
     local_mapper_->AddToQueue(keyframe);
   }
@@ -195,6 +203,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   local_mapper_->RunIteration();
 #endif
 //  ComputeVelocity(frame, last_frame_);
+  frame->SetreferenceKeyFrame(reference_keyframe);
   ReplaceLastFrame(frame);
   return TrackingResult::OK;
 }

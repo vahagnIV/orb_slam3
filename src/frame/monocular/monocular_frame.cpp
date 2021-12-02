@@ -24,17 +24,16 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularFrame::MonocularFrame(map::Atlas *atlas,
+MonocularFrame::MonocularFrame(map::Atlas * atlas,
                                features::handlers::HandlerType handler_type,
                                size_t feature_count,
-                               TImageGray8U &image,
+                               TImageGray8U & image,
                                TimePoint time_point,
-                               const std::string &filename,
-                               const camera::MonocularCamera *camera,
-                               const SensorConstants *sensor_constants) :
+                               const std::string & filename,
+                               const camera::MonocularCamera * camera,
+                               const SensorConstants * sensor_constants) :
     Frame(time_point, filename, sensor_constants, atlas),
-    BaseMonocular(camera),
-    reference_keyframe_(nullptr) {
+    BaseMonocular(camera) {
   auto feature_handler = factories::FeatureHandlerFactory::Create(handler_type,
                                                                   image,
                                                                   camera,
@@ -43,20 +42,19 @@ MonocularFrame::MonocularFrame(map::Atlas *atlas,
   SetFeatureHandler(feature_handler);
 }
 
-MonocularFrame::MonocularFrame(std::istream &stream, serialization::SerializationContext &context)
+MonocularFrame::MonocularFrame(std::istream & stream, serialization::SerializationContext & context)
     : Frame(stream, context),
       BaseMonocular(stream, context) {
   size_t reference_kf_id;
   READ_FROM_STREAM(reference_kf_id, stream);
-  frame::KeyFrame *rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
-  if(rf_kf) {
+  frame::KeyFrame * rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
+  if (rf_kf) {
     if (rf_kf->Type() != Type())
       throw std::runtime_error(
           "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
     reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
     assert(nullptr != reference_keyframe_);
-  }
-  else{
+  } else {
     reference_keyframe_ = nullptr;
   }
   size_t mp_count;
@@ -66,7 +64,7 @@ MonocularFrame::MonocularFrame(std::istream &stream, serialization::Serializatio
     READ_FROM_STREAM(feature_id, stream);
     READ_FROM_STREAM(mp_id, stream);
     auto mp = context.mp_id[mp_id];
-    if(mp)
+    if (mp)
       AddMapPoint(context.mp_id[mp_id], feature_id);
   }
 }
@@ -147,7 +145,7 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
     AddMapPoint(map_point->second, match.first);
   }
 
-  return OptimizePose() && GetMapPointsCount() >=10;
+  return OptimizePose() && GetMapPointsCount() >= 10;
 
 }
 
@@ -207,10 +205,15 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 
     precision_t max_invariance_distance, min_invariance_distance;
     GetAtlas()->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
-                                                                       feature_handler_->GetFeatures().keypoints[point.first],
-                                                                       max_invariance_distance,
-                                                                       min_invariance_distance);
-    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance, GetMap());
+                                                                 feature_handler_->GetFeatures().keypoints[point.first],
+                                                                 max_invariance_distance,
+                                                                 min_invariance_distance);
+    auto map_point = new map::MapPoint(point.second,
+                                       Id(),
+                                       max_invariance_distance,
+                                       min_invariance_distance,
+                                       GetMap());
+
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
@@ -239,7 +242,7 @@ bool MonocularFrame::IsValid() const {
 }
 
 bool MonocularFrame::OptimizePose() {
-  if(optimization::OptimizePose(this)) {
+  if (optimization::OptimizePose(this)) {
     this->ApplyStaging();
     return true;
   }
@@ -304,21 +307,12 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityPar
 }
 
 void MonocularFrame::UpdateFromReferenceKeyFrame() {
-  if (reference_keyframe_) {
-    SetStagingPosition(reference_keyframe_->GetPositionWithLock());
-    ApplyStaging();
-    ClearMapPoints();
-    for (const auto & mp: reference_keyframe_->GetMapPointsWithLock()) {
-      AddMapPoint(mp.second, mp.first);
-    }
-  }
-  else{
-    for(auto mp: map_points_){
-      if(mp.second->GetReplaced()){
-        map_points_[mp.first] = mp.second->GetReplaced();
-      }
-    }
-  }
+  SetStagingPosition(relative_position_ * reference_keyframe_->GetPositionWithLock());
+  ApplyStaging();
+  for(auto mp: map_points_)
+    if(mp.second->GetReplaced())
+      mp.second = mp.second->GetReplaced();
+
 }
 
 void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
@@ -371,7 +365,7 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
     FilterFromLastFrame(last_frame, out_visibles, radius);
     SearchInVisiblePoints(out_visibles, 0.9);
     if (GetMapPointsCount() >= 20) {
-      if(!OptimizePose())
+      if (!OptimizePose())
         return false;
       if (GetMapPointsCount() >= 10) {
         ApplyStaging();

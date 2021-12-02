@@ -49,6 +49,7 @@ class Map {
   Atlas *atlas_;
   mutable std::mutex map_points_mutex_;
 
+
 };
 }
 }

@@ -7,6 +7,8 @@
 // === stl ===
 #include <unordered_map>
 #include <mutex>
+#include <shared_mutex>
+#include <mutex>
 #include <atomic>
 
 // === orb-slam3 ===
@@ -150,7 +152,7 @@ class MapPoint {
   mutable std::recursive_mutex observation_mutex_;
 
   // Mutex for locking position
-  mutable std::recursive_mutex position_mutex_;
+  mutable std::shared_mutex position_mutex_;
   mutable std::recursive_mutex normal_mutex_;
 
   map::MapPoint * replaced_map_point_;

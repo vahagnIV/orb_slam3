@@ -44,7 +44,14 @@ const std::string & DrawerImpl::GetError() const {
   return error_;
 }
 
+void error_callback(int error, const char * msg) {
+  std::string s;
+  s = " [" + std::to_string(error) + "] " + msg + '\n';
+  std::cerr << s << std::endl;
+}
+
 void DrawerImpl::WorkThread() {
+  glfwSetErrorCallback(error_callback);
   glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -206,10 +213,9 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
   CreatePositionRectangle(message->position, kf_node->vertices);
 
   // TODO: Use memory manager to reuse this memory
-  if(vertex_buffers_.empty()) {
+  if (vertex_buffers_.empty()) {
     glGenBuffers(1, &kf_node->vertex_buffer_id);
-  }
-  else{
+  } else {
     kf_node->vertex_buffer_id = vertex_buffers_.top();
     vertex_buffers_.pop();
   }
@@ -222,8 +228,7 @@ void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
   auto mp_node = new MapPointNode(message->id);
   if (buffers_.empty()) {
     glGenBuffers(1, &mp_node->buffer_id);
-  }
-  else{
+  } else {
     mp_node->buffer_id = buffers_.top();
     buffers_.pop();
   }
@@ -238,14 +243,14 @@ void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
 }
 
 void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
-  auto kf_node = dynamic_cast<KeyFrameNode*>( graph_.GetNode(message->id));
+  auto kf_node = dynamic_cast<KeyFrameNode *>( graph_.GetNode(message->id));
   if (kf_node)
     vertex_buffers_.push(kf_node->vertex_buffer_id);
   graph_.DeleteNode(message->id);
 }
 
 void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
-  auto mp_node = dynamic_cast<MapPointNode*>( graph_.GetNode(message->id));
+  auto mp_node = dynamic_cast<MapPointNode *>( graph_.GetNode(message->id));
   if (mp_node)
     buffers_.push(mp_node->buffer_id);
   graph_.DeleteNode(message->id);
@@ -264,7 +269,7 @@ void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated * mes
 
 void DrawerImpl::MapPointGeometryUpdated(messages::MapPointGeometryUpdated * message) {
   auto node = dynamic_cast<MapPointNode *>(graph_.GetNode(message->id));
-  if(nullptr == node)
+  if (nullptr == node)
     return;
   float buffer[] = {static_cast<float>(message->position.x() / scale_),
                     static_cast<float>(message->position.y() / scale_),
