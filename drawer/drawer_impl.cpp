@@ -53,6 +53,7 @@ void error_callback(int error, const char * msg) {
 void DrawerImpl::WorkThread() {
   glfwSetErrorCallback(error_callback);
   glfwWindowHint(GLFW_SAMPLES, 4);
+  glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
@@ -296,6 +297,8 @@ void DrawerImpl::MapPointGeometryUpdated(messages::MapPointGeometryUpdated * mes
   glBindBuffer(GL_ARRAY_BUFFER, node->point_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
 
+  message->normal /= 10;
+  message->normal += message->position;
   float normal_buffer[6] = {static_cast<float>(message->position.x() / scale_),
                            static_cast<float>(message->position.y() / scale_),
                            static_cast<float>(message->position.z() / scale_),

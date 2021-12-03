@@ -91,7 +91,7 @@ void KeyFrame::AddMapPoint(Observation & observation) {
 
 void KeyFrame::EraseMapPoint(map::MapPoint * map_point) {
   Observation observation;
-  if (map_point->GetObservation(this, observation)) {
+  if (map_point->GetStagingObservation(this, observation)) {
     EraseMapPointImpl(observation);
     map_point->EraseObservation(this);
     if (Settings::Get().MessageRequested(messages::OBSERVATION_DELETED))

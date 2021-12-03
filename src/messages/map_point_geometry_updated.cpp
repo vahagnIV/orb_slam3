@@ -10,7 +10,7 @@ namespace messages {
 
 MapPointGeometryUpdated::MapPointGeometryUpdated(const map::MapPoint *map_point)
     : position(map_point->GetPosition()),
-      normal(map_point->GetNormal() + map_point->GetPosition()),
+      normal(map_point->GetNormal()),
       id((size_t) map_point){
 
 }

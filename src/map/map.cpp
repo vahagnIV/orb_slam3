@@ -134,8 +134,6 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
   }
 
   for (auto mp: GetAllMapPoints()) {
-    mp->ComputeDistinctiveDescriptor();
-    mp->CalculateNormalStaging();
     mp->ApplyStaging();
   }
 

@@ -434,8 +434,6 @@ void MonocularKeyFrame::InitializeImpl() {
     if (mp.second->IsBad())
       continue;
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
-    mp.second->ComputeDistinctiveDescriptor();
-    mp.second->CalculateNormalStaging();
     mp.second->ApplyStaging();
   }
   logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());

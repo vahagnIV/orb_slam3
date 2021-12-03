@@ -22,7 +22,11 @@ MapPoint::MapPoint(TPoint3D point,
                    precision_t max_invariance_distance,
                    precision_t min_invariance_distance,
                    Map * map)
-    : visible_(1),
+    : position_changed_(false),
+      observations_changed_(false),
+      staging_desciptor_calculated_(false),
+      staging_normal_calculated_(false),
+      visible_(1),
       found_(1),
       map_(map),
       bad_flag_(false),
@@ -38,10 +42,11 @@ MapPoint::MapPoint(TPoint3D point,
   ++counter_;
 }
 
-MapPoint::MapPoint(istream &istream, serialization::SerializationContext &context) {
+MapPoint::MapPoint(istream & istream, serialization::SerializationContext & context) {
   READ_FROM_STREAM(staging_max_invariance_distance_, istream);
   READ_FROM_STREAM(staging_min_invariance_distance_, istream);
-  ApplyMinMaxInvDistanceStaging();
+  min_invariance_distance_ = staging_min_invariance_distance_;
+  max_invariance_distance_ = staging_max_invariance_distance_;
   size_t map_id;
   READ_FROM_STREAM(map_id, istream);
   map_ = context.map_id[map_id];
@@ -54,8 +59,8 @@ MapPoint::MapPoint(istream &istream, serialization::SerializationContext &contex
   READ_FROM_STREAM(bad_flag_, istream);
   size_t descriptor_length;
   READ_FROM_STREAM(descriptor_length, istream);
-  istream.read((char *) descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
-  ApplyStaging();
+  istream.read((char *) staging_descriptor_.data(), descriptor_length * sizeof(decltype(descriptor_)::Scalar));
+  descriptor_ = staging_descriptor_;
   if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointCreated(this));
   ++counter_;
@@ -74,6 +79,15 @@ bool MapPoint::GetObservation(const frame::KeyFrame * key_frame, frame::Observat
   return false;
 }
 
+bool MapPoint::GetStagingObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const {
+  auto it = staging_observations_.find(key_frame);
+  if (it != staging_observations_.end()) {
+    out_observation = it->second;
+    return true;
+  }
+  return false;
+}
+
 void MapPoint::SetReplaced(map::MapPoint * replaced) {
   SetBad();
   replaced_map_point_ = replaced;
@@ -85,14 +99,18 @@ map::MapPoint * MapPoint::GetReplaced() {
 
 void MapPoint::AddObservation(const frame::Observation & observation) {
   assert(!IsBad());
-  observations_.emplace(observation.GetKeyFrame(), observation);
+  staging_observations_.emplace(observation.GetKeyFrame(), observation);
+  observations_changed_ = true;
+  staging_normal_calculated_ = false;
+  staging_desciptor_calculated_ = false;
 }
 
 void MapPoint::EraseObservation(frame::KeyFrame * frame) {
-  //std::unique_lock<std::mutex> lock(feature_mutex_); TODO
-  auto it = observations_.find(frame);
-  assert(it != observations_.end());
-  observations_.erase(it);
+  assert(staging_observations_.find(frame) != staging_observations_.end());
+  staging_observations_.erase(frame);
+  observations_changed_ = true;
+  staging_normal_calculated_ = false;
+  staging_desciptor_calculated_ = false;
 }
 
 void MapPoint::SetBad() {
@@ -110,11 +128,17 @@ void MapPoint::SetMap(map::Map * map) {
 
 void MapPoint::ComputeDistinctiveDescriptor() {
 
+  if (staging_desciptor_calculated_)
+    return;
+
   std::vector<features::DescriptorType> descriptors;
-  for (const auto & observation: observations_) {
+  for (const auto & observation: staging_observations_) {
     observation.second.AppendDescriptorsToList(descriptors);
   }
   const unsigned N = descriptors.size();
+  if (N == 0) {
+    return;
+  }
   int distances[N][N];
   for (size_t i = 0; i < N; ++i) {
     distances[i][i] = 0;
@@ -136,87 +160,110 @@ void MapPoint::ComputeDistinctiveDescriptor() {
       best_idx = i;
     }
   }
-  descriptor_ = descriptors[best_idx];
-
+  staging_descriptor_ = descriptors[best_idx];
+  staging_desciptor_calculated_ = true;
 }
 
 void MapPoint::CalculateNormalStaging() {
+  if (!position_changed_ && !observations_changed_)
+    return;
+
+  if (staging_normal_calculated_)
+    return;
   staging_normal_.setZero();
-  for (const auto & frame_id_pair: observations_) {
-    auto normal = frame_id_pair.first->GetNormalFromStaging(staging_position_);
-    staging_normal_ += normal;
+  for (const auto & frame_id_pair: staging_observations_) {
+    staging_normal_ += frame_id_pair.first->GetNormalFromStaging(staging_position_);
   }
-//  staging_normal_ = GetPosition() - staging_normal_;
   staging_normal_.normalize();
-//  staging_normal_ += GetPosition();
+  staging_normal_calculated_ = true;
 }
 
-void MapPoint::SetStagingPosition(const TPoint3D & position) {
-  staging_position_ = position;
-}
-
-void MapPoint::ApplyStagingPosition() {
-  std::unique_lock<std::shared_mutex> lock(position_mutex_);
-  position_ = staging_position_;
-}
-
-void MapPoint::ApplyNormalStaging() {
-  std::unique_lock<std::recursive_mutex> lock(normal_mutex_);
-  normal_ = staging_normal_;
-}
-
-const TPoint3D & MapPoint::GetPositionWithLock() const {
+const TPoint3D MapPoint::GetPosition() const {
   std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return position_;
 }
-const TVector3D & MapPoint::GetNormalWithLock() const {
-  std::unique_lock<std::recursive_mutex> lock(normal_mutex_);
+
+const TVector3D MapPoint::GetNormal() const {
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return normal_;
 }
 
-void MapPoint::ApplyMinMaxInvDistanceStaging() {
-  min_invariance_distance_ = staging_min_invariance_distance_;
-  max_invariance_distance_ = staging_max_invariance_distance_;
+const TPoint3D MapPoint::GetStagingPosition() const {
+  return staging_position_;
+}
+
+const TVector3D MapPoint::GetStagingNormal() {
+
+  CalculateNormalStaging();
+
+  return staging_normal_;
+}
+
+void MapPoint::SetStagingPosition(const TPoint3D & position) {
+  position_changed_ = true;
+  staging_normal_calculated_ = false;
+  staging_position_ = position;
 }
 
 void MapPoint::ApplyStaging() {
-  ApplyStagingPosition();
-  ApplyNormalStaging();
-  ApplyMinMaxInvDistanceStaging();
-  if(Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)){
+
+  if (position_changed_) {
+    position_ = staging_position_;
+  }
+
+  if (position_changed_ || observations_changed_) {
+    std::unique_lock<std::shared_mutex> lock(position_mutex_);
+
+    if ((position_changed_ || observations_changed_) && !staging_normal_calculated_) {
+      CalculateNormalStaging();
+      normal_ = staging_normal_;
+    }
+
+    if (observations_changed_) {
+      ComputeDistinctiveDescriptor();
+      descriptor_ = staging_descriptor_;
+    }
+
+    observations_ = staging_observations_;
+
+    min_invariance_distance_ = staging_min_invariance_distance_;
+    max_invariance_distance_ = staging_max_invariance_distance_;
+
+    position_changed_ = false;
+    observations_changed_ = false;
+  }
+
+  if (Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointGeometryUpdated(this));
   }
 }
 
-const MapPoint::MapType MapPoint::Observations() const { /// TODO change prototype
+MapPoint::MapType MapPoint::Observations() const { /// TODO change prototype
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return observations_;
 }
 
+MapPoint::MapType MapPoint::StagingObservations() const {
+  return staging_observations_;
+}
+
 size_t MapPoint::GetObservationCount() const {
-//  std::unique_lock<std::mutex> lock(feature_mutex_);
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return observations_.size();
 }
 
-const TPoint3D & MapPoint::GetPosition() const {
-  std::shared_lock<std::shared_mutex> lock(position_mutex_);
-  return position_;
+size_t MapPoint::GetStagingObservationCount() const {
+  return staging_observations_.size();
 }
 
 bool MapPoint::IsInKeyFrame(const frame::KeyFrame * keyframe) const {
-//  std::unique_lock<std::mutex> lock(feature_mutex_);
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return observations_.find(keyframe) != observations_.end();
 }
 
 const frame::Observation & MapPoint::Observation(const frame::KeyFrame * key_frame) const {
+  std::shared_lock<std::shared_mutex> lock(position_mutex_);
   return observations_.find(key_frame)->second;
-}
-
-void MapPoint::LockObservationsContainer() const {
-  observation_mutex_.lock();
-}
-
-void MapPoint::UnlockObservationsContainer() const {
-  observation_mutex_.unlock();
 }
 
 void MapPoint::Serialize(std::ostream & ostream) const {

@@ -19,7 +19,7 @@
 
 namespace orb_slam3 {
 
-namespace serialization{
+namespace serialization {
 class SerializationContext;
 }
 
@@ -40,7 +40,7 @@ class MapPoint {
            precision_t min_invariance_distance,
            Map * map);
 
-  MapPoint(std::istream &istream, serialization::SerializationContext &context);
+  MapPoint(std::istream & istream, serialization::SerializationContext & context);
 
   /*!
    * Adds frame to the map points observations
@@ -57,17 +57,18 @@ class MapPoint {
 
   void ApplyStaging();
 
-  const features::DescriptorType GetDescriptor() const { return descriptor_; }
+  const features::DescriptorType & GetDescriptor() const { return descriptor_; }
 
-  const TPoint3D & GetPosition() const;
-  const TPoint3D & GetPositionWithLock() const;
-  const TVector3D & GetNormal() const { return normal_; }
-  const TVector3D & GetNormalWithLock() const;
-  const TPoint3D & GetStagingPosition() const { return staging_position_; }
-  const TVector3D & GetStagingNormal() const { return staging_normal_; }
+  const TPoint3D GetPosition() const;
+  const TVector3D GetNormal() const;
 
-  const MapType Observations() const;
+  const TPoint3D GetStagingPosition() const;
+  const TVector3D GetStagingNormal() ;
+
+  MapType Observations() const;
+  MapType StagingObservations() const;
   size_t GetObservationCount() const;
+  size_t GetStagingObservationCount() const;
 
   precision_t GetMaxInvarianceDistance() const { return 1.2 * max_invariance_distance_; }
   precision_t GetMinInvarianceDistance() const { return 0.8 * min_invariance_distance_; }
@@ -97,7 +98,7 @@ class MapPoint {
   void SetReplaced(map::MapPoint * replaced);
   map::MapPoint * GetReplaced();
 
-  void CalculateNormalStaging();
+
 
   void SetStagingMaxInvarianceDistance(precision_t max_invariance_distance) {
     staging_max_invariance_distance_ = max_invariance_distance;
@@ -108,35 +109,41 @@ class MapPoint {
   }
 
   bool GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const;
+  bool GetStagingObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const;
 
-  void ComputeDistinctiveDescriptor();
-  void LockObservationsContainer() const;
-  void UnlockObservationsContainer() const;
   void Serialize(std::ostream & ostream) const;
  private:
-  void ApplyStagingPosition();
-  void ApplyNormalStaging();
-  void ApplyMinMaxInvDistanceStaging();
-
+  void ComputeDistinctiveDescriptor();
+  void CalculateNormalStaging();
  private:
   static std::atomic_uint64_t counter_;
   // Position in the world coordinate system
   TPoint3D position_;
   TPoint3D staging_position_;
+  bool position_changed_;
+  mutable std::shared_mutex position_mutex_;
 
   // The keyframe => Observation map of observations
   MapType observations_;
+  MapType staging_observations_;
+  bool observations_changed_;
+  mutable std::recursive_mutex observation_mutex_;
 
   // Distinctive descriptor of this map point
   features::DescriptorType descriptor_;
+  features::DescriptorType staging_descriptor_;
+  bool staging_desciptor_calculated_;
 
   // The normal
+  bool staging_normal_calculated_;
   TVector3D normal_;
   TVector3D staging_normal_;
-  precision_t staging_max_invariance_distance_;
+
   precision_t max_invariance_distance_;
-  precision_t staging_min_invariance_distance_;
+  precision_t staging_max_invariance_distance_;
+
   precision_t min_invariance_distance_;
+  precision_t staging_min_invariance_distance_;
 
   // Statistics on how many times the map point should have been
   // visible and how many times it was actually found
@@ -148,11 +155,6 @@ class MapPoint {
   bool bad_flag_;
   size_t first_observed_frame_id_;
 
-  // Mutex for locking observation
-  mutable std::recursive_mutex observation_mutex_;
-
-  // Mutex for locking position
-  mutable std::shared_mutex position_mutex_;
   mutable std::recursive_mutex normal_mutex_;
 
   map::MapPoint * replaced_map_point_;

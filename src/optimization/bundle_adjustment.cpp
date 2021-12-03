@@ -49,7 +49,6 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   for (auto mp_vertex: mp_map) {
     if (nullptr == loop_kf || loop_kf->IsInitial()) {
       mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
-      mp_vertex.first->CalculateNormalStaging();
       mp_vertex.first->ApplyStaging();
     } else {
       std::runtime_error("BA not implemented for Loop closing");
@@ -106,7 +105,6 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
   for (auto mp_vertex: mp_map) {
     if (!mp_vertex.first->IsBad()) {
       mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
-      mp_vertex.first->CalculateNormalStaging();
       mp_vertex.first->ApplyStaging();
     }
   }

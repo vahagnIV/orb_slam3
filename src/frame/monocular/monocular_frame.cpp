@@ -257,8 +257,8 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
   geometry::Pose inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
     map_point.map_point = mp;
-    TPoint3D position = mp->GetPositionWithLock();
-    TVector3D normal = mp->GetNormalWithLock();
+    TPoint3D position = mp->GetPosition();
+    TVector3D normal = mp->GetNormal();
     if (BaseMonocular::PointVisible(pose.Transform(position),
                                     position,
                                     mp->GetMinInvarianceDistance(),
@@ -325,8 +325,8 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
     assert(mp.first < last_frame->feature_handler_->GetFeatures().keypoints.size());
-    TPoint3D position = mp.second->GetPositionWithLock();
-    TVector3D normal = mp.second->GetNormalWithLock();
+    TPoint3D position = mp.second->GetPosition();
+    TVector3D normal = mp.second->GetNormal();
 
     if (BaseMonocular::PointVisible(pose.Transform(position),
                                     position,

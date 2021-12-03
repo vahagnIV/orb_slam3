@@ -309,8 +309,6 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
       mp->SetStagingMinInvarianceDistance(mp->GetMinInvarianceDistance() / depths[depths.size() / 2]);
       mp->SetStagingMaxInvarianceDistance(mp->GetMaxInvarianceDistance() / depths[depths.size() / 2]);
       mp->SetStagingPosition(pose);
-      mp->ComputeDistinctiveDescriptor();
-      mp->CalculateNormalStaging();
       mp->ApplyStaging();
     }
 

@@ -128,8 +128,6 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
       map_point->AddObservation(key_frame_obs);
       map_point->AddObservation(neighbour_obs);
 
-      map_point->ComputeDistinctiveDescriptor();
-      map_point->CalculateNormalStaging();
       map_point->ApplyStaging();
       key_frame->AddMapPoint(key_frame_obs);
       neighbour_keyframe->AddMapPoint(neighbour_obs);
@@ -163,12 +161,11 @@ void LocalMapper::Optimize(frame::KeyFrame * frame) {
 
   for (auto & obs_to_delete: observations_to_delete) {
     obs_to_delete.second->LockMapPointContainer();
-    obs_to_delete.first->LockObservationsContainer();
+
     obs_to_delete.second->EraseMapPoint(obs_to_delete.first);
     if (obs_to_delete.first->GetObservationCount() == 1)
       SetBad(obs_to_delete.first);
-    obs_to_delete.first->UnlockObservationsContainer();
-    obs_to_delete.second->UnlockMapPointContainer();
+    obs_to_delete.second->ApplyStaging();
   }
   for (auto & kf: local_keyframes)
     kf->GetCovisibilityGraph().Update();
@@ -331,8 +328,6 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
   frame->ListMapPoints(mps);
   for (auto mp: mps) {
     if (!mp->IsBad()) {
-      mp->ComputeDistinctiveDescriptor();
-      mp->CalculateNormalStaging();
       mp->ApplyStaging();
     }
   }
@@ -341,12 +336,11 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
 }
 
 void LocalMapper::ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp) {
+
   map::MapPoint::MapType old_observations = old_mp->Observations();
   for (auto old_obs: old_observations) {
     old_obs.second.GetKeyFrame()->LockMapPointContainer();
   }
-  old_mp->LockObservationsContainer();
-  new_mp->LockObservationsContainer();
 
   for (auto old_obs: old_observations) {
     frame::KeyFrame * key_frame = old_obs.second.GetKeyFrame();
@@ -359,8 +353,7 @@ void LocalMapper::ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp
   }
   old_mp->SetReplaced(new_mp);
   old_mp->GetMap()->EraseMapPoint(old_mp);
-  old_mp->UnlockObservationsContainer();
-  new_mp->UnlockObservationsContainer();
+  new_mp->ApplyStaging();
   for (auto old_obs: old_observations) {
     old_obs.second.GetKeyFrame()->UnlockMapPointContainer();
   }
@@ -399,21 +392,19 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
         if (mp->IsBad())
           continue;
 
-        mp->LockObservationsContainer();
         kf->EraseMapPoint(mp);
-        if (mp->GetObservationCount() == 1) {
+        if (mp->GetStagingObservationCount() == 1) {
           SetBad(mp);
         }
-        mp->UnlockObservationsContainer();
+        else
+          mp->ApplyStaging();
       }
       kf->SetBad();
       kf->UnlockMapPointContainer();
     }
     for (auto mp: map_points) {
       if (!mp->IsBad()) {
-        mp->CalculateNormalStaging();
         mp->ApplyStaging();
-        mp->ComputeDistinctiveDescriptor();
       }
     }
   }
@@ -421,8 +412,8 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
 }
 
 void LocalMapper::SetBad(map::MapPoint * map_point) {
-  map::MapPoint::MapType observations = map_point->Observations();
-  for (auto & obs: observations) {
+
+  for (auto & obs: map_point->StagingObservations()) {
     frame::KeyFrame * last_key_frame = obs.second.GetKeyFrame();
     last_key_frame->LockMapPointContainer();
     last_key_frame->EraseMapPoint(map_point);
@@ -463,7 +454,6 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     covisible_kf->ApplyStaging();
   }
   for (auto mp: map_points) {
-    mp->CalculateNormalStaging();
     mp->ApplyStaging();
   }
 
@@ -496,8 +486,6 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   for (auto mp: map_points) {
     if (mp->IsBad())
       continue;
-    mp->CalculateNormalStaging();
-    mp->ComputeDistinctiveDescriptor();
     mp->ApplyStaging();
   }
   for (auto covisible_kf: current_covisible_keyframes) {

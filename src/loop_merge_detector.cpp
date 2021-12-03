@@ -108,7 +108,7 @@ void LoopMergeDetector::RunIteration() {
                 mp->GetMinInvarianceDistance() / 1.2 * G21.s);
             mp->SetStagingMinInvarianceDistance(
                 mp->GetMinInvarianceDistance() / 0.8 * G21.s);
-            mp->CalculateNormalStaging();
+
             mp->ApplyStaging();
           }
 
