@@ -65,7 +65,7 @@ class LocalMapper {
   void ProcessNewKeyFrame(frame::KeyFrame * frame);
   void CreateNewMapPoints(frame::KeyFrame * key_frame);
   void KeyFrameCulling(frame::KeyFrame * keyframe);
-  void CorrectLoop(DetectionResult & detection_result);
+  static void CorrectLoop(DetectionResult & detection_result);
   void MergeMaps(DetectionResult & detection_result);
 
  private:
@@ -109,6 +109,14 @@ class LocalMapper {
    * @param map_point
    */
   static void SetBad(map::MapPoint *map_point);
+
+  /*!
+   * Lists
+   * @param key_frame
+   * @param out_window
+   */
+  static void ListSurroundingWindow(const frame::KeyFrame * key_frame,
+                                    frame::IKeyFrameDatabase::KeyFrameSet & out_window);
 
  private:
   utils::ThreadSafeQueue<frame::KeyFrame *> new_key_frames_;

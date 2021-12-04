@@ -70,79 +70,13 @@ void LoopMergeDetector::RunIteration() {
         if (merge_candidate->IsBad()) continue;
         geometry::Sim3Transformation L12;
         if (DetectLoopOrMerge(key_frame, key_frame_neighbours, merge_candidate, L12)) {
-          std::cout << "==================================" << std::endl;
-          L12.print();
-          std::cout << "==================================" << std::endl;
-
-          // TODO: Stop Local Mapper
-          frame::IKeyFrameDatabase::KeyFrameSet current_kf_window;
-          std::unordered_set<map::MapPoint *> current_window_map_points;
-          ListSurroundingWindow(key_frame, current_kf_window);
-          ListAllMapPoints(current_kf_window, current_window_map_points);
-
-          frame::IKeyFrameDatabase::KeyFrameSet candidate_kf_window;
-          std::unordered_set<map::MapPoint *> candidate_window_map_points;
-          ListSurroundingWindow(merge_candidate, candidate_kf_window);
-          ListAllMapPoints(candidate_kf_window, candidate_window_map_points);
-
-          geometry::Sim3Transformation G21 =
-              merge_candidate->GetInversePosition() *
-                  L12.GetInverse() *
-                  key_frame->GetPosition();
-
-          geometry::Sim3Transformation G12 = G21.GetInverse();
-          for (auto keyframe: key_frame->GetMap()->GetAllKeyFrames()) {
-            if (keyframe->IsBad())
-              continue;
-            geometry::Sim3Transformation
-                transform = keyframe->GetPosition() * G12;
-
-            keyframe->SetStagingPosition(transform.R, transform.T * G21.s);
-          }
-
-          for (const auto & mp: key_frame->GetMap()->GetAllMapPoints()) {
-            if (mp->IsBad())
-              continue;
-            mp->SetStagingPosition(G21.Transform(mp->GetPosition()));
-            mp->SetStagingMinInvarianceDistance(
-                mp->GetMinInvarianceDistance() / 1.2 * G21.s);
-            mp->SetStagingMinInvarianceDistance(
-                mp->GetMinInvarianceDistance() / 0.8 * G21.s);
-
-            mp->ApplyStaging();
-          }
-
-          for (auto keyframe: key_frame->GetMap()->GetAllKeyFrames()) {
-            if (keyframe->IsBad())
-              continue;
-            //TODO: Implement this function
-//            keyframe->FuseMapPoints(current_window_map_points, true);
-          }
-          // TODO: release local mapper
-          std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
-          optimization::LocalBundleAdjustment(current_kf_window,
-                                              candidate_kf_window,
-                                              current_window_map_points,
-                                              observations_to_delete,
-                                              nullptr);
-
-          // TODO: Stop everything
-          for (auto mp: key_frame->GetMap()->GetAllMapPoints()) {
-            if (mp->IsBad())
-              continue;
-            mp->SetMap(merge_candidate->GetMap());
-            mp->ApplyStaging();
-          }
-
-          for (auto kf: key_frame->GetMap()->GetAllKeyFrames()) {
-            if (kf->IsBad())
-              continue;
-            kf->SetMap(merge_candidate->GetMap());
-            kf->ApplyStaging();
-          }
-          atlas_->SetCurrentMap(merge_candidate->GetMap());
-
+          DetectionResult result{.type = DetectionType::MergeDetected,
+              .keyframe = key_frame,
+              .candidate = merge_candidate,
+              .transformation  =L12};
+          local_mapper_->AddToLMDetectionQueue(result);
           return;
+
         }
       }
     }
@@ -168,15 +102,15 @@ void LoopMergeDetector::RunIteration() {
   }
 }
 
-void LoopMergeDetector::SetLocalMapper(LocalMapper *local_mapper) {
+void LoopMergeDetector::SetLocalMapper(LocalMapper * local_mapper) {
   local_mapper_ = local_mapper;
 }
 
-bool LoopMergeDetector::Intersect(const KeyFrameSet &bow_candidate_neighbours,
-                                  const KeyFrameSet &key_frame_neighbours) {
+bool LoopMergeDetector::Intersect(const KeyFrameSet & bow_candidate_neighbours,
+                                  const KeyFrameSet & key_frame_neighbours) {
   return std::any_of(bow_candidate_neighbours.begin(),
                      bow_candidate_neighbours.end(),
-                     [&key_frame_neighbours](frame::KeyFrame *key_frame) {
+                     [&key_frame_neighbours](frame::KeyFrame * key_frame) {
                        return key_frame_neighbours.find(key_frame) != key_frame_neighbours.end();
                      });
 }
@@ -240,31 +174,6 @@ bool LoopMergeDetector::DetectLoopOrMerge(const frame::KeyFrame * key_frame,
   // TODO: move the constant to constants
   return key_frame->AdjustSim3Transformation(visible_map_points, candidate_keyframe, out_sim3_transformation) > 15;
 
-}
-
-void LoopMergeDetector::ListSurroundingWindow(const frame::KeyFrame * key_frame,
-                                              frame::IKeyFrameDatabase::KeyFrameSet & out_window) {
-  static const size_t TEMPORAL_KFS_COUNT = 15;
-  out_window = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(TEMPORAL_KFS_COUNT);
-
-  static const size_t MAX_TRIES = 3;
-  size_t nNumTries = 0;
-  while (out_window.size() < TEMPORAL_KFS_COUNT && nNumTries < MAX_TRIES) {
-    for (frame::KeyFrame * pKFi: out_window) {
-      if (!pKFi->IsBad()) {
-        auto neighbours_of_neighbour = pKFi->GetCovisibilityGraph().GetCovisibleKeyFrames(TEMPORAL_KFS_COUNT / 2);
-        out_window.insert(neighbours_of_neighbour.begin(), neighbours_of_neighbour.end());
-      }
-    }
-    nNumTries++;
-  }
-
-}
-
-void LoopMergeDetector::ListAllMapPoints(const frame::IKeyFrameDatabase::KeyFrameSet & key_frames,
-                                         std::unordered_set<map::MapPoint *> & out_mps) {
-  for (auto kf: key_frames)
-    kf->ListMapPoints(out_mps);
 }
 
 }

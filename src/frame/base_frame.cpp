@@ -48,6 +48,10 @@ BaseFrame::BaseFrame(std::istream &istream, serialization::SerializationContext 
   SetFeatureHandler(handler);
 }
 
+void BaseFrame::SetMap(map::Map * map) {
+    map_ = map;
+}
+
 BaseFrame::BaseFrame(TimePoint time_point,
                      std::string  filename,
                      const SensorConstants * sensor_constants,

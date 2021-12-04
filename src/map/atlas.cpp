@@ -16,7 +16,7 @@
 namespace orb_slam3 {
 namespace map {
 
-Atlas::Atlas(features::IFeatureExtractor *feature_extractor, frame::IKeyFrameDatabase *keyframe_database)
+Atlas::Atlas(features::IFeatureExtractor * feature_extractor, frame::IKeyFrameDatabase * keyframe_database)
     : current_map_(nullptr),
       maps_(),
       feature_extractor_(feature_extractor),
@@ -24,7 +24,7 @@ Atlas::Atlas(features::IFeatureExtractor *feature_extractor, frame::IKeyFrameDat
 
 }
 
-Atlas::Atlas(std::istream &istream, serialization::SerializationContext &context) : current_map_(nullptr) {
+Atlas::Atlas(std::istream & istream, serialization::SerializationContext & context) : current_map_(nullptr) {
   context.atlas = this;
 
   features::FeatureExtractorType fe_type;
@@ -69,11 +69,17 @@ Atlas::Atlas(std::istream &istream, serialization::SerializationContext &context
   key_frame_database_ = factories::KeyframeDatabaseFactory::CreateKeyFrameDatabase(kf_db_type, istream, context);
 }
 
-Map *Atlas::GetCurrentMap() {
+Map * Atlas::GetCurrentMap() {
   if (nullptr == current_map_)
     CreateNewMap();
 
   return current_map_;
+}
+
+void Atlas::EraseMap(Map * map) {
+  assert(current_map_ != map);
+  assert(maps_.find(map) != maps_.end());
+  maps_.erase(map);
 }
 
 void Atlas::CreateNewMap() {
@@ -147,11 +153,11 @@ void Atlas::Serialize(std::ostream & ostream) const {
   key_frame_database_->Serialize(ostream);
 }
 
-const features::IFeatureExtractor *Atlas::GetFeatureExtractor() const {
+const features::IFeatureExtractor * Atlas::GetFeatureExtractor() const {
   return feature_extractor_;
 }
 
-frame::IKeyFrameDatabase *Atlas::GetKeyframeDatabase() const {
+frame::IKeyFrameDatabase * Atlas::GetKeyframeDatabase() const {
   return key_frame_database_;
 }
 

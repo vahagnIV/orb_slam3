@@ -52,7 +52,7 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
   current_frame->ListMapPoints(frame_map_points);
   std::unordered_map<frame::KeyFrame *, unsigned> key_frame_counter;
   for (auto & map_point: frame_map_points) {
-    if(map_point->IsBad())
+    if (map_point->IsBad())
       continue;
     for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.second.GetKeyFrame()];
   }
@@ -139,7 +139,6 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     state_ = LOST;
     return TrackingResult::TRACKING_FAILED;
   }
-
 
   frame::Frame::MapPointSet current_frame_map_points, local_map_points_except_current;
   frame->ListMapPoints(current_frame_map_points);
@@ -384,7 +383,7 @@ TrackingResult Tracker::Track(frame::Frame * frame) {
 }
 
 void Tracker::ComputeVelocity(const geometry::RigidObject * object2, const geometry::RigidObject * object1) {
-  velocity_ = object2->GetPositionWithLock() * object1->GetInversePosition();
+  velocity_ = object2->GetPosition() * object1->GetInversePosition();
   velocity_is_valid_ = true;
 }
 

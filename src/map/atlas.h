@@ -30,6 +30,7 @@ class Atlas {
 
   Map *GetCurrentMap();
   void CreateNewMap();
+  void EraseMap(Map * map);
   size_t GetMapCount() const;
   const std::unordered_set<map::Map *> &GetMaps() const;
   const features::IFeatureExtractor *GetFeatureExtractor() const;

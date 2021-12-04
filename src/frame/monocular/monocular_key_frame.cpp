@@ -120,8 +120,8 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
   MapToSet(local_map_points_map, local_map_points);
   MapToSet(others_map_points_map, others_map_points);
 
-  auto local_pose = GetPositionWithLock();
-  auto other_pose = other_frame->GetPositionWithLock();
+  auto local_pose = GetPosition();
+  auto other_pose = other_frame->GetPosition();
 
   if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
     logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());

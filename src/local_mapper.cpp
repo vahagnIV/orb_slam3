@@ -243,7 +243,7 @@ void LocalMapper::RunIteration() {
       MapPointCulling(key_frame);
       Profiler::End("MapPointCulling");
 
-      if(key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames().empty())
+      if (key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames().empty())
         return;
 
       Profiler::Start("CreateNewMapPoints");
@@ -276,7 +276,136 @@ void LocalMapper::RunIteration() {
   }
 }
 
+void LocalMapper::ListSurroundingWindow(const frame::KeyFrame * key_frame,
+                                        frame::IKeyFrameDatabase::KeyFrameSet & out_window) {
+  static const size_t TEMPORAL_KFS_COUNT = 15;
+  out_window = key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames(TEMPORAL_KFS_COUNT);
+
+  static const size_t MAX_TRIES = 3;
+  size_t nNumTries = 0;
+  while (out_window.size() < TEMPORAL_KFS_COUNT && nNumTries < MAX_TRIES) {
+    for (frame::KeyFrame * pKFi: out_window) {
+      if (!pKFi->IsBad()) {
+        auto neighbours_of_neighbour = pKFi->GetCovisibilityGraph().GetCovisibleKeyFrames(TEMPORAL_KFS_COUNT / 2);
+        out_window.insert(neighbours_of_neighbour.begin(), neighbours_of_neighbour.end());
+      }
+    }
+    nNumTries++;
+  }
+}
+
 void LocalMapper::MergeMaps(DetectionResult & detection_result) {
+  std::cout << "========== Merging maps ==================" << std::endl;
+
+  map::Map * merge_map = detection_result.keyframe->GetMap();
+  map::Map * target_map = detection_result.candidate->GetMap();
+  // TODO: Stop Local Mapper
+  frame::IKeyFrameDatabase::KeyFrameSet current_kf_window;
+  std::unordered_set<map::MapPoint *> current_window_map_points;
+  ListSurroundingWindow(detection_result.keyframe, current_kf_window);
+  for (auto kf: current_kf_window)
+    kf->ListMapPoints(current_window_map_points);
+
+  frame::IKeyFrameDatabase::KeyFrameSet candidate_kf_window;
+  std::unordered_set<map::MapPoint *> candidate_window_map_points;
+  ListSurroundingWindow(detection_result.candidate, candidate_kf_window);
+  for (auto kf: current_kf_window)
+    kf->ListMapPoints(candidate_window_map_points);
+
+  geometry::Sim3Transformation G21 =
+      detection_result.candidate->GetInversePosition() *
+          detection_result.transformation.GetInverse() *
+          detection_result.keyframe->GetPosition();
+
+  atlas_->SetCurrentMap(target_map);
+  geometry::Sim3Transformation G12 = G21.GetInverse();
+  for (auto keyframe: merge_map->GetAllKeyFrames()) {
+    if (keyframe->IsBad())
+      continue;
+    geometry::Sim3Transformation
+        transform = keyframe->GetPosition() * G12;
+    detection_result.candidate->GetMap()->AddKeyFrame(keyframe);
+    keyframe->SetStagingPosition(transform.R, transform.T * G21.s);
+  }
+
+  for (const auto & mp: merge_map->GetAllMapPoints()) {
+    if (mp->IsBad())
+      continue;
+    mp->SetStagingPosition(G21.Transform(mp->GetPosition()));
+    mp->SetStagingMinInvarianceDistance(
+        mp->GetMinInvarianceDistance() / 1.2 * G21.s);
+    mp->SetStagingMinInvarianceDistance(
+        mp->GetMinInvarianceDistance() / 0.8 * G21.s);
+    detection_result.candidate->GetMap()->AddMapPoint(mp);
+    mp->ApplyStaging();
+  }
+
+  for (auto keyframe: current_kf_window) {
+    if (keyframe->IsBad())
+      continue;
+
+    std::list<frame::MapPointVisibilityParams> visibles;
+    keyframe->FilterVisibleMapPoints(candidate_window_map_points, visibles, true);
+    std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_map_points;
+    std::list<frame::Observation> local_matches;
+    keyframe->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
+    std::cout << "Found " << matched_map_points.size() << "Matches" << std::endl;
+    for (auto match: matched_map_points) {
+      if (match.first->IsBad() || match.second->IsBad())
+        continue;
+      if (match.first->GetObservationCount() > match.second->GetObservationCount())
+        ReplaceMapPoint(match.first, match.second);
+      else
+        ReplaceMapPoint(match.second, match.first);
+    }
+    for (auto local_match: local_matches) {
+      keyframe->AddMapPoint(local_match);
+      local_match.GetMapPoint()->ApplyStaging();
+    }
+
+    keyframe->GetCovisibilityGraph().Update();
+    //TODO: Implement this function
+//            keyframe->FuseMapPoints(current_window_map_points, true);
+  }
+
+  for(auto mp: merge_map->GetAllMapPoints()){
+    mp->SetMap(target_map);
+  }
+  for(auto keyframe: merge_map->GetAllKeyFrames()) {
+    merge_map->EraseKeyFrame(keyframe);
+    target_map->AddKeyFrame(keyframe);
+    keyframe->SetMap(target_map);
+  }
+  atlas_->EraseMap(merge_map);
+  delete merge_map;
+
+  // TODO: release local mapper
+  std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
+  optimization::LocalBundleAdjustment(current_kf_window,
+                                      candidate_kf_window,
+                                      current_window_map_points,
+                                      observations_to_delete,
+                                      nullptr);
+
+
+  // TODO: Stop everything
+  for (auto mp: merge_map->GetAllMapPoints()) {
+    if (mp->IsBad())
+      continue;
+    mp->ApplyStaging();
+  }
+
+  for (auto kf: merge_map->GetAllKeyFrames()) {
+    if (kf->IsBad())
+      continue;
+    kf->SetMap(detection_result.candidate->GetMap());
+    detection_result.candidate->GetMap()->AddKeyFrame(kf);
+    kf->ApplyStaging();
+  }
+
+
+
+  return;
 
 }
 
@@ -312,8 +441,10 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
     std::list<frame::Observation> local_mps;
     frame->MatchVisibleMapPoints(visibles, matched_mps, local_mps);
 
-    for (auto & obs: local_mps)
+    for (auto & obs: local_mps) {
       frame->AddMapPoint(obs);
+      obs.GetMapPoint()->ApplyStaging();
+    }
 
     for (auto match: matched_mps) {
       if (match.first->GetObservationCount() > match.second->GetObservationCount())
@@ -324,13 +455,13 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
 
   }
 
-  frame::KeyFrame::MapPointSet mps;
-  frame->ListMapPoints(mps);
-  for (auto mp: mps) {
-    if (!mp->IsBad()) {
-      mp->ApplyStaging();
-    }
-  }
+//  frame::KeyFrame::MapPointSet mps;
+//  frame->ListMapPoints(mps);
+//  for (auto mp: mps) {
+//    if (!mp->IsBad()) {
+//      mp->ApplyStaging();
+//    }
+//  }
   frame->GetCovisibilityGraph().Update();
   frame->UnlockMapPointContainer();
 }
@@ -395,8 +526,7 @@ void LocalMapper::KeyFrameCulling(frame::KeyFrame * keyframe) {
         kf->EraseMapPoint(mp);
         if (mp->GetStagingObservationCount() == 1) {
           SetBad(mp);
-        }
-        else
+        } else
           mp->ApplyStaging();
       }
       kf->SetBad();
@@ -429,6 +559,7 @@ void LocalMapper::AddToLMDetectionQueue(DetectionResult & detection_result) {
 }
 
 void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
+  std::cout << "Loop closing " << std::endl;
 
   auto current_covisible_keyframes = detection_result.keyframe->GetCovisibilityGraph().GetCovisibleKeyFrames();
   geometry::Sim3Transformation SG1 = detection_result.transformation * detection_result.candidate->GetPosition();
@@ -471,7 +602,7 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     covisible_kf->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
     std::cout << "Found " << matched_map_points.size() << "Matches" << std::endl;
     for (auto match: matched_map_points) {
-      if(match.first->IsBad() || match.second->IsBad())
+      if (match.first->IsBad() || match.second->IsBad())
         continue;
       if (match.first->GetObservationCount() > match.second->GetObservationCount())
         ReplaceMapPoint(match.first, match.second);
@@ -480,6 +611,7 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     }
     for (auto local_match: local_matches) {
       covisible_kf->AddMapPoint(local_match);
+      local_match.GetMapPoint()->ApplyStaging();
     }
   }
 
@@ -492,7 +624,7 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     covisible_kf->GetCovisibilityGraph().Update();
   }
 
-  loop_merge_detection_queue_.Clear();
+  /*loop_merge_detection_queue_.Clear();
 
   std::cout << "Runnning GBA " << std::endl;
   std::unordered_set<frame::KeyFrame *> all_keyframes =
@@ -513,7 +645,7 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     }
 //    detection_result.candidate->GetMap()->EraseMapPoint(obs_to_delete.first);
 
-  }
+  }*/
 
 }
 

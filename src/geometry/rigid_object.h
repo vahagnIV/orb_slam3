@@ -6,7 +6,7 @@
 #define ORB_SLAM3_ORB_SLAM3_INCLUDE_FRAME_RIGID_OBJECT_H_
 
 // === stl ===
-#include <mutex>
+#include <shared_mutex>
 
 // === g2o ====
 #include <g2o/types/slam3d/se3quat.h>
@@ -42,23 +42,21 @@ class RigidObject {
 
  public:
   // Getters
-  const geometry::Pose & GetPosition() const { return pose_; }
   const geometry::Pose & GetStagingPosition() const { return staging_pose_; }
 
-  geometry::Pose GetPositionWithLock() const {
-    std::unique_lock<std::mutex> lock(position_mutex_);
+  geometry::Pose GetPosition() const {
+    std::shared_lock<std::shared_mutex> lock(position_mutex_);
     return pose_;
   }
 
   void ApplyStaging() {
+    std::unique_lock<std::shared_mutex> lock(position_mutex_);
     pose_ = staging_pose_;
     inverse_pose_ = pose_.GetInversePose();
   }
 
-  const geometry::Pose & GetInversePosition() const { return inverse_pose_; }
-
-  geometry::Pose GetInversePositionWithLock() const {
-    std::unique_lock<std::mutex> lock(position_mutex_);
+  const geometry::Pose & GetInversePosition() const {
+    std::shared_lock<std::shared_mutex> lock(position_mutex_);
     return inverse_pose_;
   }
 
@@ -67,7 +65,7 @@ class RigidObject {
   geometry::Pose inverse_pose_;
   geometry::Pose staging_pose_;
 
-  mutable std::mutex position_mutex_;
+  mutable std::shared_mutex position_mutex_;
 };
 
 }

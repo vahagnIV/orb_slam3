@@ -123,6 +123,7 @@ void MapPoint::SetBad() {
 
 void MapPoint::SetMap(map::Map * map) {
   map_->EraseMapPoint(this);
+  map->AddMapPoint(this);
   map_ = map;
 }
 
