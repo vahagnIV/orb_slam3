@@ -16,6 +16,7 @@
 
 // ===== drawer ======
 #include "graph.h"
+#include "objects_buffer.h"
 
 #ifndef ORB_SLAM3_DRAWER_IMPL_DRAWER_H_
 #define ORB_SLAM3_DRAWER_IMPL_DRAWER_H_
@@ -58,6 +59,7 @@ class DrawerImpl {
   void CreatePositionRectangle(const geometry::Pose &pose, float result[]) const;
 
  private:
+  size_t draw_count_;
   size_t windo_width_;
   size_t windo_height_;
   std::string window_name_;

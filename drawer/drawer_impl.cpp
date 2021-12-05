@@ -13,6 +13,7 @@ namespace orb_slam3 {
 namespace drawer {
 
 DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
+    draw_count_(0),
     windo_width_(width),
     windo_height_(height),
     window_name_(std::move(window_name)),
@@ -119,6 +120,7 @@ void DrawerImpl::Stop() {
 }
 
 void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
+  ++draw_count_;
   glClear(GL_COLOR_BUFFER_BIT);
   // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
   glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
@@ -140,7 +142,8 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
 
   ShaderRepository::UseColor(ColorRepository::Green());
 
-  graph_.Draw();
+//  if(draw_count_ % 10 == 0)
+    graph_.Draw();
   ShaderRepository::UseColor(ColorRepository::Red());
 
 //  glUseProgram(ShaderRepository::GetPositionProgramId());

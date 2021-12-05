@@ -117,6 +117,7 @@ void MapPoint::SetBad() {
   // TODO: Implement this
   bad_flag_ = true;
   observations_.clear();
+  --counter_;
   if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointDeleted(this));
 }

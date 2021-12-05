@@ -136,6 +136,9 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
     key_frame->UnlockMapPointContainer();
     neighbour_keyframe->UnlockMapPointContainer();
   }
+  for(auto kf: covisible_frames)
+    kf->GetCovisibilityGraph().Update();
+  key_frame->GetCovisibilityGraph().Update();
 }
 
 void LocalMapper::Optimize(frame::KeyFrame * frame) {
@@ -266,6 +269,7 @@ void LocalMapper::RunIteration() {
 
       if (++iteration_cycle % 100 == 0) {
         Profiler::PrintProfiles();
+        std::cout << "Total Map points: "<< map::MapPoint::GetTotalMapPointCount() << std::endl;
       }
       if (loop_merge_detector_)
         loop_merge_detector_->Process(key_frame);

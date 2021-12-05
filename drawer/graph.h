@@ -9,6 +9,8 @@
 
 #include "node.h"
 #include "edge.h"
+#include "map_point_node.h"
+#include "key_frame_node.h"
 
 namespace orb_slam3 {
 namespace drawer {
@@ -17,6 +19,12 @@ class Graph {
  public:
   Graph();
   void AddNode( Node * node);
+  void AddMapPoint(MapPointNode * map_point_node);
+  void AddKeyFrame(KeyFrameNode * key_frame_node);
+  void DeleteMapPoint(size_t id);
+  void DeleteKeyFrane(size_t id);
+  MapPointNode * GetMapPoint(size_t id);
+  KeyFrameNode * GetKeyFrame(size_t);
   void DeleteNode(size_t node_id);
   void AddEdge(Edge * edge);
   void DeleteEdge(size_t node_id1, size_t node_id2);
@@ -25,6 +33,8 @@ class Graph {
   void Draw();
  private:
   std::unordered_map<size_t, Node *> nodes_;
+  std::unordered_map<size_t, MapPointNode *> map_points_;
+  std::unordered_map<size_t, KeyFrameNode *> keyframes_;
   size_t draw_nonce_;
 
 };

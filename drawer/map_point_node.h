@@ -20,6 +20,7 @@ class MapPointNode : public Node {
   void Draw() const override;
   GLuint point_buffer_id;
   GLuint normal_buffer_id;
+  size_t chunk_index;
 
 
 };

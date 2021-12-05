@@ -15,13 +15,47 @@ Graph::Graph() {
 
 }
 
+void Graph::AddMapPoint(MapPointNode *map_point_node) {
+  map_points_[map_point_node->Id()] = map_point_node;
+}
+
+void Graph::AddKeyFrame(KeyFrameNode *key_frame_node) {
+  keyframes_[key_frame_node->Id()] = key_frame_node;
+}
+
+void Graph::DeleteMapPoint(size_t id) {
+  auto it = map_points_.find(id);
+  if (it != map_points_.end())
+    map_points_.erase(it);
+}
+
+void Graph::DeleteKeyFrane(size_t id) {
+  auto it = keyframes_.find(id);
+  if (it != keyframes_.end())
+    keyframes_.erase(it);
+}
+
+MapPointNode *Graph::GetMapPoint(size_t id) {
+  auto it = map_points_.find(id);
+  if (it != map_points_.end())
+    return it->second;
+  return nullptr;
+}
+
+KeyFrameNode *Graph::GetKeyFrame(size_t id) {
+  auto it = keyframes_.find(id);
+  if (it != keyframes_.end())
+    return it->second;
+  return nullptr;
+}
+
 void Graph::AddNode(Node *node) {
   assert(!NodeExists(node->Id()));
   nodes_[node->Id()] = node;
 }
 
 void Graph::DeleteNode(size_t node_id) {
-  if(!NodeExists(node_id))
+  if (!NodeExists(node_id))
     return;
 //  assert(NodeExists(node_id));
   Node * node = GetNode(node_id);
