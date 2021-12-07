@@ -10,17 +10,21 @@
 
 #include "node.h"
 #include <typedefs.h>
+#include <messages/map_point_created.h>
 
 namespace orb_slam3 {
 namespace drawer {
 
 class MapPointNode : public Node {
  public:
-  MapPointNode(size_t id);
+  typedef float Scalar;
+  MapPointNode(messages::MapPointCreated * message);
   void Draw() const override;
   GLuint point_buffer_id;
   GLuint normal_buffer_id;
-  size_t chunk_index;
+  GLsizeiptr offset;
+  float coordinates[3];
+  float normal[3];
 
 
 };

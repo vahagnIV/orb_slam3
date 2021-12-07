@@ -17,12 +17,12 @@ namespace drawer {
 
 class Graph {
  public:
-  Graph();
+  Graph(size_t size);
   void AddNode( Node * node);
   void AddMapPoint(MapPointNode * map_point_node);
   void AddKeyFrame(KeyFrameNode * key_frame_node);
   void DeleteMapPoint(size_t id);
-  void DeleteKeyFrane(size_t id);
+  void DeleteKeyFrame(size_t id);
   MapPointNode * GetMapPoint(size_t id);
   KeyFrameNode * GetKeyFrame(size_t);
   void DeleteNode(size_t node_id);
@@ -32,10 +32,14 @@ class Graph {
   bool NodeExists(size_t node_id);
   void Draw();
  private:
-  std::unordered_map<size_t, Node *> nodes_;
+  size_t size_;
+  GLuint buffer_;
+  GLsizeiptr current_carrette_;
   std::unordered_map<size_t, MapPointNode *> map_points_;
+  std::unordered_map<size_t , GLsizeiptr> position_in_buffer_;
+
   std::unordered_map<size_t, KeyFrameNode *> keyframes_;
-  size_t draw_nonce_;
+
 
 };
 

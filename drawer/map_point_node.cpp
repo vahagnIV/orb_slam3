@@ -6,12 +6,17 @@
 #include <shaders/shader_repository.h>
 #include <shaders/color_repository.h>
 
-
 namespace orb_slam3 {
 namespace drawer {
 
-MapPointNode::MapPointNode(size_t id) : Node(id) {
+MapPointNode::MapPointNode(messages::MapPointCreated * message) : Node(message->id) {
+  coordinates[0] = message->position.x();
+  coordinates[1] = message->position.y();
+  coordinates[2] = message->position.z();
 
+  normal[0] = 0;
+  normal[1] = 0;
+  normal[2] = 0;
 }
 
 void MapPointNode::Draw() const {
@@ -26,7 +31,7 @@ void MapPointNode::Draw() const {
       GL_FALSE,           // normalized?
       0,                  // stride
       (void *) 0            // array buffer offset
-      );
+  );
   glDrawArrays(GL_POINTS, 0, 1); // 3 indices starting at 0 -> 1 triangle
 
   ShaderRepository::UseColor(ColorRepository::Pink());

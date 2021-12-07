@@ -13,13 +13,14 @@ namespace orb_slam3 {
 namespace drawer {
 
 DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
-    draw_count_(0),
+    ydraw_count_(0),
     windo_width_(width),
     windo_height_(height),
     window_name_(std::move(window_name)),
     window_(nullptr),
     thread_(nullptr),
     error_(),
+    graph_(11000),
     cancellation_token_(false),
     scale_(4.) {
 
@@ -120,7 +121,6 @@ void DrawerImpl::Stop() {
 }
 
 void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
-  ++draw_count_;
   glClear(GL_COLOR_BUFFER_BIT);
   // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
   glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
@@ -143,7 +143,7 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   ShaderRepository::UseColor(ColorRepository::Green());
 
 //  if(draw_count_ % 10 == 0)
-    graph_.Draw();
+  graph_.Draw();
   ShaderRepository::UseColor(ColorRepository::Red());
 
 //  glUseProgram(ShaderRepository::GetPositionProgramId());
@@ -225,57 +225,23 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
   }
   glBindBuffer(GL_ARRAY_BUFFER, kf_node->vertex_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, sizeof(kf_node->vertices), kf_node->vertices, GL_STATIC_DRAW);
-  graph_.AddNode(kf_node);
+//  graph_.AddNode(kf_node);
 }
 
 void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
-  auto mp_node = new MapPointNode(message->id);
-  if (point_buffers_.empty()) {
-    glGenBuffers(1, &mp_node->point_buffer_id);
-  } else {
-    mp_node->point_buffer_id = point_buffers_.top();
-    point_buffers_.pop();
-  }
-  float buffer[] = {static_cast<float>(message->position.x() / scale_),
-                    static_cast<float>(message->position.y() / scale_),
-                    static_cast<float>(message->position.z() / scale_)};
-
-  glBindBuffer(GL_ARRAY_BUFFER, mp_node->point_buffer_id);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
-
-  if (line_buffers_.empty()) {
-    glGenBuffers(1, &mp_node->normal_buffer_id);
-  } else {
-    mp_node->normal_buffer_id = line_buffers_.top();
-    line_buffers_.pop();
-  }
-
-  float normal_buffer[] = {static_cast<float>(message->position.x() / scale_),
-                           static_cast<float>(message->position.y() / scale_),
-                           static_cast<float>(message->position.z() / scale_),
-                           static_cast<float>(message->position.x() / scale_),
-                           static_cast<float>(message->position.y() / scale_),
-                           static_cast<float>(message->position.z() / scale_)};
-
-  glBindBuffer(GL_ARRAY_BUFFER, mp_node->normal_buffer_id);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(normal_buffer), normal_buffer, GL_STATIC_DRAW);
-
-  graph_.AddNode(mp_node);
-
+  auto mp_node = new MapPointNode(message);
+  graph_.AddMapPoint(mp_node);
 }
 
 void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
   auto kf_node = dynamic_cast<KeyFrameNode *>( graph_.GetNode(message->id));
   if (kf_node)
     vertex_buffers_.push(kf_node->vertex_buffer_id);
-  graph_.DeleteNode(message->id);
+//  graph_.DeleteNode(message->id);
 }
 
 void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
-  auto mp_node = dynamic_cast<MapPointNode *>( graph_.GetNode(message->id));
-  if (mp_node)
-    point_buffers_.push(mp_node->point_buffer_id);
-  graph_.DeleteNode(message->id);
+  graph_.DeleteMapPoint(message->id);
 }
 
 void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated * message) {
@@ -303,11 +269,11 @@ void DrawerImpl::MapPointGeometryUpdated(messages::MapPointGeometryUpdated * mes
   message->normal /= 10;
   message->normal += message->position;
   float normal_buffer[6] = {static_cast<float>(message->position.x() / scale_),
-                           static_cast<float>(message->position.y() / scale_),
-                           static_cast<float>(message->position.z() / scale_),
-                           static_cast<float>(message->normal.x() / scale_),
-                           static_cast<float>(message->normal.y() / scale_),
-                           static_cast<float>(message->normal.z() / scale_)};
+                            static_cast<float>(message->position.y() / scale_),
+                            static_cast<float>(message->position.z() / scale_),
+                            static_cast<float>(message->normal.x() / scale_),
+                            static_cast<float>(message->normal.y() / scale_),
+                            static_cast<float>(message->normal.z() / scale_)};
 
   glBindBuffer(GL_ARRAY_BUFFER, node->normal_buffer_id);
 //  glVertexPointer(2, GL_FLOAT, 0, normal_buffer);

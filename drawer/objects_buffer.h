@@ -13,25 +13,19 @@ namespace drawer {
 
 class ObjectsBuffer {
  public:
-  ObjectsBuffer(size_t count) : count_(count) {
-    glGenBuffers()
-
+  ObjectsBuffer(size_t count) : size_(count) {
+    glGenBuffers(1, &buffer_id);
   }
 
   bool Empty() const {
     return free_offsets_.empty();
   }
 
-  size_t PopOffset() {
-    size_t offset = free_offsets_.top();
-    free_offsets_.pop();
-    return offset;
-  }
-
  private:
   GLuint buffer_id;
   std::stack<size_t> free_offsets_;
-  size_t count_;
+  size_t size_;
+  size_t carrette_position_;
 
 };
 
