@@ -96,7 +96,10 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 }
 
 void Tracker::StartNewMap(frame::Frame * frame) {
-  atlas_->CreateNewMap();
+  std::cout << "Starting new map" << std::endl;
+  if(atlas_->GetCurrentMap()->GetSize()!=0)
+    atlas_->CreateNewMap();
+
   frame->SetIdentity();
   state_ = FIRST_IMAGE;
   frame->SetMap(atlas_->GetCurrentMap());
@@ -121,7 +124,9 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     velocity_is_valid_ = false;
     delete frame;
     state_ = LOST;
+    std::cout << "Tracking lost after twrkf" << std::endl;
     return TrackingResult::TRACKING_FAILED;
+
   }
 
 //  debug::DrawCommonMapPoints(frame->GetFilename(),
@@ -137,6 +142,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     velocity_is_valid_ = false;
     delete frame;
     state_ = LOST;
+    std::cout << "Tracking lost after list local kfs" << std::endl;
     return TrackingResult::TRACKING_FAILED;
   }
 
@@ -168,6 +174,10 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
   frame->SearchInVisiblePoints(visible_map_points);
 
   if (frame->OptimizePose() && frame->GetMapPointsCount() < 20) {
+    velocity_is_valid_ = false;
+    delete frame;
+    state_ = LOST;
+    std::cout << "Tracking lost after optimization" << std::endl;
     return TrackingResult::TRACKING_FAILED;
   }
   frame->SetMap(atlas_->GetCurrentMap());

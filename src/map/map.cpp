@@ -31,16 +31,13 @@ void Map::AddMapPoint(MapPoint *map_point) {
 }
 
 void Map::EraseMapPoint(MapPoint * map_point) {
+  std::unique_lock<std::mutex> lock(map_points_mutex_);
   map_points_.erase(map_point);
 }
 
 std::unordered_set<MapPoint *> Map::GetAllMapPoints() const {
   std::unique_lock<std::mutex> lock(map_points_mutex_);
-  std::unordered_set<MapPoint *> result;
-  for (auto mp: map_points_)
-    if (!mp->IsBad())
-      result.insert(mp);
-  return result;
+  return map_points_;
 }
 
 void Map::SetInitialKeyFrame(frame::KeyFrame * frame) {

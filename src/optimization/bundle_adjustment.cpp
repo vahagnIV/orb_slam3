@@ -48,6 +48,15 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   // Collect Map Point positions
   for (auto mp_vertex: mp_map) {
     if (nullptr == loop_kf || loop_kf->IsInitial()) {
+      for(auto edge : mp_vertex.second->edges()) {
+        auto e = dynamic_cast<edges::BABinaryEdge *>(edge);
+        if(!e->IsValid()){
+          mp_vertex.first->SetBad();
+          break;
+        }
+      }
+      if(mp_vertex.first->IsBad())
+        continue;
       mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
       mp_vertex.first->ApplyStaging();
     } else {

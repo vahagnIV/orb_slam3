@@ -35,6 +35,7 @@ bool OptimizePose(MonocularFrame * frame) {
   frame_vertex->setId(max_id);
   frame_vertex->setFixed(false);
   optimizer.addVertex(frame_vertex);
+//  optimizer.setVerbose(true);
 
   const auto & features = frame->GetFeatureHandler()->GetFeatures();
 

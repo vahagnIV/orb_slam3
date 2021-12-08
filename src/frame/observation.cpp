@@ -64,10 +64,10 @@ Observation & Observation::operator=(const Observation & other) {
 optimization::edges::BABinaryEdge * Observation::CreateBinaryEdge() const {
   if (IsMonocular()) {
     const auto monocular_key_frame = dynamic_cast<const monocular::MonocularKeyFrame *>(key_frame_);
-    auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetMonoCamera(),
-                                                           constants::MONO_CHI2);
     const size_t & feature_id = feature_ids_[0];
     auto & kp = monocular_key_frame->GetFeatureHandler()->GetFeatures().keypoints[feature_id];
+    auto edge = new optimization::edges::SE3ProjectXYZPose(monocular_key_frame->GetMonoCamera(),
+                                                           constants::MONO_CHI2 *  monocular_key_frame->GetMap()->GetAtlas()->GetFeatureExtractor()->GetAcceptableSquareError(kp.level));
     edge->setMeasurement(kp.pt);
     precision_t
         information_coefficient =

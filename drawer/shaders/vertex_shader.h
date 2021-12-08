@@ -11,11 +11,12 @@ const char * VERTEX_SHADER_SOURCE = "#version 330 core\n"
                                     "\n"
                                     "// Values that stay constant for the whole mesh.\n"
                                     "uniform mat4 MVP;\n"
+                                    "uniform float scale;\n"
                                     "\n"
                                     "void main(){\n"
                                     "\n"
                                     "\t// Output position of the vertex, in clip space : MVP * position\n"
-                                    "\tgl_Position =  MVP * vec4(vertexPosition_modelspace,1);\n"
+                                    "\tgl_Position =  MVP * vec4(vertexPosition_modelspace * scale,1);\n"
                                     "\n"
                                     "}";
 #endif //ORB_SLAM3_DRAWER_SHADERS_VERTEX_SHADER_H_

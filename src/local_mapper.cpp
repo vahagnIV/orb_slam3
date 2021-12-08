@@ -330,6 +330,7 @@ void LocalMapper::MergeMaps(DetectionResult & detection_result) {
         transform = keyframe->GetPosition() * G12;
     detection_result.candidate->GetMap()->AddKeyFrame(keyframe);
     keyframe->SetStagingPosition(transform.R, transform.T * G21.s);
+    keyframe->ApplyStaging();
   }
 
   for (const auto & mp: merge_map->GetAllMapPoints()) {
@@ -353,7 +354,7 @@ void LocalMapper::MergeMaps(DetectionResult & detection_result) {
     std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_map_points;
     std::list<frame::Observation> local_matches;
     keyframe->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
-    std::cout << "Found " << matched_map_points.size() << "Matches" << std::endl;
+    std::cout << "Found " << matched_map_points.size() << " Matches" << std::endl;
     for (auto match: matched_map_points) {
       if (match.first->IsBad() || match.second->IsBad())
         continue;
@@ -365,11 +366,9 @@ void LocalMapper::MergeMaps(DetectionResult & detection_result) {
     for (auto local_match: local_matches) {
       keyframe->AddMapPoint(local_match);
       local_match.GetMapPoint()->ApplyStaging();
+      local_match.GetMapPoint()->ApplyStaging();
     }
-
     keyframe->GetCovisibilityGraph().Update();
-    //TODO: Implement this function
-//            keyframe->FuseMapPoints(current_window_map_points, true);
   }
 
   for(auto mp: merge_map->GetAllMapPoints()){
@@ -381,7 +380,8 @@ void LocalMapper::MergeMaps(DetectionResult & detection_result) {
     keyframe->SetMap(target_map);
   }
   atlas_->EraseMap(merge_map);
-  delete merge_map;
+#warning map should be deleted
+//  delete merge_map;
 
   // TODO: release local mapper
   std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> observations_to_delete;
@@ -604,7 +604,7 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
     std::list<std::pair<map::MapPoint *, map::MapPoint *>> matched_map_points;
     std::list<frame::Observation> local_matches;
     covisible_kf->MatchVisibleMapPoints(visibles, matched_map_points, local_matches);
-    std::cout << "Found " << matched_map_points.size() << "Matches" << std::endl;
+    std::cout << "Found " << matched_map_points.size() << " Matches" << std::endl;
     for (auto match: matched_map_points) {
       if (match.first->IsBad() || match.second->IsBad())
         continue;

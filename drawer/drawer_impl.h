@@ -58,7 +58,11 @@ class DrawerImpl {
   static void Convert(const geometry::Pose & pose, glm::mat4 & out_mat);
   void CreatePositionRectangle(const geometry::Pose &pose, float result[]) const;
 
+  GLFWwindow * CreateWindow();
+  void Initialize();
+
  private:
+  bool is_initialized_;
   size_t windo_width_;
   size_t windo_height_;
   std::string window_name_;
@@ -66,7 +70,7 @@ class DrawerImpl {
   std::thread * thread_;
   std::string error_;
   bool cancellation_token_;
-  Graph graph_;
+  Graph * graph_;
   glm::mat4 transformation_matrix_;
   GLuint position_vertex_buffer_id_;
   precision_t scale_;

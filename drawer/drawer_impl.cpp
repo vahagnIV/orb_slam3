@@ -13,21 +13,43 @@ namespace orb_slam3 {
 namespace drawer {
 
 DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
-    ydraw_count_(0),
+    is_initialized_(false),
     windo_width_(width),
     windo_height_(height),
     window_name_(std::move(window_name)),
     window_(nullptr),
     thread_(nullptr),
     error_(),
-    graph_(11000),
+    graph_(nullptr),
     cancellation_token_(false),
-    scale_(4.) {
+    scale_(.25) {
+
+}
+
+void DrawerImpl::Initialize() {
+  if (is_initialized_)
+    return;
+  is_initialized_ = true;
+
+  window_ = glfwCreateWindow(windo_width_, windo_height_, window_name_.c_str(), NULL, NULL);
+  if (nullptr == window_) {
+    error_ = "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible.";
+    return;
+  }
+  glfwMakeContextCurrent(window_);
+
+  GLenum glew_initialization_result = glewInit();
+  if (glew_initialization_result != GLEW_OK) {
+    std::cerr << glewGetErrorString(glew_initialization_result) << std::endl;
+    assert(!"Glew was not initialized");
+  }
+  graph_ = new Graph(10000);
 
 }
 
 DrawerImpl::~DrawerImpl() {
   Stop();
+  delete graph_;
 }
 
 void DrawerImpl::Start() {
@@ -46,33 +68,8 @@ const std::string & DrawerImpl::GetError() const {
   return error_;
 }
 
-void error_callback(int error, const char * msg) {
-  std::string s;
-  s = " [" + std::to_string(error) + "] " + msg + '\n';
-  std::cerr << s << std::endl;
-}
-
 void DrawerImpl::WorkThread() {
-  glfwSetErrorCallback(error_callback);
-  glfwWindowHint(GLFW_SAMPLES, 4);
-  glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  window_ = glfwCreateWindow(windo_width_, windo_height_, window_name_.c_str(), NULL, NULL);
-  if (nullptr == window_) {
-    error_ = "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible.";
-    return;
-  }
-  glfwMakeContextCurrent(window_);
-
-  GLenum glew_initialization_result = glewInit();
-  if (glew_initialization_result != GLEW_OK) {
-    std::cerr << glewGetErrorString(glew_initialization_result) << std::endl;
-    assert(!"Glew was not initialized");
-  }
+  Initialize();
   ShaderRepository::Initialize();
 
   glGenBuffers(1, &position_vertex_buffer_id_);
@@ -121,6 +118,7 @@ void DrawerImpl::Stop() {
 }
 
 void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
+  glUseProgram(ShaderRepository::GetKeyFrameProgramId());
   glClear(GL_COLOR_BUFFER_BIT);
   // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
   glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
@@ -140,10 +138,26 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   GLuint MatrixID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "MVP");
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &transformation_matrix_[0][0]);
 
+  GLuint ScaleID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "scale");
+  glUniform1f(ScaleID, scale_);
+
   ShaderRepository::UseColor(ColorRepository::Green());
 
 //  if(draw_count_ % 10 == 0)
-  graph_.Draw();
+  glBindBuffer(GL_ARRAY_BUFFER, graph_->Buffer());
+  glEnableVertexAttribArray(0);
+  ShaderRepository::UseColor(ColorRepository::Blue());
+  glVertexAttribPointer(
+      0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+      3,                  // size
+      GL_FLOAT,           // type
+      GL_FALSE,           // normalized?
+      0,                  // stride
+      (void *) 0            // array buffer offset
+  );
+  glDrawArrays(GL_POINTS, 0, graph_->Size()); //
+  glDisableVertexAttribArray(0);
+
   ShaderRepository::UseColor(ColorRepository::Red());
 
 //  glUseProgram(ShaderRepository::GetPositionProgramId());
@@ -200,7 +214,7 @@ void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float resu
   TVector3D top_right = inverse.Transform(top_right_init);
   TVector3D bottom_right = inverse.Transform(bottom_right_init);
 
-#define COPY(dest, source) for(int i =0; i < 3; ++i) *((dest)+i)=(source)[i] / scale_;
+#define COPY(dest, source) for(int i =0; i < 3; ++i) *((dest)+i)=(source)[i];
 
   COPY(result, bottom_left.data());
   COPY(result + 3, top_left.data());
@@ -230,22 +244,22 @@ void DrawerImpl::KeyFrameCreated(messages::KeyFrameCreated * message) {
 
 void DrawerImpl::MapPointCreated(messages::MapPointCreated * message) {
   auto mp_node = new MapPointNode(message);
-  graph_.AddMapPoint(mp_node);
+  graph_->AddMapPoint(mp_node);
 }
 
 void DrawerImpl::KeyFrameDeleted(messages::KeyFrameDeleted * message) {
-  auto kf_node = dynamic_cast<KeyFrameNode *>( graph_.GetNode(message->id));
+  auto kf_node = graph_->GetKeyFrame(message->id);
   if (kf_node)
     vertex_buffers_.push(kf_node->vertex_buffer_id);
 //  graph_.DeleteNode(message->id);
 }
 
 void DrawerImpl::MapPointDeleted(messages::MapPointDeleted * message) {
-  graph_.DeleteMapPoint(message->id);
+  graph_->DeleteMapPoint(message->id);
 }
 
 void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated * message) {
-  auto node = dynamic_cast<KeyFrameNode *>(graph_.GetNode(message->id));
+  auto node = graph_->GetKeyFrame(message->id);
   // TODO: This issue arises because monocular keyframe's constructor raises this event
   // TODO: before raising kf creted event.
   if (nullptr == node)
@@ -256,28 +270,7 @@ void DrawerImpl::KeyFramePositionUpdated(messages::KeyFramePositionUpdated * mes
 }
 
 void DrawerImpl::MapPointGeometryUpdated(messages::MapPointGeometryUpdated * message) {
-  auto node = dynamic_cast<MapPointNode *>(graph_.GetNode(message->id));
-  if (nullptr == node)
-    return;
-  float buffer[] = {static_cast<float>(message->position.x() / scale_),
-                    static_cast<float>(message->position.y() / scale_),
-                    static_cast<float>(message->position.z() / scale_)};
-
-  glBindBuffer(GL_ARRAY_BUFFER, node->point_buffer_id);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
-
-  message->normal /= 10;
-  message->normal += message->position;
-  float normal_buffer[6] = {static_cast<float>(message->position.x() / scale_),
-                            static_cast<float>(message->position.y() / scale_),
-                            static_cast<float>(message->position.z() / scale_),
-                            static_cast<float>(message->normal.x() / scale_),
-                            static_cast<float>(message->normal.y() / scale_),
-                            static_cast<float>(message->normal.z() / scale_)};
-
-  glBindBuffer(GL_ARRAY_BUFFER, node->normal_buffer_id);
-//  glVertexPointer(2, GL_FLOAT, 0, normal_buffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(normal_buffer), normal_buffer, GL_STATIC_DRAW);
+  graph_->UpdateMapPoint(message);
 }
 
 }

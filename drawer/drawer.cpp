@@ -4,6 +4,7 @@
 
 #include "drawer.h"
 #include <GL/glew.h>
+#include <GL/glut.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -27,6 +28,11 @@ MessageCallback(GLenum source,
 
 // During init, enable debug output
 
+void error_callback(int error, const char * msg) {
+  std::string s;
+  s = " [" + std::to_string(error) + "] " + msg + '\n';
+  std::cerr << s << std::endl;
+}
 
 bool Initialize() {
   if (!glfwInit()) {
@@ -35,6 +41,16 @@ bool Initialize() {
     return false;
   }
   glFrontFace(GL_CCW);
+  glfwSetErrorCallback(error_callback);
+  glfwWindowHint(GLFW_SAMPLES, 4);
+  glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//  glutInitDisplayMode(GLUT_RGB);
+
+
   return true;
 }
 
