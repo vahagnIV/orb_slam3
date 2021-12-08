@@ -575,12 +575,14 @@ void LocalMapper::CorrectLoop(DetectionResult & detection_result) {
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ListMapPoints(map_points);
     covisible_kf->SetStagingPosition(covisible_kf->GetPosition() * keyframe_pose_inverse * corrected_keyframe_pose);
+    covisible_kf->ApplyStaging();
   }
 
   geometry::Sim3Transformation global_sim3 = keyframe_pose_inverse * detection_result.transformation
       * detection_result.candidate->GetPosition();
   for (auto mp: map_points) {
     mp->SetStagingPosition(global_sim3.Transform(mp->GetPosition()));
+    mp->ApplyStaging();
   }
   for (auto covisible_kf: current_covisible_keyframes) {
     covisible_kf->ApplyStaging();

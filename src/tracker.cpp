@@ -214,6 +214,7 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 //  ComputeVelocity(frame, last_frame_);
   frame->SetreferenceKeyFrame(reference_keyframe);
   ReplaceLastFrame(frame);
+  usleep(1000);
   return TrackingResult::OK;
 }
 
