@@ -22,7 +22,7 @@ DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
     error_(),
     graph_(nullptr),
     cancellation_token_(false),
-    scale_(.1) {
+    scale_(.005) {
 
 }
 
@@ -121,7 +121,7 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   glUseProgram(ShaderRepository::GetKeyFrameProgramId());
   glClear(GL_COLOR_BUFFER_BIT);
   // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-  glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.001f, 100.0f);
+  glm::mat4 Projection = glm::perspective(glm::radians(90.0f), 4.0f / 3.0f, 0.0001f, 100.0f);
 
 
   // Camera matrix
@@ -154,7 +154,7 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   glm::mat4 mmm(message->position.R(0, 0), message->position.R(1, 0), message->position.R(2, 0), 0,
                 message->position.R(0, 1), message->position.R(1, 1), message->position.R(2, 1), 0,
                 message->position.R(0, 2), message->position.R(1, 2), message->position.R(2, 2), 0,
-                message->position.T.x(), message->position.T.y(), message->position.T.z(), 1);
+                message->position.T.x(), message->position.T.y(), message->position.T.z() + .5, 1);
 //  for (int i = 0; i < 3; ++i) {
 //    for (int j = 0; j < 3; ++j) {
 //      mmm[j][i] = message->position.R(i, j);
@@ -232,11 +232,11 @@ void DrawerImpl::Convert(const geometry::Pose & pose, glm::mat4 & out_mat) {
 }
 
 void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float result[]) const {
-  static const float rectangle_size = 0.0025;
-  static const TVector3D bottom_left_init{-rectangle_size, -rectangle_size, 0.1};
-  static const TVector3D top_left_init{-rectangle_size, rectangle_size, 0.1};
-  static const TVector3D top_right_init{rectangle_size, rectangle_size, 0.1};
-  static const TVector3D bottom_right_init{rectangle_size, -rectangle_size, 0.1};
+  static const float rectangle_size = 0.025;
+  static const TVector3D bottom_left_init{-rectangle_size, -rectangle_size, 0.};
+  static const TVector3D top_left_init{-rectangle_size, rectangle_size, 0.};
+  static const TVector3D top_right_init{rectangle_size, rectangle_size, 0.};
+  static const TVector3D bottom_right_init{rectangle_size, -rectangle_size, 0.};
 
   geometry::Pose inverse = pose.GetInversePose();
 

@@ -40,6 +40,7 @@ MonocularFrame::MonocularFrame(map::Atlas * atlas,
                                                                   atlas->GetFeatureExtractor(),
                                                                   feature_count);
   SetFeatureHandler(feature_handler);
+//  cv::imshow("Current key points", debug::DrawKeyPoints(this, image));
 }
 
 MonocularFrame::MonocularFrame(std::istream & stream, serialization::SerializationContext & context)
@@ -309,8 +310,8 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityPar
 void MonocularFrame::UpdateFromReferenceKeyFrame() {
   SetStagingPosition(relative_position_ * reference_keyframe_->GetPosition());
   ApplyStaging();
-  for(auto mp: map_points_)
-    if(mp.second->GetReplaced())
+  for (auto mp: map_points_)
+    if (mp.second->GetReplaced())
       mp.second = mp.second->GetReplaced();
 
 }

@@ -62,6 +62,18 @@ cv::Mat DrawMatches(const std::string & filename_to,
                      features_from);
 }
 
+cv::Mat DrawKeyPoints(frame::monocular::MonocularFrame * frame, TImageGray8U & image) {
+
+  cv::Mat img = cv::Mat(image.rows(), image.cols(), CV_8U, (void *) image.data());
+  cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+  auto & features = frame->GetFeatureHandler()->GetFeatures();
+  std::vector<cv::KeyPoint> opencv_kps;
+  ToOpenCvKeyPoints(features.keypoints, opencv_kps);
+  cv::drawKeypoints(img, opencv_kps, img);
+  return img;
+
+}
+
 cv::Mat DrawMatches(const std::string & filename_to,
                     const std::string & filename_from,
                     const std::vector<features::Match> & matches,
@@ -218,13 +230,17 @@ void DisplayTrackingInfo(const frame::Frame * frame,
   key = cv::waitKey(time_to_wait);
   image.release();
   switch (key) {
-    case 'c':time_to_wait = (int) !time_to_wait;
+    case 'c':
+      time_to_wait = (int) !time_to_wait;
       break;
-    case 'm':mode ^= 1;
+    case 'm':
+      mode ^= 1;
       break;
-    case 'v':mode ^= 2;
+    case 'v':
+      mode ^= 2;
       break;
-    case 'b':mode ^= 8;
+    case 'b':
+      mode ^= 8;
       break;
     case 'q':
       exit(0);
@@ -277,15 +293,16 @@ void MapPointsToKeyPoints(const frame::monocular::MonocularKeyFrame * frame1,
       key_point.angle = kp.angle;
     } else {
       key_point.octave =
-          frame1->GetMap()->GetAtlas()->GetFeatureExtractor()->PredictScale(local_coords.norm(), mp->GetMaxInvarianceDistance() / 1.2);
+          frame1->GetMap()->GetAtlas()->GetFeatureExtractor()->PredictScale(local_coords.norm(),
+                                                                            mp->GetMaxInvarianceDistance() / 1.2);
     }
     out_key_points.push_back(key_point);
   }
 }
 
 cv::Mat DrawMapPointMatches(const frame::monocular::MonocularKeyFrame * frame1,
-                                   const frame::monocular::MonocularKeyFrame * frame2,
-                                   const std::unordered_map<map::MapPoint *, size_t> & matches) {
+                            const frame::monocular::MonocularKeyFrame * frame2,
+                            const std::unordered_map<map::MapPoint *, size_t> & matches) {
 
   std::unordered_map<size_t, map::MapPoint *> inverted_matches;
   std::transform(matches.begin(),
