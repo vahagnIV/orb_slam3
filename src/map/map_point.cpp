@@ -67,7 +67,7 @@ MapPoint::MapPoint(istream & istream, serialization::SerializationContext & cont
 }
 
 MapPoint::~MapPoint() {
-  --counter_;
+  SetBad();
 }
 
 bool MapPoint::GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const {

@@ -22,7 +22,7 @@ DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
     error_(),
     graph_(nullptr),
     cancellation_token_(false),
-    scale_(.25) {
+    scale_(.1) {
 
 }
 
@@ -121,22 +121,52 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   glUseProgram(ShaderRepository::GetKeyFrameProgramId());
   glClear(GL_COLOR_BUFFER_BIT);
   // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-  glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+  glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.001f, 100.0f);
 
 
   // Camera matrix
+//  glm::mat4 View = glm::lookAt(
+//      glm::vec3(4, 3, -3), // Camera is at (4,3,-3), in World Space
+//      glm::vec3(2, 0, 0), // and looks at the origin
+//      glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
+//  );
+  auto invpose = message->position.GetInversePose();
+  TVector3D center = invpose.R * TVector3D{0, 0, 1} + invpose.T;
+  TVector3D up = invpose.R * TVector3D{0, 1, 0} + invpose.T;
   glm::mat4 View = glm::lookAt(
-      glm::vec3(4, 3, -3), // Camera is at (4,3,-3), in World Space
-      glm::vec3(2, 0, 0), // and looks at the origin
-      glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
+      glm::vec3(invpose.T.x(), invpose.T.y(), invpose.T.z()), // Camera is at (4,3,-3), in World Space
+      glm::vec3(center.x(), center.y(), center.z()), // and looks at the origin
+      glm::vec3(0, 0, 1)  // Head is up (set to 0,-1,0 to look upside-down)
   );
   // Model matrix : an identity matrix (model will be at the origin)
-  glm::mat4 Model = glm::translate(glm::mat4(1.0), glm::vec3(-2, 0, 0));
+//  glm::mat4 Model = glm::translate(glm::mat4(1.0), glm::vec3(-2, 0, 0));
 //  Convert(message->position.GetInversePose(), Model);
   // Our ModelViewProjection : multiplication of our 3 matrices
-  transformation_matrix_ = Projection * View * Model; // Remember, matrix multiplication is the other way around
+  transformation_matrix_ = /*Projection **/ View;//* Model; // Remember, matrix multiplication is the other way around
   GLuint MatrixID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "MVP");
-  glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &transformation_matrix_[0][0]);
+  GLuint ProjectionID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "Projection");
+
+  const static glm::mat4 aMat4 = glm::mat4(1.0, 0.0, 0.0, 0.0,  // 1. column\n"
+                                           0.0, -1.0, 0.0, 0.0,  // 2. column\n"
+                                           0.0, 0.0, -1.0, 0.0,  // 3. column\n"
+                                           0.0, 0.0, 0.0, 1.0); // 4. column"
+
+  glm::mat4 mmm(message->position.R(0, 0), message->position.R(1, 0), message->position.R(2, 0), 0,
+                message->position.R(0, 1), message->position.R(1, 1), message->position.R(2, 1), 0,
+                message->position.R(0, 2), message->position.R(1, 2), message->position.R(2, 2), 0,
+                message->position.T.x(), message->position.T.y(), message->position.T.z(), 1);
+//  for (int i = 0; i < 3; ++i) {
+//    for (int j = 0; j < 3; ++j) {
+//      mmm[j][i] = message->position.R(i, j);
+//    }
+//  }
+
+//  mmm = glm::translate(mmm, glm::vec3(message->position.T.x(), message->position.T.y(), message->position.T.z()));
+//  mmm[3][3]-=1;
+  mmm =  mmm;
+//  glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &transformation_matrix_[0][0]);
+  glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mmm[0][0]);
+  glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
 
   GLuint ScaleID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "scale");
   glUniform1f(ScaleID, scale_);
@@ -167,6 +197,7 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, position_vertex_buffer_id_);
   glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+  glPointSize(2);
   glVertexAttribPointer(
       0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
       3,                  // size
@@ -201,11 +232,11 @@ void DrawerImpl::Convert(const geometry::Pose & pose, glm::mat4 & out_mat) {
 }
 
 void DrawerImpl::CreatePositionRectangle(const geometry::Pose & pose, float result[]) const {
-  static const float rectangle_size = 0.15;
-  static const TVector3D bottom_left_init{-rectangle_size, -rectangle_size, 0};
-  static const TVector3D top_left_init{-rectangle_size, rectangle_size, 0};
-  static const TVector3D top_right_init{rectangle_size, rectangle_size, 0};
-  static const TVector3D bottom_right_init{rectangle_size, -rectangle_size, 0};
+  static const float rectangle_size = 0.0025;
+  static const TVector3D bottom_left_init{-rectangle_size, -rectangle_size, 0.1};
+  static const TVector3D top_left_init{-rectangle_size, rectangle_size, 0.1};
+  static const TVector3D top_right_init{rectangle_size, rectangle_size, 0.1};
+  static const TVector3D bottom_right_init{rectangle_size, -rectangle_size, 0.1};
 
   geometry::Pose inverse = pose.GetInversePose();
 
