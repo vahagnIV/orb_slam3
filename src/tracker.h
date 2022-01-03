@@ -66,6 +66,7 @@ class Tracker{
  private:
   static frame::KeyFrame * ListLocalKeyFrames(frame::Frame * current_frame,
                                               std::unordered_set<frame::KeyFrame *> & out_local_keyframes);
+  static void ScalePosition(geometry::RigidObject * object, precision_t scale);
 
  private:
   /// Helper member variables

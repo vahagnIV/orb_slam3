@@ -91,6 +91,8 @@ bool OptimizePose(MonocularFrame * frame) {
       if (N - 2 == i)
         edge->setRobustKernel(nullptr);
     }
+    if(optimizer.edges().size()<10)
+      return false;
   }
 
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);

@@ -101,7 +101,7 @@ class Frame : public BaseFrame {
    */
   virtual void UpdateFromReferenceKeyFrame() = 0;
 
-  void SetreferenceKeyFrame(KeyFrame * reference_keyframe);
+  void SetReferenceKeyFrame(KeyFrame * reference_keyframe);
  protected:
   KeyFrame * reference_keyframe_;
   geometry::Pose relative_position_;

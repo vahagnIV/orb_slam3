@@ -14,7 +14,7 @@ Frame::Frame(std::istream & stream, serialization::SerializationContext & contex
 
 }
 
-void Frame::SetreferenceKeyFrame(KeyFrame * reference_keyframe) {
+void Frame::SetReferenceKeyFrame(KeyFrame * reference_keyframe) {
   reference_keyframe_ = reference_keyframe;
   relative_position_ = GetPosition() * reference_keyframe->GetPosition().GetInversePose();
 }

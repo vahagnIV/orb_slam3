@@ -115,6 +115,7 @@ void MapPoint::EraseObservation(frame::KeyFrame * frame) {
 
 void MapPoint::SetBad() {
   // TODO: Implement this
+  std::unique_lock<std::shared_mutex> lock(position_mutex_);
   bad_flag_ = true;
   observations_.clear();
   --counter_;
@@ -209,12 +210,14 @@ void MapPoint::SetStagingPosition(const TPoint3D & position) {
 
 void MapPoint::ApplyStaging() {
 
-  if (position_changed_) {
-    position_ = staging_position_;
-  }
-
+  bool raise_event = false;
   if (position_changed_ || observations_changed_) {
+    raise_event = true;
     std::unique_lock<std::shared_mutex> lock(position_mutex_);
+
+    if (position_changed_) {
+      position_ = staging_position_;
+    }
 
     if ((position_changed_ || observations_changed_) && !staging_normal_calculated_) {
       CalculateNormalStaging();
@@ -235,7 +238,7 @@ void MapPoint::ApplyStaging() {
     observations_changed_ = false;
   }
 
-  if (Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
+  if ( raise_event && Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointGeometryUpdated(this));
   }
 }

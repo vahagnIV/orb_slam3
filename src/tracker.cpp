@@ -3,6 +3,7 @@
 //
 
 #include <cassert>
+#include <queue>
 
 #include "tracker.h"
 #include <settings.h>
@@ -57,20 +58,29 @@ frame::KeyFrame * Tracker::ListLocalKeyFrames(frame::Frame * current_frame,
     for (const auto & observation: map_point->Observations()) ++key_frame_counter[observation.second.GetKeyFrame()];
   }
 
-  frame::KeyFrame * max_covisible_key_frame = nullptr;
-  unsigned max_count = 0;
-  for (auto & kf_count: key_frame_counter) {
-    out_local_keyframes.insert(kf_count.first);
-    if (max_count < kf_count.second) {
-      max_count = kf_count.second;
-      max_covisible_key_frame = kf_count.first;
+  struct Comparator {
+    bool operator()(const std::pair<frame::KeyFrame *, unsigned> & a,
+                    const std::pair<frame::KeyFrame *, unsigned> & b) {
+      return a.second < b.second;
     }
-  }
+  };
+  std::priority_queue<std::pair<frame::KeyFrame *, unsigned>,
+                      std::vector<std::pair<frame::KeyFrame *, unsigned>>,
+                      Comparator> pq;
 
-  for (auto kf: key_frame_counter) {
-    auto covisible_frames = kf.first->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
-    if (out_local_keyframes.size() >= 80)
-      break;
+  frame::KeyFrame * max_covisible_key_frame = nullptr;
+  for (auto & kf_count: key_frame_counter) {
+    pq.push(kf_count);
+    out_local_keyframes.insert(kf_count.first);
+  }
+  if (pq.empty())
+    return nullptr;
+  else
+    max_covisible_key_frame = pq.top().first;
+
+  while (!pq.empty() && out_local_keyframes.size() < 80) {
+    auto covisible_frames = pq.top().first->GetCovisibilityGraph().GetCovisibleKeyFrames(10);
+    pq.pop();
     std::copy(covisible_frames.begin(),
               covisible_frames.end(),
               std::inserter(out_local_keyframes, out_local_keyframes.begin()));
@@ -97,7 +107,7 @@ bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
 
 void Tracker::StartNewMap(frame::Frame * frame) {
   std::cout << "Starting new map" << std::endl;
-  if(atlas_->GetCurrentMap()->GetSize()!=0)
+  if (atlas_->GetCurrentMap()->GetSize() != 0)
     atlas_->CreateNewMap();
 
   frame->SetIdentity();
@@ -135,16 +145,17 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
 //                             dynamic_cast<frame::monocular::MonocularKeyFrame *>(reference_keyframe_));
 
   std::unordered_set<frame::KeyFrame *> local_keyframes;
-  frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(frame, local_keyframes);
-  if (reference_keyframe)
-    reference_keyframe_ = reference_keyframe;
-  else {
+  frame::KeyFrame * reference_keyframe = ListLocalKeyFrames(last_frame_, local_keyframes);
+  if (nullptr == reference_keyframe) {
+
     velocity_is_valid_ = false;
     delete frame;
     state_ = LOST;
     std::cout << "Tracking lost after list local kfs" << std::endl;
     return TrackingResult::TRACKING_FAILED;
   }
+
+  reference_keyframe_ = reference_keyframe;
 
   frame::Frame::MapPointSet current_frame_map_points, local_map_points_except_current;
   frame->ListMapPoints(current_frame_map_points);
@@ -202,17 +213,18 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     map_point->IncreaseFound();
 
   //TODO: Add keyframe if necessary
+  frame->SetReferenceKeyFrame(reference_keyframe);
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
-    frame->SetreferenceKeyFrame(keyframe);
     last_key_frame_ = keyframe;
     local_mapper_->AddToQueue(keyframe);
   }
+
 #ifndef MULTITHREADED
   local_mapper_->RunIteration();
 #endif
 //  ComputeVelocity(frame, last_frame_);
-  frame->SetreferenceKeyFrame(reference_keyframe);
+
   ReplaceLastFrame(frame);
   usleep(1000);
   return TrackingResult::OK;
@@ -273,6 +285,13 @@ bool Tracker::NeedNewKeyFrame(frame::Frame * frame) {
   return need;*/
 }
 
+void Tracker::ScalePosition(geometry::RigidObject * object, precision_t scale) {
+  auto pose = object->GetPosition();
+  pose.T /= scale;
+  object->SetStagingPosition(pose);
+  object->ApplyStaging();
+}
+
 TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
 
   assert(FIRST_IMAGE == state_);
@@ -280,8 +299,6 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
   frame->SetMap(atlas_->GetCurrentMap());
   if (frame->Link(last_frame_)) {
     map::Map * current_map = atlas_->GetCurrentMap();
-//    std::cout << "Position after linking " << std::endl;
-//    frame->GetPosition().print();
 
     frame::KeyFrame * initial_key_frame = last_frame_->CreateKeyFrame();
     initial_key_frame->SetInitial(true);
@@ -299,20 +316,15 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     current_key_frame->ListMapPoints(map_points);
 
     optimization::BundleAdjustment(key_frames, map_points, 30);
-//    std::cout << "Position after linking BA " << std::endl;
-//    current_key_frame->GetPosition().print();
 
     std::vector<precision_t> depths;
     for (auto mp: map_points) depths.push_back(mp->GetPosition().z());
 
-    auto pose = current_key_frame->GetPosition();
-    pose.T /= depths[depths.size() / 2];
-    current_key_frame->SetStagingPosition(pose);
-    current_key_frame->ApplyStaging();
-    frame->SetStagingPosition(pose);
-    frame->ApplyStaging();
-
     std::sort(depths.begin(), depths.end());
+
+    ScalePosition(current_key_frame, depths[depths.size() / 2]);
+    ScalePosition(frame, depths[depths.size() / 2]);
+
     for (auto mp: map_points) {
       TPoint3D pose = mp->GetPosition();
       pose /= depths[depths.size() / 2];
@@ -325,7 +337,7 @@ TrackingResult Tracker::TrackInFirstImageState(frame::Frame * frame) {
     reference_keyframe_ = current_key_frame;
     state_ = OK;
     last_frame_ = frame;
-    local_mapper_->AddToQueue(initial_key_frame);
+//    local_mapper_->AddToQueue(initial_key_frame);
     local_mapper_->AddToQueue(current_key_frame);
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Initial, .frame=initial_key_frame});
 //    this->NotifyObservers(UpdateMessage{.type = PositionMessageType::Update, .frame=current_key_frame});

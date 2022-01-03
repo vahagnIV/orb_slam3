@@ -159,8 +159,10 @@ FrameType MonocularFrame::Type() const {
 }
 
 KeyFrame * MonocularFrame::CreateKeyFrame() {
-  reference_keyframe_ = new MonocularKeyFrame(this);
-  map_->AddKeyFrame(reference_keyframe_);
+  auto reference_keyframe = new MonocularKeyFrame(this);
+  SetReferenceKeyFrame(reference_keyframe);
+  // TODO: remove the following line from here
+  map_->AddKeyFrame(reference_keyframe);
   return reference_keyframe_;
 }
 
@@ -313,7 +315,6 @@ void MonocularFrame::UpdateFromReferenceKeyFrame() {
   for (auto mp: map_points_)
     if (mp.second->GetReplaced())
       mp.second = mp.second->GetReplaced();
-
 }
 
 void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
@@ -367,7 +368,7 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
     SearchInVisiblePoints(out_visibles, 0.9);
     if (GetMapPointsCount() >= 20) {
       if (!OptimizePose())
-        return false;
+        continue;
       if (GetMapPointsCount() >= 10) {
         ApplyStaging();
         return true;
