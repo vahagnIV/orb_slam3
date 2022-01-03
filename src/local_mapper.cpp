@@ -40,6 +40,10 @@ void LocalMapper::Run() {
 }
 
 void LocalMapper::Start() {
+#ifndef MULTITHREADED
+  cancelled_ = false;
+  return;
+#endif
   if (thread_ != nullptr)
     return;
   cancelled_ = false;
@@ -212,10 +216,10 @@ void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *
   }
 }
 
+size_t iteration_cycle = 0;
 void LocalMapper::RunIteration() {
 
-  size_t iteration_cycle = 0;
-  while (!cancelled_) {
+
     if (!loop_merge_detection_queue_.Empty()) {
       switch (loop_merge_detection_queue_.Front().type) {
         case DetectionType::LoopDetected:
@@ -267,17 +271,20 @@ void LocalMapper::RunIteration() {
 //        Profiler::End("KeyFrameCulling");
       }
 
-      if (++iteration_cycle % 100 == 0) {
+      if (++iteration_cycle % 20 == 0) {
         Profiler::PrintProfiles();
         std::cout << "Total Map points: "<< map::MapPoint::GetTotalMapPointCount() << std::endl;
       }
       if (loop_merge_detector_)
         loop_merge_detector_->Process(key_frame);
+#ifndef MULTITHREADED
+      loop_merge_detector_->RunIteration();
+#endif
 
       accept_key_frames_ = true;
     }
     std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-  }
+
 }
 
 void LocalMapper::ListSurroundingWindow(const frame::KeyFrame * key_frame,
