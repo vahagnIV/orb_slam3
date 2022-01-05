@@ -15,7 +15,7 @@
 namespace orb_slam3 {
 namespace map {
 
-std::atomic_uint64_t MapPoint::counter_(0);
+std::atomic_uint64_t MapPoint::counter_ = 0;
 
 MapPoint::MapPoint(TPoint3D point,
                    size_t first_observed_frame_id,
@@ -168,11 +168,18 @@ void MapPoint::ComputeDistinctiveDescriptor() {
 }
 
 void MapPoint::CalculateNormalStaging() {
-  if (!position_changed_ && !observations_changed_)
+  if (!position_changed_ && !observations_changed_) {
+    staging_normal_calculated_ = true;
     return;
+  }
 
   if (staging_normal_calculated_)
     return;
+
+  if (observations_.size() <= 1) {
+    staging_normal_calculated_ = true;
+    return;
+  }
   staging_normal_.setZero();
   for (const auto & frame_id_pair: staging_observations_) {
     staging_normal_ += frame_id_pair.first->GetNormalFromStaging(staging_position_);
@@ -238,7 +245,7 @@ void MapPoint::ApplyStaging() {
     observations_changed_ = false;
   }
 
-  if ( raise_event && Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
+  if (raise_event && Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointGeometryUpdated(this));
   }
 }

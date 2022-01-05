@@ -105,7 +105,7 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
     undistorted.z() = 1;
     return true;
   }
-  undistorted << -10000, -10000, 1;
+  undistorted << -10000, -10000, -1;
   return false;
 }
 

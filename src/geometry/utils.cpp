@@ -20,8 +20,7 @@ TMatrix33 SkewSymmetricMatrix(const TVector3D & vector) {
 void ComputeRelativeTransformation(const Pose & pose_to,
                                    const Pose & pose_from,
                                    Pose & out_pose) {
-  out_pose.R = pose_to.R * pose_from.R.transpose();
-  out_pose.T = -out_pose.R * pose_from.T + pose_to.T;
+  out_pose = pose_to * pose_from.GetInversePose();
 }
 
 /*
@@ -78,8 +77,9 @@ bool Triangulate(const Pose & pose,
 
 precision_t ComputeCosParallax(const Pose & pose, const TPoint3D & point) {
   const TVector3D & vec1 = point;
-  const TVector3D vec2 = point - (pose.T.transpose() * pose.R).transpose();
-  return vec1.dot(vec2) / vec1.norm() / vec2.norm();
+  const TVector3D vec2 = pose.Transform(point);//(pose.T.transpose() * pose.R).transpose();
+  return (vec1.squaredNorm() + vec2.squaredNorm() - pose.T.squaredNorm()) / (2 * vec1.norm() * vec2.norm());
+//  return vec1.dot(vec2) / vec1.norm() / vec2.norm();
 }
 
 precision_t ComputeReprojectionError(const HomogenousPoint & point, const HomogenousPoint & original_point) {
@@ -91,32 +91,37 @@ precision_t ComputeReprojectionError(const HomogenousPoint & point, const Homoge
   return error_x * error_x + error_y * error_y;
 }
 
-bool TriangulateAndValidate(const HomogenousPoint & point_from,
-                            const HomogenousPoint & point_to,
-                            const Pose & pose,
-                            precision_t reprojection_threshold_to,
-                            precision_t reprojection_threshold_from,
-                            precision_t parallax_cos_threshold,
-                            precision_t & out_cos_parallax,
-                            TPoint3D & out_triangulated) {
+ValidationResult TriangulateAndValidate(const HomogenousPoint & point_from,
+                                        const HomogenousPoint & point_to,
+                                        const Pose & pose,
+                                        precision_t reprojection_threshold_to,
+                                        precision_t reprojection_threshold_from,
+                                        precision_t parallax_cos_threshold,
+                                        precision_t & out_cos_parallax,
+                                        TPoint3D & out_triangulated) {
+
+  if(point_to.z() == -1 || point_from.z() == -1)
+    return ValidationResult::INVALID_POINT;
+
+  TVector3D transformed_from = pose.R  * point_from;
+  out_cos_parallax = point_to.dot(transformed_from) / (point_to.norm() * transformed_from.norm());
+  if (out_cos_parallax > parallax_cos_threshold || out_cos_parallax < 0 || std::isnan(out_cos_parallax))
+    return ValidationResult::PARALLAX_NOT_ENOUGH;
+
   if (!utils::Triangulate(pose, point_from, point_to, out_triangulated))
-    return false;
+    return ValidationResult::TRIANGULATION_ERROR;
 
-  if (out_triangulated[2] < 0)
-    return false;
-
-  out_cos_parallax = utils::ComputeCosParallax(pose, out_triangulated);
-  if (out_cos_parallax > parallax_cos_threshold || std::isnan(out_cos_parallax))
-    return false;
+  if (out_triangulated.z() < 0)
+    return ValidationResult::NEGATIVE_TO;
 
   const TVector3D triangulated2 = pose.Transform(out_triangulated);
-  if (triangulated2[2] < 0) return false;
+  if (triangulated2.z() < 0) return ValidationResult::NEGATIVE_FROM;
 
   if (utils::ComputeReprojectionError(out_triangulated, point_from) > reprojection_threshold_from
       || utils::ComputeReprojectionError(triangulated2, point_to) > reprojection_threshold_to)
-    return false;
+    return ValidationResult::REPROJECTION_HIGH;
 
-  return true;
+  return ValidationResult::OK;
 }
 
 }

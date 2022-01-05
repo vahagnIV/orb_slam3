@@ -99,7 +99,6 @@ bool Tracker::TrackWithMotionModel(frame::Frame * frame, std::list<frame::MapPoi
 }
 
 bool Tracker::TrackWithReferenceKeyFrame(frame::Frame * frame) {
-  std::cout << "TWRKF" << std::endl;
   frame->SetStagingPosition(reference_keyframe_->GetPosition());
   frame->ApplyStaging();
   return frame->FindMapPointsFromReferenceKeyFrame(reference_keyframe_);
@@ -213,12 +212,15 @@ TrackingResult Tracker::TrackInOkState(frame::Frame * frame) {
     map_point->IncreaseFound();
 
   //TODO: Add keyframe if necessary
-  frame->SetReferenceKeyFrame(reference_keyframe);
+
   if (NeedNewKeyFrame(frame)) {
     auto keyframe = frame->CreateKeyFrame();
+    frame->SetReferenceKeyFrame(keyframe);
     last_key_frame_ = keyframe;
     local_mapper_->AddToQueue(keyframe);
   }
+  else
+    frame->SetReferenceKeyFrame(reference_keyframe);
 
 #ifndef MULTITHREADED
   local_mapper_->RunIteration();

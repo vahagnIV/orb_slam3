@@ -61,5 +61,8 @@ Pose Pose::operator*(const Pose & other) const {
   return Pose(R * other.R, R * other.T + T);
 }
 
+TVector3D Pose::operator*(const TVector3D & vect) const {
+  return R * vect + T;
+}
 }
 }

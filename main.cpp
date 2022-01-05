@@ -159,7 +159,7 @@ void ReadImagesForMonocularTestTum(
     std::string::size_type idx = row.find(',');
     if (idx == std::string::npos) continue;
     time_t timestamp = std::stoul(row.substr(0, idx));
-    timestamp*=1.5;
+    timestamp*=1.1;
 
     ;
     std::chrono::system_clock::time_point time_point(
