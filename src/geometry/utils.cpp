@@ -79,7 +79,7 @@ bool Triangulate(const Pose & pose,
 precision_t ComputeCosParallax(const Pose & pose, const TPoint3D & point) {
   const TVector3D & vec1 = point;
   const TVector3D vec2 = point - (pose.T.transpose() * pose.R).transpose();
-  return vec1.dot(vec2) / vec1.norm() / vec2.norm();
+  return vec1.dot(vec2) / std::sqrt(vec1.squaredNorm() * vec2.squaredNorm());
 }
 
 precision_t ComputeReprojectionError(const HomogenousPoint & point, const HomogenousPoint & original_point) {

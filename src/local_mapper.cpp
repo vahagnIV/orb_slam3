@@ -238,36 +238,36 @@ void LocalMapper::RunIteration() {
       new_key_frames_.Pop();
       accept_key_frames_ = false;
 
-//      Profiler::Start("ProcessNewKeyFrame");
+      Profiler::Start("ProcessNewKeyFrame");
       ProcessNewKeyFrame(key_frame);
-//      Profiler::End("ProcessNewKeyFrame");
+      Profiler::End("ProcessNewKeyFrame");
 
-//      Profiler::Start("MapPointCulling");
+      Profiler::Start("MapPointCulling");
       MapPointCulling(key_frame);
-//      Profiler::End("MapPointCulling");
+      Profiler::End("MapPointCulling");
 
       if (key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames().empty())
         return;
 
-//      Profiler::Start("CreateNewMapPoints");
+      Profiler::Start("CreateNewMapPoints");
       CreateNewMapPoints(key_frame);
-//      Profiler::End("CreateNewMapPoints");
+      Profiler::End("CreateNewMapPoints");
 
       if (new_key_frames_.Empty()) {
-//        Profiler::Start("FuseMapPoints");
+        Profiler::Start("FuseMapPoints");
         FuseMapPoints(key_frame, false);
-//        Profiler::End("FuseMapPoints");
+        Profiler::End("FuseMapPoints");
       }
       if (new_key_frames_.Empty()) {
-//        Profiler::Start("Optimize");
+        Profiler::Start("Optimize");
         Optimize(key_frame);
-//        Profiler::End("Optimize");
-//        Profiler::Start("KeyFrameCulling");
+        Profiler::End("Optimize");
+        Profiler::Start("KeyFrameCulling");
         KeyFrameCulling(key_frame);
-//        Profiler::End("KeyFrameCulling");
+        Profiler::End("KeyFrameCulling");
       }
 
-      if (++iteration_cycle % 100 == 0) {
+      if (++iteration_cycle % 20 == 0) {
         Profiler::PrintProfiles();
         std::cout << "Total Map points: "<< map::MapPoint::GetTotalMapPointCount() << std::endl;
       }

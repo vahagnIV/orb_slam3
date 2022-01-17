@@ -71,6 +71,7 @@ MapPoint::~MapPoint() {
 }
 
 bool MapPoint::GetObservation(const frame::KeyFrame * key_frame, frame::Observation & out_observation) const {
+  std::shared_lock<std::shared_mutex> lock(observation_mutex_);
   auto it = observations_.find(key_frame);
   if (it != observations_.end()) {
     out_observation = it->second;
@@ -115,9 +116,11 @@ void MapPoint::EraseObservation(frame::KeyFrame * frame) {
 
 void MapPoint::SetBad() {
   // TODO: Implement this
-  std::unique_lock<std::shared_mutex> lock(position_mutex_);
   bad_flag_ = true;
-  observations_.clear();
+  {
+    std::unique_lock<std::shared_mutex> lock(observation_mutex_);
+    observations_.clear();
+  }
   --counter_;
   if (Settings::Get().MessageRequested(messages::MAP_CREATED))
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointDeleted(this));
@@ -187,7 +190,7 @@ const TPoint3D MapPoint::GetPosition() const {
 }
 
 const TVector3D MapPoint::GetNormal() const {
-  std::shared_lock<std::shared_mutex> lock(position_mutex_);
+  std::shared_lock<std::shared_mutex> lock(observation_mutex_);
   return normal_;
 }
 
@@ -213,23 +216,24 @@ void MapPoint::ApplyStaging() {
   bool raise_event = false;
   if (position_changed_ || observations_changed_) {
     raise_event = true;
-    std::unique_lock<std::shared_mutex> lock(position_mutex_);
-
     if (position_changed_) {
+      std::unique_lock<std::shared_mutex> lock(position_mutex_);
       position_ = staging_position_;
     }
 
-    if ((position_changed_ || observations_changed_) && !staging_normal_calculated_) {
-      CalculateNormalStaging();
-      normal_ = staging_normal_;
-    }
+    CalculateNormalStaging();
 
     if (observations_changed_) {
       ComputeDistinctiveDescriptor();
       descriptor_ = staging_descriptor_;
     }
-
-    observations_ = staging_observations_;
+    {
+      std::unique_lock<std::shared_mutex> lock(observation_mutex_);
+      normal_ = staging_normal_;
+      observations_ = staging_observations_;
+      if (observations_changed_)
+        descriptor_ = staging_descriptor_;
+    }
 
     min_invariance_distance_ = staging_min_invariance_distance_;
     max_invariance_distance_ = staging_max_invariance_distance_;
@@ -238,7 +242,7 @@ void MapPoint::ApplyStaging() {
     observations_changed_ = false;
   }
 
-  if ( raise_event && Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
+  if (raise_event && Settings::Get().MessageRequested(messages::MessageType::MAP_POINT_GEOMETRY_UPDATED)) {
     messages::MessageProcessor::Instance().Enqueue(new messages::MapPointGeometryUpdated(this));
   }
 }
