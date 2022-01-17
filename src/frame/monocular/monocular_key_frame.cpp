@@ -19,7 +19,7 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularKeyFrame::MonocularKeyFrame(std::istream &istream, serialization::SerializationContext &context) :
+MonocularKeyFrame::MonocularKeyFrame(std::istream & istream, serialization::SerializationContext & context) :
     KeyFrame(istream, context),
     BaseMonocular(istream, context) {
 }
@@ -42,7 +42,7 @@ FrameType MonocularKeyFrame::Type() const {
 }
 
 void MonocularKeyFrame::SetCamera(const camera::ICamera * icamera) {
-  if(icamera->Type() != camera::CameraType::MONOCULAR)
+  if (icamera->Type() != camera::CameraType::MONOCULAR)
     throw std::runtime_error("Invalid camera for monocular frame");
 
   BaseMonocular::SetCamera(dynamic_cast<const camera::MonocularCamera *>(icamera));
@@ -123,10 +123,10 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
   auto local_pose = GetPosition();
   auto other_pose = other_frame->GetPosition();
 
-  if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
-    logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());
-    return;
-  }
+//  if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
+//    logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());
+//    return;
+//  }
 
   logging::RetrieveLogger()->debug("LM: Initial local map point count: {}", local_map_points.size());
 
@@ -141,29 +141,30 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
                                    other_frame->Id(),
                                    Id());
 
+  unsigned valid_matches = 0;
+  std::map<geometry::utils::ValidationResult, unsigned> rejection_counter;
   for (auto match: matches) {
     if (local_map_points_map.find(match.first) != local_map_points_map.end()
         || others_map_points_map.find(match.second) != others_map_points_map.end())
       continue;
+    ++valid_matches;
     precision_t parallax;
     TPoint3D triangulated;
-    if (!geometry::utils::TriangulateAndValidate(other_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second],
-                                                 feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.first],
-                                                 relative_pose,
-                                                 5.991 * GetMonoCamera()->FxInv() * GetMonoCamera()->FxInv(),
-                                                 5.991 * other_frame->GetMonoCamera()->FxInv()
-                                                     * other_frame->GetMonoCamera()->FxInv(),
-                                                 constants::PARALLAX_THRESHOLD,
-                                                 parallax,
-                                                 triangulated))
+    precision_t allowed_error = 5.991 * GetMonoCamera()->FxInv() * GetMonoCamera()->FxInv()
+        * GetFeatureHandler()->GetFeatureExtractor()->GetAcceptableSquareError(feature_handler_->GetFeatures().keypoints[match.first].level);
+    geometry::utils::ValidationResult result =
+        geometry::utils::TriangulateAndValidate(other_frame->feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second],
+                                                feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.first],
+                                                relative_pose,
+                                                allowed_error,
+                                                allowed_error,
+                                                constants::PARALLAX_THRESHOLD,
+                                                parallax,
+                                                triangulated);
+    if (geometry::utils::ValidationResult::OK != result) {
+      ++rejection_counter[result];
       continue;
-    TPoint2D pt_other, pt_this;
-    other_frame->GetMonoCamera()->ProjectAndDistort(triangulated, pt_other);
-    GetMonoCamera()->ProjectAndDistort(relative_pose.Transform(triangulated), pt_this);
-    if (!other_frame->GetMonoCamera()->IsInFrustum(pt_other))
-      continue;
-    if (!GetMonoCamera()->IsInFrustum(pt_this))
-      continue;
+    }
     precision_t min_invariance_distance, max_invariance_distance;
     feature_handler_->GetFeatureExtractor()->ComputeInvariantDistances(triangulated,
                                                                        other_frame->feature_handler_->GetFeatures().keypoints[match.second],
@@ -178,6 +179,17 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
     out_newly_created.emplace_back(Observation(map_point, const_cast<MonocularKeyFrame *>(this), match.first),
                                    Observation(map_point, other, match.second));
   }
+
+//  std::cout << "Total matches " << matches.size() << std::endl;
+//  std::cout << "Total valid matches " << valid_matches << std::endl;
+//  std::cout << "Total newly created " << out_newly_created.size() << std::endl;
+//  for (auto m: rejection_counter) {
+//    std::cout << m.first << " " << m.second << std::endl;
+//  }
+
+//  std::cout << "Valid matches " << valid_matches << std::endl;
+//  std::cout << "Triangulated " << out_newly_created.size() << std::endl<< std::endl<< std::endl;
+
 }
 
 void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibilityParams> & visibles,
@@ -313,11 +325,11 @@ int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
                                                      map_point->GetMaxInvarianceDistance() / 1.2);
 }
 
-void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet &map_points,
-                                               const geometry::Sim3Transformation &relative_transformation,
-                                               const geometry::Pose &mp_local_transformation,
+void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
+                                               const geometry::Sim3Transformation & relative_transformation,
+                                               const geometry::Pose & mp_local_transformation,
                                                precision_t radius_multiplier,
-                                               std::list<MapPointVisibilityParams> &out_visibles) const {
+                                               std::list<MapPointVisibilityParams> & out_visibles) const {
   MapPointVisibilityParams tmp;
   geometry::Pose pose = GetPosition();
   geometry::Pose inverse_pose = pose.GetInversePose();
@@ -461,15 +473,15 @@ int MonocularKeyFrame::GetScaleLevel(const map::MapPoint * map_point) const {
   return GetScaleLevel(observation);
 }
 
-int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
+int MonocularKeyFrame::GetScaleLevel(const Observation & observation) const {
   return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
-const camera::ICamera *MonocularKeyFrame::GetCamera() const {
+const camera::ICamera * MonocularKeyFrame::GetCamera() const {
   return this->GetMonoCamera();
 }
 
-void MonocularKeyFrame::SerializeToStream(std::ostream &stream) const {
+void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
   KeyFrame::SerializeToStream(stream);
   BaseMonocular::SerializeToStream(stream);
 }

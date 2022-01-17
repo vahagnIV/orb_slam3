@@ -65,6 +65,17 @@ precision_t ComputeCosParallax(const Pose & pose,
  */
 precision_t ComputeReprojectionError(const HomogenousPoint &point, const HomogenousPoint &original_point);
 
+
+enum ValidationResult{
+  OK = 0,
+  PARALLAX_NOT_ENOUGH = 1,
+  TRIANGULATION_ERROR = 2,
+  NEGATIVE_TO = 3,
+  NEGATIVE_FROM = 4,
+  REPROJECTION_HIGH = 5,
+  INVALID_POINT = 6
+};
+
 /*!
  * Triangulate point visible by two frames that were made in 2 coordinate systems
  * @param point_from The projection in the first coordinate system
@@ -77,7 +88,7 @@ precision_t ComputeReprojectionError(const HomogenousPoint &point, const Homogen
  * @param out_triangulated The output triangulated point
  * @return true on success
  */
-bool TriangulateAndValidate(const HomogenousPoint &point_from,
+ValidationResult TriangulateAndValidate(const HomogenousPoint &point_from,
                                    const HomogenousPoint &point_to,
                                    const Pose & pose,
                                    precision_t reprojection_threshold_to,

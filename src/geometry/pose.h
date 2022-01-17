@@ -31,6 +31,7 @@ struct Pose {
   Pose & operator=(const Pose & other);
 
   Pose operator*(const Pose & other) const;
+  TVector3D operator*(const TVector3D & vect) const;
 
   TVector3D Transform(const TPoint3D & point) const;
 

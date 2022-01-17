@@ -312,9 +312,15 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityPar
 void MonocularFrame::UpdateFromReferenceKeyFrame() {
   SetStagingPosition(relative_position_ * reference_keyframe_->GetPosition());
   ApplyStaging();
-  for (auto mp: map_points_)
-    if (mp.second->GetReplaced())
-      mp.second = mp.second->GetReplaced();
+  for (auto it = map_points_.begin(); it != map_points_.end();) {
+    if (it->second->IsBad()) {
+      it = map_points_.erase(it);
+      continue;
+    }
+    if (it->second->GetReplaced())
+      it->second = it->second->GetReplaced();
+    ++it;
+  }
 }
 
 void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
