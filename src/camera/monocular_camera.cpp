@@ -125,7 +125,7 @@ void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_p
 }
 
 bool MonocularCamera::IsInFrustum(const TPoint2D & distorted) const {
-  return distorted.x() >= 0 && distorted.x() < width_ && distorted.y() >= 0 && height_;
+  return distorted.x() >= 0 && distorted.x() < width_ && distorted.y() >= 0 && distorted.y() < height_;
 //  return distorted.x() >= min_X_ && distorted.x() < max_X_ && distorted.y() >= min_Y_ && distorted.y() < max_Y_;
 }
 

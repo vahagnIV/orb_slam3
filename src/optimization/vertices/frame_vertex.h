@@ -18,6 +18,7 @@ namespace vertices {
 
 class FrameVertex : public g2o::VertexSE3Expmap {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   FrameVertex() = default;
   explicit FrameVertex(frame::BaseFrame * frame) : frame_(frame) {
     setEstimate(g2o::SE3Quat(frame->GetStagingPosition().R, frame->GetStagingPosition().T));

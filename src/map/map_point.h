@@ -6,9 +6,7 @@
 #define ORB_SLAM3_INCLUDE_MAP_POINT_H_
 // === stl ===
 #include <unordered_map>
-#include <mutex>
 #include <shared_mutex>
-#include <mutex>
 #include <atomic>
 
 // === orb-slam3 ===
@@ -122,12 +120,12 @@ class MapPoint {
   TPoint3D staging_position_;
   bool position_changed_;
   mutable std::shared_mutex position_mutex_;
+  mutable std::shared_mutex observation_mutex_;
 
   // The keyframe => Observation map of observations
   MapType observations_;
   MapType staging_observations_;
   bool observations_changed_;
-  mutable std::recursive_mutex observation_mutex_;
 
   // Distinctive descriptor of this map point
   features::DescriptorType descriptor_;
@@ -154,8 +152,6 @@ class MapPoint {
 
   bool bad_flag_;
   size_t first_observed_frame_id_;
-
-  mutable std::recursive_mutex normal_mutex_;
 
   map::MapPoint * replaced_map_point_;
 
