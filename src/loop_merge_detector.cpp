@@ -22,6 +22,10 @@ LoopMergeDetector::~LoopMergeDetector() {
 }
 
 void LoopMergeDetector::Start() {
+#ifndef MULTITHREADED
+  canceled_ = false;
+  return;
+#endif
   if (thread_)
     return;
   canceled_ = false;

@@ -40,6 +40,10 @@ void LocalMapper::Run() {
 }
 
 void LocalMapper::Start() {
+#ifndef MULTITHREADED
+  cancelled_ = false;
+  return;
+#endif
   if (thread_ != nullptr)
     return;
   cancelled_ = false;
@@ -136,7 +140,7 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
     key_frame->UnlockMapPointContainer();
     neighbour_keyframe->UnlockMapPointContainer();
   }
-  for(auto kf: covisible_frames)
+  for (auto kf: covisible_frames)
     kf->GetCovisibilityGraph().Update();
   key_frame->GetCovisibilityGraph().Update();
 }
@@ -211,72 +215,74 @@ void LocalMapper::FilterFixedKeyFames(const std::unordered_set<frame::KeyFrame *
     }
   }
 }
+size_t iteration_cycle = 0;
 
 void LocalMapper::RunIteration() {
 
-  size_t iteration_cycle = 0;
-  while (!cancelled_) {
-    if (!loop_merge_detection_queue_.Empty()) {
-      switch (loop_merge_detection_queue_.Front().type) {
-        case DetectionType::LoopDetected:
-          CorrectLoop(loop_merge_detection_queue_.Front());
-          break;
-        case DetectionType::MergeDetected:
-          MergeMaps(loop_merge_detection_queue_.Front());
-          break;
-        default:
-          loop_merge_detection_queue_.Pop();
-          break;
-      }
-      loop_merge_detection_queue_.Clear();
+  if (!loop_merge_detection_queue_.Empty()) {
+    switch (loop_merge_detection_queue_.Front().type) {
+      case DetectionType::LoopDetected:
+        CorrectLoop(loop_merge_detection_queue_.Front());
+        break;
+      case DetectionType::MergeDetected:
+        MergeMaps(loop_merge_detection_queue_.Front());
+        break;
+      default:
+        loop_merge_detection_queue_.Pop();
+        break;
+    }
+    loop_merge_detection_queue_.Clear();
 //      accept_key_frames_ = false;
 //      new_key_frames_.Clear();
-    } else if (!new_key_frames_.Empty()) {
+  } else if (!new_key_frames_.Empty()) {
 
-      frame::KeyFrame * key_frame;
-      key_frame = new_key_frames_.Front();
-      new_key_frames_.Pop();
-      accept_key_frames_ = false;
+    frame::KeyFrame * key_frame;
+    key_frame = new_key_frames_.Front();
+    new_key_frames_.Pop();
+    accept_key_frames_ = false;
 
-      Profiler::Start("ProcessNewKeyFrame");
-      ProcessNewKeyFrame(key_frame);
-      Profiler::End("ProcessNewKeyFrame");
+    Profiler::Start("ProcessNewKeyFrame");
+    ProcessNewKeyFrame(key_frame);
+    Profiler::End("ProcessNewKeyFrame");
 
-      Profiler::Start("MapPointCulling");
-      MapPointCulling(key_frame);
-      Profiler::End("MapPointCulling");
+    Profiler::Start("MapPointCulling");
+    MapPointCulling(key_frame);
+    Profiler::End("MapPointCulling");
 
-      if (key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames().empty())
-        return;
+    if (key_frame->GetCovisibilityGraph().GetCovisibleKeyFrames().empty())
+      return;
 
-      Profiler::Start("CreateNewMapPoints");
-      CreateNewMapPoints(key_frame);
-      Profiler::End("CreateNewMapPoints");
+    Profiler::Start("CreateNewMapPoints");
+    CreateNewMapPoints(key_frame);
+    Profiler::End("CreateNewMapPoints");
 
-      if (new_key_frames_.Empty()) {
-        Profiler::Start("FuseMapPoints");
-        FuseMapPoints(key_frame, false);
-        Profiler::End("FuseMapPoints");
-      }
-      if (new_key_frames_.Empty()) {
-        Profiler::Start("Optimize");
-        Optimize(key_frame);
-        Profiler::End("Optimize");
-        Profiler::Start("KeyFrameCulling");
-        KeyFrameCulling(key_frame);
-        Profiler::End("KeyFrameCulling");
-      }
-
-      if (++iteration_cycle % 20 == 0) {
-        Profiler::PrintProfiles();
-        std::cout << "Total Map points: "<< map::MapPoint::GetTotalMapPointCount() << std::endl;
-      }
-      if (loop_merge_detector_)
-        loop_merge_detector_->Process(key_frame);
-
-      accept_key_frames_ = true;
+    if (new_key_frames_.Empty()) {
+      Profiler::Start("FuseMapPoints");
+      FuseMapPoints(key_frame, false);
+      Profiler::End("FuseMapPoints");
     }
-    std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+    if (new_key_frames_.Empty()) {
+      Profiler::Start("Optimize");
+      Optimize(key_frame);
+      Profiler::End("Optimize");
+      Profiler::Start("KeyFrameCulling");
+      KeyFrameCulling(key_frame);
+      Profiler::End("KeyFrameCulling");
+    }
+
+    if (++iteration_cycle % 20 == 0) {
+      Profiler::PrintProfiles();
+      std::cout << "Total Map points: " << map::MapPoint::GetTotalMapPointCount() << std::endl;
+    }
+    if (loop_merge_detector_)
+      loop_merge_detector_->Process(key_frame);
+
+#ifndef MULTITHREADED
+    loop_merge_detector_->RunIteration();
+#endif
+
+    accept_key_frames_ = true;
+
   }
 }
 
@@ -371,10 +377,10 @@ void LocalMapper::MergeMaps(DetectionResult & detection_result) {
     keyframe->GetCovisibilityGraph().Update();
   }
 
-  for(auto mp: merge_map->GetAllMapPoints()){
+  for (auto mp: merge_map->GetAllMapPoints()) {
     mp->SetMap(target_map);
   }
-  for(auto keyframe: merge_map->GetAllKeyFrames()) {
+  for (auto keyframe: merge_map->GetAllKeyFrames()) {
     merge_map->EraseKeyFrame(keyframe);
     target_map->AddKeyFrame(keyframe);
     keyframe->SetMap(target_map);
@@ -406,8 +412,6 @@ void LocalMapper::MergeMaps(DetectionResult & detection_result) {
     detection_result.candidate->GetMap()->AddKeyFrame(kf);
     kf->ApplyStaging();
   }
-
-
 
   return;
 
