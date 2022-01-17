@@ -99,6 +99,13 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
                             precision_t parallax_cos_threshold,
                             precision_t & out_cos_parallax,
                             TPoint3D & out_triangulated) {
+
+  if (point_to.z() < 0)
+    return false;
+
+  if (point_from.z() < 0)
+    return false;
+
   if (!utils::Triangulate(pose, point_from, point_to, out_triangulated))
     return false;
 
