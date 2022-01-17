@@ -35,9 +35,9 @@ void SE3ProjectXYZPose::linearizeOplus() {
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
-  const double & x = pt_camera_system[0];
-  const double & y = pt_camera_system[1];
-  const double & z = pt_camera_system[2];
+  const double & x = pt_camera_system.x();
+  const double & y = pt_camera_system.y();
+  const double & z = pt_camera_system.z();
 
   camera::ProjectionJacobianType projection_jacobian;
   camera_->ComputeJacobian(pt_camera_system, projection_jacobian);

@@ -97,9 +97,9 @@ void MonocularCamera::ComputeImageBounds() {
 }
 
 void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianType & out_jacobian) const {
-  const double & x = pt[0];
-  const double & y = pt[1];
-  const double & z = pt[2];
+  const double & x = pt.x();
+  const double & y = pt.y();
+  const double & z = pt.z();
   const double z_inv = 1 / z;
   const double z_inv2 = z_inv * z_inv;
   ProjectionJacobianType projection_jacobian;
@@ -110,8 +110,12 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
   projected << x * z_inv, y * z_inv;
   distortion_model_->ComputeJacobian(projected, distortion_jacobian);
   out_jacobian = distortion_jacobian * projection_jacobian;
-  if(out_jacobian.array().isNaN().any())
+  if(out_jacobian.array().isNaN().any()) {
+    std::cout << "Pt\n" << pt << std::endl;
+    std::cout << "Projected\n" << projected << std::endl;
+
     throw std::runtime_error("Error from monocam");
+  }
 }
 
 void MonocularCamera::ProjectAndDistort(const TPoint3D & point, TPoint2D & out_projected) const {
