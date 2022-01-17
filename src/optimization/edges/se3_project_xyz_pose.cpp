@@ -25,11 +25,6 @@ void SE3ProjectXYZPose::computeError() {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   TPoint3D pt_camera_system = pose->estimate().map(point->estimate());
-  if(std::abs(pt_camera_system[2]) < std::numeric_limits<double>::epsilon()){
-    _error << 0,0;
-    return;
-  }
-
   TPoint2D distorted;
   camera_->ProjectAndDistort(pt_camera_system, distorted);
 
@@ -37,23 +32,12 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-  computeError();
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
   const double & x = pt_camera_system[0];
   const double & y = pt_camera_system[1];
   const double & z = pt_camera_system[2];
-
-  if(z == 0) {
-    if(std::abs(pt_camera_system[2]) < std::numeric_limits<double>::epsilon()){
-      _jacobianOplusXi.setZero();
-      _jacobianOplusXj.setZero();
-      return;
-    }
-    std::cout << point->estimate() << std::endl;
-    std::cout << pose->estimate() << std::endl;
-  }
 
   camera::ProjectionJacobianType projection_jacobian;
   camera_->ComputeJacobian(pt_camera_system, projection_jacobian);
