@@ -10,7 +10,7 @@
 namespace orb_slam3 {
 namespace logging {
 
-void Initialize();
+void Initialize(spdlog::level::level_enum level = spdlog::level::level_enum::debug);
 
 std::shared_ptr<spdlog::logger > RetrieveLogger();
 //spdlog::logger * RetrieveLogger();

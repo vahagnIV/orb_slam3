@@ -61,7 +61,7 @@ class BaseFrame : public geometry::RigidObject {
   const std::string & GetFilename() const { return filename_; }
   const std::shared_ptr<const features::handlers::BaseFeatureHandler> & GetFeatureHandler() const { return feature_handler_; }
 
-  virtual void SetMap(map::Map * map) { map_ = map; }
+  virtual void SetMap(map::Map * map) ;
   map::Map * GetMap() const { return map_; }
   map::Map * GetMap() { return map_; }
   map::Atlas * GetAtlas() const { return atlas_; }

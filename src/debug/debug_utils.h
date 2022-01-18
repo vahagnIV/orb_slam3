@@ -22,6 +22,8 @@ void ToOpenCvMatches(const std::unordered_map<size_t, size_t> & matches, std::ve
 void ToOpenCvMatches(const std::vector<features::Match> & matches, std::vector<cv::DMatch> & out_matches);
 void ToOpenCvKeyPoints(const std::vector<features::KeyPoint> & keypoints, std::vector<cv::KeyPoint> & out_key_points);
 
+cv::Mat DrawKeyPoints(frame::monocular::MonocularFrame * frame, TImageGray8U & image);
+
 cv::Mat DrawMatches(const std::string & filename_to,
                     const std::string & filename_from,
                     const std::unordered_map<size_t, size_t> & matches,

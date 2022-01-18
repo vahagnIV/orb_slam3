@@ -28,8 +28,6 @@
 #include <factories/feature_handler_factory.h>
 #include <frame/database/DBoW2/dbo_w2_database.h>
 #include <factories/keyframe_database_factory.h>
-#include <odometry_publisher.h>
-#include <ros_common.h>
 #include <camera/monocular_camera.h>
 
 const size_t NFEATURES1 = 7500;
@@ -161,6 +159,7 @@ void ReadImagesForMonocularTestTum(
     std::string::size_type idx = row.find(',');
     if (idx == std::string::npos) continue;
     time_t timestamp = std::stoul(row.substr(0, idx));
+//    timestamp*=1.5;
 
     ;
     std::chrono::system_clock::time_point time_point(
@@ -354,9 +353,16 @@ void RunDataset(OrbSlam3System system,
     cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
 
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    if (i > 0)
-      std::this_thread::sleep_for(
-          (timestamps[i] - timestamps[i - 1]) - (now - last));
+    if (i > 0) {
+
+//      std::cout<<"Delta timestamp " << (timestamps[i] - timestamps[i - 1]).count() << std::endl;
+//      std::cout<<"Delta npw: " << (now-last).count() << std::endl;
+      if(now - last < timestamps[i] - timestamps[i - 1]) {
+//        std::cout << "waiting" << std::endl;
+        std::this_thread::sleep_for(
+            (timestamps[i] - timestamps[i - 1]) - (now - last));
+      }
+    }
     last = now;
 
     orb_slam3::logging::RetrieveLogger()->info("{}. processing frame {}", i, filenames[i]);
@@ -501,7 +507,7 @@ void LoadConfig(nlohmann::json & config) {
 
 void initialize() {
   orb_slam3::drawer::Initialize();
-  orb_slam3::logging::Initialize();
+  orb_slam3::logging::Initialize(spdlog::level::level_enum::critical);
 
 }
 

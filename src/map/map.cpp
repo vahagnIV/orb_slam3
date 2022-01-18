@@ -18,27 +18,28 @@ Map::Map(Atlas *atlas) : atlas_(atlas) {
 }
 
 void Map::AddKeyFrame(frame::KeyFrame *key_frame) {
+  std::unique_lock<std::shared_mutex> lock(keyframe_mutex_);
   key_frames_.insert(key_frame);
 }
 
 void Map::EraseKeyFrame(frame::KeyFrame *key_frame) {
+  std::unique_lock<std::shared_mutex> lock(keyframe_mutex_);
   key_frames_.erase(key_frame);
 }
 
 void Map::AddMapPoint(MapPoint *map_point) {
+  std::unique_lock<std::shared_mutex> lock(map_points_mutex_);
   map_points_.insert(map_point);
 }
 
 void Map::EraseMapPoint(MapPoint * map_point) {
+  std::unique_lock<std::shared_mutex> lock(map_points_mutex_);
   map_points_.erase(map_point);
 }
 
 std::unordered_set<MapPoint *> Map::GetAllMapPoints() const {
-  std::unordered_set<MapPoint *> result;
-  for (auto mp: map_points_)
-    if (!mp->IsBad())
-      result.insert(mp);
-  return result;
+  std::shared_lock<std::shared_mutex> lock(map_points_mutex_);
+  return map_points_;
 }
 
 void Map::SetInitialKeyFrame(frame::KeyFrame * frame) {
@@ -47,6 +48,7 @@ void Map::SetInitialKeyFrame(frame::KeyFrame * frame) {
 }
 
 std::unordered_set<frame::KeyFrame *> Map::GetAllKeyFrames() const {
+  std::shared_lock<std::shared_mutex> lock(keyframe_mutex_);
   std::unordered_set<frame::KeyFrame *> result;
   for (auto kf: key_frames_)
     if (!kf->IsBad())
@@ -132,8 +134,6 @@ void Map::Deserialize(std::istream & istream, serialization::SerializationContex
   }
 
   for (auto mp: GetAllMapPoints()) {
-    mp->ComputeDistinctiveDescriptor();
-    mp->CalculateNormalStaging();
     mp->ApplyStaging();
   }
 

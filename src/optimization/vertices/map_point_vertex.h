@@ -15,6 +15,7 @@ namespace vertices {
 
 class MapPointVertex : public g2o::VertexPointXYZ {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MapPointVertex() = default;
   explicit MapPointVertex(map::MapPoint * map_point);
 

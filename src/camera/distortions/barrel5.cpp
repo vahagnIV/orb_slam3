@@ -65,7 +65,7 @@ bool Barrel5::UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &
     x = xnew;
     y = ynew;
   }
-  undistorted = distorted;
+  undistorted << -10000,10000,-1;
   return false;
 }
 

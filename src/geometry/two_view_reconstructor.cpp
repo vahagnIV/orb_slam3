@@ -30,7 +30,7 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
 
   std::vector<std::vector<size_t>> random_match_subset_idx;
   // TODO: check count consistency
-  GenerateRandomSubsets(0, matches.size(), 12, number_of_ransac_iterations_, matches, random_match_subset_idx);
+  GenerateRandomSubsets(0, matches.size(), 20, number_of_ransac_iterations_, matches, random_match_subset_idx);
 
   precision_t h_score;
   precision_t f_score;
@@ -55,7 +55,6 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                         h_score);
 
   if (h_score > f_score) {
-    std::cout << "Homography" << std::endl;
     return homography_matrix_estimator_.FindPose(homography,
                                                  points_to,
                                                  points_from,
@@ -63,7 +62,6 @@ bool TwoViewReconstructor::Reconstruct(const std::vector<HomogenousPoint> & poin
                                                  out_points,
                                                  out_pose);
   }
-  std::cout << "Essential" << std::endl;
   return essential_matrix_estimator_.FindPose(essential,
                                               points_to,
                                               points_from,
@@ -82,8 +80,6 @@ void TwoViewReconstructor::GenerateRandomSubsets(const size_t min,
   out_result.resize(subset_count);
   RandomSubsetGenerator generator(count, min, max);
   while (subset_count--) {
-//    if(!utils::GenerateRandomSubset(min, max, count, out_result[subset_count]))
-//      return;
     generator.Generate(out_result[subset_count]);
     std::sort(out_result[subset_count].begin(), out_result[subset_count].end());
     auto b = matches.begin();

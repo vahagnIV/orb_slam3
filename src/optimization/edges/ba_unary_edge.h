@@ -19,6 +19,7 @@ namespace optimization {
 namespace edges {
 class BAUnaryEdge : public g2o::BaseUnaryEdge<2, Eigen::Vector2d, vertices::FrameVertex> {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   BAUnaryEdge(map::MapPoint * map_point, size_t feature_id) : map_point_(map_point), feature_id_(feature_id) {}
   map::MapPoint * GetMapPoint() const { return map_point_; }
   size_t GetFeatureId() const { return feature_id_; }

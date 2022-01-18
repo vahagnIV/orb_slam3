@@ -10,7 +10,7 @@
 namespace orb_slam3 {
 namespace optimization {
 
-void OptimizePose(frame::monocular::MonocularFrame * frame);
+bool OptimizePose(frame::monocular::MonocularFrame * frame);
 
 size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
                     const frame::monocular::MonocularKeyFrame * const from_frame,

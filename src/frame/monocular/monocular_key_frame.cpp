@@ -59,13 +59,13 @@ void MonocularKeyFrame::ListMapPoints(BaseFrame::MapPointSet & out_map_points) c
 
 TVector3D MonocularKeyFrame::GetNormal(const TPoint3D & point) const {
   TPoint3D normal = GetInversePosition().T - point;
-  normal.normalize();
+//  normal.normalize();
   return normal;
 }
 
 TVector3D MonocularKeyFrame::GetNormalFromStaging(const TPoint3D & point) const {
   TPoint3D normal = GetStagingPosition().GetInversePose().T - point;
-  normal.normalize();
+//  normal.normalize();
   return normal;
 }
 
@@ -120,8 +120,8 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
   MapToSet(local_map_points_map, local_map_points);
   MapToSet(others_map_points_map, others_map_points);
 
-  auto local_pose = GetPositionWithLock();
-  auto other_pose = other_frame->GetPositionWithLock();
+  auto local_pose = GetPosition();
+  auto other_pose = other_frame->GetPosition();
 
   if (!BaseLineIsEnough(others_map_points, local_pose, other_pose)) {
     logging::RetrieveLogger()->debug("Baseline between frames {} and {} is not enough", Id(), other->Id());
@@ -359,7 +359,7 @@ size_t MonocularKeyFrame::AdjustSim3Transformation(std::list<MapPointVisibilityP
   TMatcher matcher(0.9, 50);
   TMatcher::MatchMapType matches;
   matcher.MatchWithIterators(begin, end, GetMap()->GetAtlas()->GetFeatureExtractor(), matches);
-  std::cout << "Match count: " << matches.size() << std::endl;
+//  std::cout << "Match count: " << matches.size() << std::endl;
   if (matches.size() < 50)
     return 0;
 
@@ -434,8 +434,6 @@ void MonocularKeyFrame::InitializeImpl() {
     if (mp.second->IsBad())
       continue;
     mp.second->AddObservation(Observation(mp.second, this, mp.first));
-    mp.second->ComputeDistinctiveDescriptor();
-    mp.second->CalculateNormalStaging();
     mp.second->ApplyStaging();
   }
   logging::RetrieveLogger()->debug("Created new keyframe with id {}", Id());

@@ -22,7 +22,7 @@ namespace optimization {
 
 using namespace frame::monocular;
 
-void OptimizePose(MonocularFrame * frame) {
+bool OptimizePose(MonocularFrame * frame) {
   BaseMonocular::MonocularMapPoints map_points = frame->GetMapPoints();
 
   g2o::SparseOptimizer optimizer;
@@ -35,6 +35,7 @@ void OptimizePose(MonocularFrame * frame) {
   frame_vertex->setId(max_id);
   frame_vertex->setFixed(false);
   optimizer.addVertex(frame_vertex);
+//  optimizer.setVerbose(true);
 
   const auto & features = frame->GetFeatureHandler()->GetFeatures();
 
@@ -68,6 +69,9 @@ void OptimizePose(MonocularFrame * frame) {
   for (int i = 0; i < N; ++i) {
     dynamic_cast<vertices::FrameVertex *>(optimizer.vertex(frame_vertex->id()))->setEstimate(pose.GetQuaternion());
     optimizer.initializeOptimization(0);
+    if(optimizer.activeEdges().empty()){
+      return false;
+    }
     optimizer.optimize(10);
 
     for (auto edge_base: optimizer.edges()) {
@@ -87,12 +91,15 @@ void OptimizePose(MonocularFrame * frame) {
       if (N - 2 == i)
         edge->setRobustKernel(nullptr);
     }
+    if(optimizer.edges().size()<10)
+      return false;
   }
 
   logging::RetrieveLogger()->debug("Pose optimization discarded {} map_points", discarded_count);
 
   frame->SetStagingPosition(frame_vertex->estimate());
   frame->ApplyStaging();
+  return true;
 
 }
 
@@ -114,14 +121,14 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   auto trans_vertex = dynamic_cast<g2o::VertexSim3Expmap *>(optimizer.vertex(0));
   assert(nullptr != trans_vertex);
 
-  in_out_transformation.print();
-  optimizer.setVerbose(true);
+//  in_out_transformation.print();
+//  optimizer.setVerbose(true);
   optimizer.initializeOptimization();
   optimizer.optimize(5);
   in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
   in_out_transformation.T = trans_vertex->estimate().translation();
   in_out_transformation.s = trans_vertex->estimate().scale();
-  in_out_transformation.print();
+//  in_out_transformation.print();
 
 
 
@@ -157,7 +164,7 @@ size_t OptimizeSim3(const frame::monocular::MonocularKeyFrame * const to_frame,
   in_out_transformation.R = trans_vertex->estimate().rotation().toRotationMatrix();
   in_out_transformation.T = trans_vertex->estimate().translation();
   in_out_transformation.s = trans_vertex->estimate().scale();
-  in_out_transformation.print();
+//  in_out_transformation.print();
 #ifndef MULTITHREADED
   cv::imshow("projected matches", debug::DrawMapPointMatches(to_frame, from_frame, matches));
   cv::waitKey();

@@ -34,7 +34,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   bool FindMapPointsFromReferenceKeyFrame(const KeyFrame * reference_keyframe) override;
   bool EstimatePositionByProjectingMapPoints(Frame * frame, std::list<MapPointVisibilityParams> & out_visibles) override;
   void ListMapPoints(MapPointSet & out_map_points) const override;
-  void OptimizePose() override;
+  bool OptimizePose() override;
   void FilterVisibleMapPoints(const std::unordered_set<map::MapPoint *> & map_points,
                               std::list<MapPointVisibilityParams> & out_filetered_map_points,
                               precision_t radius_multiplier) const override;
@@ -64,8 +64,7 @@ class MonocularFrame : public Frame, public BaseMonocular {
   void SearchInVisiblePoints(const std::list<MapPointVisibilityParams> & filtered_map_points, precision_t matcher_snn_threshold);
  public:
   // MonocularFame
- private:
-  MonocularKeyFrame * reference_keyframe_;
+
 
 };
 

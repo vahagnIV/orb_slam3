@@ -48,8 +48,16 @@ void BundleAdjustment(std::unordered_set<frame::KeyFrame *> & key_frames,
   // Collect Map Point positions
   for (auto mp_vertex: mp_map) {
     if (nullptr == loop_kf || loop_kf->IsInitial()) {
+      for(auto edge : mp_vertex.second->edges()) {
+        auto e = dynamic_cast<edges::BABinaryEdge *>(edge);
+        if(!e->IsValid()){
+          mp_vertex.first->SetBad();
+          break;
+        }
+      }
+      if(mp_vertex.first->IsBad())
+        continue;
       mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
-      mp_vertex.first->CalculateNormalStaging();
       mp_vertex.first->ApplyStaging();
     } else {
       std::runtime_error("BA not implemented for Loop closing");
@@ -63,7 +71,7 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
                            std::vector<std::pair<map::MapPoint *, frame::KeyFrame *>> & out_observations_to_delete,
                            bool * stop_flag) {
   g2o::SparseOptimizer optimizer;
-  optimizer.setVerbose(true);
+//  optimizer.setVerbose(true);
   InitializeOptimizer<g2o::LinearSolverEigen>(optimizer);
 
   std::unordered_map<frame::KeyFrame *, vertices::FrameVertex *> frame_map;
@@ -106,7 +114,6 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
   for (auto mp_vertex: mp_map) {
     if (!mp_vertex.first->IsBad()) {
       mp_vertex.first->SetStagingPosition(mp_vertex.second->estimate());
-      mp_vertex.first->CalculateNormalStaging();
       mp_vertex.first->ApplyStaging();
     }
   }

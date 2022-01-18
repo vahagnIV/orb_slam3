@@ -79,14 +79,14 @@ bool Triangulate(const Pose & pose,
 precision_t ComputeCosParallax(const Pose & pose, const TPoint3D & point) {
   const TVector3D & vec1 = point;
   const TVector3D vec2 = point - (pose.T.transpose() * pose.R).transpose();
-  return vec1.dot(vec2) / vec1.norm() / vec2.norm();
+  return vec1.dot(vec2) / std::sqrt(vec1.squaredNorm() * vec2.squaredNorm());
 }
 
 precision_t ComputeReprojectionError(const HomogenousPoint & point, const HomogenousPoint & original_point) {
-  precision_t zpoint_inv = 1. / point[2];
-  precision_t zoriginal_inv = 1. / original_point[2];
-  precision_t error_x = point[0] * zpoint_inv - original_point[0] * zoriginal_inv;
-  precision_t error_y = point[1] * zpoint_inv - original_point[1] * zoriginal_inv;
+  precision_t zpoint_inv = 1. / point.z();
+  precision_t zoriginal_inv = 1. / original_point.z();
+  precision_t error_x = point.x() * zpoint_inv - original_point.x() * zoriginal_inv;
+  precision_t error_y = point.y() * zpoint_inv - original_point.y() * zoriginal_inv;
 
   return error_x * error_x + error_y * error_y;
 }
@@ -99,10 +99,17 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
                             precision_t parallax_cos_threshold,
                             precision_t & out_cos_parallax,
                             TPoint3D & out_triangulated) {
+
+  if (point_to.z() < 0)
+    return false;
+
+  if (point_from.z() < 0)
+    return false;
+
   if (!utils::Triangulate(pose, point_from, point_to, out_triangulated))
     return false;
 
-  if (out_triangulated[2] < 0)
+  if (out_triangulated.z() < 0)
     return false;
 
   out_cos_parallax = utils::ComputeCosParallax(pose, out_triangulated);
@@ -110,7 +117,7 @@ bool TriangulateAndValidate(const HomogenousPoint & point_from,
     return false;
 
   const TVector3D triangulated2 = pose.Transform(out_triangulated);
-  if (triangulated2[2] < 0) return false;
+  if (triangulated2.z() < 0) return false;
 
   if (utils::ComputeReprojectionError(out_triangulated, point_from) > reprojection_threshold_from
       || utils::ComputeReprojectionError(triangulated2, point_to) > reprojection_threshold_to)

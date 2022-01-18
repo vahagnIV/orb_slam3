@@ -24,39 +24,38 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularFrame::MonocularFrame(map::Atlas *atlas,
+MonocularFrame::MonocularFrame(map::Atlas * atlas,
                                features::handlers::HandlerType handler_type,
                                size_t feature_count,
-                               TImageGray8U &image,
+                               TImageGray8U & image,
                                TimePoint time_point,
-                               const std::string &filename,
-                               const camera::MonocularCamera *camera,
-                               const SensorConstants *sensor_constants) :
+                               const std::string & filename,
+                               const camera::MonocularCamera * camera,
+                               const SensorConstants * sensor_constants) :
     Frame(time_point, filename, sensor_constants, atlas),
-    BaseMonocular(camera),
-    reference_keyframe_(nullptr) {
+    BaseMonocular(camera) {
   auto feature_handler = factories::FeatureHandlerFactory::Create(handler_type,
                                                                   image,
                                                                   camera,
                                                                   atlas->GetFeatureExtractor(),
                                                                   feature_count);
   SetFeatureHandler(feature_handler);
+//  cv::imshow("Current key points", debug::DrawKeyPoints(this, image));
 }
 
-MonocularFrame::MonocularFrame(std::istream &stream, serialization::SerializationContext &context)
+MonocularFrame::MonocularFrame(std::istream & stream, serialization::SerializationContext & context)
     : Frame(stream, context),
       BaseMonocular(stream, context) {
   size_t reference_kf_id;
   READ_FROM_STREAM(reference_kf_id, stream);
-  frame::KeyFrame *rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
-  if(rf_kf) {
+  frame::KeyFrame * rf_kf = reference_kf_id ? context.kf_id[reference_kf_id] : nullptr;
+  if (rf_kf) {
     if (rf_kf->Type() != Type())
       throw std::runtime_error(
           "Invalid reference kf type while deserializing monocular frame. Only monocular keyframes are supported");
     reference_keyframe_ = dynamic_cast<MonocularKeyFrame *> (rf_kf);
     assert(nullptr != reference_keyframe_);
-  }
-  else{
+  } else {
     reference_keyframe_ = nullptr;
   }
   size_t mp_count;
@@ -66,7 +65,7 @@ MonocularFrame::MonocularFrame(std::istream &stream, serialization::Serializatio
     READ_FROM_STREAM(feature_id, stream);
     READ_FROM_STREAM(mp_id, stream);
     auto mp = context.mp_id[mp_id];
-    if(mp)
+    if (mp)
       AddMapPoint(context.mp_id[mp_id], feature_id);
   }
 }
@@ -147,15 +146,8 @@ bool MonocularFrame::FindMapPointsFromReferenceKeyFrame(const KeyFrame * referen
     AddMapPoint(map_point->second, match.first);
   }
 
-  OptimizePose();
+  return OptimizePose() && GetMapPointsCount() >= 10;
 
-//  cv::imshow("TWRKF", debug::DrawMatches(GetFilename(),
-//                                         reference_keyframe->GetFilename(),
-//                                         matches,
-//                                         feature_handler_->GetFeatures(),
-//                                         reference_kf->feature_handler_->GetFeatures()));
-
-  return matches.size() >= 10;
 }
 
 size_t MonocularFrame::GetMapPointsCount() const {
@@ -167,8 +159,10 @@ FrameType MonocularFrame::Type() const {
 }
 
 KeyFrame * MonocularFrame::CreateKeyFrame() {
-  reference_keyframe_ = new MonocularKeyFrame(this);
-  map_->AddKeyFrame(reference_keyframe_);
+  auto reference_keyframe = new MonocularKeyFrame(this);
+  SetReferenceKeyFrame(reference_keyframe);
+  // TODO: remove the following line from here
+  map_->AddKeyFrame(reference_keyframe);
   return reference_keyframe_;
 }
 
@@ -214,10 +208,15 @@ void MonocularFrame::InitializeMapPointsFromMatches(const std::unordered_map<std
 
     precision_t max_invariance_distance, min_invariance_distance;
     GetAtlas()->GetFeatureExtractor()->ComputeInvariantDistances(GetPosition().Transform(point.second),
-                                                                       feature_handler_->GetFeatures().keypoints[point.first],
-                                                                       max_invariance_distance,
-                                                                       min_invariance_distance);
-    auto map_point = new map::MapPoint(point.second, Id(), max_invariance_distance, min_invariance_distance, GetMap());
+                                                                 feature_handler_->GetFeatures().keypoints[point.first],
+                                                                 max_invariance_distance,
+                                                                 min_invariance_distance);
+    auto map_point = new map::MapPoint(point.second,
+                                       Id(),
+                                       max_invariance_distance,
+                                       min_invariance_distance,
+                                       GetMap());
+
     AddMapPoint(map_point, point.first);
     from_frame->AddMapPoint(map_point, matches.find(point.first)->second);
     out_map_points.insert(map_point);
@@ -245,9 +244,12 @@ bool MonocularFrame::IsValid() const {
   return feature_handler_->GetFeatures().Size() > 0;
 }
 
-void MonocularFrame::OptimizePose() {
-  optimization::OptimizePose(this);
-  this->ApplyStaging();
+bool MonocularFrame::OptimizePose() {
+  if (optimization::OptimizePose(this)) {
+    this->ApplyStaging();
+    return true;
+  }
+  return false;
 }
 
 void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
@@ -258,8 +260,8 @@ void MonocularFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
   geometry::Pose inverse_pose = pose.GetInversePose();
   for (auto mp: map_points) {
     map_point.map_point = mp;
-    TPoint3D position = mp->GetPositionWithLock();
-    TVector3D normal = mp->GetNormalWithLock();
+    TPoint3D position = mp->GetPosition();
+    TVector3D normal = mp->GetNormal();
     if (BaseMonocular::PointVisible(pose.Transform(position),
                                     position,
                                     mp->GetMinInvarianceDistance(),
@@ -308,14 +310,11 @@ void MonocularFrame::SearchInVisiblePoints(const std::list<MapPointVisibilityPar
 }
 
 void MonocularFrame::UpdateFromReferenceKeyFrame() {
-  if (reference_keyframe_) {
-    SetStagingPosition(reference_keyframe_->GetPositionWithLock());
-    ApplyStaging();
-    ClearMapPoints();
-    for (const auto & mp: reference_keyframe_->GetMapPointsWithLock()) {
-      AddMapPoint(mp.second, mp.first);
-    }
-  }
+  SetStagingPosition(relative_position_ * reference_keyframe_->GetPosition());
+  ApplyStaging();
+  for (auto mp: map_points_)
+    if (mp.second->GetReplaced())
+      mp.second = mp.second->GetReplaced();
 }
 
 void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
@@ -328,8 +327,8 @@ void MonocularFrame::FilterFromLastFrame(MonocularFrame * last_frame,
   std::list<MapPointVisibilityParams> visibles;
   for (auto mp: mps) {
     assert(mp.first < last_frame->feature_handler_->GetFeatures().keypoints.size());
-    TPoint3D position = mp.second->GetPositionWithLock();
-    TVector3D normal = mp.second->GetNormalWithLock();
+    TPoint3D position = mp.second->GetPosition();
+    TVector3D normal = mp.second->GetNormal();
 
     if (BaseMonocular::PointVisible(pose.Transform(position),
                                     position,
@@ -368,7 +367,8 @@ bool MonocularFrame::EstimatePositionByProjectingMapPoints(Frame * frame,
     FilterFromLastFrame(last_frame, out_visibles, radius);
     SearchInVisiblePoints(out_visibles, 0.9);
     if (GetMapPointsCount() >= 20) {
-      OptimizePose();
+      if (!OptimizePose())
+        continue;
       if (GetMapPointsCount() >= 10) {
         ApplyStaging();
         return true;

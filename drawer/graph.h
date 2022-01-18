@@ -9,23 +9,37 @@
 
 #include "node.h"
 #include "edge.h"
+#include "map_point_node.h"
+#include "key_frame_node.h"
+#include <messages/map_point_geometry_updated.h>
 
 namespace orb_slam3 {
 namespace drawer {
 
 class Graph {
  public:
-  Graph();
-  void AddNode( Node * node);
-  void DeleteNode(size_t node_id);
+  Graph(size_t size);
+  void AddMapPoint(MapPointNode * map_point_node);
+  void UpdateMapPoint(messages::MapPointGeometryUpdated *  update_message);
+  void AddKeyFrame(KeyFrameNode * key_frame_node);
+  void DeleteMapPoint(size_t id);
+  void DeleteKeyFrame(size_t id);
+  MapPointNode * GetMapPoint(size_t id);
+  KeyFrameNode * GetKeyFrame(size_t);
   void AddEdge(Edge * edge);
   void DeleteEdge(size_t node_id1, size_t node_id2);
-  Node * GetNode(size_t node_id) const;
-  bool NodeExists(size_t node_id);
   void Draw();
+  GLuint Buffer() const { return buffer_; }
+  size_t Size() const { return current_carrette_; }
  private:
-  std::unordered_map<size_t, Node *> nodes_;
-  size_t draw_nonce_;
+  void  ReinstantiateBuffer();
+  size_t size_;
+  GLuint buffer_;
+  GLsizeiptr current_carrette_;
+  std::unordered_map<size_t, MapPointNode *> map_points_;
+  std::vector<MapPointNode *> map_points_ordered_;
+
+  std::unordered_map<size_t, KeyFrameNode *> keyframes_;
 
 };
 

@@ -51,10 +51,7 @@ class LoopMergeDetector {
   static void FindMapPointMatches(const frame::KeyFrame * current_key_frame,
                                   const KeyFrameSet & loop_neighbours,
                                   MapPointMatches & out_matches);
-  static void ListSurroundingWindow(const frame::KeyFrame * key_frame,
-                                    frame::IKeyFrameDatabase::KeyFrameSet & out_window);
-  static void ListAllMapPoints(const frame::IKeyFrameDatabase::KeyFrameSet & key_frames,
-                               std::unordered_set<map::MapPoint *> & out_mps);
+
  private:
   map::Atlas * atlas_;
   bool canceled_;

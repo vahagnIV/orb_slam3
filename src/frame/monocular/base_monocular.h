@@ -104,8 +104,8 @@ class BaseMonocular {
  protected:
   /// Private member variables
 
- private:
   MonocularMapPoints map_points_;
+ private:
   const camera::MonocularCamera * camera_;
 
 };

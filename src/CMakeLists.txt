@@ -31,6 +31,7 @@ add_library(orbslam SHARED
         loop_merge_detector.cpp
         logging.cpp
         settings.cpp
+        profiler.cpp
 
         frame/key_frame.cpp
         frame/base_frame.cpp

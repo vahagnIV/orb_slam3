@@ -38,7 +38,7 @@ bool RANSACSim3Solver::operator()(Sim3Transformation & out_pose) {
     out_pose = Sim3Solver::ComputeSim3(matches_, slice);
     size_t n_inliers = CheckPose(out_pose);
     if (n_inliers > min_inliers_count_) {
-      std::cout << "Found " << n_inliers << " inliers out_of " << matches_.size() << std::endl;
+//      std::cout << "Found " << n_inliers << " inliers out_of " << matches_.size() << std::endl;
       return true;
     }
   }
