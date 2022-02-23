@@ -195,9 +195,9 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
 
   for (auto & match: matches) {
 
-    map::MapPoint * local_mp = GetMapPoint(match.second);
-    const features::KeyPoint & key_point = GetFeatureHandler()->GetFeatures().keypoints[match.second];
-    const TPoint2D & original_point = key_point.pt;
+    map::MapPoint *local_mp = GetMapPoint(match.second);
+    const features::KeyPoint &key_point = GetFeatureHandler()->GetFeatures().keypoints[match.second];
+    const TPoint2D &original_point = key_point.pt;
     TPoint2D projected;
     GetMonoCamera()->ProjectAndDistort(GetPosition().Transform(match.first->GetPosition()), projected);
     precision_t error = (original_point - projected).squaredNorm();
@@ -206,7 +206,8 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
       continue;
 
     if (nullptr == local_mp) {
-      out_local_matches.emplace_back(match.first, const_cast<MonocularKeyFrame *>(this), match.second);
+      if (feature_handler_->GetFeatures().undistorted_and_unprojected_keypoints[match.second].z() > 0)
+        out_local_matches.emplace_back(match.first, const_cast<MonocularKeyFrame *>(this), match.second);
     } else {
       out_matched_map_points.emplace_back(local_mp, match.first);
     }

@@ -133,6 +133,8 @@ int Sim3FillOptimizer(g2o::SparseOptimizer & optimizer,
 
   for (auto it: to_map_points) {
     size_t to_feature_id = it.first;
+    if(to_features.undistorted_and_unprojected_keypoints[to_feature_id].z() < 0)
+      continue;
     map::MapPoint * to_mp = it.second;
     assert(nullptr != to_mp);
     if (to_mp->IsBad())
