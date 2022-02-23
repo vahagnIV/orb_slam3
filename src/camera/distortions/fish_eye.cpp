@@ -99,7 +99,7 @@ bool FishEye::UnDistortPoint(const HomogenousPoint & distorted, HomogenousPoint 
 
   bool flipped = ((theta_d < 0 && theta > 0) || (theta_d > 0 && theta < 0));
 
-  if (converged && !flipped) {
+  if (converged && !flipped && scale > 0) {
     undistorted.x() = distorted.x() * scale;
     undistorted.y() = distorted.y() * scale;
     undistorted.z() = 1;
