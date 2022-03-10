@@ -117,6 +117,8 @@ void LocalMapper::CreateNewMapPoints(frame::KeyFrame * key_frame) {
   logging::RetrieveLogger()->debug("LM: covisible frame count: {}", covisible_frames.size());
 
   for (auto neighbour_keyframe: covisible_frames) {
+    if(key_frame == neighbour_keyframe)
+      throw std::runtime_error("Same kf");
     frame::KeyFrame::NewMapPoints new_map_points;
 
     key_frame->CreateNewMapPoints(neighbour_keyframe, new_map_points);

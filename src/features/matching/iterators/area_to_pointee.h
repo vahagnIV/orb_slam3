@@ -46,7 +46,7 @@ class AreaToPointee : public VectorFromPointee {
                                        0,
                                        0,
                                        from_indices_);
-    end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), nullptr);
+    end_iterator_ = iterator(from_indices_.end(), from_indices_.end(), &features_from_->descriptors);
     begin_iterator_ = iterator(from_indices_.begin(), from_indices_.end(), &features_from_->descriptors);
   }
   bool IsValid(){

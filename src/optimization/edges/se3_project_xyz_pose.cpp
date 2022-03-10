@@ -32,12 +32,28 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-  auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
-  auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
+  auto pose = dynamic_cast<vertices::FrameVertex *>(_vertices[0]);
+  auto point = dynamic_cast<vertices::MapPointVertex *>(_vertices[1]);
+
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
   const double & x = pt_camera_system.x();
   const double & y = pt_camera_system.y();
   const double & z = pt_camera_system.z();
+  if(z == 0 ){
+    TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
+    TVector3D t = pose->estimate().translation();
+    TPoint3D pt = point->estimate();
+    std::cout << "Estimate:\n" << pt << std::endl;
+    std::cout << "Original:\n" << point->GetMapPoint()->GetPosition() << std::endl;
+
+    std::cout << "Frame estimate R:\n" << r <<std::endl;
+    std::cout << "Frame estimate T:\n" << t <<std::endl;
+    std::cout << "Frame origin R:\n" << pose->GetFrame()->GetPosition().R;
+    std::cout << "Frame origin T:\n" << pose->GetFrame()->GetPosition().T;
+    std::cout << "Frame origin staging R:\n" << pose->GetFrame()->GetStagingPosition().R;
+    std::cout << "Frame origin staging T:\n" << pose->GetFrame()->GetStagingPosition().T;
+    throw std::runtime_error("fff");
+  }
 
   camera::ProjectionJacobianType projection_jacobian;
   camera_->ComputeJacobian(pt_camera_system, projection_jacobian);
