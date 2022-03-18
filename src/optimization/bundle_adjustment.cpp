@@ -121,6 +121,22 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
     if (!frame_vertex.second->fixed()) {
       frame_vertex.first->SetStagingPosition(frame_vertex.second->estimate());
       frame_vertex.first->ApplyStaging();
+      /*
+      frame::BaseFrame::MapPointSet mps;
+      frame_vertex.first->ListMapPoints(mps);
+      geometry::Pose pose = frame_vertex.first->GetPosition();
+      for(auto & mp: mps){
+        if(pose.Transform(mp->GetPosition()).z() == 0) {
+          bool to_delete = false;
+          for(auto otd: observations_to_delete){
+            to_delete = otd.first == mp && otd.second == frame_vertex.first;
+            if(to_delete)
+              break;
+          }
+          std::cout << "To delete:  " << to_delete << std::endl;
+          throw std::runtime_error("ttt");
+        }
+      }*/
     }
   }
 

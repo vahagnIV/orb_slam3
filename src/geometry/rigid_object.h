@@ -22,15 +22,15 @@ class RigidObject {
   virtual ~RigidObject() = default;
  public:
   // Setters
-  void SetStagingPosition(const geometry::Pose & pose) {
+  virtual void SetStagingPosition(const geometry::Pose & pose) {
     SetStagingPosition(pose.R, pose.T);
   }
 
-  void SetStagingPosition(const g2o::SE3Quat & quaternion) {
+  virtual void SetStagingPosition(const g2o::SE3Quat & quaternion) {
     SetStagingPosition(quaternion.rotation().toRotationMatrix(), quaternion.translation());
   }
 
-  void SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) {
+  virtual void SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) {
     staging_pose_.R = R;
     staging_pose_.T = T;
   }

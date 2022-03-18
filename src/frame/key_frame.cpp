@@ -13,18 +13,19 @@ namespace orb_slam3 {
 namespace frame {
 
 KeyFrame::KeyFrame(TimePoint time_point,
-                   const std::string &filename,
-                   const SensorConstants *sensor_constants,
+                   const std::string & filename,
+                   const SensorConstants * sensor_constants,
                    size_t id,
-                   map::Atlas *atlas,
-                   map::Map *map,
-                   const geometry::Pose &pose)
+                   map::Atlas * atlas,
+                   map::Map * map,
+                   const geometry::Pose & pose)
     : BaseFrame(time_point, filename, sensor_constants, id, atlas),
       is_initialized_(false),
       covisibility_graph_(this),
       is_initial_(false),
       bad_flag_(false),
       kf_gba_(nullptr) {
+  history.emplace_back("Created with id " + std::to_string(id));
   SetStagingPosition(pose);
   RigidObject::ApplyStaging();
   SetMap(map);
@@ -98,6 +99,24 @@ void KeyFrame::EraseMapPoint(map::MapPoint * map_point) {
       messages::MessageProcessor::Instance().Enqueue(new messages::ObservationDeleted(observation));
   } else
     assert(false);
+}
+
+void KeyFrame::SetStagingPosition(const geometry::Pose & pose) {
+  std::stringstream ss;
+  ss << "New staging position \n" << pose.R << "\n" << pose.T;
+  history.emplace_back(ss.str());
+  RigidObject::SetStagingPosition(pose);
+}
+
+void KeyFrame::SetStagingPosition(const g2o::SE3Quat & quaternion) {
+  std::stringstream ss;
+  ss << "New staging position \n" << quaternion.rotation().toRotationMatrix() << "\n" << quaternion.translation();
+  history.emplace_back(ss.str());
+  RigidObject::SetStagingPosition(quaternion);
+}
+
+void KeyFrame::SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) {
+  RigidObject::SetStagingPosition(R, T);
 }
 
 void KeyFrame::SerializeToStream(std::ostream & stream) const {

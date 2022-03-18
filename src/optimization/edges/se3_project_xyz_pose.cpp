@@ -18,7 +18,7 @@ SE3ProjectXYZPose::SE3ProjectXYZPose(const camera::MonocularCamera * camera, pre
 bool SE3ProjectXYZPose::IsDepthPositive() const {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
-  return pose->estimate().map(point->estimate())[2] > 0;
+  return pose->estimate().map(point->estimate()).z() > 1e-4;
 }
 
 void SE3ProjectXYZPose::computeError() {
@@ -40,6 +40,7 @@ void SE3ProjectXYZPose::linearizeOplus() {
   const double & y = pt_camera_system.y();
   const double & z = pt_camera_system.z();
   if(z == 0 ){
+    std::cout << "Frame id " << pose->GetFrame()->Id() << std:: endl;;
     TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
     TVector3D t = pose->estimate().translation();
     TPoint3D pt = point->estimate();

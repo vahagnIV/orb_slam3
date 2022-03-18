@@ -154,6 +154,8 @@ class MapPoint {
   size_t first_observed_frame_id_;
 
   map::MapPoint * replaced_map_point_;
+ public:
+  std::vector<std::string> history;
 
 };
 

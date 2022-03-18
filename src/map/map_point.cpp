@@ -206,6 +206,10 @@ const TVector3D MapPoint::GetStagingNormal() {
 }
 
 void MapPoint::SetStagingPosition(const TPoint3D & position) {
+  std::stringstream ss;
+  ss << "Staging posiiton updated to:\n" << position;
+  history.push_back(ss.str());
+
   position_changed_ = true;
   staging_normal_calculated_ = false;
   staging_position_ = position;

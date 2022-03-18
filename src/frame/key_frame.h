@@ -162,6 +162,10 @@ class KeyFrame : public BaseFrame {
   virtual int GetScaleLevel(const map::MapPoint * map_point) const = 0;
   virtual int GetScaleLevel(const Observation & observation) const = 0;
 
+  void SetStagingPosition(const geometry::Pose & pose) override;
+  void SetStagingPosition(const g2o::SE3Quat & quaternion) override;
+  void SetStagingPosition(const TMatrix33 & R, const TPoint3D & T) override;
+
  protected:
   void SerializeToStream(std::ostream & stream) const override;
 
@@ -179,6 +183,8 @@ class KeyFrame : public BaseFrame {
   // Container for saving the position after gba for LC
   geometry::Pose pose_gba_;
   KeyFrame * kf_gba_;
+ public:
+  std::vector<std::string> history;
 
 };
 

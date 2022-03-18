@@ -268,7 +268,7 @@ void LocalMapper::RunIteration() {
       Optimize(key_frame);
       Profiler::End("Optimize");
       Profiler::Start("KeyFrameCulling");
-      KeyFrameCulling(key_frame);
+//      KeyFrameCulling(key_frame);
       Profiler::End("KeyFrameCulling");
     }
 
@@ -477,7 +477,8 @@ void LocalMapper::FuseMapPoints(frame::KeyFrame * frame, bool use_staging) {
 }
 
 void LocalMapper::ReplaceMapPoint(map::MapPoint * old_mp, map::MapPoint * new_mp) {
-
+  old_mp->history.emplace_back("Got Replaced");
+  new_mp->history.emplace_back("Replaced other");
   map::MapPoint::MapType old_observations = old_mp->Observations();
   for (auto old_obs: old_observations) {
     old_obs.second.GetKeyFrame()->LockMapPointContainer();

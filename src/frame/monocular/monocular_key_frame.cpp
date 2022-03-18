@@ -19,7 +19,7 @@ namespace orb_slam3 {
 namespace frame {
 namespace monocular {
 
-MonocularKeyFrame::MonocularKeyFrame(std::istream &istream, serialization::SerializationContext &context) :
+MonocularKeyFrame::MonocularKeyFrame(std::istream & istream, serialization::SerializationContext & context) :
     KeyFrame(istream, context),
     BaseMonocular(istream, context) {
 }
@@ -33,6 +33,9 @@ MonocularKeyFrame::MonocularKeyFrame(MonocularFrame * frame) : KeyFrame(frame->G
                                                                         frame->GetPosition()),
                                                                BaseMonocular(*frame),
                                                                map_points_mutex_() {
+  for(auto mp: frame->GetMapPoints()){
+    mp.second->history.push_back("Added to frame "  + std::to_string(Id()));
+  }
   SetFeatureHandler(frame->GetFeatureHandler());
   SetMap(frame->GetMap());
 }
@@ -42,7 +45,7 @@ FrameType MonocularKeyFrame::Type() const {
 }
 
 void MonocularKeyFrame::SetCamera(const camera::ICamera * icamera) {
-  if(icamera->Type() != camera::CameraType::MONOCULAR)
+  if (icamera->Type() != camera::CameraType::MONOCULAR)
     throw std::runtime_error("Invalid camera for monocular frame");
 
   BaseMonocular::SetCamera(dynamic_cast<const camera::MonocularCamera *>(icamera));
@@ -174,6 +177,10 @@ void MonocularKeyFrame::CreateNewMapPoints(frame::KeyFrame * other, NewMapPoints
                                        max_invariance_distance,
                                        min_invariance_distance,
                                        GetMap());
+    std::stringstream ss;
+    ss << "Created between frames " << std::to_string(other->Id()) << " and " << std::to_string(Id()) << "\n";
+    ss << "Initial position:\n" << map_point->GetStagingPosition();
+    map_point->history.push_back( ss.str());
 
     out_newly_created.emplace_back(Observation(map_point, const_cast<MonocularKeyFrame *>(this), match.first),
                                    Observation(map_point, other, match.second));
@@ -195,9 +202,9 @@ void MonocularKeyFrame::MatchVisibleMapPoints(const std::list<MapPointVisibility
 
   for (auto & match: matches) {
 
-    map::MapPoint *local_mp = GetMapPoint(match.second);
-    const features::KeyPoint &key_point = GetFeatureHandler()->GetFeatures().keypoints[match.second];
-    const TPoint2D &original_point = key_point.pt;
+    map::MapPoint * local_mp = GetMapPoint(match.second);
+    const features::KeyPoint & key_point = GetFeatureHandler()->GetFeatures().keypoints[match.second];
+    const TPoint2D & original_point = key_point.pt;
     TPoint2D projected;
     GetMonoCamera()->ProjectAndDistort(GetPosition().Transform(match.first->GetPosition()), projected);
     precision_t error = (original_point - projected).squaredNorm();
@@ -254,6 +261,7 @@ void MonocularKeyFrame::FilterVisibleMapPoints(const BaseFrame::MapPointSet & ma
 }
 
 void MonocularKeyFrame::EraseMapPointImpl(Observation & observation) {
+  observation.GetMapPoint()->history.push_back("Erased from " + std::to_string(Id()));
   BaseMonocular::EraseMapPoint(observation.GetFeatureId());
 }
 
@@ -314,11 +322,11 @@ int MonocularKeyFrame::GetMapPointLevel(const map::MapPoint * map_point) const {
                                                      map_point->GetMaxInvarianceDistance() / 1.2);
 }
 
-void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet &map_points,
-                                               const geometry::Sim3Transformation &relative_transformation,
-                                               const geometry::Pose &mp_local_transformation,
+void MonocularKeyFrame::FilterVisibleMapPoints(const MapPointSet & map_points,
+                                               const geometry::Sim3Transformation & relative_transformation,
+                                               const geometry::Pose & mp_local_transformation,
                                                precision_t radius_multiplier,
-                                               std::list<MapPointVisibilityParams> &out_visibles) const {
+                                               std::list<MapPointVisibilityParams> & out_visibles) const {
   MapPointVisibilityParams tmp;
   geometry::Pose pose = GetPosition();
   geometry::Pose inverse_pose = pose.GetInversePose();
@@ -452,6 +460,10 @@ void MonocularKeyFrame::UnlockMapPointContainer() const {
 }
 
 void MonocularKeyFrame::AddMapPointImpl(Observation & observation) {
+  observation.GetMapPoint()->history.push_back("Added to frame " + std::to_string(Id()));
+  assert(observation.GetKeyFrame() == this);
+  precision_t z = GetPosition().Transform( observation.GetMapPoint()->GetPosition()).z();
+  assert(z != 0 );
   BaseMonocular::AddMapPoint(observation.GetMapPoint(), observation.GetFeatureId());
 }
 
@@ -462,15 +474,15 @@ int MonocularKeyFrame::GetScaleLevel(const map::MapPoint * map_point) const {
   return GetScaleLevel(observation);
 }
 
-int MonocularKeyFrame::GetScaleLevel(const Observation &observation) const {
+int MonocularKeyFrame::GetScaleLevel(const Observation & observation) const {
   return GetFeatureHandler()->GetFeatures().keypoints[observation.GetFeatureId()].level;
 }
 
-const camera::ICamera *MonocularKeyFrame::GetCamera() const {
+const camera::ICamera * MonocularKeyFrame::GetCamera() const {
   return this->GetMonoCamera();
 }
 
-void MonocularKeyFrame::SerializeToStream(std::ostream &stream) const {
+void MonocularKeyFrame::SerializeToStream(std::ostream & stream) const {
   KeyFrame::SerializeToStream(stream);
   BaseMonocular::SerializeToStream(stream);
 }
