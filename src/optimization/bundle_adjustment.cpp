@@ -121,23 +121,26 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
     if (!frame_vertex.second->fixed()) {
       frame_vertex.first->SetStagingPosition(frame_vertex.second->estimate());
       frame_vertex.first->ApplyStaging();
-      /*
-      frame::BaseFrame::MapPointSet mps;
-      frame_vertex.first->ListMapPoints(mps);
-      geometry::Pose pose = frame_vertex.first->GetPosition();
-      for(auto & mp: mps){
-        if(pose.Transform(mp->GetPosition()).z() == 0) {
-          bool to_delete = false;
-          for(auto otd: observations_to_delete){
-            to_delete = otd.first == mp && otd.second == frame_vertex.first;
-            if(to_delete)
-              break;
-          }
-          std::cout << "To delete:  " << to_delete << std::endl;
-          throw std::runtime_error("ttt");
-        }
-      }*/
     }
+  }
+
+  for (auto &mp: local_map_points) {
+    for (auto obs: mp->Observations()) {
+      auto pose = obs.first->GetPosition();
+      if (pose.Transform(mp->GetPosition()).z() == 0) {
+        std::cout << "In kfs " << (keyframes.find(obs.second.GetKeyFrame()) != keyframes.end()) << std::endl;
+        std::cout << "In Fkfs " << (fixed_keyframes.find(obs.second.GetKeyFrame()) != fixed_keyframes.end())
+                  << std::endl;
+        std::cout << "To delete " << (observations_to_delete.end() != std::find(observations_to_delete.begin(),
+                                                                                observations_to_delete.end(),
+                                                                                std::make_pair(mp,
+                                                                                               obs.second.GetKeyFrame())))
+                  << std::endl;
+
+        throw std::runtime_error("ttt");
+      }
+    }
+
   }
 
 }

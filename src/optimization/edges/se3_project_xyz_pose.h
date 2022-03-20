@@ -34,6 +34,7 @@ class SE3ProjectXYZPose : public BABinaryEdge {
  private:
   const camera::MonocularCamera * camera_;
   precision_t threshold_;
+  unsigned step_;
 
 };
 

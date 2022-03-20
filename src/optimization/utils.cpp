@@ -34,6 +34,8 @@ size_t FillKeyFrameVertices(const std::unordered_set<frame::KeyFrame *> & key_fr
   for (auto key_frame: key_frames) {
     if (key_frame->IsBad())
       continue;
+    std::string log = std::string("Participates in BA ") + ( fixed ? " as fixed " : "");
+    key_frame->history.emplace_back(log);
     auto vertex = new vertices::FrameVertex(key_frame);
     vertex->setId(key_frame->Id());
     max_id = std::max(max_id, static_cast<size_t>(vertex->id()));
@@ -76,8 +78,10 @@ void FillMpVertices(const std::unordered_set<map::MapPoint *> & map_points,
     }
     if (0 == number_of_edges)
       inout_optimizer.removeVertex(mp_vertex);
-    else
+    else {
       out_mp_map[map_point] = mp_vertex;
+      map_point->history.emplace_back("Aprticipates in BA");
+    }
   }
 
 }
