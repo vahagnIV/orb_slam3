@@ -69,7 +69,9 @@ void Barrel8::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k5_, ostream);
   WRITE_TO_STREAM(k6_, ostream);
 }
+void Barrel8::ComputeGradientAndHessian(const HomogenousPoint &point, TVector3D &out_gradient, TMatrix33 &out_hessian) {
 
+}
 
 }
 }

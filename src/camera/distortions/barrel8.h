@@ -21,6 +21,9 @@ class Barrel8 : public IDistortionModel {
   Barrel8(std::istream &istream, serialization::SerializationContext &context);
   bool DistortPoint(const HomogenousPoint &undistorted, HomogenousPoint &distorted) const override;
   bool UnDistortPoint(const HomogenousPoint &distorted, HomogenousPoint &undistorted) const override;
+  void ComputeGradientAndHessian(const HomogenousPoint &point,
+                                 TVector3D &out_gradient,
+                                 TMatrix33 &out_hessian) override;
   void ComputeJacobian(const TPoint2D &point, JacobianType &out_jacobian) const override;
  public:
 

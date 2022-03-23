@@ -146,5 +146,9 @@ void FishEye::Serialize(std::ostream & ostream) const {
   WRITE_TO_STREAM(k4_, ostream);
 }
 
+void FishEye::ComputeGradientAndHessian(const HomogenousPoint &point, TVector3D &out_gradient, TMatrix33 &out_hessian) {
+
+}
+
 }
 }
