@@ -38,9 +38,12 @@ void SE3ProjectXYZPose::linearizeOplus() {
   auto point = dynamic_cast<vertices::MapPointVertex *>(_vertices[1]);
 
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
-  const double & x = pt_camera_system.x();
-  const double & y = pt_camera_system.y();
-  const double & z = pt_camera_system.z();
+  const double &x = pt_camera_system.x();
+  const double &y = pt_camera_system.y();
+  const double &z = pt_camera_system.z();
+//  const double & x = point->estimate().x();
+//  const double & y = point->estimate().y();
+//  const double & z = point->estimate().z();
   if (z == 0) {
     std::cout << "Frame id " << pose->GetFrame()->Id() << std::endl;;
     TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
@@ -74,6 +77,7 @@ void SE3ProjectXYZPose::linearizeOplus() {
 //  std::cout << "Interesting:\n" << projection_jacobian.inverse() * _jacobianOplusXi << std::endl;
   std::cout << point->GetMapPoint() << std::endl;
   std::cout << pose->GetFrame()->Id() << std::endl;
+  std::cout << pose->estimate() << std::endl;
   std::cout << _jacobianOplusXi << std::endl;
   std::cout << Xi << std::endl;
   Eigen::Matrix<precision_t, 2, 6> deltai = _jacobianOplusXi - Xi;
