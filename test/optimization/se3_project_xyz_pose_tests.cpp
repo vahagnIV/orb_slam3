@@ -13,11 +13,48 @@
 #include "camera/distortions/fish_eye.h"
 #include "mock/mock_frame.h"
 #include "test_utils.h"
+#include "g2o/core/base_binary_edge.h"
+#include "g2o/core/base_unary_edge.h"
+#include <map/map.h>
+
+namespace g2o {
+template<typename EdgeType>
+void evaluateJacobian(EdgeType &e, JacobianWorkspace &jacobianWorkspace,
+                      g2o::JacobianWorkspace &numericJacobianWorkspace) {
+  // calling the analytic Jacobian but writing to the numeric workspace
+  e.BaseBinaryEdge<EdgeType::Dimension, typename EdgeType::Measurement,
+                   typename EdgeType::VertexXiType,
+                   typename EdgeType::VertexXjType>::linearizeOplus(numericJacobianWorkspace);
+  // copy result into analytic workspace
+  jacobianWorkspace = numericJacobianWorkspace;
+
+  // compute the numeric Jacobian into the numericJacobianWorkspace workspace as
+  // setup by the previous call
+  e.BaseBinaryEdge<EdgeType::Dimension, typename EdgeType::Measurement,
+                   typename EdgeType::VertexXiType,
+                   typename EdgeType::VertexXjType>::linearizeOplus();
+
+  // compare the two Jacobians
+  for (int i = 0; i < 2; ++i) {
+    number_t *n = numericJacobianWorkspace.workspaceForVertex(i);
+    number_t *a = jacobianWorkspace.workspaceForVertex(i);
+    int numElems = EdgeType::Dimension;
+    if (i == 0)
+      numElems *= EdgeType::VertexXiType::Dimension;
+    else
+      numElems *= EdgeType::VertexXjType::Dimension;
+    for (int j = 0; j < numElems; ++j) {
+      EXPECT_NEAR(n[j], a[j], 1e-3);
+    }
+  }
+}
+}
 
 namespace orb_slam3 {
 namespace test {
 
 using ::testing::Return;
+
 
 TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
 
@@ -34,7 +71,7 @@ TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
   // ===== camera ====
   camera::MonocularCamera camera(1000, 1000);
   camera.SetFx(808);
-  camera.SetFy(812);
+  camera.SetFy(808);
   camera.SetCx(498);
   camera.SetCy(501);
 
@@ -47,7 +84,8 @@ TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
   ON_CALL(mock_frame, GetCamera).WillByDefault(Return(&camera));
 
   TPoint3D point;
-  map::MapPoint map_point(point, 1, 1, 1, nullptr);
+  map::Map mp(nullptr);
+  map::MapPoint map_point(point, 1, 1, 1, &mp);
 
   optimization::vertices::FrameVertex frame_vertex(&mock_frame);
   optimization::vertices::MapPointVertex map_point_vertex(&map_point);
@@ -55,22 +93,29 @@ TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
   optimization::edges::SE3ProjectXYZPose e(&camera, 1e-4);
   e.setVertex(0, &frame_vertex);
   e.setVertex(1, &map_point_vertex);
+  e.setInformation(TMatrix22::Identity());
 
   g2o::JacobianWorkspace jacobianWorkspace;
   g2o::JacobianWorkspace numericJacobianWorkspace;
   numericJacobianWorkspace.updateSize(&e);
   numericJacobianWorkspace.allocate();
   for (int i = 0; i < 10; ++i) {
-    point.setRandom();
+    mock_frame.SetStagingPosition(
+        GetRotationMatrixRollPitchYaw(DoubleRand(-M_PI / 2, M_PI / 2),
+                                      DoubleRand(-M_PI / 2, M_PI / 2),
+                                      DoubleRand(-M_PI / 2, M_PI / 2)),
+        GenerateRandom3DPoint(0, 0, 0, 10, 10, 10));
+    frame_vertex.setEstimate(g2o::SE3Quat(mock_frame.GetStagingPosition().R, mock_frame.GetStagingPosition().T));
 
-    map_point.SetStagingPosition(point);
-    TPoint3D local = mock_frame.GetStagingPosition().Transform(map_point.GetStagingPosition());
+    TPoint3D local = GenerateRandom3DPoint(-20, -20, 0.5, 20, 20, 60);
     TPoint2D measurement;
     camera.ProjectAndDistort(local, measurement);
-    TPoint2D measurement_distortion;
-    measurement_distortion.setRandom();
-    measurement_distortion /= measurement_distortion.maxCoeff();
+    TPoint2D measurement_distortion = GenerateRandom2DPoint(-0.2, -0.2, 0.2, 0.2);
 
+//    measurement += measurement_distortion;
+    map_point.SetStagingPosition(mock_frame.GetStagingPosition().GetInversePose().Transform(local));
+    map_point_vertex.setEstimate(map_point.GetStagingPosition());
+    evaluateJacobian(e, jacobianWorkspace, numericJacobianWorkspace);
   }
 
 }

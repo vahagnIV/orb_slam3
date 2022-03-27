@@ -23,6 +23,7 @@ typedef g2o::BaseBinaryEdge<2, Eigen::Vector2d,
 class BABinaryEdge : public  G2OBinaryEdge {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  BABinaryEdge() : G2OBinaryEdge() {}
   virtual bool IsValid() const = 0;
   virtual bool IsDepthPositive() const = 0;
   ~BABinaryEdge() override = default;

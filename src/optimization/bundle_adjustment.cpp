@@ -124,24 +124,24 @@ void LocalBundleAdjustment(std::unordered_set<frame::KeyFrame *> & keyframes,
     }
   }
 
-  for (auto &mp: local_map_points) {
-    for (auto obs: mp->Observations()) {
-      auto pose = obs.first->GetPosition();
-      if (pose.Transform(mp->GetPosition()).z() == 0) {
-        std::cout << "In kfs " << (keyframes.find(obs.second.GetKeyFrame()) != keyframes.end()) << std::endl;
-        std::cout << "In Fkfs " << (fixed_keyframes.find(obs.second.GetKeyFrame()) != fixed_keyframes.end())
-                  << std::endl;
-        std::cout << "To delete " << (observations_to_delete.end() != std::find(observations_to_delete.begin(),
-                                                                                observations_to_delete.end(),
-                                                                                std::make_pair(mp,
-                                                                                               obs.second.GetKeyFrame())))
-                  << std::endl;
-
-        throw std::runtime_error("ttt");
-      }
-    }
-
-  }
+//  for (auto &mp: local_map_points) {
+//    for (auto obs: mp->Observations()) {
+//      auto pose = obs.first->GetPosition();
+//      if (pose.Transform(mp->GetPosition()).z() == 0) {
+//        std::cout << "In kfs " << (keyframes.find(obs.second.GetKeyFrame()) != keyframes.end()) << std::endl;
+//        std::cout << "In Fkfs " << (fixed_keyframes.find(obs.second.GetKeyFrame()) != fixed_keyframes.end())
+//                  << std::endl;
+//        std::cout << "To delete " << (observations_to_delete.end() != std::find(observations_to_delete.begin(),
+//                                                                                observations_to_delete.end(),
+//                                                                                std::make_pair(mp,
+//                                                                                               obs.second.GetKeyFrame())))
+//                  << std::endl;
+//
+//        throw std::runtime_error("ttt");
+//      }
+//    }
+//
+//  }
 
 }
 

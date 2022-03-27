@@ -11,7 +11,7 @@ namespace optimization {
 namespace edges {
 
 SE3ProjectXYZPose::SE3ProjectXYZPose(const camera::MonocularCamera * camera, precision_t threshold)
-    : camera_(camera), threshold_(threshold), step_(0) {
+    :BABinaryEdge(), camera_(camera), threshold_(threshold), step_(0) {
   error()[0] = error()[1] = 0;
 }
 
@@ -32,7 +32,8 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-
+  BaseFixedSizedEdge::linearizeOplus();
+  return;
   ++step_;
   auto pose = dynamic_cast<vertices::FrameVertex *>(_vertices[0]);
   auto point = dynamic_cast<vertices::MapPointVertex *>(_vertices[1]);
@@ -44,23 +45,23 @@ void SE3ProjectXYZPose::linearizeOplus() {
 //  const double & x = point->estimate().x();
 //  const double & y = point->estimate().y();
 //  const double & z = point->estimate().z();
-  if (z == 0) {
-    std::cout << "Frame id " << pose->GetFrame()->Id() << std::endl;;
-    TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
-    TVector3D t = pose->estimate().translation();
-    TPoint3D pt = point->estimate();
-    std::cout << "Estimate:\n" << pt << std::endl;
-    std::cout << "Original:\n" << point->GetMapPoint()->GetPosition() << std::endl;
-
-    std::cout << "Frame estimate R:\n" << r << std::endl;
-    std::cout << "Frame estimate T:\n" << t << std::endl;
-    std::cout << "Frame origin R:\n" << pose->GetFrame()->GetPosition().R;
-    std::cout << "Frame origin T:\n" << pose->GetFrame()->GetPosition().T;
-    std::cout << "Frame origin staging R:\n" << pose->GetFrame()->GetStagingPosition().R;
-    std::cout << "Frame origin staging T:\n" << pose->GetFrame()->GetStagingPosition().T;
-    throw std::runtime_error("fff");
-  }
-
+//  if (z == 0) {
+//    std::cout << "Frame id " << pose->GetFrame()->Id() << std::endl;;
+//    TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
+//    TVector3D t = pose->estimate().translation();
+//    TPoint3D pt = point->estimate();
+//    std::cout << "Estimate:\n" << pt << std::endl;
+//    std::cout << "Original:\n" << point->GetMapPoint()->GetPosition() << std::endl;
+//
+//    std::cout << "Frame estimate R:\n" << r << std::endl;
+//    std::cout << "Frame estimate T:\n" << t << std::endl;
+//    std::cout << "Frame origin R:\n" << pose->GetFrame()->GetPosition().R;
+//    std::cout << "Frame origin T:\n" << pose->GetFrame()->GetPosition().T;
+//    std::cout << "Frame origin staging R:\n" << pose->GetFrame()->GetStagingPosition().R;
+//    std::cout << "Frame origin staging T:\n" << pose->GetFrame()->GetStagingPosition().T;
+//    throw std::runtime_error("fff");
+//  }
+//
   camera::ProjectionJacobianType projection_jacobian;
 
   camera_->ComputeJacobian(pt_camera_system, projection_jacobian);
@@ -70,28 +71,28 @@ void SE3ProjectXYZPose::linearizeOplus() {
   se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
       -z, 0.f, x, 0.f, 1.f, 0.f,
       y, -x, 0.f, 0.f, 0.f, 1.f;
-
-  Eigen::Matrix<precision_t, 2, 6> Xi = projection_jacobian * se3_jacobian;;
-  Eigen::Matrix<precision_t, 2, 3> Xj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
-  BaseFixedSizedEdge::linearizeOplus();
-//  std::cout << "Interesting:\n" << projection_jacobian.inverse() * _jacobianOplusXi << std::endl;
-  std::cout << point->GetMapPoint() << std::endl;
-  std::cout << pose->GetFrame()->Id() << std::endl;
-  std::cout << pose->estimate() << std::endl;
-  std::cout << _jacobianOplusXi << std::endl;
-  std::cout << Xi << std::endl;
-  Eigen::Matrix<precision_t, 2, 6> deltai = _jacobianOplusXi - Xi;
-  Eigen::Matrix<precision_t, 2, 3> deltaj = _jacobianOplusXj - Xj;
-  std::cout << deltai << std::endl;
-  std::cout << deltaj << std::endl;
-  precision_t di = std::abs((deltai).sum());
-  std::cout << "Di = " << di << std::endl;
+//
+//  Eigen::Matrix<precision_t, 2, 6> Xi = projection_jacobian * se3_jacobian;;
+//  Eigen::Matrix<precision_t, 2, 3> Xj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
+//  BaseFixedSizedEdge::linearizeOplus();
+////  std::cout << "Interesting:\n" << projection_jacobian.inverse() * _jacobianOplusXi << std::endl;
+//  std::cout << point->GetMapPoint() << std::endl;
+//  std::cout << pose->GetFrame()->Id() << std::endl;
+//  std::cout << pose->estimate() << std::endl;
+//  std::cout << _jacobianOplusXi << std::endl;
+//  std::cout << Xi << std::endl;
+//  Eigen::Matrix<precision_t, 2, 6> deltai = _jacobianOplusXi - Xi;
+//  Eigen::Matrix<precision_t, 2, 3> deltaj = _jacobianOplusXj - Xj;
+//  std::cout << deltai << std::endl;
+//  std::cout << deltaj << std::endl;
+//  precision_t di = std::abs((deltai).sum());
+//  std::cout << "Di = " << di << std::endl;
 //  if (di > 1e-2)
 //    throw std::runtime_error("ppp");
 //  if (std::abs((deltaj).sum()) > 1e-2)
 //    throw std::runtime_error("ppp");
-//  _jacobianOplusXi = projection_jacobian * se3_jacobian;
-//  _jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
+  _jacobianOplusXi = projection_jacobian * se3_jacobian;
+  _jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
 }
 
 bool SE3ProjectXYZPose::IsValid() const {
