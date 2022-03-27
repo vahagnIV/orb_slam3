@@ -42,7 +42,10 @@ set(ALL_TEST_SOURCE_FILES
         test_utils.cpp
         test_utils.h)
 add_executable(orb_slam_unit_tests ${ALL_TEST_SOURCE_FILES})
-target_link_libraries(orb_slam_unit_tests orbslam gmock gmock_main DBoW2 ${OpenCV_LIBS})
+target_link_libraries(orb_slam_unit_tests orbslam gmock gmock_main DBoW2 ${OpenCV_LIBS} g2o::core
+        g2o::solver_cholmod
+        g2o::types_sba
+        g2o::types_sim3)
 
 gtest_add_tests(TARGET orb_slam_unit_tests
         SOURCES ${ALL_TEST_SOURCE_FILES}

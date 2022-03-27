@@ -13,6 +13,7 @@ namespace test {
 class Se3ProjectXyzPoseTests : public ::testing::Test {
  public:
   Se3ProjectXyzPoseTests() = default;
+ private:
 
 };
 
