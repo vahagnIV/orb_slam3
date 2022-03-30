@@ -11,7 +11,7 @@ namespace optimization {
 namespace edges {
 
 SE3ProjectXYZPose::SE3ProjectXYZPose(const camera::MonocularCamera * camera, precision_t threshold)
-    :BABinaryEdge(), camera_(camera), threshold_(threshold), step_(0) {
+    : BABinaryEdge(), camera_(camera), threshold_(threshold), step_(0) {
   error()[0] = error()[1] = 0;
 }
 
@@ -32,35 +32,35 @@ void SE3ProjectXYZPose::computeError() {
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-  BaseFixedSizedEdge::linearizeOplus();
-  return;
+//  BaseFixedSizedEdge::linearizeOplus();
   ++step_;
   auto pose = dynamic_cast<vertices::FrameVertex *>(_vertices[0]);
   auto point = dynamic_cast<vertices::MapPointVertex *>(_vertices[1]);
 
-  g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
-  const double &x = pt_camera_system.x();
-  const double &y = pt_camera_system.y();
-  const double &z = pt_camera_system.z();
+  g2o::Vector3 pt_camera_system = g2o::SE3Quat(pose->estimate()).map(TVector3D(point->estimate()));
+  const double & x = pt_camera_system.x();
+  const double & y = pt_camera_system.y();
+  const double & z = pt_camera_system.z();
 //  const double & x = point->estimate().x();
 //  const double & y = point->estimate().y();
 //  const double & z = point->estimate().z();
-//  if (z == 0) {
-//    std::cout << "Frame id " << pose->GetFrame()->Id() << std::endl;;
-//    TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
-//    TVector3D t = pose->estimate().translation();
-//    TPoint3D pt = point->estimate();
-//    std::cout << "Estimate:\n" << pt << std::endl;
-//    std::cout << "Original:\n" << point->GetMapPoint()->GetPosition() << std::endl;
-//
-//    std::cout << "Frame estimate R:\n" << r << std::endl;
-//    std::cout << "Frame estimate T:\n" << t << std::endl;
-//    std::cout << "Frame origin R:\n" << pose->GetFrame()->GetPosition().R;
-//    std::cout << "Frame origin T:\n" << pose->GetFrame()->GetPosition().T;
-//    std::cout << "Frame origin staging R:\n" << pose->GetFrame()->GetStagingPosition().R;
-//    std::cout << "Frame origin staging T:\n" << pose->GetFrame()->GetStagingPosition().T;
-//    throw std::runtime_error("fff");
-//  }
+  if (z == 0) {
+    std::cout << "Frame id " << pose->GetFrame()->Id() << std::endl;;
+    TMatrix33 r = pose->estimate().rotation().toRotationMatrix();
+    TVector3D t = pose->estimate().translation();
+    TPoint3D pt = point->estimate();
+    std::cout << "Estimate:\n" << pt << std::endl;
+    std::cout << "Original:\n" << point->GetMapPoint()->GetPosition() << std::endl;
+
+    std::cout << "Frame estimate R:\n" << r << std::endl;
+    std::cout << "Frame estimate T:\n" << t << std::endl;
+    std::cout << "Frame origin R:\n" << pose->GetFrame()->GetPosition().R;
+    std::cout << "Frame origin T:\n" << pose->GetFrame()->GetPosition().T;
+    std::cout << "Frame origin staging R:\n" << pose->GetFrame()->GetStagingPosition().R;
+    std::cout << "Frame origin staging T:\n" << pose->GetFrame()->GetStagingPosition().T;
+    throw std::runtime_error("fff");
+  }
+//  return;
 //
   camera::ProjectionJacobianType projection_jacobian;
 
@@ -68,9 +68,9 @@ void SE3ProjectXYZPose::linearizeOplus() {
 
   Eigen::Matrix<double, 3, 6> se3_jacobian;
   // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
-  se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
-      -z, 0.f, x, 0.f, 1.f, 0.f,
-      y, -x, 0.f, 0.f, 0.f, 1.f;
+  se3_jacobian << 0.f, z, -y, 1., 0., 0.,
+                  -z, 0.f, x, 0., 1., 0.,
+                  y, -x, 0.f, 0., 0., 1.;
 //
 //  Eigen::Matrix<precision_t, 2, 6> Xi = projection_jacobian * se3_jacobian;;
 //  Eigen::Matrix<precision_t, 2, 3> Xj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();

@@ -458,8 +458,8 @@ void TestMonocularTum(const std::string & dataPath) {
   OrbSlam3System system;
   auto * atlas = new orb_slam3::map::Atlas(feature_extractor, kf_database);
 
-  system.loop_merge_detector = new orb_slam3::LoopMergeDetector(atlas);
-  system.loop_merge_detector->Start();
+  system.loop_merge_detector = nullptr;// new orb_slam3::LoopMergeDetector(atlas);
+//  system.loop_merge_detector->Start();
   system.local_mapper = new orb_slam3::LocalMapper(atlas, system.loop_merge_detector);
   system.tracker = new orb_slam3::Tracker(atlas, system.local_mapper);
 
@@ -507,7 +507,7 @@ void LoadConfig(nlohmann::json & config) {
 
 void initialize() {
   orb_slam3::drawer::Initialize();
-  orb_slam3::logging::Initialize(spdlog::level::level_enum::critical);
+  orb_slam3::logging::Initialize(spdlog::level::level_enum::warn);
 
 }
 

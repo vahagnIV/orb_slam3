@@ -25,7 +25,8 @@ LocalMapper::LocalMapper(map::Atlas * atlas, LoopMergeDetector * loop_mege_detec
       thread_(nullptr),
       accept_key_frames_(true),
       loop_merge_detector_(loop_mege_detector) {
-  loop_merge_detector_->SetLocalMapper(this);
+  if (loop_mege_detector)
+    loop_merge_detector_->SetLocalMapper(this);
 }
 
 LocalMapper::~LocalMapper() {
@@ -280,7 +281,8 @@ void LocalMapper::RunIteration() {
       loop_merge_detector_->Process(key_frame);
 
 #ifndef MULTITHREADED
-    loop_merge_detector_->RunIteration();
+    if (loop_merge_detector_)
+      loop_merge_detector_->RunIteration();
 #endif
 
     accept_key_frames_ = true;

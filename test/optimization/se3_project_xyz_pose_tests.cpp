@@ -44,7 +44,7 @@ void evaluateJacobian(EdgeType &e, JacobianWorkspace &jacobianWorkspace,
     else
       numElems *= EdgeType::VertexXjType::Dimension;
     for (int j = 0; j < numElems; ++j) {
-      EXPECT_NEAR(n[j], a[j], 1e-3);
+      EXPECT_NEAR(n[j], a[j], 1e-5);
     }
   }
 }
@@ -70,8 +70,8 @@ TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
 
   // ===== camera ====
   camera::MonocularCamera camera(1000, 1000);
-  camera.SetFx(808);
-  camera.SetFy(808);
+  camera.SetFx(256);
+  camera.SetFy(256);
   camera.SetCx(498);
   camera.SetCy(501);
 
@@ -83,6 +83,7 @@ TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
   camera.SetDistortionModel(distortion);
   ON_CALL(mock_frame, GetCamera).WillByDefault(Return(&camera));
 
+  // ======
   TPoint3D point;
   map::Map mp(nullptr);
   map::MapPoint map_point(point, 1, 1, 1, &mp);
@@ -112,7 +113,7 @@ TEST(Se3ProjectXyzPoseTests, JacobianIsComputedorrectly) {
     camera.ProjectAndDistort(local, measurement);
     TPoint2D measurement_distortion = GenerateRandom2DPoint(-0.2, -0.2, 0.2, 0.2);
 
-//    measurement += measurement_distortion;
+    measurement += measurement_distortion;
     map_point.SetStagingPosition(mock_frame.GetStagingPosition().GetInversePose().Transform(local));
     map_point_vertex.setEstimate(map_point.GetStagingPosition());
     evaluateJacobian(e, jacobianWorkspace, numericJacobianWorkspace);

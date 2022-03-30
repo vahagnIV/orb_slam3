@@ -8,7 +8,7 @@ find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(g2o REQUIRED)
 
-#add_definitions(-DMULTITHREADED)
+add_definitions(-DMULTITHREADED)
 
 enable_testing()
 include_directories(external ${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR})
