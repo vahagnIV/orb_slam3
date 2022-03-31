@@ -129,14 +129,11 @@ void FishEye::ComputeJacobian(const TPoint2D & point,
   double Dthetad = 1 + 3 * K1() * theta2 + 5 * K2() * theta4 + 7 * K3() * theta6 +
       9 * K4() * theta8;
 
-  out_jacobian(0, 0) = (Dthetad * x2 / (r2 * (r2 + 1)) + thetad * y2 / r3);
+  out_jacobian(0, 0) = thetad * ( y2 / r3)  + Dthetad * x2 / (r2 * (r2 + 1)) ;
 
-  out_jacobian(0, 1) = out_jacobian(1, 0) = (Dthetad * y * x / (r2 * (r2 + 1)) - thetad * y * x / r3);
+  out_jacobian(0, 1) = out_jacobian(1, 0) = y * x * ( - thetad / r3 + Dthetad  / (r2 * (r2 + 1)) );
 
-//  out_jacobian(1, 0) = (Dthetad * y * x / (r2 * (r2 + 1)) - thetad * y * x / r3);
-  out_jacobian(1, 1) = (Dthetad * y2 / (r2 * (r2 + 1)) + thetad * x2 / r3);
-//  if(out_jacobian.array().isNaN().any())
-//    throw std::runtime_error("Nan in jacobian");
+  out_jacobian(1, 1) = thetad * ( x2 / r3)  + Dthetad * y2 / (r2 * (r2 + 1)) ;
 }
 
 void FishEye::Serialize(std::ostream & ostream) const {

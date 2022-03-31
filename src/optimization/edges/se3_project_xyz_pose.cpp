@@ -18,22 +18,22 @@ SE3ProjectXYZPose::SE3ProjectXYZPose(const camera::MonocularCamera * camera, pre
 bool SE3ProjectXYZPose::IsDepthPositive() const {
   auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
   auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
-  return pose->estimate().map(point->estimate())[2] > 0;
+  return pose->estimate().map(point->estimate()).z() > 0;
 }
 
 void SE3ProjectXYZPose::computeError() {
-  auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
-  auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
+  auto point = dynamic_cast<g2o::VertexPointXYZ *>(vertex(1));
+  auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(vertex(0));
   TPoint3D pt_camera_system = pose->estimate().map(point->estimate());
   TPoint2D distorted;
   camera_->ProjectAndDistort(pt_camera_system, distorted);
 
-  _error = distorted - _measurement;
+  _error =  _measurement - distorted;
 }
 
 void SE3ProjectXYZPose::linearizeOplus() {
-  auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
-  auto point = dynamic_cast<g2o::VertexPointXYZ *>(_vertices[1]);
+  auto pose = dynamic_cast<g2o::VertexSE3Expmap *>(vertex(0));
+  auto point = dynamic_cast<g2o::VertexPointXYZ *>(vertex(1));
   g2o::Vector3 pt_camera_system = pose->estimate().map(point->estimate());
   const double & x = pt_camera_system.x();
   const double & y = pt_camera_system.y();
@@ -47,8 +47,8 @@ void SE3ProjectXYZPose::linearizeOplus() {
   se3_jacobian << 0.f, z, -y, 1.f, 0.f, 0.f,
       -z, 0.f, x, 0.f, 1.f, 0.f,
       y, -x, 0.f, 0.f, 0.f, 1.f;
-  _jacobianOplusXi = projection_jacobian * se3_jacobian;
-  _jacobianOplusXj = projection_jacobian * pose->estimate().rotation().toRotationMatrix();
+  _jacobianOplusXi = -projection_jacobian * se3_jacobian;
+  _jacobianOplusXj = -projection_jacobian * pose->estimate().rotation().toRotationMatrix();
 }
 
 bool SE3ProjectXYZPose::IsValid() const {

@@ -29,10 +29,11 @@ class MonocularCamera
       width_(width),
       height_(height),
       distortion_model_(nullptr) {
+    f_jac_.setZero();
   }
 
-  MonocularCamera(std::istream &istream,
-                  serialization::SerializationContext &context);
+  MonocularCamera(std::istream & istream,
+                  serialization::SerializationContext & context);
   virtual ~MonocularCamera() { delete distortion_model_; }
 
  public: // ====  optimization =============
@@ -107,10 +108,12 @@ class MonocularCamera
   void SetFx(precision_t fx) noexcept {
     fx_ = fx;
     fx_inv_ = fx ? 1 / fx : 0;
+    f_jac_(0, 0) = fx_;
   }
   void SetFy(precision_t fy) noexcept {
     fy_ = fy;
     fy_inv_ = fy ? 1 / fy : 1;
+    f_jac_(1, 1) = fy_;
   }
   void SetCx(precision_t cx) noexcept { cx_ = cx; }
   void SetCy(precision_t cy) noexcept { cy_ = cy; }
@@ -136,6 +139,7 @@ class MonocularCamera
   precision_t fx_inv_, fy_inv_;
   precision_t fx_, fy_, cx_, cy_;
   IDistortionModel * distortion_model_;
+  TMatrix22 f_jac_;
 
 };
 

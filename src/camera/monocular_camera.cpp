@@ -10,7 +10,7 @@
 namespace orb_slam3 {
 namespace camera {
 
-MonocularCamera::MonocularCamera(std::istream &istream, serialization::SerializationContext &context) {
+MonocularCamera::MonocularCamera(std::istream & istream, serialization::SerializationContext & context) {
   READ_FROM_STREAM(fx_, istream);
   SetFx(fx_);
   READ_FROM_STREAM(fy_, istream);
@@ -21,18 +21,18 @@ MonocularCamera::MonocularCamera(std::istream &istream, serialization::Serializa
   READ_FROM_STREAM(height_, istream);
   DistortionModelType type;
   READ_FROM_STREAM(type, istream);
-  camera::IDistortionModel *distortion_model = factories::DistortionModelFactory::Create(type,
-                                                                                         istream,
-                                                                                         context);
+  camera::IDistortionModel * distortion_model = factories::DistortionModelFactory::Create(type,
+                                                                                          istream,
+                                                                                          context);
   SetDistortionModel(distortion_model);
   ComputeImageBounds();
 }
 
-void MonocularCamera::UnprojectPoint(const TPoint2D &point, HomogenousPoint &unprojected) const {
+void MonocularCamera::UnprojectPoint(const TPoint2D & point, HomogenousPoint & unprojected) const {
   unprojected << (point.x() - Cx()) * fx_inv_, (point.y() - Cy()) * fy_inv_, 1;
 }
 
-void MonocularCamera::ProjectPoint(const TPoint3D &point, TPoint2D &projected) const {
+void MonocularCamera::ProjectPoint(const TPoint3D & point, TPoint2D & projected) const {
   double z_inv = 1 / point.z();
   projected << point.x() * z_inv * Fx() + Cx(), point.y() * z_inv * Fy() + Cy();
 }
@@ -90,27 +90,23 @@ void MonocularCamera::ComputeImageBounds() {
   max_Y_ = std::max(bottom_left.y(), bottom_right.y());
   min_X_ = std::min(top_left.x(), bottom_left.x());
   min_Y_ = std::min(top_left.y(), top_left.y());
-//  max_X_ = 570;
-//  max_Y_ = 570;
-//  min_X_ = -45;
-//  min_Y_ = -45;
 }
 
 void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianType & out_jacobian) const {
   const double & x = pt.x();
   const double & y = pt.y();
   const double & z = pt.z();
-  const double z_inv = 1 / z;
+  const double z_inv = 1. / z;
   const double z_inv2 = z_inv * z_inv;
   ProjectionJacobianType projection_jacobian;
-  projection_jacobian << Fx() * z_inv, 0, -x * z_inv2 * Fx(),
-      0, z_inv * Fy(), -y * z_inv2 * Fy();
+  projection_jacobian << z_inv, 0, -x * z_inv2,
+      0, z_inv, -y * z_inv2;
   IDistortionModel::JacobianType distortion_jacobian;
   TPoint2D projected;
   projected << x * z_inv, y * z_inv;
   distortion_model_->ComputeJacobian(projected, distortion_jacobian);
-  out_jacobian = distortion_jacobian * projection_jacobian;
-  if(out_jacobian.array().isNaN().any()) {
+  out_jacobian = f_jac_ * distortion_jacobian * projection_jacobian;
+  if (out_jacobian.array().isNaN().any()) {
     std::cout << "Pt\n" << pt << std::endl;
     std::cout << "Projected\n" << projected << std::endl;
 
