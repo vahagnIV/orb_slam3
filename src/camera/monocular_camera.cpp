@@ -109,6 +109,8 @@ void MonocularCamera::ComputeJacobian(const TPoint3D & pt, ProjectionJacobianTyp
   if (out_jacobian.array().isNaN().any()) {
     std::cout << "Pt\n" << pt << std::endl;
     std::cout << "Projected\n" << projected << std::endl;
+    out_jacobian.setZero();
+    return;
 
     throw std::runtime_error("Error from monocam");
   }
