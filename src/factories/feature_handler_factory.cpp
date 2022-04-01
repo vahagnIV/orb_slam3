@@ -42,23 +42,39 @@ std::shared_ptr<features::handlers::BaseFeatureHandler> FeatureHandlerFactory::C
                                                                                       const camera::ICamera * camera,
                                                                                       const features::IFeatureExtractor * feature_extractor,
                                                                                       size_t feature_count) {
+  features::Features features(image.cols(), image.rows());
+
+  feature_extractor->Extract(image, features, feature_count);
+
+
+  if (camera->Type() == camera::CameraType::MONOCULAR) {
+    auto mono_cam = dynamic_cast<const camera::MonocularCamera *>(camera);
+    features.undistorted_keypoints.reserve(features.Size());
+    features.undistorted_and_unprojected_keypoints.reserve(features.Size());
+
+    size_t feature_size = features.Size();
+    for (size_t i = 0; i < feature_size;) {
+      TPoint2D undistorted_kp;
+      if (mono_cam->UndistortPoint(features.keypoints[i].pt, undistorted_kp)) {
+        TPoint3D undistorted_unprojected_kp;
+        mono_cam->UnprojectAndUndistort(features.keypoints[i].pt,
+                                        undistorted_unprojected_kp);
+        features.undistorted_keypoints.emplace_back(undistorted_kp);
+        features.undistorted_and_unprojected_keypoints.emplace_back(undistorted_unprojected_kp);
+        ++i;
+      } else {
+        --feature_size;
+        std::swap(features.keypoints[i], features.keypoints[feature_size - i ]);
+        features.descriptors.row(i).swap( features.descriptors.row(feature_size - i ));
+      }
+    }
+    features.keypoints.resize(feature_size);
+    features.descriptors.conservativeResize(feature_size, features.descriptors.cols());
+  }
+  features.AssignFeaturesToGrid();
   switch (type) {
     case features::handlers::HandlerType::DBoW2: {
 
-      features::Features features(image.cols(), image.rows());
-
-      feature_extractor->Extract(image, features, feature_count);
-      features.AssignFeaturesToGrid();
-
-      if (camera->Type() == camera::CameraType::MONOCULAR) {
-        auto mono_cam = dynamic_cast<const camera::MonocularCamera *>(camera);
-        features.undistorted_keypoints.resize(features.Size());
-        features.undistorted_and_unprojected_keypoints.resize(features.Size());
-        for (size_t i = 0; i < features.Size(); ++i) {
-          mono_cam->UndistortPoint(features.keypoints[i].pt, features.undistorted_keypoints[i]);
-          mono_cam->UnprojectAndUndistort(features.keypoints[i].pt, features.undistorted_and_unprojected_keypoints[i]);
-        }
-      }
       auto result = std::make_shared<features::handlers::DBoW2Handler>(std::move(features),
                                                                        feature_extractor,
                                                                        features::utils::DBoW2Vocabulary::Instance().GetVocabulary());
