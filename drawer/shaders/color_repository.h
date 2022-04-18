@@ -14,11 +14,13 @@ class ColorRepository {
   static const float *Green();
   static const float *Blue();
   static const float *Pink();
+  static const float *Yellow();
  private:
   static const float red[3];
   static const float green[3];
   static const float blue[3];
   static const float pink[3];
+  static const float yellow[3];
 
 };
 

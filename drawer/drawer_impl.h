@@ -44,6 +44,7 @@ class DrawerImpl {
   void KeyFramePositionUpdated(messages::KeyFramePositionUpdated *message);
   void MapPointGeometryUpdated(messages::MapPointGeometryUpdated *message);
   void TrackingInfo(messages::TrackingInfo *message);
+  void PositionPredicted(messages::PositionPredicted *message);
 
  private:
   void WorkThread();
@@ -72,11 +73,13 @@ class DrawerImpl {
   bool cancellation_token_;
   Graph * graph_;
   glm::mat4 transformation_matrix_;
+
   GLuint position_vertex_buffer_id_;
+  bool position_is_predicted_;
+  GLuint predicted_position_vertex_buffer_id_;
   precision_t scale_;
-  std::stack<GLuint> point_buffers_;
-  std::stack<GLuint> line_buffers_;
   std::stack<GLuint> vertex_buffers_;
+
 
 };
 

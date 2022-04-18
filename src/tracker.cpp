@@ -414,6 +414,9 @@ void Tracker::PredictAndSetNewFramePosition(frame::Frame * frame) const {
   geometry::Pose pose = velocity_ * last_frame_->GetPosition();
   frame->SetStagingPosition(pose);
   frame->ApplyStaging();
+  if (Settings::Get().MessageRequested(messages::MessageType::POSITION_PREDICTED)) {
+    messages::MessageProcessor::Instance().Enqueue(new messages::PositionPredicted(frame));
+  }
 }
 
 void Tracker::SaveState(std::ostream & ostream) {

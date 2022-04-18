@@ -315,6 +315,7 @@ void SetSettings() {
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::OBSERVATION_DELETED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::KEYFRAME_POSITION_UPDATED);
   orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::MAP_POINT_GEOMETRY_UPDATED);
+  orb_slam3::Settings::Get().RequestMessage(orb_slam3::messages::MessageType::POSITION_PREDICTED);
 }
 
 orb_slam3::frame::SensorConstants GetSensorConstants() {

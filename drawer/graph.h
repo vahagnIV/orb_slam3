@@ -38,8 +38,8 @@ class Graph {
   GLsizeiptr current_carrette_;
   std::unordered_map<size_t, MapPointNode *> map_points_;
   std::vector<MapPointNode *> map_points_ordered_;
-
   std::unordered_map<size_t, KeyFrameNode *> keyframes_;
+
 
 };
 

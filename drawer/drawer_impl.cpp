@@ -21,6 +21,7 @@ DrawerImpl::DrawerImpl(size_t width, size_t height, std::string window_name) :
     thread_(nullptr),
     error_(),
     graph_(nullptr),
+    position_is_predicted_(false),
     cancellation_token_(false),
     scale_(.005) {
 
@@ -73,6 +74,7 @@ void DrawerImpl::WorkThread() {
   ShaderRepository::Initialize();
 
   glGenBuffers(1, &position_vertex_buffer_id_);
+  glGenBuffers(1, &predicted_position_vertex_buffer_id_);
 
   glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
@@ -105,9 +107,42 @@ void DrawerImpl::WorkThread() {
       case messages::MessageType::MAP_POINT_GEOMETRY_UPDATED:
         MapPointGeometryUpdated(Extract<messages::MapPointGeometryUpdated>(message));
         break;
+      case messages::MessageType::POSITION_PREDICTED:
+        PositionPredicted(Extract<messages::PositionPredicted>(message));
+        break;
     }
     delete message;
   }
+}
+
+void DrawerImpl::PositionPredicted(messages::PositionPredicted * message) {
+  position_is_predicted_ = true;
+  glUseProgram(ShaderRepository::GetKeyFrameProgramId());
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  auto invpose = message->pose.GetInversePose();
+  TVector3D center = invpose.R * TVector3D{0, 0, 1} + invpose.T;
+  TVector3D up = invpose.R * TVector3D{0, 1, 0} + invpose.T;
+
+
+  glUseProgram(ShaderRepository::GetPositionProgramId());
+  float buffer[18];
+  CreatePositionRectangle(message->pose, buffer);
+  // 1rst attribute buffer : vertices
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, predicted_position_vertex_buffer_id_);
+  glVertexAttribPointer(
+      0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+      3,                  // size
+      GL_FLOAT,           // type
+      GL_FALSE,           // normalized?
+      0,                  // stride
+      (void *) 0            // array buffer offset
+  );
+  glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+//  glPointSize(2);
+
+  glDisableVertexAttribArray(0);
 }
 
 void DrawerImpl::Stop() {
@@ -123,13 +158,6 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
   glm::mat4 Projection = glm::perspective(glm::radians(90.0f), 4.0f / 3.0f, 0.0001f, 100.0f);
 
-
-  // Camera matrix
-//  glm::mat4 View = glm::lookAt(
-//      glm::vec3(4, 3, -3), // Camera is at (4,3,-3), in World Space
-//      glm::vec3(2, 0, 0), // and looks at the origin
-//      glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-//  );
   auto invpose = message->position.GetInversePose();
   TVector3D center = invpose.R * TVector3D{0, 0, 1} + invpose.T;
   TVector3D up = invpose.R * TVector3D{0, 1, 0} + invpose.T;
@@ -138,10 +166,6 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
       glm::vec3(center.x(), center.y(), center.z()), // and looks at the origin
       glm::vec3(0, 0, 1)  // Head is up (set to 0,-1,0 to look upside-down)
   );
-  // Model matrix : an identity matrix (model will be at the origin)
-//  glm::mat4 Model = glm::translate(glm::mat4(1.0), glm::vec3(-2, 0, 0));
-//  Convert(message->position.GetInversePose(), Model);
-  // Our ModelViewProjection : multiplication of our 3 matrices
   transformation_matrix_ = /*Projection **/ View;//* Model; // Remember, matrix multiplication is the other way around
   GLuint MatrixID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "MVP");
   GLuint ProjectionID = glGetUniformLocation(ShaderRepository::GetKeyFrameProgramId(), "Projection");
@@ -155,16 +179,7 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
                 message->position.R(0, 1), message->position.R(1, 1), message->position.R(2, 1), 0,
                 message->position.R(0, 2), message->position.R(1, 2), message->position.R(2, 2), 0,
                 message->position.T.x(), message->position.T.y(), message->position.T.z() + .5, 1);
-//  for (int i = 0; i < 3; ++i) {
-//    for (int j = 0; j < 3; ++j) {
-//      mmm[j][i] = message->position.R(i, j);
-//    }
-//  }
 
-//  mmm = glm::translate(mmm, glm::vec3(message->position.T.x(), message->position.T.y(), message->position.T.z()));
-//  mmm[3][3]-=1;
-  mmm =  mmm;
-//  glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &transformation_matrix_[0][0]);
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mmm[0][0]);
   glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
 
@@ -173,7 +188,6 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
 
   ShaderRepository::UseColor(ColorRepository::Green());
 
-//  if(draw_count_ % 10 == 0)
   glBindBuffer(GL_ARRAY_BUFFER, graph_->Buffer());
   glEnableVertexAttribArray(0);
   ShaderRepository::UseColor(ColorRepository::Blue());
@@ -187,6 +201,23 @@ void DrawerImpl::TrackingInfo(messages::TrackingInfo * message) {
   );
   glDrawArrays(GL_POINTS, 0, graph_->Size()); //
   glDisableVertexAttribArray(0);
+
+  if(position_is_predicted_) {
+    glBindBuffer(GL_ARRAY_BUFFER, predicted_position_vertex_buffer_id_);
+    ShaderRepository::UseColor(ColorRepository::Yellow());
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+        3,                  // size
+        GL_FLOAT,           // type
+        GL_FALSE,           // normalized?
+        0,                  // stride
+        (void *) 0            // array buffer offset
+    );
+    glDrawArrays(GL_TRIANGLES, 0, 6); // 3 indices starting at 0 -> 1 triangle
+    glDisableVertexAttribArray(0);
+    position_is_predicted_ = false;
+  }
 
   ShaderRepository::UseColor(ColorRepository::Red());
 

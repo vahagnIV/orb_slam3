@@ -17,5 +17,6 @@
 #include "key_frame_position_updated.h"
 #include "key_frame_covisibility_updated.h"
 #include "map_point_geometry_updated.h"
+#include "position_predicted.h"
 
 #endif //ORB_SLAM3_SRC_MESSAGES_MESSAGES_H_
